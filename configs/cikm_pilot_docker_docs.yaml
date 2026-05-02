@@ -53,6 +53,15 @@ tests:
       graph_expansion_hops: 1
       experiment_id: E003
 
+  - name: rag_graph_ranked_expand
+    image: retrieval-arena/rag-graph-ranked-expand:latest
+    build_context: ../tests/rag_graph_ranked_expand
+    config:
+      seed_top_k: 3
+      neighbor_budget: 2
+      max_context_chars_per_doc: 1200
+      experiment_id: E003b
+
 scoring:
   method: lexical_baseline
   match_threshold: 0.5
