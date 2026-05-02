@@ -82,8 +82,20 @@ tests:
       max_context_chars_per_doc: 1200
       experiment_id: E004
 
+  - name: oracle_graph_support
+    image: retrieval-arena/oracle-graph-support:latest
+    build_context: ../tests/oracle_graph_support
+    config:
+      seed_top_k: 5
+      target_top_k: 5
+      hop_budget: 2
+      final_top_k: 8
+      max_context_chars_per_doc: 1200
+      directed: false
+      experiment_id: E005
 scoring:
   method: lexical_baseline
   match_threshold: 0.5
 
 output_dir: ../../DocSpectraCIKM2026/reports/retrieval_arena
+

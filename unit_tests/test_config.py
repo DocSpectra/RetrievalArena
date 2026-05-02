@@ -13,6 +13,15 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(config.tests[0].build_context.exists())
 
 
+    def test_loads_cikm_configs_with_oracle_graph_support(self):
+        for path in sorted(Path("configs").glob("cikm_pilot_*.yaml")):
+            config = load_config(path)
+            tests = {test.name: test for test in config.tests}
+            self.assertIn("oracle_graph_support", tests)
+            self.assertEqual(tests["oracle_graph_support"].config["experiment_id"], "E005")
+            self.assertTrue(tests["oracle_graph_support"].build_context.exists())
+
+
     def test_parse_config_rejects_duplicate_tests(self):
         raw = {
             "experiment_name": "x",

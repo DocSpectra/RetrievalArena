@@ -34,7 +34,7 @@ def prepare_input(dataset_path: Path, test: TestConfig, input_dir: Path) -> None
         shutil.rmtree(input_dir)
     input_dir.mkdir(parents=True)
     shutil.copytree(dataset_path / "corpus", input_dir / "corpus")
-    for filename in ["questions.jsonl", "answers.jsonl", "graph_edges.csv", "graph_metrics.json"]:
+    for filename in ["questions.jsonl", "answers.jsonl", "graph_edges.csv", "graph_metrics.json", "faq_support_audit.jsonl"]:
         source = dataset_path / filename
         if source.exists():
             shutil.copy2(source, input_dir / filename)
