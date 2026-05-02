@@ -37,6 +37,14 @@ tests:
       top_k: 5
       experiment_id: E002
 
+  - name: rag_lexical_topk
+    image: retrieval-arena/rag-lexical-topk:latest
+    build_context: ../tests/rag_lexical_topk
+    config:
+      top_k: 5
+      max_context_chars_per_doc: 1500
+      experiment_id: E002b
+
   - name: rag_graph_expand
     image: retrieval-arena/rag-graph-expand:latest
     build_context: ../tests/rag_graph_expand
