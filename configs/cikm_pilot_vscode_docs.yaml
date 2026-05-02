@@ -45,6 +45,17 @@ tests:
       max_context_chars_per_doc: 1500
       experiment_id: E002b
 
+  - name: rag_embedding_topk
+    image: retrieval-arena/rag-embedding-topk:latest
+    build_context: ../tests/rag_embedding_topk
+    config:
+      top_k: 5
+      max_context_chars_per_doc: 1500
+      embedding_backend: local_hashing_tfidf
+      model_id: local-hashing-tfidf-v1
+      embedding_dimensions: 512
+      experiment_id: E002c
+
   - name: rag_graph_expand
     image: retrieval-arena/rag-graph-expand:latest
     build_context: ../tests/rag_graph_expand
