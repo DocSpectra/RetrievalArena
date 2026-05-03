@@ -19,6 +19,15 @@ class TestConfig:
     image: str
     build_context: Path | None = None
     config: dict[str, Any] = field(default_factory=dict)
+    volumes: list["VolumeMount"] = field(default_factory=list)
+    network_disabled: bool = False
+
+
+@dataclass(frozen=True)
+class VolumeMount:
+    host_path: Path
+    container_path: str
+    read_only: bool = True
 
 
 @dataclass(frozen=True)
@@ -167,11 +176,31 @@ def parse_config(raw: dict[str, Any], config_path: Path) -> ExperimentConfig:
         build_context = item.get("build_context")
         if build_context is not None and not isinstance(build_context, str):
             raise ValidationError(f"Test {name} build_context must be a string when present.")
+        network_disabled = item.get("network_disabled", False)
+        if not isinstance(network_disabled, bool):
+            raise ValidationError(f"Test {name} network_disabled must be boolean when present.")
         test_config = item.get("config", {})
         if not isinstance(test_config, dict):
             raise ValidationError(f"Test {name} config must be a mapping.")
+        volumes_raw = item.get("volumes", [])
+        if not isinstance(volumes_raw, list):
+            raise ValidationError(f"Test {name} volumes must be a list when present.")
+        volumes: list[VolumeMount] = []
+        for volume in volumes_raw:
+            if not isinstance(volume, dict):
+                raise ValidationError(f"Test {name} volume entries must be mappings.")
+            host_path = volume.get("host_path")
+            container_path = volume.get("container_path")
+            read_only = volume.get("read_only", True)
+            if not isinstance(host_path, str) or not host_path:
+                raise ValidationError(f"Test {name} volume requires host_path.")
+            if not isinstance(container_path, str) or not container_path.startswith("/"):
+                raise ValidationError(f"Test {name} volume requires absolute container_path.")
+            if not isinstance(read_only, bool):
+                raise ValidationError(f"Test {name} volume read_only must be boolean.")
+            volumes.append(VolumeMount(host_path=_resolve_path(host_path, base), container_path=container_path, read_only=read_only))
         seen_tests.add(name)
-        tests.append(TestConfig(name=name, image=image, build_context=_resolve_path(build_context, base) if build_context else None, config=test_config))
+        tests.append(TestConfig(name=name, image=image, build_context=_resolve_path(build_context, base) if build_context else None, config=test_config, volumes=volumes, network_disabled=network_disabled))
 
     scoring_raw = raw.get("scoring", {})
     if not isinstance(scoring_raw, dict):

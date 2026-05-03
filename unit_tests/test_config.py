@@ -24,6 +24,40 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(tests["rag_graph_multihop_rerank"].config["experiment_id"], "E006")
             self.assertTrue(tests["rag_graph_multihop_rerank"].build_context.exists())
 
+    def test_parse_config_loads_read_only_test_volumes(self):
+        raw = {
+            "experiment_name": "x",
+            "datasets": [{"name": "d", "path": "."}],
+            "tests": [
+                {
+                    "name": "rag_embedding_topk",
+                    "image": "i",
+                    "volumes": [
+                        {
+                            "host_path": ".",
+                            "container_path": "/models/minilm",
+                            "read_only": True,
+                        }
+                    ],
+                }
+            ],
+        }
+        config = parse_config(raw, Path("config.yaml"))
+
+        self.assertEqual(len(config.tests[0].volumes), 1)
+        self.assertEqual(config.tests[0].volumes[0].container_path, "/models/minilm")
+        self.assertTrue(config.tests[0].volumes[0].read_only)
+
+    def test_parse_config_loads_network_disabled_flag(self):
+        raw = {
+            "experiment_name": "x",
+            "datasets": [{"name": "d", "path": "."}],
+            "tests": [{"name": "t", "image": "i", "network_disabled": True}],
+        }
+        config = parse_config(raw, Path("config.yaml"))
+
+        self.assertTrue(config.tests[0].network_disabled)
+
 
     def test_parse_config_rejects_duplicate_tests(self):
         raw = {

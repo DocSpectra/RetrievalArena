@@ -48,12 +48,23 @@ tests:
   - name: rag_embedding_topk
     image: retrieval-arena/rag-embedding-topk:latest
     build_context: ../tests/rag_embedding_topk
+    network_disabled: true
+    volumes:
+      - host_path: ../../DocSpectraCIKM2026/analysis/model_provenance
+        container_path: /model_provenance
+        read_only: true
+      - host_path: ../../DocSpectraCIKM2026/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+        container_path: /models/minilm
+        read_only: true
     config:
       top_k: 5
       max_context_chars_per_doc: 1500
-      embedding_backend: local_hashing_tfidf
-      model_id: local-hashing-tfidf-v1
-      embedding_dimensions: 512
+      embedding_backend: sentence_transformers_local
+      model_id: sentence-transformers/all-MiniLM-L6-v2
+      model_revision: c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+      model_lock_path: /model_provenance/embedding_models.lock.json
+      model_cache_path: /models/minilm
+      embedding_dimensions: 384
       experiment_id: E002c
 
   - name: rag_graph_expand
