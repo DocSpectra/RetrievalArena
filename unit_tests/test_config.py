@@ -20,6 +20,9 @@ class ConfigTests(unittest.TestCase):
             self.assertIn("oracle_graph_support", tests)
             self.assertEqual(tests["oracle_graph_support"].config["experiment_id"], "E005")
             self.assertTrue(tests["oracle_graph_support"].build_context.exists())
+            self.assertIn("rag_graph_multihop_rerank", tests)
+            self.assertEqual(tests["rag_graph_multihop_rerank"].config["experiment_id"], "E006")
+            self.assertTrue(tests["rag_graph_multihop_rerank"].build_context.exists())
 
 
     def test_parse_config_rejects_duplicate_tests(self):
