@@ -115,6 +115,8 @@ frontier_budget = max(0, int(config.get("frontier_budget_per_node", 12)))
 candidate_budget = max(1, int(config.get("candidate_budget", 60)))
 final_top_k = max(1, int(config.get("final_top_k", 5)))
 distance_penalty = float(config.get("distance_penalty", 0.15))
+reserved_deep_slots = max(0, int(config.get("reserved_deep_slots", 0)))
+reserved_min_graph_distance = max(1, int(config.get("reserved_min_graph_distance", 2)))
 max_context_chars = max(0, int(config.get("max_context_chars_per_doc", 1200)))
 directed = bool(config.get("directed", False))
 
@@ -134,10 +136,27 @@ with (output_dir / "predictions.jsonl").open("w", encoding="utf-8", newline="\n"
             ranked_candidates = bm25_scores(query_tokens, corpus_tokens, candidates)[:candidate_budget]
             candidates = {doc_id for _, doc_id in ranked_candidates}
         bm25_by_doc = {doc_id: score for score, doc_id in bm25_scores(query_tokens, corpus_tokens, candidates)}
-        reranked = sorted(
+        ranked_candidates = sorted(
             candidates,
             key=lambda doc_id: (-(bm25_by_doc.get(doc_id, 0.0) - (distance_penalty * distances.get(doc_id, max_hops + 1))), distances.get(doc_id, max_hops + 1), doc_id),
-        )[:final_top_k]
+        )
+        reserved_docs = [
+            doc_id
+            for doc_id in ranked_candidates
+            if distances.get(doc_id, max_hops + 1) >= reserved_min_graph_distance
+        ][: min(reserved_deep_slots, final_top_k)]
+        fill_budget = final_top_k - len(reserved_docs)
+        selected_docs: list[str] = []
+        fill_count = 0
+        for doc_id in ranked_candidates:
+            if doc_id in reserved_docs:
+                selected_docs.append(doc_id)
+            elif fill_count < fill_budget:
+                selected_docs.append(doc_id)
+                fill_count += 1
+            if len(selected_docs) >= final_top_k:
+                break
+        reranked = selected_docs
         context = [
             {
                 "doc_id": doc_id,
@@ -162,6 +181,8 @@ with (output_dir / "predictions.jsonl").open("w", encoding="utf-8", newline="\n"
                         "seed_doc_ids": seed_ids,
                         "candidate_count": len(candidates),
                         "max_hops": max_hops,
+                        "reserved_deep_slots": reserved_deep_slots,
+                        "reserved_min_graph_distance": reserved_min_graph_distance,
                     },
                 },
                 sort_keys=True,
@@ -182,6 +203,8 @@ with (output_dir / "predictions.jsonl").open("w", encoding="utf-8", newline="\n"
             "candidate_budget": candidate_budget,
             "final_top_k": final_top_k,
             "distance_penalty": distance_penalty,
+            "reserved_deep_slots": reserved_deep_slots,
+            "reserved_min_graph_distance": reserved_min_graph_distance,
             "directed": directed,
             "max_context_chars_per_doc": max_context_chars,
         },
