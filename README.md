@@ -18,3 +18,11 @@ results/toy_faq_reconstruction/summary.md
 ```
 
 See the parent workspace specification at `project_specifications/RetrievalArenaSpec.md` for the v1 contract and validation plan.
+
+## Output contract validation
+
+`retrieval-arena validate` runs the deterministic Phase 1 gate and negative
+contract checks before results should be trusted for analysis. Container outputs
+fail validation on invalid JSONL, duplicate predictions, unknown question IDs,
+missing required prediction fields, mismatched question text for a claimed
+`question_id`, missing predictions, or incomplete `metadata.json`.

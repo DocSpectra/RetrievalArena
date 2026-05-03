@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from typing import Iterator
 
 from retrieval_arena.errors import ValidationError
-from retrieval_arena.schemas import validate_dataset, validate_predictions, write_jsonl
+from retrieval_arena.schemas import validate_dataset, validate_metadata, validate_predictions, write_jsonl
 
 
 class SchemaTests(unittest.TestCase):
@@ -61,6 +61,68 @@ class SchemaTests(unittest.TestCase):
             write_jsonl(path, rows)
             with self.assertRaisesRegex(ValidationError, "Duplicate prediction"):
                 validate_predictions(path, questions)
+
+    def test_validate_predictions_rejects_invalid_jsonl(self):
+        questions, _ = validate_dataset(Path("examples/toy_docs"))
+        with self.workspace_tempdir() as tmp:
+            path = Path(tmp) / "predictions.jsonl"
+            path.write_text('{"question_id": "q001"\n', encoding="utf-8")
+            with self.assertRaisesRegex(ValidationError, "Invalid JSON"):
+                validate_predictions(path, questions)
+
+    def test_validate_predictions_rejects_missing_generated_answer(self):
+        questions, _ = validate_dataset(Path("examples/toy_docs"))
+        rows = [{"question_id": q["question_id"], "question": q["question"], "generated_answer": "x", "retrieved_context": []} for q in questions]
+        del rows[0]["generated_answer"]
+        with self.workspace_tempdir() as tmp:
+            path = Path(tmp) / "predictions.jsonl"
+            write_jsonl(path, rows)
+            with self.assertRaisesRegex(ValidationError, "generated_answer"):
+                validate_predictions(path, questions)
+
+    def test_validate_predictions_rejects_mismatched_question_text(self):
+        questions, _ = validate_dataset(Path("examples/toy_docs"))
+        rows = [{"question_id": q["question_id"], "question": q["question"], "generated_answer": "x", "retrieved_context": []} for q in questions]
+        rows[0]["question"] = questions[1]["question"]
+        with self.workspace_tempdir() as tmp:
+            path = Path(tmp) / "predictions.jsonl"
+            write_jsonl(path, rows)
+            with self.assertRaisesRegex(ValidationError, "question text"):
+                validate_predictions(path, questions)
+
+    def test_validate_predictions_rejects_missing_question_field(self):
+        questions, _ = validate_dataset(Path("examples/toy_docs"))
+        rows = [{"question_id": q["question_id"], "question": q["question"], "generated_answer": "x", "retrieved_context": []} for q in questions]
+        del rows[0]["question"]
+        with self.workspace_tempdir() as tmp:
+            path = Path(tmp) / "predictions.jsonl"
+            write_jsonl(path, rows)
+            with self.assertRaisesRegex(ValidationError, "question string"):
+                validate_predictions(path, questions)
+
+    def test_validate_predictions_rejects_malformed_context(self):
+        questions, _ = validate_dataset(Path("examples/toy_docs"))
+        rows = [{"question_id": q["question_id"], "question": q["question"], "generated_answer": "x", "retrieved_context": []} for q in questions]
+        rows[0]["retrieved_context"] = [{"doc_id": "d1", "score": "high"}]
+        with self.workspace_tempdir() as tmp:
+            path = Path(tmp) / "predictions.jsonl"
+            write_jsonl(path, rows)
+            with self.assertRaisesRegex(ValidationError, "score must be numeric"):
+                validate_predictions(path, questions)
+
+    def test_validate_metadata_requires_name_and_deterministic_flag(self):
+        with self.workspace_tempdir() as tmp:
+            path = Path(tmp) / "metadata.json"
+            path.write_text('{"name":"bad"}\n', encoding="utf-8")
+            with self.assertRaisesRegex(ValidationError, "deterministic"):
+                validate_metadata(path)
+
+            path.write_text('{"deterministic":true}\n', encoding="utf-8")
+            with self.assertRaisesRegex(ValidationError, "name"):
+                validate_metadata(path)
+
+            path.write_text('{"name":"ok","deterministic":true}\n', encoding="utf-8")
+            self.assertEqual(validate_metadata(path)["name"], "ok")
 
 
 if __name__ == "__main__":

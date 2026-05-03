@@ -9,7 +9,7 @@ from typing import Iterator
 
 from retrieval_arena.config import TestConfig, VolumeMount
 from retrieval_arena.docker import run_container
-from retrieval_arena.harness import prepare_input
+from retrieval_arena.harness import assert_contract_negative_checks, prepare_input
 from retrieval_arena.errors import ValidationError
 
 
@@ -48,6 +48,14 @@ class HarnessTests(unittest.TestCase):
             test = TestConfig(name="rag_embedding_topk", image="no-such-image", volumes=[VolumeMount(missing, "/models/minilm")])
             with self.assertRaisesRegex(ValidationError, "volume host_path not found"):
                 run_container(test, root / "input", root / "output")
+
+    def test_contract_negative_checks_cover_adversarial_outputs(self):
+        questions = [
+            {"question_id": "q001", "question": "Question one?"},
+            {"question_id": "q002", "question": "Question two?"},
+        ]
+        with self.workspace_tempdir() as tmp:
+            assert_contract_negative_checks(Path(tmp), questions)
 
 
 if __name__ == "__main__":

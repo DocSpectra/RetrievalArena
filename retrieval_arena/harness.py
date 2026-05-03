@@ -115,6 +115,54 @@ def comparable(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [{key: row[key] for key in keys} for row in sorted(rows, key=lambda r: (r["dataset"], r["test"]))]
 
 
+def assert_contract_negative_checks(root: Path, questions: list[dict[str, str]]) -> None:
+    rows = [
+        {"question_id": q["question_id"], "question": q["question"], "generated_answer": "", "retrieved_context": []}
+        for q in questions
+    ]
+    if not rows:
+        raise ValidationError("Phase 1 validation requires at least one question.")
+    cases: list[tuple[str, list[dict[str, Any]], str]] = [
+        ("duplicate_prediction", [*rows, dict(rows[0])], "Duplicate prediction"),
+        ("unknown_question_id", [{**rows[0], "question_id": "__unknown__"}, *rows[1:]], "unknown question_id"),
+        ("missing_generated_answer", [{key: value for key, value in rows[0].items() if key != "generated_answer"}, *rows[1:]], "generated_answer"),
+        ("wrong_question_text", [{**rows[0], "question": rows[-1]["question"] + " wrong"} if len(rows) == 1 else {**rows[0], "question": rows[1]["question"]}, *rows[1:]], "question text"),
+        ("missing_prediction", rows[:-1], "Missing predictions"),
+    ]
+    for name, case_rows, expected in cases:
+        path = root / name / "predictions.jsonl"
+        write_jsonl(path, case_rows)
+        try:
+            validate_predictions(path, questions)
+        except ValidationError as exc:
+            if expected not in str(exc):
+                raise RetrievalArenaError(f"Contract negative check {name} failed with unexpected error: {exc}") from exc
+        else:
+            raise RetrievalArenaError(f"Contract negative check failed: {name} was accepted.")
+
+    invalid_jsonl = root / "invalid_jsonl" / "predictions.jsonl"
+    invalid_jsonl.parent.mkdir(parents=True, exist_ok=True)
+    invalid_jsonl.write_text('{"question_id": "q001"\n', encoding="utf-8")
+    try:
+        validate_predictions(invalid_jsonl, questions)
+    except ValidationError as exc:
+        if "Invalid JSON" not in str(exc):
+            raise RetrievalArenaError(f"Contract negative check invalid_jsonl failed with unexpected error: {exc}") from exc
+    else:
+        raise RetrievalArenaError("Contract negative check failed: invalid JSONL was accepted.")
+
+    bad_metadata = root / "missing_metadata_field" / "metadata.json"
+    bad_metadata.parent.mkdir(parents=True, exist_ok=True)
+    bad_metadata.write_text('{"name":"bad"}\n', encoding="utf-8")
+    try:
+        validate_metadata(bad_metadata)
+    except ValidationError as exc:
+        if "deterministic" not in str(exc):
+            raise RetrievalArenaError(f"Contract negative check missing_metadata_field failed with unexpected error: {exc}") from exc
+    else:
+        raise RetrievalArenaError("Contract negative check failed: incomplete metadata.json was accepted.")
+
+
 def validate_phase1(config_path: str | Path) -> None:
     config = load_config(config_path)
     for dataset in config.datasets:
@@ -127,13 +175,5 @@ def validate_phase1(config_path: str | Path) -> None:
     if comparable(first) != comparable(second):
         raise RetrievalArenaError("Reproducibility check failed: two deterministic validation runs produced different scores.")
 
-    bad_dir = validation_root / "contract_negative"
-    bad_dir.mkdir(parents=True, exist_ok=True)
     questions, _ = validate_dataset(config.datasets[0].path)
-    write_jsonl(bad_dir / "predictions.jsonl", [{"question_id": questions[0]["question_id"], "question": questions[0]["question"], "generated_answer": "", "retrieved_context": []}])
-    try:
-        validate_predictions(bad_dir / "predictions.jsonl", questions)
-    except ValidationError:
-        pass
-    else:
-        raise RetrievalArenaError("Contract negative check failed: missing predictions were accepted.")
+    assert_contract_negative_checks(validation_root / "contract_negative", questions)

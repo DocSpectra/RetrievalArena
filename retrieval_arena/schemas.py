@@ -88,6 +88,12 @@ def validate_metadata(path: Path) -> dict[str, Any]:
         raise ValidationError(f"Invalid metadata.json: {exc}") from exc
     if not isinstance(metadata, dict):
         raise ValidationError("metadata.json must be a JSON object.")
+    name = metadata.get("name")
+    if not isinstance(name, str) or not name:
+        raise ValidationError("metadata.json requires non-empty string name.")
+    deterministic = metadata.get("deterministic")
+    if not isinstance(deterministic, bool):
+        raise ValidationError("metadata.json requires boolean deterministic.")
     return metadata
 
 
