@@ -13,7 +13,7 @@ from .config import ExperimentConfig, TestConfig, load_config
 from .docker import build_image, run_container
 from .errors import RetrievalArenaError, ValidationError
 from .reports import write_run_scores, write_summary
-from .schemas import validate_dataset, validate_metadata, validate_predictions, write_jsonl
+from .schemas import validate_action_traces, validate_dataset, validate_metadata, validate_predictions, write_jsonl
 from .scoring import score_predictions
 
 
@@ -71,6 +71,10 @@ def run_experiment(config: ExperimentConfig, *, output_dir: Path | None = None) 
             predictions = validate_predictions(output_subdir / "predictions.jsonl", questions)
             shutil.copy2(output_subdir / "predictions.jsonl", run_dir / "predictions.jsonl")
             shutil.copy2(output_subdir / "metadata.json", run_dir / "metadata.json")
+            action_trace_path = output_subdir / "action_traces.jsonl"
+            if action_trace_path.exists():
+                validate_action_traces(action_trace_path, questions)
+                shutil.copy2(action_trace_path, run_dir / "action_traces.jsonl")
             item_scores, aggregate = score_predictions(predictions, answers, config.scoring.match_threshold)
             aggregate.update({
                 "dataset": dataset.name,

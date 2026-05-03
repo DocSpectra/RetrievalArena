@@ -120,6 +120,20 @@ tests:
       max_context_chars_per_doc: 1200
       directed: false
       experiment_id: E006
+
+  - name: rag_iterative_search
+    image: retrieval-arena/rag-iterative-search:latest
+    build_context: ../tests/rag_iterative_search
+    network_disabled: true
+    config:
+      search_top_k: 5
+      inspect_budget: 8
+      follow_budget_per_page: 3
+      max_actions: 30
+      final_top_k: 5
+      max_context_chars_per_doc: 1200
+      directed: false
+      experiment_id: E007a
 scoring:
   method: lexical_baseline
   match_threshold: 0.5

@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from typing import Iterator
 
 from retrieval_arena.errors import ValidationError
-from retrieval_arena.schemas import validate_dataset, validate_metadata, validate_predictions, write_jsonl
+from retrieval_arena.schemas import validate_action_traces, validate_dataset, validate_metadata, validate_predictions, write_jsonl
 
 
 class SchemaTests(unittest.TestCase):
@@ -123,6 +123,44 @@ class SchemaTests(unittest.TestCase):
 
             path.write_text('{"name":"ok","deterministic":true}\n', encoding="utf-8")
             self.assertEqual(validate_metadata(path)["name"], "ok")
+
+    def test_validate_action_traces_accepts_e007a_trace_schema(self):
+        questions = [{"question_id": "q001", "question": "Question one?"}]
+        rows = [
+            {
+                "question_id": "q001",
+                "schema_version": "e007a.action_trace.v1",
+                "policy": "deterministic_bm25_link_walk_v1",
+                "actions": [
+                    {"step": 1, "action": "search", "budget_remaining": 2, "details": {"top_doc_ids": ["a"]}},
+                    {"step": 2, "action": "inspect_page", "budget_remaining": 1, "details": {"doc_id": "a"}},
+                    {"step": 3, "action": "stop", "budget_remaining": 0, "details": {"reason": "test"}},
+                ],
+                "final_context_doc_ids": ["a"],
+            }
+        ]
+        with self.workspace_tempdir() as tmp:
+            path = Path(tmp) / "action_traces.jsonl"
+            write_jsonl(path, rows)
+            self.assertEqual(validate_action_traces(path, questions)[0]["question_id"], "q001")
+
+    def test_validate_action_traces_rejects_bad_action_and_missing_stop(self):
+        questions = [{"question_id": "q001", "question": "Question one?"}]
+        rows = [
+            {
+                "question_id": "q001",
+                "schema_version": "e007a.action_trace.v1",
+                "actions": [
+                    {"step": 1, "action": "search", "budget_remaining": 1},
+                    {"step": 2, "action": "teleport", "budget_remaining": 0},
+                ],
+            }
+        ]
+        with self.workspace_tempdir() as tmp:
+            path = Path(tmp) / "action_traces.jsonl"
+            write_jsonl(path, rows)
+            with self.assertRaisesRegex(ValidationError, "unsupported action"):
+                validate_action_traces(path, questions)
 
 
 if __name__ == "__main__":

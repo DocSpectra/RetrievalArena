@@ -132,3 +132,50 @@ def validate_predictions(path: Path, questions: list[dict[str, str]]) -> list[di
     if missing:
         raise ValidationError(f"Missing predictions for question_id values: {sorted(missing)}")
     return predictions
+
+
+TRACE_ACTIONS = {"search", "inspect_page", "follow_link", "add_context", "stop"}
+
+
+def validate_action_traces(path: Path, questions: list[dict[str, str]]) -> list[dict[str, Any]]:
+    if not path.exists():
+        raise ValidationError(f"Missing action_traces.jsonl: {path}")
+    traces = read_jsonl(path)
+    expected_ids = {q["question_id"] for q in questions}
+    seen: set[str] = set()
+    for trace in traces:
+        qid = trace.get("question_id")
+        if not isinstance(qid, str) or not qid:
+            raise ValidationError("Each action trace requires non-empty string question_id.")
+        if qid in seen:
+            raise ValidationError(f"Duplicate action trace for question_id: {qid}")
+        if qid not in expected_ids:
+            raise ValidationError(f"Action trace for unknown question_id: {qid}")
+        seen.add(qid)
+        schema_version = trace.get("schema_version")
+        if not isinstance(schema_version, str) or not schema_version:
+            raise ValidationError(f"Action trace {qid} requires schema_version.")
+        actions = trace.get("actions")
+        if not isinstance(actions, list) or not actions:
+            raise ValidationError(f"Action trace {qid} requires non-empty actions list.")
+        expected_step = 1
+        for action in actions:
+            if not isinstance(action, dict):
+                raise ValidationError(f"Action trace {qid} actions must be objects.")
+            if action.get("step") != expected_step:
+                raise ValidationError(f"Action trace {qid} has non-contiguous step values.")
+            expected_step += 1
+            action_name = action.get("action")
+            if action_name not in TRACE_ACTIONS:
+                raise ValidationError(f"Action trace {qid} has unsupported action: {action_name}")
+            if "budget_remaining" in action and not isinstance(action["budget_remaining"], int):
+                raise ValidationError(f"Action trace {qid} budget_remaining must be an integer.")
+        if actions[-1].get("action") != "stop":
+            raise ValidationError(f"Action trace {qid} must end with stop.")
+        final_context = trace.get("final_context_doc_ids", [])
+        if not isinstance(final_context, list) or not all(isinstance(doc_id, str) for doc_id in final_context):
+            raise ValidationError(f"Action trace {qid} final_context_doc_ids must be a list of strings.")
+    missing = expected_ids - seen
+    if missing:
+        raise ValidationError(f"Missing action traces for question_id values: {sorted(missing)}")
+    return traces
