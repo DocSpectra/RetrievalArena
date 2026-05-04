@@ -134,6 +134,25 @@ tests:
       max_context_chars_per_doc: 1200
       directed: false
       experiment_id: E007a
+
+  - name: rag_directed_spectral_rerank
+    image: retrieval-arena/rag-directed-spectral-rerank:latest
+    build_context: ../tests/rag_directed_spectral_rerank
+    network_disabled: true
+    config:
+      seed_top_k: 5
+      final_top_k: 5
+      directed_neighbor_budget: 8
+      global_prior_top_k: 10
+      pagerank_weight: 0.18
+      authority_weight: 0.22
+      hub_weight: -0.04
+      forward_link_bonus: 0.08
+      backward_link_bonus: 0.03
+      spectral_iterations: 40
+      pagerank_damping: 0.85
+      max_context_chars_per_doc: 1200
+      experiment_id: E008
 scoring:
   method: lexical_baseline
   match_threshold: 0.5

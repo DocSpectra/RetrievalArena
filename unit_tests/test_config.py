@@ -23,6 +23,10 @@ class ConfigTests(unittest.TestCase):
             self.assertIn("rag_graph_multihop_rerank", tests)
             self.assertEqual(tests["rag_graph_multihop_rerank"].config["experiment_id"], "E006")
             self.assertTrue(tests["rag_graph_multihop_rerank"].build_context.exists())
+            if path.name in {"cikm_pilot_django_docs.yaml", "cikm_pilot_python312.yaml"}:
+                self.assertIn("rag_directed_spectral_rerank", tests)
+                self.assertEqual(tests["rag_directed_spectral_rerank"].config["experiment_id"], "E008")
+                self.assertTrue(tests["rag_directed_spectral_rerank"].build_context.exists())
 
     def test_parse_config_loads_read_only_test_volumes(self):
         raw = {
