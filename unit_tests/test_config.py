@@ -27,6 +27,22 @@ class ConfigTests(unittest.TestCase):
                 self.assertIn("rag_directed_spectral_rerank", tests)
                 self.assertEqual(tests["rag_directed_spectral_rerank"].config["experiment_id"], "E008")
                 self.assertTrue(tests["rag_directed_spectral_rerank"].build_context.exists())
+            if path.name == "cikm_pilot_ansible_docs.yaml":
+                self.assertIn("rag_semantic_graph_rerank", tests)
+                self.assertEqual(tests["rag_semantic_graph_rerank"].config["experiment_id"], "E009")
+                self.assertEqual(tests["rag_semantic_graph_rerank"].config["embedding_backend"], "sentence_transformers_local")
+                self.assertTrue(tests["rag_semantic_graph_rerank"].network_disabled)
+                self.assertTrue(tests["rag_semantic_graph_rerank"].build_context.exists())
+
+    def test_loads_minilm_smoke_with_e009(self):
+        config = load_config("configs/cikm_minilm_smoke.yaml")
+        tests = {test.name: test for test in config.tests}
+
+        self.assertIn("rag_embedding_topk", tests)
+        self.assertIn("rag_semantic_graph_rerank", tests)
+        self.assertEqual(tests["rag_semantic_graph_rerank"].config["experiment_id"], "E009")
+        self.assertEqual(tests["rag_semantic_graph_rerank"].config["model_id"], "sentence-transformers/all-MiniLM-L6-v2")
+        self.assertTrue(tests["rag_semantic_graph_rerank"].network_disabled)
 
     def test_parse_config_loads_read_only_test_volumes(self):
         raw = {
