@@ -28,11 +28,21 @@ class ConfigTests(unittest.TestCase):
                 self.assertEqual(tests["rag_directed_spectral_rerank"].config["experiment_id"], "E008")
                 self.assertTrue(tests["rag_directed_spectral_rerank"].build_context.exists())
             if path.name == "cikm_pilot_ansible_docs.yaml":
-                self.assertIn("rag_semantic_graph_rerank", tests)
-                self.assertEqual(tests["rag_semantic_graph_rerank"].config["experiment_id"], "E009")
-                self.assertEqual(tests["rag_semantic_graph_rerank"].config["embedding_backend"], "sentence_transformers_local")
-                self.assertTrue(tests["rag_semantic_graph_rerank"].network_disabled)
-                self.assertTrue(tests["rag_semantic_graph_rerank"].build_context.exists())
+                variants = {
+                    "rag_semantic_graph_rerank_e009a": ("E009a", 5, 1),
+                    "rag_semantic_graph_rerank_e009b": ("E009b", 2, 1),
+                    "rag_semantic_graph_rerank_e009c": ("E009c", 2, 2),
+                }
+                for test_name, (variant_id, seed_top_k, graph_hops) in variants.items():
+                    self.assertIn(test_name, tests)
+                    self.assertEqual(tests[test_name].config["experiment_id"], "E009")
+                    self.assertEqual(tests[test_name].config["variant_id"], variant_id)
+                    self.assertEqual(tests[test_name].config["seed_top_k"], seed_top_k)
+                    self.assertEqual(tests[test_name].config["graph_hops"], graph_hops)
+                    self.assertEqual(tests[test_name].config["final_top_k"], 5)
+                    self.assertEqual(tests[test_name].config["embedding_backend"], "sentence_transformers_local")
+                    self.assertTrue(tests[test_name].network_disabled)
+                    self.assertTrue(tests[test_name].build_context.exists())
 
     def test_loads_minilm_smoke_with_e009(self):
         config = load_config("configs/cikm_minilm_smoke.yaml")

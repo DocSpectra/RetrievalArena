@@ -252,6 +252,7 @@ def run(input_dir: Path, output_dir: Path) -> None:
     model_lock_path = Path(str(config.get("model_lock_path", "/model_provenance/embedding_models.lock.json")))
     model_cache_path = Path(str(config.get("model_cache_path", "/models/minilm")))
     batch_size = max(1, int(config.get("batch_size", 32)))
+    variant_id = str(config.get("variant_id", ""))
 
     questions = read_jsonl(input_dir / "questions.jsonl")
     corpus = {path.stem: path.read_text(encoding="utf-8") for path in (input_dir / "corpus").glob("*.md")}
@@ -341,6 +342,7 @@ def run(input_dir: Path, output_dir: Path) -> None:
                             "graph_distances": {doc_id: distances[doc_id] for doc_id in sorted(distances) if doc_id in nodes},
                             "dropped_candidate_count": max(0, len(candidates) - len(selected)),
                             "pagerank_prior_enabled": use_pagerank_prior,
+                            "variant_id": variant_id,
                         },
                     },
                     sort_keys=True,
@@ -353,6 +355,7 @@ def run(input_dir: Path, output_dir: Path) -> None:
             {
                 "name": "rag_semantic_graph_rerank",
                 "experiment_id": "E009",
+                "variant_id": variant_id,
                 "deterministic": True,
                 "policy": POLICY_NAME,
                 "uses_llm": False,

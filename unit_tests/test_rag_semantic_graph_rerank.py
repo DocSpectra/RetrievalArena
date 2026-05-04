@@ -61,6 +61,7 @@ class SemanticGraphRerankTests(unittest.TestCase):
                     "embedding_backend": "local_hashing_tfidf",
                     "model_id": "local-hashing-tfidf-v1",
                     "embedding_dimensions": 128,
+                    "variant_id": "E009b",
                 },
                 sort_keys=True,
             ),
@@ -84,6 +85,7 @@ class SemanticGraphRerankTests(unittest.TestCase):
             self.assertLessEqual(len(predictions[0]["retrieved_context"]), 2)
             self.assertEqual(metadata["name"], "rag_semantic_graph_rerank")
             self.assertEqual(metadata["experiment_id"], "E009")
+            self.assertEqual(metadata["variant_id"], "E009b")
             self.assertEqual(metadata["seed_ranker"], "minilm_embedding")
             self.assertEqual(metadata["embedding_backend"], "local_hashing_tfidf")
             self.assertFalse(metadata["uses_llm"])
@@ -166,6 +168,7 @@ class SemanticGraphRerankTests(unittest.TestCase):
             self.assertEqual(audit["final_ranker"], "minilm_embedding_plus_graph_distance")
             self.assertIn("final_context_doc_ids", audit)
             self.assertIn("pagerank_prior_enabled", audit)
+            self.assertEqual(audit["variant_id"], "E009b")
 
 
 if __name__ == "__main__":
