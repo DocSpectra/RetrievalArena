@@ -66,6 +66,20 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(tests["rag_semantic_graph_rerank"].config["model_id"], "sentence-transformers/all-MiniLM-L6-v2")
         self.assertTrue(tests["rag_semantic_graph_rerank"].network_disabled)
 
+    def test_loads_e001b_local_no_context_config(self):
+        config = load_config("configs/e001b_local_no_context_minidocs.yaml")
+        tests = {test.name: test for test in config.tests}
+
+        self.assertIn("local_no_context_llm_e001b", tests)
+        e001b = tests["local_no_context_llm_e001b"]
+        self.assertEqual(e001b.config["experiment_id"], "E001b")
+        self.assertEqual(e001b.config["provider"], "mock")
+        self.assertTrue(e001b.config["local_only"])
+        self.assertFalse(e001b.config["allow_network"])
+        self.assertFalse(e001b.config["allow_local_provider_execution"])
+        self.assertTrue(e001b.network_disabled)
+        self.assertTrue(e001b.build_context.exists())
+
     def test_parse_config_loads_read_only_test_volumes(self):
         raw = {
             "experiment_name": "x",
