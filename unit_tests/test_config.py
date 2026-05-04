@@ -42,6 +42,19 @@ class ConfigTests(unittest.TestCase):
                 self.assertEqual(tests[test_name].config["embedding_backend"], "sentence_transformers_local")
                 self.assertTrue(tests[test_name].network_disabled)
                 self.assertTrue(tests[test_name].build_context.exists())
+            if path.name == "cikm_pilot_django_docs.yaml":
+                self.assertIn("rag_random_seed_graph_traversal", tests)
+                e010 = tests["rag_random_seed_graph_traversal"]
+                self.assertEqual(e010.config["experiment_id"], "E010")
+                self.assertEqual(e010.config["diagnostic_role"], "random_seed_graph_navigability")
+                self.assertEqual(e010.config["rng_seed"], 20260504)
+                self.assertEqual(e010.config["num_trials"], 8)
+                self.assertEqual(e010.config["max_hops"], 2)
+                self.assertEqual(e010.config["neighbor_budget"], 12)
+                self.assertEqual(e010.config["candidate_budget"], 60)
+                self.assertEqual(e010.config["final_top_k"], 5)
+                self.assertTrue(e010.network_disabled)
+                self.assertTrue(e010.build_context.exists())
 
     def test_loads_minilm_smoke_with_e009(self):
         config = load_config("configs/cikm_minilm_smoke.yaml")
