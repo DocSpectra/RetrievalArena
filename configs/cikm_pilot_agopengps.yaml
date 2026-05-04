@@ -134,8 +134,98 @@ tests:
       max_context_chars_per_doc: 1200
       directed: false
       experiment_id: E007a
+  - name: rag_semantic_graph_rerank_e009a
+    image: retrieval-arena/rag-semantic-graph-rerank:latest
+    build_context: ../tests/rag_semantic_graph_rerank
+    network_disabled: true
+    volumes:
+      - host_path: ../../DocSpectraCIKM2026/analysis/model_provenance
+        container_path: /model_provenance
+        read_only: true
+      - host_path: ../../DocSpectraCIKM2026/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+        container_path: /models/minilm
+        read_only: true
+    config:
+      seed_top_k: 5
+      graph_hops: 1
+      neighbor_budget: 12
+      candidate_budget: 60
+      final_top_k: 5
+      distance_penalty: 0.02
+      max_context_chars_per_doc: 1200
+      embedding_backend: sentence_transformers_local
+      model_id: sentence-transformers/all-MiniLM-L6-v2
+      model_revision: c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+      model_lock_path: /model_provenance/embedding_models.lock.json
+      model_cache_path: /models/minilm
+      embedding_dimensions: 384
+      use_pagerank_prior: false
+      directed: false
+      experiment_id: E009
+      variant_id: E009a
+
+  - name: rag_semantic_graph_rerank_e009b
+    image: retrieval-arena/rag-semantic-graph-rerank:latest
+    build_context: ../tests/rag_semantic_graph_rerank
+    network_disabled: true
+    volumes:
+      - host_path: ../../DocSpectraCIKM2026/analysis/model_provenance
+        container_path: /model_provenance
+        read_only: true
+      - host_path: ../../DocSpectraCIKM2026/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+        container_path: /models/minilm
+        read_only: true
+    config:
+      seed_top_k: 2
+      graph_hops: 1
+      neighbor_budget: 12
+      candidate_budget: 60
+      final_top_k: 5
+      distance_penalty: 0.02
+      max_context_chars_per_doc: 1200
+      embedding_backend: sentence_transformers_local
+      model_id: sentence-transformers/all-MiniLM-L6-v2
+      model_revision: c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+      model_lock_path: /model_provenance/embedding_models.lock.json
+      model_cache_path: /models/minilm
+      embedding_dimensions: 384
+      use_pagerank_prior: false
+      directed: false
+      experiment_id: E009
+      variant_id: E009b
+
+  - name: rag_semantic_graph_rerank_e009c
+    image: retrieval-arena/rag-semantic-graph-rerank:latest
+    build_context: ../tests/rag_semantic_graph_rerank
+    network_disabled: true
+    volumes:
+      - host_path: ../../DocSpectraCIKM2026/analysis/model_provenance
+        container_path: /model_provenance
+        read_only: true
+      - host_path: ../../DocSpectraCIKM2026/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+        container_path: /models/minilm
+        read_only: true
+    config:
+      seed_top_k: 2
+      graph_hops: 2
+      neighbor_budget: 12
+      candidate_budget: 60
+      final_top_k: 5
+      distance_penalty: 0.02
+      max_context_chars_per_doc: 1200
+      embedding_backend: sentence_transformers_local
+      model_id: sentence-transformers/all-MiniLM-L6-v2
+      model_revision: c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+      model_lock_path: /model_provenance/embedding_models.lock.json
+      model_cache_path: /models/minilm
+      embedding_dimensions: 384
+      use_pagerank_prior: false
+      directed: false
+      experiment_id: E009
+      variant_id: E009c
 scoring:
   method: lexical_baseline
   match_threshold: 0.5
 
 output_dir: ../../DocSpectraCIKM2026/reports/retrieval_arena
+
