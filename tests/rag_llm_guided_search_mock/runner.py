@@ -11,11 +11,15 @@ from typing import Any
 
 TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
 TRACE_SCHEMA_VERSION = "e007b.action_trace.v1"
+COMPATIBLE_ACTION_SCHEMA_VERSION = "e007a.action_trace.v1"
 POLICY_NAME = "mock_llm_guided_fixture_controller_v1"
+PROVIDER_POLICY_NAME = "bounded_provider_action_controller_v1"
+ALLOWED_ACTIONS = {"search", "inspect_page", "follow_link", "add_context", "stop"}
 
 
 @dataclass(frozen=True)
 class SearchConfig:
+    controller: str = "mock"
     search_top_k: int = 5
     inspect_budget: int = 8
     follow_budget_per_page: int = 2
@@ -23,6 +27,7 @@ class SearchConfig:
     final_top_k: int = 5
     max_context_chars_per_doc: int = 1200
     directed: bool = False
+    provider: dict[str, Any] | None = None
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -39,7 +44,11 @@ def read_config(path: Path) -> dict[str, Any]:
 
 
 def parse_config(raw: dict[str, Any]) -> SearchConfig:
+    provider = raw.get("provider")
+    if provider is not None and not isinstance(provider, dict):
+        provider = {"provider": str(provider)}
     return SearchConfig(
+        controller=str(raw.get("controller", "mock")),
         search_top_k=max(1, int(raw.get("search_top_k", raw.get("top_k", 5)))),
         inspect_budget=max(1, int(raw.get("inspect_budget", 8))),
         follow_budget_per_page=max(0, int(raw.get("follow_budget_per_page", 2))),
@@ -47,6 +56,7 @@ def parse_config(raw: dict[str, Any]) -> SearchConfig:
         final_top_k=max(1, int(raw.get("final_top_k", raw.get("top_k", 5)))),
         max_context_chars_per_doc=max(0, int(raw.get("max_context_chars_per_doc", 1200))),
         directed=bool(raw.get("directed", False)),
+        provider=provider,
     )
 
 
@@ -106,7 +116,220 @@ def trace_action(actions: list[dict[str, Any]], action: str, *, budget_remaining
     actions.append({"step": len(actions) + 1, "action": action, "budget_remaining": budget_remaining, "details": details})
 
 
-def run_question(question: dict[str, str], corpus: dict[str, str], corpus_tokens: dict[str, list[str]], edges: dict[str, set[str]], config: SearchConfig) -> tuple[dict[str, Any], dict[str, Any]]:
+def provider_manifest(config: SearchConfig) -> dict[str, Any]:
+    provider = config.provider or {}
+    provider_type = str(provider.get("provider", provider.get("type", "mock")))
+    base_url = str(provider.get("base_url", ""))
+    is_loopback = base_url.startswith(("http://localhost", "http://127.0.0.1", "http://[::1]"))
+    return {
+        "provider": provider_type,
+        "model_id": provider.get("model_id", "mock-e007b-controller"),
+        "prompt_version": provider.get("prompt_version", "e007b_next_action_prompt_v1"),
+        "response_schema_version": "e007b.next_action.v1",
+        "local_only": bool(provider.get("local_only", True)),
+        "allow_network": bool(provider.get("allow_network", False)),
+        "dry_run": bool(provider.get("dry_run", provider_type != "fake_sequence")),
+        "base_url_category": "loopback" if is_loopback else "none",
+    }
+
+
+def action_schema() -> dict[str, Any]:
+    return {
+        "schema_version": "e007b.next_action.v1",
+        "compatible_action_schema_version": COMPATIBLE_ACTION_SCHEMA_VERSION,
+        "allowed_actions": sorted(ALLOWED_ACTIONS),
+        "required": ["action"],
+        "properties": {
+            "action": sorted(ALLOWED_ACTIONS),
+            "query": "string for search actions",
+            "doc_id": "string for inspect_page or add_context actions",
+            "from_doc_id": "string for follow_link actions",
+            "to_doc_id": "string for follow_link actions",
+            "reason": "short string rationale",
+        },
+    }
+
+
+def excerpt(text: str, *, max_chars: int = 500) -> str:
+    return answer_text(text, max_chars=max_chars)
+
+
+def build_observation(
+    question: dict[str, str],
+    corpus: dict[str, str],
+    edges: dict[str, set[str]],
+    ranked: list[tuple[float, str]],
+    *,
+    inspected: set[str],
+    context_doc_ids: list[str],
+    queue: list[str],
+) -> dict[str, Any]:
+    inspected_pages = [
+        {"doc_id": doc_id, "excerpt": excerpt(corpus[doc_id]), "allowed_links": sorted(edges.get(doc_id, set()) & set(corpus))}
+        for doc_id in sorted(inspected)
+        if doc_id in corpus
+    ]
+    return {
+        "question_id": question["question_id"],
+        "question": question["question"],
+        "search_results": [{"doc_id": doc_id, "score": float(score)} for score, doc_id in ranked[:10]],
+        "candidate_queue": list(queue),
+        "inspected_pages": inspected_pages,
+        "context_doc_ids": list(context_doc_ids),
+        "allowed_actions": sorted(ALLOWED_ACTIONS),
+        "forbidden_inputs": [
+            "faq_reference_answers",
+            "human_review_labels",
+            "faq_support_audit_labels",
+            "graph_spectral_predictor_summaries",
+            "downstream_analysis_metrics",
+        ],
+    }
+
+
+def fake_provider_next_action(config: SearchConfig, step_index: int, observation: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    provider = config.provider or {}
+    provider_type = str(provider.get("provider", provider.get("type", "mock")))
+    manifest = provider_manifest(config)
+    if provider_type != "fake_sequence":
+        return {"action": "stop", "reason": "non_fake_provider_execution_disabled"}, {**manifest, "refused_live_execution": True}
+    responses = provider.get("responses", [])
+    if not isinstance(responses, list):
+        responses = []
+    if step_index < len(responses) and isinstance(responses[step_index], dict):
+        return dict(responses[step_index]), {**manifest, "request_index": step_index + 1}
+    if observation["candidate_queue"]:
+        return {"action": "inspect_page", "doc_id": observation["candidate_queue"][0], "reason": "fake_sequence_default_inspect"}, {**manifest, "request_index": step_index + 1}
+    return {"action": "stop", "reason": "fake_sequence_exhausted"}, {**manifest, "request_index": step_index + 1}
+
+
+def validate_provider_action(
+    action: dict[str, Any],
+    observation: dict[str, Any],
+    *,
+    inspected: set[str],
+    context_doc_ids: list[str],
+    follow_counts: dict[str, int],
+    edges: dict[str, set[str]],
+    corpus: dict[str, str],
+    config: SearchConfig,
+) -> tuple[bool, str]:
+    action_name = action.get("action")
+    if action_name not in ALLOWED_ACTIONS:
+        return False, f"unsupported_action:{action_name}"
+    if action_name == "search":
+        ok = isinstance(action.get("query"), str) and bool(action["query"].strip())
+        return ok, "search_requires_query"
+    if action_name == "inspect_page":
+        doc_id = action.get("doc_id")
+        allowed = {row["doc_id"] for row in observation["search_results"]} | set(observation["candidate_queue"])
+        ok = len(inspected) < config.inspect_budget and isinstance(doc_id, str) and doc_id in allowed and doc_id in corpus
+        return ok, "inspect_page_doc_not_allowed"
+    if action_name == "follow_link":
+        from_doc_id = action.get("from_doc_id")
+        to_doc_id = action.get("to_doc_id")
+        allowed_links = edges.get(str(from_doc_id), set()) & set(corpus)
+        ok = (
+            isinstance(from_doc_id, str)
+            and follow_counts.get(from_doc_id, 0) < config.follow_budget_per_page
+            and from_doc_id in inspected
+            and isinstance(to_doc_id, str)
+            and to_doc_id in allowed_links
+        )
+        return ok, "follow_link_not_allowed"
+    if action_name == "add_context":
+        doc_id = action.get("doc_id")
+        ok = len(context_doc_ids) < config.final_top_k and isinstance(doc_id, str) and doc_id in inspected and doc_id not in context_doc_ids
+        return ok, "add_context_doc_not_inspected_or_duplicate"
+    return True, "ok"
+
+
+def run_question_provider_controller(
+    question: dict[str, str],
+    corpus: dict[str, str],
+    corpus_tokens: dict[str, list[str]],
+    edges: dict[str, set[str]],
+    config: SearchConfig,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    query_tokens = tokens(question["question"])
+    ranked = bm25_scores(query_tokens, corpus_tokens)
+    bm25_by_doc = {doc_id: score for score, doc_id in ranked}
+    actions: list[dict[str, Any]] = []
+    queue: list[str] = []
+    seen: set[str] = set()
+    inspected: set[str] = set()
+    follow_counts: dict[str, int] = {}
+    context_doc_ids: list[str] = []
+    provider_calls: list[dict[str, Any]] = []
+    step_index = 0
+
+    while len(actions) < config.max_actions - 1:
+        observation = build_observation(question, corpus, edges, ranked, inspected=inspected, context_doc_ids=context_doc_ids, queue=queue)
+        requested, provenance = fake_provider_next_action(config, step_index, observation)
+        provider_calls.append({"request_index": step_index + 1, "observation": observation, "response_schema": action_schema(), "provider_provenance": provenance, "requested_action": requested})
+        step_index += 1
+        ok, reason = validate_provider_action(requested, observation, inspected=inspected, context_doc_ids=context_doc_ids, follow_counts=follow_counts, edges=edges, corpus=corpus, config=config)
+        if not ok:
+            trace_action(actions, "stop", budget_remaining=max(0, config.max_actions - len(actions) - 1), details={"reason": "invalid_provider_action_refused", "validation_error": reason, "requested_action": requested, "provider": provenance})
+            break
+
+        action_name = requested["action"]
+        if action_name == "search":
+            top_doc_ids = [doc_id for _, doc_id in ranked[: config.search_top_k]]
+            trace_action(actions, "search", budget_remaining=config.max_actions - len(actions) - 1, details={"query": requested["query"], "top_doc_ids": top_doc_ids, "provider": provenance})
+            for doc_id in top_doc_ids:
+                if doc_id not in seen:
+                    queue.append(doc_id)
+                    seen.add(doc_id)
+        elif action_name == "inspect_page":
+            doc_id = requested["doc_id"]
+            if doc_id in queue:
+                queue.remove(doc_id)
+            inspected.add(doc_id)
+            trace_action(actions, "inspect_page", budget_remaining=config.max_actions - len(actions) - 1, details={"doc_id": doc_id, "score": float(bm25_by_doc.get(doc_id, 0.0)), "provider": provenance})
+        elif action_name == "follow_link":
+            to_doc_id = requested["to_doc_id"]
+            from_doc_id = requested["from_doc_id"]
+            if to_doc_id not in seen:
+                queue.append(to_doc_id)
+                seen.add(to_doc_id)
+            follow_counts[from_doc_id] = follow_counts.get(from_doc_id, 0) + 1
+            trace_action(actions, "follow_link", budget_remaining=config.max_actions - len(actions) - 1, details={"from_doc_id": from_doc_id, "to_doc_ids": [to_doc_id], "provider": provenance})
+        elif action_name == "add_context":
+            doc_id = requested["doc_id"]
+            if len(context_doc_ids) < config.final_top_k:
+                context_doc_ids.append(doc_id)
+            trace_action(actions, "add_context", budget_remaining=config.max_actions - len(actions) - 1, details={"doc_id": doc_id, "context_rank": len(context_doc_ids), "reason": requested.get("reason", "provider_selected_context"), "provider": provenance})
+            if len(context_doc_ids) >= config.final_top_k:
+                trace_action(actions, "stop", budget_remaining=max(0, config.max_actions - len(actions) - 1), details={"reason": "context_budget_exhausted", "provider": provenance})
+                break
+        elif action_name == "stop":
+            trace_action(actions, "stop", budget_remaining=max(0, config.max_actions - len(actions) - 1), details={"reason": requested.get("reason", "provider_stop"), "provider": provenance})
+            break
+
+    if not actions or actions[-1]["action"] != "stop":
+        trace_action(actions, "stop", budget_remaining=max(0, config.max_actions - len(actions) - 1), details={"reason": "search_budget_exhausted", "provider": provider_manifest(config)})
+
+    context = [
+        {"doc_id": doc_id, "text": answer_text(corpus[doc_id], max_chars=config.max_context_chars_per_doc), "score": float(bm25_by_doc.get(doc_id, 0.0)), "source": "llm_guided_search_provider", "selection_role": "provider_agent_context", "rank": rank}
+        for rank, doc_id in enumerate(context_doc_ids, start=1)
+    ]
+    prediction = {"question_id": question["question_id"], "question": question["question"], "generated_answer": " ".join(item["text"] for item in context if item["text"]), "retrieved_context": context, "action_trace": actions}
+    trace = {
+        "question_id": question["question_id"],
+        "schema_version": TRACE_SCHEMA_VERSION,
+        "compatible_action_schema_version": COMPATIBLE_ACTION_SCHEMA_VERSION,
+        "policy": PROVIDER_POLICY_NAME,
+        "controller": {**provider_manifest(config), "type": "provider_action"},
+        "provider_calls": provider_calls,
+        "actions": actions,
+        "final_context_doc_ids": context_doc_ids,
+        "paper_facing_evidence": False,
+    }
+    return prediction, trace
+
+
+def run_question_mock(question: dict[str, str], corpus: dict[str, str], corpus_tokens: dict[str, list[str]], edges: dict[str, set[str]], config: SearchConfig) -> tuple[dict[str, Any], dict[str, Any]]:
     query_tokens = tokens(question["question"])
     ranked = bm25_scores(query_tokens, corpus_tokens)
     bm25_by_doc = {doc_id: score for score, doc_id in ranked}
@@ -138,10 +361,24 @@ def run_question(question: dict[str, str], corpus: dict[str, str], corpus_tokens
         {"doc_id": doc_id, "text": answer_text(corpus[doc_id], max_chars=config.max_context_chars_per_doc), "score": float(bm25_by_doc.get(doc_id, 0.0)), "source": "llm_guided_search_mock", "selection_role": "mock_agent_context", "rank": rank}
         for rank, doc_id in enumerate(context_doc_ids, start=1)
     ]
-    return (
-        {"question_id": question["question_id"], "question": question["question"], "generated_answer": " ".join(item["text"] for item in context if item["text"]), "retrieved_context": context, "action_trace": actions},
-        {"question_id": question["question_id"], "schema_version": TRACE_SCHEMA_VERSION, "policy": POLICY_NAME, "controller": {"type": "mock", "local_only": True, "allow_network": False}, "actions": actions, "final_context_doc_ids": context_doc_ids},
-    )
+    prediction = {"question_id": question["question_id"], "question": question["question"], "generated_answer": " ".join(item["text"] for item in context if item["text"]), "retrieved_context": context, "action_trace": actions}
+    trace = {
+        "question_id": question["question_id"],
+        "schema_version": TRACE_SCHEMA_VERSION,
+        "compatible_action_schema_version": COMPATIBLE_ACTION_SCHEMA_VERSION,
+        "policy": POLICY_NAME,
+        "controller": {"type": "mock", "local_only": True, "allow_network": False},
+        "actions": actions,
+        "final_context_doc_ids": context_doc_ids,
+        "paper_facing_evidence": False,
+    }
+    return prediction, trace
+
+
+def run_question(question: dict[str, str], corpus: dict[str, str], corpus_tokens: dict[str, list[str]], edges: dict[str, set[str]], config: SearchConfig) -> tuple[dict[str, Any], dict[str, Any]]:
+    if config.controller == "provider":
+        return run_question_provider_controller(question, corpus, corpus_tokens, edges, config)
+    return run_question_mock(question, corpus, corpus_tokens, edges, config)
 
 
 def run(input_dir: Path, output_dir: Path) -> None:
@@ -163,8 +400,28 @@ def run(input_dir: Path, output_dir: Path) -> None:
     with (output_dir / "action_traces.jsonl").open("w", encoding="utf-8", newline="\n") as handle:
         for row in traces:
             handle.write(json.dumps(row, sort_keys=True) + "\n")
+    provider = provider_manifest(config)
     (output_dir / "metadata.json").write_text(
-        json.dumps({"name": "rag_llm_guided_search_mock", "experiment_id": "E007b", "deterministic": True, "policy": POLICY_NAME, "trace_schema_version": TRACE_SCHEMA_VERSION, "uses_llm": False, "uses_llm_controller": "mock", "provider": "mock", "local_only": True, "allow_network": False}, indent=2, sort_keys=True) + "\n",
+        json.dumps(
+            {
+                "name": "rag_llm_guided_search_mock",
+                "experiment_id": "E007b",
+                "deterministic": True,
+                "policy": PROVIDER_POLICY_NAME if config.controller == "provider" else POLICY_NAME,
+                "trace_schema_version": TRACE_SCHEMA_VERSION,
+                "compatible_action_schema_version": COMPATIBLE_ACTION_SCHEMA_VERSION,
+                "uses_llm": False,
+                "uses_llm_controller": config.controller,
+                "provider": provider["provider"],
+                "provider_provenance": provider,
+                "local_only": provider["local_only"],
+                "allow_network": provider["allow_network"],
+                "paper_facing_evidence": False,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
         encoding="utf-8",
     )
 
