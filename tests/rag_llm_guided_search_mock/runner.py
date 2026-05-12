@@ -204,6 +204,10 @@ def validate_local_provider_gate(provider: dict[str, Any]) -> None:
         raise ValueError("base_url_host_must_be_loopback")
 
 
+def compact_snippet(text: str, *, max_chars: int = 300) -> str:
+    return re.sub(r"\s+", " ", text).strip()[:max_chars]
+
+
 def extract_json_content(text: str) -> Any:
     stripped = text.strip()
     try:
@@ -234,7 +238,7 @@ def extract_json_content(text: str) -> Any:
                 if depth == 0:
                     return json.loads(stripped[start : index + 1])
         start = stripped.find("{", start + 1)
-    raise ValueError("provider_response_content_is_not_json")
+    raise ValueError(f"provider_response_content_is_not_json:{compact_snippet(text)}")
 
 
 def parse_openai_compatible_response(raw_response: dict[str, Any]) -> Any:
@@ -250,18 +254,37 @@ def parse_openai_compatible_response(raw_response: dict[str, Any]) -> Any:
 
 
 def build_provider_messages(observation: dict[str, Any]) -> list[dict[str, str]]:
+    allowed_actions = ", ".join(observation["allowed_actions"])
     return [
         {
             "role": "system",
             "content": (
-                "You choose exactly one bounded E007b documentation-search action. "
-                "Return only JSON matching the supplied schema. Do not infer from FAQ "
-                "answers, labels, metrics, or hidden knowledge."
+                "/no_think\n"
+                "You are the E007b next-action JSON controller for a bounded "
+                "documentation search environment. You must return exactly one JSON "
+                "object and nothing else. Do not include markdown, code fences, XML "
+                "tags, commentary, chain-of-thought, or prose outside the JSON object. "
+                "The only allowed action values are: "
+                f"{allowed_actions}. "
+                "If candidate_queue is empty, choose search with a short query derived "
+                "from the question. Choose inspect_page only for a doc_id shown in "
+                "search_results or candidate_queue. Choose follow_link only from an "
+                "inspected page to one of that page's allowed_links. Choose add_context "
+                "only for an inspected doc_id. Choose stop only when enough context was "
+                "already added or no valid action remains. Never use FAQ reference "
+                "answers, human labels, support labels, graph/spectral predictors, "
+                "downstream metrics, or hidden knowledge."
             ),
         },
         {
             "role": "user",
-            "content": json.dumps({"observation": observation, "response_schema": action_schema()}, sort_keys=True),
+            "content": (
+                "/no_think\n"
+                "Return one JSON object matching this schema:\n"
+                '{"action":"search","query":"short search query","reason":"brief reason"}\n\n'
+                "Current observation and schema:\n"
+                + json.dumps({"observation": observation, "response_schema": action_schema()}, sort_keys=True)
+            ),
         },
     ]
 
