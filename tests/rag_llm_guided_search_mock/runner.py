@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+import argparse
 import csv
+import http.client
 import json
 import math
 import re
+import socket
+import urllib.error
+import urllib.request
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
 TRACE_SCHEMA_VERSION = "e007b.action_trace.v1"
@@ -15,6 +21,9 @@ COMPATIBLE_ACTION_SCHEMA_VERSION = "e007a.action_trace.v1"
 POLICY_NAME = "mock_llm_guided_fixture_controller_v1"
 PROVIDER_POLICY_NAME = "bounded_provider_action_controller_v1"
 ALLOWED_ACTIONS = {"search", "inspect_page", "follow_link", "add_context", "stop"}
+OPENAI_COMPATIBLE_PROVIDER = "openai_compatible"
+FAKE_SEQUENCE_PROVIDER = "fake_sequence"
+LOCAL_LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
 
 @dataclass(frozen=True)
@@ -120,7 +129,8 @@ def provider_manifest(config: SearchConfig) -> dict[str, Any]:
     provider = config.provider or {}
     provider_type = str(provider.get("provider", provider.get("type", "mock")))
     base_url = str(provider.get("base_url", ""))
-    is_loopback = base_url.startswith(("http://localhost", "http://127.0.0.1", "http://[::1]"))
+    parsed = urlparse(base_url)
+    is_loopback = parsed.scheme == "http" and parsed.hostname in LOCAL_LOOPBACK_HOSTS
     return {
         "provider": provider_type,
         "model_id": provider.get("model_id", "mock-e007b-controller"),
@@ -128,8 +138,14 @@ def provider_manifest(config: SearchConfig) -> dict[str, Any]:
         "response_schema_version": "e007b.next_action.v1",
         "local_only": bool(provider.get("local_only", True)),
         "allow_network": bool(provider.get("allow_network", False)),
-        "dry_run": bool(provider.get("dry_run", provider_type != "fake_sequence")),
-        "base_url_category": "loopback" if is_loopback else "none",
+        "dry_run": bool(provider.get("dry_run", provider_type not in {FAKE_SEQUENCE_PROVIDER, OPENAI_COMPATIBLE_PROVIDER})),
+        "base_url_category": "local_loopback" if is_loopback else ("remote_or_network" if base_url else "none"),
+        "mock": provider_type not in {FAKE_SEQUENCE_PROVIDER, OPENAI_COMPATIBLE_PROVIDER},
+        "temperature": provider.get("temperature", 0.0),
+        "max_tokens": provider.get("max_tokens", 256),
+        "timeout_seconds": provider.get("timeout_seconds", 60),
+        "max_retries": provider.get("max_retries", 0),
+        "allow_local_provider_execution": bool(provider.get("allow_local_provider_execution", False)),
     }
 
 
@@ -137,17 +153,177 @@ def action_schema() -> dict[str, Any]:
     return {
         "schema_version": "e007b.next_action.v1",
         "compatible_action_schema_version": COMPATIBLE_ACTION_SCHEMA_VERSION,
-        "allowed_actions": sorted(ALLOWED_ACTIONS),
+        "type": "object",
         "required": ["action"],
+        "additionalProperties": False,
         "properties": {
-            "action": sorted(ALLOWED_ACTIONS),
-            "query": "string for search actions",
-            "doc_id": "string for inspect_page or add_context actions",
-            "from_doc_id": "string for follow_link actions",
-            "to_doc_id": "string for follow_link actions",
-            "reason": "short string rationale",
+            "action": {"type": "string", "enum": sorted(ALLOWED_ACTIONS)},
+            "query": {"type": "string"},
+            "doc_id": {"type": "string"},
+            "from_doc_id": {"type": "string"},
+            "to_doc_id": {"type": "string"},
+            "reason": {"type": "string"},
         },
     }
+
+
+def validate_structured_action(value: Any, schema: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(value, dict):
+        return ["response must be a JSON object"]
+    for field_name in schema.get("required", []):
+        if field_name not in value:
+            errors.append(f"{field_name} is required")
+    properties = schema.get("properties", {})
+    if schema.get("additionalProperties") is False:
+        for field_name in value:
+            if field_name not in properties:
+                errors.append(f"{field_name} is not allowed")
+    for field_name, field_schema in properties.items():
+        if field_name not in value or not isinstance(field_schema, dict):
+            continue
+        if field_schema.get("type") == "string" and not isinstance(value[field_name], str):
+            errors.append(f"{field_name} must be a string")
+    return errors
+
+
+def validate_local_provider_gate(provider: dict[str, Any]) -> None:
+    parsed = urlparse(str(provider.get("base_url", "")))
+    host = parsed.hostname or ""
+    if not bool(provider.get("allow_local_provider_execution", False)):
+        raise ValueError("missing_explicit_local_execution_flag")
+    if str(provider.get("provider", provider.get("type", ""))) != OPENAI_COMPATIBLE_PROVIDER:
+        raise ValueError("provider_must_be_openai_compatible")
+    if not bool(provider.get("local_only", True)):
+        raise ValueError("local_only_must_be_true")
+    if bool(provider.get("allow_network", False)):
+        raise ValueError("allow_network_must_be_false")
+    if parsed.scheme != "http":
+        raise ValueError("scheme_must_be_http_loopback")
+    if host not in LOCAL_LOOPBACK_HOSTS:
+        raise ValueError("base_url_host_must_be_loopback")
+
+
+def extract_json_content(text: str) -> Any:
+    stripped = text.strip()
+    try:
+        return json.loads(stripped)
+    except json.JSONDecodeError:
+        pass
+    start = stripped.find("{")
+    while start != -1:
+        depth = 0
+        in_string = False
+        escape = False
+        for index in range(start, len(stripped)):
+            char = stripped[index]
+            if in_string:
+                if escape:
+                    escape = False
+                elif char == "\\":
+                    escape = True
+                elif char == '"':
+                    in_string = False
+                continue
+            if char == '"':
+                in_string = True
+            elif char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    return json.loads(stripped[start : index + 1])
+        start = stripped.find("{", start + 1)
+    raise ValueError("provider_response_content_is_not_json")
+
+
+def parse_openai_compatible_response(raw_response: dict[str, Any]) -> Any:
+    choices = raw_response.get("choices")
+    if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+        raise ValueError("provider_response_missing_choices")
+    message = choices[0].get("message")
+    if isinstance(message, dict) and isinstance(message.get("content"), str):
+        return extract_json_content(message["content"])
+    if isinstance(choices[0].get("text"), str):
+        return extract_json_content(choices[0]["text"])
+    raise ValueError("provider_response_missing_message_content")
+
+
+def build_provider_messages(observation: dict[str, Any]) -> list[dict[str, str]]:
+    return [
+        {
+            "role": "system",
+            "content": (
+                "You choose exactly one bounded E007b documentation-search action. "
+                "Return only JSON matching the supplied schema. Do not infer from FAQ "
+                "answers, labels, metrics, or hidden knowledge."
+            ),
+        },
+        {
+            "role": "user",
+            "content": json.dumps({"observation": observation, "response_schema": action_schema()}, sort_keys=True),
+        },
+    ]
+
+
+def openai_compatible_next_action(config: SearchConfig, step_index: int, observation: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    provider = dict(config.provider or {})
+    manifest = provider_manifest(config)
+    request_schema = action_schema()
+    messages = build_provider_messages(observation)
+    base_url = str(provider.get("base_url", "")).rstrip("/")
+    request_body = {
+        "model": str(provider.get("model_id", provider.get("model", "qwen3:14b"))),
+        "messages": messages,
+        "temperature": float(provider.get("temperature", 0.0)),
+        "max_tokens": int(provider.get("max_tokens", 256)),
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {"name": "e007b_next_action_v1", "schema": request_schema, "strict": True},
+        },
+    }
+    request_metadata = {
+        "request_index": step_index + 1,
+        "method": "POST",
+        "url": f"{base_url}/chat/completions",
+        "body": request_body,
+        "timeout_seconds": float(provider.get("timeout_seconds", 60)),
+        "max_retries": int(provider.get("max_retries", 0)),
+        "local_only": bool(provider.get("local_only", True)),
+        "allow_network": bool(provider.get("allow_network", False)),
+    }
+    validate_local_provider_gate(provider)
+    last_error = ""
+    for attempt in range(request_metadata["max_retries"] + 1):
+        try:
+            payload = json.dumps(request_body).encode("utf-8")
+            request = urllib.request.Request(
+                request_metadata["url"],
+                data=payload,
+                headers={"Content-Type": "application/json", "Accept": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=request_metadata["timeout_seconds"]) as response:
+                raw_text = response.read().decode("utf-8")
+            raw_response = json.loads(raw_text)
+            if not isinstance(raw_response, dict):
+                raise ValueError("provider_response_must_be_object")
+            content = parse_openai_compatible_response(raw_response)
+            schema_errors = validate_structured_action(content, request_schema)
+            if schema_errors:
+                raise ValueError("structured_response_invalid:" + ";".join(schema_errors))
+            return dict(content), {
+                **manifest,
+                "request_index": step_index + 1,
+                "request_metadata": request_metadata,
+                "usage": raw_response.get("usage") if isinstance(raw_response.get("usage"), dict) else {},
+                "dry_run": False,
+            }
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, socket.timeout, http.client.HTTPException, json.JSONDecodeError, ValueError) as exc:
+            last_error = str(exc)
+            if attempt >= request_metadata["max_retries"]:
+                raise ValueError(f"provider_request_failed:{last_error}") from exc
+    raise ValueError(f"provider_request_failed:{last_error}")
 
 
 def excerpt(text: str, *, max_chars: int = 500) -> str:
@@ -191,7 +367,9 @@ def fake_provider_next_action(config: SearchConfig, step_index: int, observation
     provider = config.provider or {}
     provider_type = str(provider.get("provider", provider.get("type", "mock")))
     manifest = provider_manifest(config)
-    if provider_type != "fake_sequence":
+    if provider_type == OPENAI_COMPATIBLE_PROVIDER:
+        return openai_compatible_next_action(config, step_index, observation)
+    if provider_type != FAKE_SEQUENCE_PROVIDER:
         return {"action": "stop", "reason": "non_fake_provider_execution_disabled"}, {**manifest, "refused_live_execution": True}
     responses = provider.get("responses", [])
     if not isinstance(responses, list):
@@ -265,7 +443,18 @@ def run_question_provider_controller(
 
     while len(actions) < config.max_actions - 1:
         observation = build_observation(question, corpus, edges, ranked, inspected=inspected, context_doc_ids=context_doc_ids, queue=queue)
-        requested, provenance = fake_provider_next_action(config, step_index, observation)
+        try:
+            requested, provenance = fake_provider_next_action(config, step_index, observation)
+        except ValueError as exc:
+            provenance = {**provider_manifest(config), "request_index": step_index + 1, "provider_error": str(exc)}
+            provider_calls.append({"request_index": step_index + 1, "observation": observation, "response_schema": action_schema(), "provider_provenance": provenance, "provider_error": str(exc)})
+            trace_action(
+                actions,
+                "stop",
+                budget_remaining=max(0, config.max_actions - len(actions) - 1),
+                details={"reason": "provider_execution_refused_or_failed", "validation_error": str(exc), "provider": provenance},
+            )
+            break
         provider_calls.append({"request_index": step_index + 1, "observation": observation, "response_schema": action_schema(), "provider_provenance": provenance, "requested_action": requested})
         step_index += 1
         ok, reason = validate_provider_action(requested, observation, inspected=inspected, context_doc_ids=context_doc_ids, follow_counts=follow_counts, edges=edges, corpus=corpus, config=config)
@@ -401,21 +590,29 @@ def run(input_dir: Path, output_dir: Path) -> None:
         for row in traces:
             handle.write(json.dumps(row, sort_keys=True) + "\n")
     provider = provider_manifest(config)
+    provider_request_count = sum(len(trace.get("provider_calls", [])) for trace in traces)
     (output_dir / "metadata.json").write_text(
         json.dumps(
             {
                 "name": "rag_llm_guided_search_mock",
                 "experiment_id": "E007b",
-                "deterministic": True,
+                "deterministic": provider["provider"] != OPENAI_COMPATIBLE_PROVIDER,
                 "policy": PROVIDER_POLICY_NAME if config.controller == "provider" else POLICY_NAME,
                 "trace_schema_version": TRACE_SCHEMA_VERSION,
                 "compatible_action_schema_version": COMPATIBLE_ACTION_SCHEMA_VERSION,
-                "uses_llm": False,
+                "uses_llm": provider["provider"] == OPENAI_COMPATIBLE_PROVIDER,
                 "uses_llm_controller": config.controller,
                 "provider": provider["provider"],
                 "provider_provenance": provider,
+                "model_id": provider["model_id"],
+                "prompt_version": provider["prompt_version"],
+                "response_schema_version": provider["response_schema_version"],
                 "local_only": provider["local_only"],
                 "allow_network": provider["allow_network"],
+                "base_url_category": provider["base_url_category"],
+                "mock": provider["mock"],
+                "dry_run": provider["dry_run"],
+                "provider_request_count": provider_request_count,
                 "paper_facing_evidence": False,
             },
             indent=2,
@@ -426,5 +623,13 @@ def run(input_dir: Path, output_dir: Path) -> None:
     )
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run the E007b LLM-guided search test runner.")
+    parser.add_argument("--input-dir", default="/input")
+    parser.add_argument("--output-dir", default="/output")
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    run(Path("/input"), Path("/output"))
+    args = parse_args()
+    run(Path(args.input_dir), Path(args.output_dir))
