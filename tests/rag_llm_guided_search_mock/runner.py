@@ -26,6 +26,12 @@ FAKE_SEQUENCE_PROVIDER = "fake_sequence"
 LOCAL_LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
 
+class ProviderActionError(ValueError):
+    def __init__(self, message: str, details: dict[str, Any] | None = None):
+        super().__init__(message)
+        self.details = details or {}
+
+
 @dataclass(frozen=True)
 class SearchConfig:
     controller: str = "mock"
@@ -208,6 +214,46 @@ def compact_snippet(text: str, *, max_chars: int = 300) -> str:
     return re.sub(r"\s+", " ", text).strip()[:max_chars]
 
 
+def raw_response_debug(raw_response: dict[str, Any], *, raw_text: str = "") -> dict[str, Any]:
+    debug: dict[str, Any] = {
+        "raw_response_keys": sorted(raw_response.keys()),
+        "raw_response_snippet": compact_snippet(json.dumps(raw_response, sort_keys=True), max_chars=1000),
+        "raw_text_length": len(raw_text),
+        "raw_text_snippet": compact_snippet(raw_text, max_chars=1000),
+    }
+    choices = raw_response.get("choices")
+    if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+        first = choices[0]
+        debug["choice_keys"] = sorted(first.keys())
+        if "finish_reason" in first:
+            debug["finish_reason"] = first.get("finish_reason")
+        message = first.get("message")
+        if isinstance(message, dict):
+            debug["message_keys"] = sorted(message.keys())
+            content = message.get("content")
+            if isinstance(content, str):
+                debug["message_content_length"] = len(content)
+                debug["message_content_repr"] = repr(content[:500])
+                debug["message_content_snippet"] = compact_snippet(content, max_chars=500)
+            else:
+                debug["message_content_type"] = type(content).__name__
+            for key in ("reasoning_content", "thinking", "tool_calls"):
+                if key in message:
+                    value = message[key]
+                    debug[f"message_{key}_type"] = type(value).__name__
+                    if isinstance(value, str):
+                        debug[f"message_{key}_length"] = len(value)
+                        debug[f"message_{key}_snippet"] = compact_snippet(value, max_chars=500)
+        text = first.get("text")
+        if isinstance(text, str):
+            debug["choice_text_length"] = len(text)
+            debug["choice_text_snippet"] = compact_snippet(text, max_chars=500)
+    usage = raw_response.get("usage")
+    if isinstance(usage, dict):
+        debug["usage"] = usage
+    return debug
+
+
 def extract_json_content(text: str) -> Any:
     stripped = text.strip()
     try:
@@ -238,19 +284,30 @@ def extract_json_content(text: str) -> Any:
                 if depth == 0:
                     return json.loads(stripped[start : index + 1])
         start = stripped.find("{", start + 1)
-    raise ValueError(f"provider_response_content_is_not_json:{compact_snippet(text)}")
+    raise ProviderActionError(
+        f"provider_response_content_is_not_json:{compact_snippet(text)}",
+        {"message_content_length": len(text), "message_content_repr": repr(text[:500])},
+    )
 
 
 def parse_openai_compatible_response(raw_response: dict[str, Any]) -> Any:
     choices = raw_response.get("choices")
     if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
-        raise ValueError("provider_response_missing_choices")
+        raise ProviderActionError("provider_response_missing_choices", raw_response_debug(raw_response))
     message = choices[0].get("message")
     if isinstance(message, dict) and isinstance(message.get("content"), str):
-        return extract_json_content(message["content"])
+        try:
+            return extract_json_content(message["content"])
+        except ProviderActionError as exc:
+            exc.details = {**raw_response_debug(raw_response), **exc.details}
+            raise
     if isinstance(choices[0].get("text"), str):
-        return extract_json_content(choices[0]["text"])
-    raise ValueError("provider_response_missing_message_content")
+        try:
+            return extract_json_content(choices[0]["text"])
+        except ProviderActionError as exc:
+            exc.details = {**raw_response_debug(raw_response), **exc.details}
+            raise
+    raise ProviderActionError("provider_response_missing_message_content", raw_response_debug(raw_response))
 
 
 def build_provider_messages(observation: dict[str, Any]) -> list[dict[str, str]]:
@@ -330,11 +387,11 @@ def openai_compatible_next_action(config: SearchConfig, step_index: int, observa
                 raw_text = response.read().decode("utf-8")
             raw_response = json.loads(raw_text)
             if not isinstance(raw_response, dict):
-                raise ValueError("provider_response_must_be_object")
+                raise ProviderActionError("provider_response_must_be_object", {"raw_text_length": len(raw_text), "raw_text_snippet": compact_snippet(raw_text, max_chars=1000)})
             content = parse_openai_compatible_response(raw_response)
             schema_errors = validate_structured_action(content, request_schema)
             if schema_errors:
-                raise ValueError("structured_response_invalid:" + ";".join(schema_errors))
+                raise ProviderActionError("structured_response_invalid:" + ";".join(schema_errors), {"content": content, **raw_response_debug(raw_response, raw_text=raw_text)})
             return dict(content), {
                 **manifest,
                 "request_index": step_index + 1,
@@ -345,8 +402,9 @@ def openai_compatible_next_action(config: SearchConfig, step_index: int, observa
         except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, socket.timeout, http.client.HTTPException, json.JSONDecodeError, ValueError) as exc:
             last_error = str(exc)
             if attempt >= request_metadata["max_retries"]:
-                raise ValueError(f"provider_request_failed:{last_error}") from exc
-    raise ValueError(f"provider_request_failed:{last_error}")
+                details = getattr(exc, "details", {})
+                raise ProviderActionError(f"provider_request_failed:{last_error}", {"request_metadata": request_metadata, **details}) from exc
+    raise ProviderActionError(f"provider_request_failed:{last_error}", {"request_metadata": request_metadata})
 
 
 def excerpt(text: str, *, max_chars: int = 500) -> str:
@@ -468,9 +526,10 @@ def run_question_provider_controller(
         observation = build_observation(question, corpus, edges, ranked, inspected=inspected, context_doc_ids=context_doc_ids, queue=queue)
         try:
             requested, provenance = fake_provider_next_action(config, step_index, observation)
-        except ValueError as exc:
-            provenance = {**provider_manifest(config), "request_index": step_index + 1, "provider_error": str(exc)}
-            provider_calls.append({"request_index": step_index + 1, "observation": observation, "response_schema": action_schema(), "provider_provenance": provenance, "provider_error": str(exc)})
+        except (ProviderActionError, ValueError) as exc:
+            details = getattr(exc, "details", {})
+            provenance = {**provider_manifest(config), "request_index": step_index + 1, "provider_error": str(exc), "provider_error_details": details}
+            provider_calls.append({"request_index": step_index + 1, "observation": observation, "response_schema": action_schema(), "provider_provenance": provenance, "provider_error": str(exc), "provider_error_details": details})
             trace_action(
                 actions,
                 "stop",
