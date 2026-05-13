@@ -214,12 +214,26 @@ def compact_snippet(text: str, *, max_chars: int = 300) -> str:
     return re.sub(r"\s+", " ", text).strip()[:max_chars]
 
 
+def sanitize_provider_debug(value: Any) -> Any:
+    if isinstance(value, dict):
+        sanitized: dict[str, Any] = {}
+        for key, child in value.items():
+            if key in {"reasoning", "reasoning_content", "thinking"}:
+                sanitized[key] = f"<redacted:{len(child) if isinstance(child, str) else type(child).__name__}>"
+            else:
+                sanitized[key] = sanitize_provider_debug(child)
+        return sanitized
+    if isinstance(value, list):
+        return [sanitize_provider_debug(item) for item in value]
+    return value
+
+
 def raw_response_debug(raw_response: dict[str, Any], *, raw_text: str = "") -> dict[str, Any]:
+    sanitized = sanitize_provider_debug(raw_response)
     debug: dict[str, Any] = {
         "raw_response_keys": sorted(raw_response.keys()),
-        "raw_response_snippet": compact_snippet(json.dumps(raw_response, sort_keys=True), max_chars=1000),
+        "raw_response_snippet": compact_snippet(json.dumps(sanitized, sort_keys=True), max_chars=1000),
         "raw_text_length": len(raw_text),
-        "raw_text_snippet": compact_snippet(raw_text, max_chars=1000),
     }
     choices = raw_response.get("choices")
     if isinstance(choices, list) and choices and isinstance(choices[0], dict):
@@ -237,13 +251,12 @@ def raw_response_debug(raw_response: dict[str, Any], *, raw_text: str = "") -> d
                 debug["message_content_snippet"] = compact_snippet(content, max_chars=500)
             else:
                 debug["message_content_type"] = type(content).__name__
-            for key in ("reasoning_content", "thinking", "tool_calls"):
+            for key in ("reasoning", "reasoning_content", "thinking", "tool_calls"):
                 if key in message:
                     value = message[key]
                     debug[f"message_{key}_type"] = type(value).__name__
                     if isinstance(value, str):
                         debug[f"message_{key}_length"] = len(value)
-                        debug[f"message_{key}_snippet"] = compact_snippet(value, max_chars=500)
         text = first.get("text")
         if isinstance(text, str):
             debug["choice_text_length"] = len(text)
