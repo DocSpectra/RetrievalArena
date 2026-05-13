@@ -284,6 +284,8 @@ class RagLlmGuidedSearchMockTests(unittest.TestCase):
                 self.assertIn("/no_think", requests[0]["body"]["messages"][0]["content"])
                 self.assertIn("If candidate_queue is empty, choose search", requests[0]["body"]["messages"][0]["content"])
                 self.assertIn("If candidate_queue is non-empty, do not choose search", requests[0]["body"]["messages"][0]["content"])
+                self.assertIn("without add_context the final answer will be empty", requests[0]["body"]["messages"][0]["content"])
+                self.assertIn("An acceptable weak answer grounded in partial local evidence is better than no context", requests[0]["body"]["messages"][0]["content"])
                 self.assertIn('"action":"search"', requests[0]["body"]["messages"][1]["content"])
                 self.assertEqual(traces[0]["actions"][-1]["action"], "stop")
                 self.assertEqual(traces[0]["controller"]["base_url_category"], "local_loopback")
@@ -318,6 +320,8 @@ class RagLlmGuidedSearchMockTests(unittest.TestCase):
 
             self.assertIn("question", observation)
             self.assertIn("search_results", observation)
+            self.assertEqual(observation["budget"]["actions_remaining"], 11)
+            self.assertEqual(observation["budget"]["context_slots_remaining"], 2)
             self.assertNotIn("reference_answer", observation)
             self.assertIn("graph_spectral_predictor_summaries", observation["forbidden_inputs"])
 

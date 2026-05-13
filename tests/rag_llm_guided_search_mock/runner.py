@@ -342,8 +342,13 @@ def build_provider_messages(observation: dict[str, Any]) -> list[dict[str, str]]
                 "candidate should be inspected. Choose inspect_page only for a doc_id shown in "
                 "search_results or candidate_queue. Choose follow_link only from an "
                 "inspected page to one of that page's allowed_links. Choose add_context "
-                "only for an inspected doc_id. Choose stop only when enough context was "
-                "already added or no valid action remains. Never use FAQ reference "
+                "only for an inspected doc_id. add_context means save that inspected "
+                "page as evidence for the final answer; without add_context the final "
+                "answer will be empty. Watch the budget. If actions_remaining is small "
+                "or you have inspected several pages, add the best inspected page even "
+                "if it is only partially relevant. An acceptable weak answer grounded "
+                "in partial local evidence is better than no context. Choose stop only "
+                "when enough context was already added or no valid action remains. Never use FAQ reference "
                 "answers, human labels, support labels, graph/spectral predictors, "
                 "downstream metrics, or hidden knowledge."
             ),
@@ -435,6 +440,8 @@ def build_observation(
     inspected: set[str],
     context_doc_ids: list[str],
     queue: list[str],
+    action_budget_remaining: int,
+    config: SearchConfig,
 ) -> dict[str, Any]:
     inspected_pages = [
         {"doc_id": doc_id, "excerpt": excerpt(corpus[doc_id]), "allowed_links": sorted(edges.get(doc_id, set()) & set(corpus))}
@@ -448,6 +455,15 @@ def build_observation(
         "candidate_queue": list(queue),
         "inspected_pages": inspected_pages,
         "context_doc_ids": list(context_doc_ids),
+        "budget": {
+            "actions_remaining": action_budget_remaining,
+            "inspect_slots_remaining": max(0, config.inspect_budget - len(inspected)),
+            "context_slots_remaining": max(0, config.final_top_k - len(context_doc_ids)),
+            "inspected_count": len(inspected),
+            "context_count": len(context_doc_ids),
+            "max_actions": config.max_actions,
+            "final_top_k": config.final_top_k,
+        },
         "allowed_actions": sorted(ALLOWED_ACTIONS),
         "forbidden_inputs": [
             "faq_reference_answers",
@@ -540,7 +556,17 @@ def run_question_provider_controller(
     step_index = 0
 
     while len(actions) < config.max_actions - 1:
-        observation = build_observation(question, corpus, edges, ranked, inspected=inspected, context_doc_ids=context_doc_ids, queue=queue)
+        observation = build_observation(
+            question,
+            corpus,
+            edges,
+            ranked,
+            inspected=inspected,
+            context_doc_ids=context_doc_ids,
+            queue=queue,
+            action_budget_remaining=max(0, config.max_actions - len(actions) - 1),
+            config=config,
+        )
         try:
             requested, provenance = fake_provider_next_action(config, step_index, observation)
         except (ProviderActionError, ValueError) as exc:
