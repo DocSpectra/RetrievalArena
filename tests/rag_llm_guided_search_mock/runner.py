@@ -337,7 +337,9 @@ def build_provider_messages(observation: dict[str, Any]) -> list[dict[str, str]]
                 "The only allowed action values are: "
                 f"{allowed_actions}. "
                 "If candidate_queue is empty, choose search with a short query derived "
-                "from the question. Choose inspect_page only for a doc_id shown in "
+                "from the question. If candidate_queue is non-empty, do not choose "
+                "search; choose inspect_page for one candidate, or stop if no valid "
+                "candidate should be inspected. Choose inspect_page only for a doc_id shown in "
                 "search_results or candidate_queue. Choose follow_link only from an "
                 "inspected page to one of that page's allowed_links. Choose add_context "
                 "only for an inspected doc_id. Choose stop only when enough context was "
@@ -490,6 +492,8 @@ def validate_provider_action(
     if action_name not in ALLOWED_ACTIONS:
         return False, f"unsupported_action:{action_name}"
     if action_name == "search":
+        if observation["candidate_queue"]:
+            return False, "search_not_allowed_when_candidate_queue_non_empty"
         ok = isinstance(action.get("query"), str) and bool(action["query"].strip())
         return ok, "search_requires_query"
     if action_name == "inspect_page":

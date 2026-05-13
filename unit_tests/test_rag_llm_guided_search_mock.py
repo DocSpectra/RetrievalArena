@@ -283,6 +283,7 @@ class RagLlmGuidedSearchMockTests(unittest.TestCase):
                 self.assertEqual(requests[0]["body"]["response_format"]["type"], "json_schema")
                 self.assertIn("/no_think", requests[0]["body"]["messages"][0]["content"])
                 self.assertIn("If candidate_queue is empty, choose search", requests[0]["body"]["messages"][0]["content"])
+                self.assertIn("If candidate_queue is non-empty, do not choose search", requests[0]["body"]["messages"][0]["content"])
                 self.assertIn('"action":"search"', requests[0]["body"]["messages"][1]["content"])
                 self.assertEqual(traces[0]["actions"][-1]["action"], "stop")
                 self.assertEqual(traces[0]["controller"]["base_url_category"], "local_loopback")
@@ -319,6 +320,30 @@ class RagLlmGuidedSearchMockTests(unittest.TestCase):
             self.assertIn("search_results", observation)
             self.assertNotIn("reference_answer", observation)
             self.assertIn("graph_spectral_predictor_summaries", observation["forbidden_inputs"])
+
+    def test_provider_controller_refuses_repeated_search_when_queue_is_populated(self):
+        runner = load_runner()
+        config = {
+            "controller": "provider",
+            "provider": {
+                "provider": "fake_sequence",
+                "local_only": True,
+                "allow_network": False,
+                "responses": [
+                    {"action": "search", "query": "plugins collections"},
+                    {"action": "search", "query": "repeat search"},
+                ],
+            },
+        }
+        with self.workspace_tempdir() as root:
+            input_dir, output_dir = self.write_input(root, config=config)
+            runner.run(input_dir, output_dir)
+
+            traces = self.read_jsonl(output_dir / "action_traces.jsonl")
+
+            self.assertEqual([action["action"] for action in traces[0]["actions"]], ["search", "stop"])
+            self.assertEqual(traces[0]["actions"][-1]["details"]["reason"], "invalid_provider_action_refused")
+            self.assertEqual(traces[0]["actions"][-1]["details"]["validation_error"], "search_not_allowed_when_candidate_queue_non_empty")
 
 
 if __name__ == "__main__":
