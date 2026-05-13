@@ -42,9 +42,11 @@ class RagLlmGuidedSearchMockTests(unittest.TestCase):
         (input_dir / "corpus").mkdir(parents=True)
         (input_dir / "corpus" / "install.md").write_text("# Install\nUse plugins with collections.\n", encoding="utf-8")
         (input_dir / "corpus" / "collections.md").write_text("# Collections\nCollections package plugins and modules.\n", encoding="utf-8")
+        (input_dir / "corpus" / "modules.md").write_text("# Modules\nModules can be packaged with plugins.\n", encoding="utf-8")
+        (input_dir / "corpus" / "inventory.md").write_text("# Inventory\nInventory configures hosts for modules and plugins.\n", encoding="utf-8")
         (input_dir / "questions.jsonl").write_text('{"question_id":"q1","question":"How do plugins work with collections?"}\n', encoding="utf-8")
         (input_dir / "answers.jsonl").write_text('{"question_id":"q1","answer":"Collections package plugins."}\n', encoding="utf-8")
-        (input_dir / "graph_edges.csv").write_text("source,target\ninstall,collections\n", encoding="utf-8")
+        (input_dir / "graph_edges.csv").write_text("source,target\ninstall,collections\ncollections,modules\nmodules,inventory\n", encoding="utf-8")
         raw_config = {"search_top_k": 1, "final_top_k": 2, "max_actions": 12}
         if config:
             raw_config.update(config)
@@ -286,6 +288,7 @@ class RagLlmGuidedSearchMockTests(unittest.TestCase):
                 self.assertIn("If candidate_queue is non-empty, do not choose search", requests[0]["body"]["messages"][0]["content"])
                 self.assertIn("without add_context the final answer will be empty", requests[0]["body"]["messages"][0]["content"])
                 self.assertIn("An acceptable weak answer grounded in partial local evidence is better than no context", requests[0]["body"]["messages"][0]["content"])
+                self.assertIn("If three pages have been inspected and no context has been added", requests[0]["body"]["messages"][0]["content"])
                 self.assertIn('"action":"search"', requests[0]["body"]["messages"][1]["content"])
                 self.assertEqual(traces[0]["actions"][-1]["action"], "stop")
                 self.assertEqual(traces[0]["controller"]["base_url_category"], "local_loopback")
@@ -322,6 +325,7 @@ class RagLlmGuidedSearchMockTests(unittest.TestCase):
             self.assertIn("search_results", observation)
             self.assertEqual(observation["budget"]["actions_remaining"], 11)
             self.assertEqual(observation["budget"]["context_slots_remaining"], 2)
+            self.assertFalse(observation["budget"]["context_decision_required"])
             self.assertNotIn("reference_answer", observation)
             self.assertIn("graph_spectral_predictor_summaries", observation["forbidden_inputs"])
 
@@ -348,6 +352,90 @@ class RagLlmGuidedSearchMockTests(unittest.TestCase):
             self.assertEqual([action["action"] for action in traces[0]["actions"]], ["search", "stop"])
             self.assertEqual(traces[0]["actions"][-1]["details"]["reason"], "invalid_provider_action_refused")
             self.assertEqual(traces[0]["actions"][-1]["details"]["validation_error"], "search_not_allowed_when_candidate_queue_non_empty")
+
+    def test_provider_controller_requires_context_decision_after_three_inspections(self):
+        runner = load_runner()
+        config = {
+            "controller": "provider",
+            "search_top_k": 4,
+            "provider": {
+                "provider": "fake_sequence",
+                "local_only": True,
+                "allow_network": False,
+                "responses": [
+                    {"action": "search", "query": "plugins collections modules inventory"},
+                    {"action": "inspect_page", "doc_id": "install"},
+                    {"action": "inspect_page", "doc_id": "collections"},
+                    {"action": "inspect_page", "doc_id": "modules"},
+                    {"action": "inspect_page", "doc_id": "inventory"},
+                ],
+            },
+        }
+        with self.workspace_tempdir() as root:
+            input_dir, output_dir = self.write_input(root, config=config)
+            runner.run(input_dir, output_dir)
+
+            traces = self.read_jsonl(output_dir / "action_traces.jsonl")
+
+            self.assertEqual([action["action"] for action in traces[0]["actions"]], ["search", "inspect_page", "inspect_page", "inspect_page", "stop"])
+            self.assertEqual(traces[0]["actions"][-1]["details"]["reason"], "invalid_provider_action_refused")
+            self.assertEqual(traces[0]["actions"][-1]["details"]["validation_error"], "context_decision_required_after_three_inspections")
+            self.assertTrue(traces[0]["provider_calls"][-1]["observation"]["budget"]["context_decision_required"])
+
+    def test_provider_controller_allows_add_context_after_three_inspections(self):
+        runner = load_runner()
+        config = {
+            "controller": "provider",
+            "search_top_k": 4,
+            "provider": {
+                "provider": "fake_sequence",
+                "local_only": True,
+                "allow_network": False,
+                "responses": [
+                    {"action": "search", "query": "plugins collections modules inventory"},
+                    {"action": "inspect_page", "doc_id": "install"},
+                    {"action": "inspect_page", "doc_id": "collections"},
+                    {"action": "inspect_page", "doc_id": "modules"},
+                    {"action": "add_context", "doc_id": "collections", "reason": "best inspected page"},
+                    {"action": "stop", "reason": "done"},
+                ],
+            },
+        }
+        with self.workspace_tempdir() as root:
+            input_dir, output_dir = self.write_input(root, config=config)
+            runner.run(input_dir, output_dir)
+
+            traces = self.read_jsonl(output_dir / "action_traces.jsonl")
+
+            self.assertEqual([action["action"] for action in traces[0]["actions"]], ["search", "inspect_page", "inspect_page", "inspect_page", "add_context", "stop"])
+            self.assertEqual(traces[0]["final_context_doc_ids"], ["collections"])
+
+    def test_provider_controller_allows_stop_after_three_inspections(self):
+        runner = load_runner()
+        config = {
+            "controller": "provider",
+            "search_top_k": 4,
+            "provider": {
+                "provider": "fake_sequence",
+                "local_only": True,
+                "allow_network": False,
+                "responses": [
+                    {"action": "search", "query": "plugins collections modules inventory"},
+                    {"action": "inspect_page", "doc_id": "install"},
+                    {"action": "inspect_page", "doc_id": "collections"},
+                    {"action": "inspect_page", "doc_id": "modules"},
+                    {"action": "stop", "reason": "no relevant local context found"},
+                ],
+            },
+        }
+        with self.workspace_tempdir() as root:
+            input_dir, output_dir = self.write_input(root, config=config)
+            runner.run(input_dir, output_dir)
+
+            traces = self.read_jsonl(output_dir / "action_traces.jsonl")
+
+            self.assertEqual([action["action"] for action in traces[0]["actions"]], ["search", "inspect_page", "inspect_page", "inspect_page", "stop"])
+            self.assertEqual(traces[0]["actions"][-1]["details"]["reason"], "no relevant local context found")
 
 
 if __name__ == "__main__":

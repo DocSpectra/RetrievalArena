@@ -45,6 +45,10 @@ class SearchConfig:
     provider: dict[str, Any] | None = None
 
 
+def context_decision_required(inspected: set[str], context_doc_ids: list[str]) -> bool:
+    return len(inspected) >= 3 and not context_doc_ids
+
+
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
@@ -347,8 +351,11 @@ def build_provider_messages(observation: dict[str, Any]) -> list[dict[str, str]]
                 "answer will be empty. Watch the budget. If actions_remaining is small "
                 "or you have inspected several pages, add the best inspected page even "
                 "if it is only partially relevant. An acceptable weak answer grounded "
-                "in partial local evidence is better than no context. Choose stop only "
-                "when enough context was already added or no valid action remains. Never use FAQ reference "
+                "in partial local evidence is better than no context. If three pages "
+                "have been inspected and no context has been added, you must choose "
+                "add_context for the best inspected page or stop with a no relevant "
+                "local context reason. Choose stop only when enough context was already "
+                "added or no valid action remains. Never use FAQ reference "
                 "answers, human labels, support labels, graph/spectral predictors, "
                 "downstream metrics, or hidden knowledge."
             ),
@@ -463,6 +470,7 @@ def build_observation(
             "context_count": len(context_doc_ids),
             "max_actions": config.max_actions,
             "final_top_k": config.final_top_k,
+            "context_decision_required": context_decision_required(inspected, context_doc_ids),
         },
         "allowed_actions": sorted(ALLOWED_ACTIONS),
         "forbidden_inputs": [
@@ -507,12 +515,17 @@ def validate_provider_action(
     action_name = action.get("action")
     if action_name not in ALLOWED_ACTIONS:
         return False, f"unsupported_action:{action_name}"
+    must_commit_or_stop = context_decision_required(inspected, context_doc_ids)
     if action_name == "search":
+        if must_commit_or_stop:
+            return False, "context_decision_required_after_three_inspections"
         if observation["candidate_queue"]:
             return False, "search_not_allowed_when_candidate_queue_non_empty"
         ok = isinstance(action.get("query"), str) and bool(action["query"].strip())
         return ok, "search_requires_query"
     if action_name == "inspect_page":
+        if must_commit_or_stop:
+            return False, "context_decision_required_after_three_inspections"
         doc_id = action.get("doc_id")
         allowed = {row["doc_id"] for row in observation["search_results"]} | set(observation["candidate_queue"])
         ok = len(inspected) < config.inspect_budget and isinstance(doc_id, str) and doc_id in allowed and doc_id in corpus
