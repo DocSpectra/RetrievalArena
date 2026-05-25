@@ -57,6 +57,7 @@ def build_corpus_snapshot_manifest(
     snapshot_id: str,
     extraction_version: str,
     parser_version: str,
+    require_dataset_contract: bool = True,
     created_at: str | None = None,
     source_name: str | None = None,
     source_url: str | None = None,
@@ -68,7 +69,8 @@ def build_corpus_snapshot_manifest(
     require_id("snapshot_id", snapshot_id)
     require_id("extraction_version", extraction_version)
     require_id("parser_version", parser_version)
-    validate_dataset(dataset_path)
+    if require_dataset_contract:
+        validate_dataset(dataset_path)
 
     corpus_dir = dataset_path / "corpus"
     if not corpus_dir.is_dir():

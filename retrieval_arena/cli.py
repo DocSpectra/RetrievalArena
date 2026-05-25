@@ -13,6 +13,7 @@ from .commands import (
     snapshot_manifest,
     validate_experiment,
 )
+from .corpus.comparison import run_corpus_snapshot_comparison
 from .errors import RetrievalArenaError
 from .replay_manifests import manifest_json_text
 
@@ -42,6 +43,10 @@ def build_parser() -> argparse.ArgumentParser:
     replay_compare.add_argument("--expected", required=True, help="Expected run directory.")
     replay_compare.add_argument("--actual", required=True, help="Actual run directory.")
     replay_compare.add_argument("--out", help="Optional path for replay_fidelity_report.json.")
+    corpus = subparsers.add_parser("corpus", help="Import and compare corpus snapshots.")
+    corpus_subparsers = corpus.add_subparsers(dest="corpus_command", required=True)
+    corpus_compare = corpus_subparsers.add_parser("compare-snapshots", help="Run a corpus source comparison plan.")
+    corpus_compare.add_argument("--plan", required=True, help="Path to corpus snapshot comparison plan JSON.")
     snapshot = subparsers.add_parser("snapshot", help="Generate snapshot observability artifacts.")
     snapshot_subparsers = snapshot.add_subparsers(dest="snapshot_command", required=True)
     manifest = snapshot_subparsers.add_parser("manifest", help="Write snapshot manifests for a prepared dataset.")
@@ -95,6 +100,9 @@ def main(argv: list[str] | None = None) -> int:
                 Path(args.actual),
                 out_path=Path(args.out) if args.out else None,
             )
+            print(result["summary"])
+        elif args.command == "corpus" and args.corpus_command == "compare-snapshots":
+            result = run_corpus_snapshot_comparison(Path(args.plan))
             print(result["summary"])
         elif args.command == "snapshot" and args.snapshot_command == "manifest":
             dataset_path = Path(args.dataset)

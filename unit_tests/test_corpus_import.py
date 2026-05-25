@@ -156,6 +156,30 @@ class CorpusImportTests(unittest.TestCase):
             with self.assertRaisesRegex(ValidationError, "must be clean"):
                 import_corpus_source(descriptor, created_at=CREATED_AT, overwrite=False)
 
+    def test_import_rebuilds_incomplete_workspace_when_reuse_requested(self):
+        with self.workspace_tempdir() as tmp:
+            source = tmp / "source"
+            source.mkdir()
+            (source / "install.md").write_text("Use pip.\n", encoding="utf-8")
+            workspace = tmp / "workspace"
+            incomplete = workspace / "toy" / "s1"
+            incomplete.mkdir(parents=True)
+            (incomplete / "partial.txt").write_text("interrupted\n", encoding="utf-8")
+            descriptor = CorpusSourceDescriptor(
+                corpus_id="toy",
+                snapshot_id="s1",
+                source_type="local",
+                source_path=source,
+                destination_workspace=workspace,
+                include=("*.md",),
+            )
+
+            result = import_corpus_source(descriptor, created_at=CREATED_AT, overwrite=False)
+
+            self.assertFalse(result["reused"])
+            self.assertFalse((incomplete / "partial.txt").exists())
+            self.assertTrue((result["documents_path"] / "install.md").exists())
+
     def test_dataset_preparation_and_conditional_hooks_write_manifests(self):
         with self.workspace_tempdir() as tmp:
             source = tmp / "source"

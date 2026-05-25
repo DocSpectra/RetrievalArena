@@ -21,7 +21,9 @@ def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str 
     documents_workspace = snapshot_workspace / "documents"
     if snapshot_workspace.exists():
         if not overwrite:
-            return _reuse_existing_import(descriptor, snapshot_workspace)
+            reused = _reuse_existing_import(descriptor, snapshot_workspace)
+            if reused is not None:
+                return reused
         shutil.rmtree(snapshot_workspace)
     source_workspace.mkdir(parents=True)
     documents_workspace.mkdir(parents=True)
@@ -76,10 +78,10 @@ def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str 
     }
 
 
-def _reuse_existing_import(descriptor: CorpusSourceDescriptor, snapshot_workspace: Path) -> dict[str, Any]:
+def _reuse_existing_import(descriptor: CorpusSourceDescriptor, snapshot_workspace: Path) -> dict[str, Any] | None:
     manifest_path = snapshot_workspace / "corpus_import_manifest.json"
     if not manifest_path.exists():
-        raise ValidationError(f"Existing snapshot workspace has no import manifest: {manifest_path}")
+        return None
     manifest = read_manifest(manifest_path)
     documents_path = Path(str(manifest.get("documents_path", snapshot_workspace / "documents")))
     _validate_reusable_manifest(descriptor, manifest, documents_path)
