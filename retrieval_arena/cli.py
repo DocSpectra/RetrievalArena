@@ -8,6 +8,7 @@ from .commands import (
     git_comparison_plan,
     git_provenance,
     replay_compare,
+    retrieval_drift,
     run_experiment,
     snapshot_diff,
     snapshot_manifest,
@@ -43,6 +44,12 @@ def build_parser() -> argparse.ArgumentParser:
     replay_compare.add_argument("--expected", required=True, help="Expected run directory.")
     replay_compare.add_argument("--actual", required=True, help="Actual run directory.")
     replay_compare.add_argument("--out", help="Optional path for replay_fidelity_report.json.")
+    drift = subparsers.add_parser("drift", help="Compare retrieval behavior across completed runs.")
+    drift_subparsers = drift.add_subparsers(dest="drift_command", required=True)
+    drift_compare = drift_subparsers.add_parser("compare", help="Write retrieval drift reports for two run directories.")
+    drift_compare.add_argument("--before-run", required=True, help="Before run directory.")
+    drift_compare.add_argument("--after-run", required=True, help="After run directory.")
+    drift_compare.add_argument("--out-dir", help="Directory for retrieval_drift reports.")
     corpus = subparsers.add_parser("corpus", help="Import and compare corpus snapshots.")
     corpus_subparsers = corpus.add_subparsers(dest="corpus_command", required=True)
     corpus_compare = corpus_subparsers.add_parser("compare-snapshots", help="Run a corpus source comparison plan.")
@@ -99,6 +106,13 @@ def main(argv: list[str] | None = None) -> int:
                 Path(args.expected),
                 Path(args.actual),
                 out_path=Path(args.out) if args.out else None,
+            )
+            print(result["summary"])
+        elif args.command == "drift" and args.drift_command == "compare":
+            result = retrieval_drift(
+                Path(args.before_run),
+                Path(args.after_run),
+                out_dir=Path(args.out_dir) if args.out_dir else None,
             )
             print(result["summary"])
         elif args.command == "corpus" and args.corpus_command == "compare-snapshots":

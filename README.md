@@ -60,6 +60,25 @@ Use `overwrite_imports: false` in comparison plans to reuse existing imports
 when the import manifest, selected documents, requested ref, and clean Git
 source still match.
 
+## Retrieval drift comparison
+
+Completed run directories can be compared without rerunning retrieval:
+
+```cmd
+python -m retrieval_arena.cli drift compare --before-run RUN_DIR --after-run RUN_DIR --out-dir reports\drift
+```
+
+The command writes deterministic query-level and aggregate reports:
+
+```text
+retrieval_drift.jsonl
+retrieval_drift_summary.json
+retrieval_drift_summary.md
+```
+
+Optional support, evidence, graph-distance, and action-trace signals are marked
+unavailable when the corresponding fields or artifacts are absent.
+
 ## Architecture
 
 The high-level BigData observability flow is documented as a Mermaid diagram in

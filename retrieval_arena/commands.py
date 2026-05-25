@@ -5,6 +5,7 @@ from typing import Any
 
 from .git_provenance import describe_git_provenance, plan_git_comparison
 from .harness import run_config, validate_phase1
+from .drift import compare_retrieval_runs
 from .replay_compare import compare_run_dirs
 from .snapshot_diff import compare_snapshot_bundles
 from .snapshots import write_corpus_snapshot_manifest, write_graph_snapshot_manifest, write_support_surface_manifest
@@ -39,6 +40,22 @@ def replay_compare(expected_run_dir: Path, actual_run_dir: Path, *, out_path: Pa
         "summary": f"Replay fidelity {status}: {summary['changed_artifact_count']} changed artifacts, {summary['changed_question_count']} changed questions",
         "report": report,
         "written_artifacts": [str(out_path)] if out_path is not None else [],
+    }
+
+
+def retrieval_drift(before_run_dir: Path, after_run_dir: Path, *, out_dir: Path | None = None) -> dict[str, Any]:
+    report = compare_retrieval_runs(before_run_dir, after_run_dir, out_dir=out_dir)
+    summary = report["summary"]
+    return {
+        "ok": True,
+        "summary": (
+            "Retrieval drift compared "
+            f"{summary['query_count']} queries: "
+            f"mean top-k Jaccard {summary['mean_top_k_jaccard']}, "
+            f"mean ordered overlap {summary['mean_ordered_top_k_overlap']}"
+        ),
+        "report": report,
+        "written_artifacts": report["written_artifacts"],
     }
 
 
