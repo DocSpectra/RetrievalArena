@@ -1,0 +1,167 @@
+from __future__ import annotations
+
+import shutil
+import subprocess
+from pathlib import Path
+from typing import Any
+
+from ..errors import RetrievalArenaError, ValidationError
+from ..hashing import sha256_file, sha256_json
+from ..manifests import write_manifest
+from ..snapshots import corpus_doc_id, utc_now_iso
+from .sources import CorpusSourceDescriptor
+
+
+IMPORT_SCHEMA_VERSION = "retrieval_arena.corpus_import_manifest.v1"
+
+
+def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str | None = None) -> dict[str, Any]:
+    snapshot_workspace = descriptor.destination_workspace / descriptor.corpus_id / descriptor.snapshot_id
+    source_workspace = snapshot_workspace / "source"
+    documents_workspace = snapshot_workspace / "documents"
+    if snapshot_workspace.exists():
+        shutil.rmtree(snapshot_workspace)
+    source_workspace.mkdir(parents=True)
+    documents_workspace.mkdir(parents=True)
+
+    provenance = _materialize_source(descriptor, source_workspace)
+    selection_root = _selection_root(source_workspace, descriptor.docs_root)
+    selected_files = _select_files(selection_root, include=descriptor.include, exclude=descriptor.exclude)
+    inventory: list[dict[str, Any]] = []
+    for source_file in selected_files:
+        relative_path = source_file.relative_to(selection_root).as_posix()
+        destination = documents_workspace / relative_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_file, destination)
+        inventory.append(
+            {
+                "path": relative_path,
+                "doc_id": corpus_doc_id(relative_path),
+                "size_bytes": destination.stat().st_size,
+                "sha256": sha256_file(destination),
+            }
+        )
+    inventory = sorted(inventory, key=lambda item: item["path"])
+    manifest = {
+        "schema_version": IMPORT_SCHEMA_VERSION,
+        "created_at": created_at or utc_now_iso(),
+        "manifest_type": "corpus_import",
+        "corpus_id": descriptor.corpus_id,
+        "snapshot_id": descriptor.snapshot_id,
+        "source_type": descriptor.source_type,
+        "source_url": descriptor.source_url,
+        "source_path": str(descriptor.source_path) if descriptor.source_path else None,
+        "requested_ref": descriptor.requested_ref,
+        "docs_root": descriptor.docs_root,
+        "include": list(descriptor.include),
+        "exclude": list(descriptor.exclude),
+        "snapshot_workspace": str(snapshot_workspace.resolve()),
+        "materialized_source_path": str(source_workspace.resolve()),
+        "documents_path": str(documents_workspace.resolve()),
+        "source_provenance": provenance,
+        "selected_file_count": len(inventory),
+        "selected_size_bytes": sum(int(item["size_bytes"]) for item in inventory),
+        "file_inventory": inventory,
+        "content_hash": sha256_json({"files": inventory}),
+        "stage_status": "ok",
+    }
+    written = write_manifest(snapshot_workspace / "corpus_import_manifest.json", manifest)
+    return {"manifest": written, "manifest_path": snapshot_workspace / "corpus_import_manifest.json", "documents_path": documents_workspace}
+
+
+def _materialize_source(descriptor: CorpusSourceDescriptor, source_workspace: Path) -> dict[str, Any]:
+    if descriptor.source_type == "local":
+        assert descriptor.source_path is not None
+        if not descriptor.source_path.is_dir():
+            raise ValidationError(f"Local source path must be a directory: {descriptor.source_path}")
+        _copy_tree_contents(descriptor.source_path, source_workspace)
+        return {
+            "source_kind": "local_directory",
+            "source_path": str(descriptor.source_path),
+            "source_hash": _source_tree_hash(descriptor.source_path),
+            "mutates_active_checkout": False,
+        }
+    return _materialize_git_source(descriptor, source_workspace)
+
+
+def _materialize_git_source(descriptor: CorpusSourceDescriptor, source_workspace: Path) -> dict[str, Any]:
+    source = descriptor.source_path or Path(str(descriptor.source_url))
+    if descriptor.source_path is None:
+        raise RetrievalArenaError("Remote Git clone support is scaffolded; provide source_path for offline imports.")
+    if not descriptor.source_path.is_dir():
+        raise ValidationError(f"Git source path must be a directory: {descriptor.source_path}")
+    ref = descriptor.requested_ref or "HEAD"
+    commit = _git_output(descriptor.source_path, ["rev-parse", "--verify", f"{ref}^{{commit}}"])
+    archive = subprocess.run(
+        ["git", "-C", str(descriptor.source_path), "archive", "--format=tar", commit],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if archive.returncode != 0:
+        detail = archive.stderr.decode("utf-8", errors="replace").strip()
+        raise RetrievalArenaError(f"Unable to archive Git source {source}: {detail}")
+    extract = subprocess.run(
+        ["tar", "-xf", "-", "-C", str(source_workspace)],
+        input=archive.stdout,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if extract.returncode != 0:
+        detail = extract.stderr.decode("utf-8", errors="replace").strip()
+        raise RetrievalArenaError(f"Unable to extract Git archive: {detail}")
+    return {
+        "source_kind": "git_local_archive",
+        "source_path": str(descriptor.source_path),
+        "source_url": descriptor.source_url,
+        "requested_ref": descriptor.requested_ref,
+        "resolved_commit": commit,
+        "mutates_active_checkout": False,
+    }
+
+
+def _copy_tree_contents(source: Path, destination: Path) -> None:
+    for item in source.iterdir():
+        target = destination / item.name
+        if item.is_dir():
+            shutil.copytree(item, target)
+        else:
+            shutil.copy2(item, target)
+
+
+def _select_files(root: Path, *, include: tuple[str, ...], exclude: tuple[str, ...]) -> list[Path]:
+    if not root.is_dir():
+        raise ValidationError(f"docs_root does not exist in materialized source: {root}")
+    files: list[Path] = []
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(root).as_posix()
+        if not any(Path(relative).match(pattern) for pattern in include):
+            continue
+        if any(Path(relative).match(pattern) for pattern in exclude):
+            continue
+        files.append(path)
+    return sorted(files, key=lambda path: path.relative_to(root).as_posix())
+
+
+def _selection_root(source_workspace: Path, docs_root: str | None) -> Path:
+    return source_workspace / docs_root if docs_root else source_workspace
+
+
+def _source_tree_hash(path: Path) -> str:
+    entries = []
+    for item in path.rglob("*"):
+        if item.is_file():
+            entries.append({"path": item.relative_to(path).as_posix(), "size_bytes": item.stat().st_size, "sha256": sha256_file(item)})
+    return sha256_json({"files": sorted(entries, key=lambda item: item["path"])})
+
+
+def _git_output(repo: Path, args: list[str]) -> str:
+    try:
+        result = subprocess.run(["git", "-C", str(repo), *args], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except OSError as exc:
+        raise RetrievalArenaError("Git executable is not available for corpus import.") from exc
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip()
+        raise RetrievalArenaError(detail)
+    return result.stdout.strip()

@@ -4,13 +4,17 @@ import argparse
 import sys
 from pathlib import Path
 
+from .commands import (
+    git_comparison_plan,
+    git_provenance,
+    replay_compare,
+    run_experiment,
+    snapshot_diff,
+    snapshot_manifest,
+    validate_experiment,
+)
 from .errors import RetrievalArenaError
-from .git_provenance import describe_git_provenance, plan_git_comparison
-from .harness import run_config, validate_phase1
-from .replay_compare import compare_run_dirs
 from .replay_manifests import manifest_json_text
-from .snapshot_diff import compare_snapshot_bundles
-from .snapshots import write_corpus_snapshot_manifest, write_graph_snapshot_manifest, write_support_surface_manifest
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -70,99 +74,58 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "run":
             if args.run_command == "compare-git":
-                plan = plan_git_comparison(
+                result = git_comparison_plan(
                     Path(args.repo),
                     left_ref=args.left_ref,
                     right_ref=args.right_ref,
                     output_dir=Path(args.out_dir) if args.out_dir else None,
                 )
-                print(manifest_json_text(plan), end="")
+                print(manifest_json_text(result["plan"]), end="")
             else:
                 if not args.config:
                     raise RetrievalArenaError("run requires --config.")
-                rows = run_config(args.config)
-                print(f"RetrievalArena run complete: {len(rows)} dataset/test runs")
+                print(run_experiment(args.config)["summary"])
         elif args.command == "validate":
-            validate_phase1(args.config)
-            print("RetrievalArena Phase 1 validation passed")
+            print(validate_experiment(args.config)["summary"])
         elif args.command == "provenance" and args.provenance_command == "git":
-            print(manifest_json_text(describe_git_provenance(Path(args.path), ref=args.ref)), end="")
+            print(manifest_json_text(git_provenance(Path(args.path), ref=args.ref)["provenance"]), end="")
         elif args.command == "replay" and args.replay_command == "compare":
-            report = compare_run_dirs(
+            result = replay_compare(
                 Path(args.expected),
                 Path(args.actual),
                 out_path=Path(args.out) if args.out else None,
             )
-            status = "PASSED" if report["passed"] else "FAILED"
-            changed_artifacts = report["summary"]["changed_artifact_count"]
-            changed_questions = report["summary"]["changed_question_count"]
-            print(f"Replay fidelity {status}: {changed_artifacts} changed artifacts, {changed_questions} changed questions")
+            print(result["summary"])
         elif args.command == "snapshot" and args.snapshot_command == "manifest":
             dataset_path = Path(args.dataset)
             out_dir = Path(args.out_dir)
             requested_types = {item.strip() for item in args.types.split(",") if item.strip()}
-            valid_types = {"corpus", "graph", "support"}
-            unknown_types = requested_types - valid_types
-            if unknown_types:
-                raise RetrievalArenaError(f"Unknown snapshot manifest types: {sorted(unknown_types)}")
-            written: list[Path] = []
-            if "corpus" in requested_types:
-                write_corpus_snapshot_manifest(
-                    out_dir / "corpus_snapshot_manifest.json",
-                    dataset_path,
-                    corpus_id=args.corpus_id,
-                    snapshot_id=args.snapshot_id,
-                    extraction_version=args.extraction_version,
-                    parser_version=args.parser_version,
-                    source_name=args.source_name,
-                    source_url=args.source_url,
-                    source_commit=args.source_commit,
-                    source_release=args.source_release,
-                    source_timestamp=args.source_timestamp,
-                )
-                written.append(out_dir / "corpus_snapshot_manifest.json")
-            corpus_snapshot_id = args.corpus_snapshot_id or args.snapshot_id
-            if "graph" in requested_types:
-                write_graph_snapshot_manifest(
-                    out_dir / "graph_snapshot_manifest.json",
-                    dataset_path,
-                    corpus_id=args.corpus_id,
-                    snapshot_id=args.snapshot_id,
-                    corpus_snapshot_id=corpus_snapshot_id,
-                    graph_extraction_version=args.graph_extraction_version,
-                )
-                written.append(out_dir / "graph_snapshot_manifest.json")
-            if "support" in requested_types:
-                if not args.query_set_id:
-                    raise RetrievalArenaError("--query-set-id is required when writing support manifests.")
-                write_support_surface_manifest(
-                    out_dir / "support_surface_manifest.json",
-                    dataset_path,
-                    corpus_id=args.corpus_id,
-                    snapshot_id=args.snapshot_id,
-                    corpus_snapshot_id=corpus_snapshot_id,
-                    query_set_id=args.query_set_id,
-                )
-                written.append(out_dir / "support_surface_manifest.json")
-            print(f"RetrievalArena snapshot manifests written: {len(written)}")
+            result = snapshot_manifest(
+                dataset_path,
+                out_dir,
+                corpus_id=args.corpus_id,
+                snapshot_id=args.snapshot_id,
+                corpus_snapshot_id=args.corpus_snapshot_id,
+                query_set_id=args.query_set_id,
+                extraction_version=args.extraction_version,
+                parser_version=args.parser_version,
+                graph_extraction_version=args.graph_extraction_version,
+                source_name=args.source_name,
+                source_url=args.source_url,
+                source_commit=args.source_commit,
+                source_release=args.source_release,
+                source_timestamp=args.source_timestamp,
+                manifest_types=requested_types,
+            )
+            print(result["summary"])
         elif args.command == "snapshot" and args.snapshot_command == "diff":
-            report = compare_snapshot_bundles(
+            result = snapshot_diff(
                 Path(args.before),
                 Path(args.after),
                 out_path=Path(args.out) if args.out else None,
                 markdown_out_path=Path(args.markdown_out) if args.markdown_out else None,
             )
-            status = "PASSED" if report["passed"] else "FAILED"
-            summary = report["summary"]
-            print(
-                "Snapshot diff "
-                f"{status}: files +{summary['added_file_count']} "
-                f"-{summary['removed_file_count']} "
-                f"changed {summary['changed_file_count']}; "
-                f"edges +{summary['added_edge_count']} "
-                f"-{summary['removed_edge_count']}; "
-                f"support questions changed {summary['changed_support_question_count']}"
-            )
+            print(result["summary"])
         return 0
     except RetrievalArenaError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

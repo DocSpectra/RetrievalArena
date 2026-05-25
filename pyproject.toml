@@ -14,7 +14,7 @@ dependencies = []
 retrieval-arena = "retrieval_arena.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["retrieval_arena*"]
+include = ["retrieval_arena*", "studies*"]
 
 [tool.pytest.ini_options]
 testpaths = ["unit_tests"]
