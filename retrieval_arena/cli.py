@@ -9,6 +9,7 @@ from .git_provenance import describe_git_provenance, plan_git_comparison
 from .harness import run_config, validate_phase1
 from .replay_compare import compare_run_dirs
 from .replay_manifests import manifest_json_text
+from .snapshot_diff import compare_snapshot_bundles
 from .snapshots import write_corpus_snapshot_manifest, write_graph_snapshot_manifest, write_support_surface_manifest
 
 
@@ -55,6 +56,11 @@ def build_parser() -> argparse.ArgumentParser:
     manifest.add_argument("--source-release")
     manifest.add_argument("--source-timestamp")
     manifest.add_argument("--types", default="corpus,graph,support", help="Comma-separated manifest types: corpus,graph,support.")
+    snapshot_diff = snapshot_subparsers.add_parser("diff", help="Compare two completed snapshot manifest bundles.")
+    snapshot_diff.add_argument("--before", required=True, help="Before snapshot directory or corpus manifest path.")
+    snapshot_diff.add_argument("--after", required=True, help="After snapshot directory or corpus manifest path.")
+    snapshot_diff.add_argument("--out", help="Optional path for snapshot_diff.json.")
+    snapshot_diff.add_argument("--markdown-out", help="Optional path for snapshot_diff.md.")
     return parser
 
 
@@ -139,6 +145,24 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 written.append(out_dir / "support_surface_manifest.json")
             print(f"RetrievalArena snapshot manifests written: {len(written)}")
+        elif args.command == "snapshot" and args.snapshot_command == "diff":
+            report = compare_snapshot_bundles(
+                Path(args.before),
+                Path(args.after),
+                out_path=Path(args.out) if args.out else None,
+                markdown_out_path=Path(args.markdown_out) if args.markdown_out else None,
+            )
+            status = "PASSED" if report["passed"] else "FAILED"
+            summary = report["summary"]
+            print(
+                "Snapshot diff "
+                f"{status}: files +{summary['added_file_count']} "
+                f"-{summary['removed_file_count']} "
+                f"changed {summary['changed_file_count']}; "
+                f"edges +{summary['added_edge_count']} "
+                f"-{summary['removed_edge_count']}; "
+                f"support questions changed {summary['changed_support_question_count']}"
+            )
         return 0
     except RetrievalArenaError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
