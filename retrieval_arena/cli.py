@@ -7,6 +7,7 @@ from pathlib import Path
 from .errors import RetrievalArenaError
 from .git_provenance import describe_git_provenance, plan_git_comparison
 from .harness import run_config, validate_phase1
+from .replay_compare import compare_run_dirs
 from .replay_manifests import manifest_json_text
 from .snapshots import write_corpus_snapshot_manifest, write_graph_snapshot_manifest, write_support_surface_manifest
 
@@ -30,6 +31,12 @@ def build_parser() -> argparse.ArgumentParser:
     git = provenance_subparsers.add_parser("git", help="Print Git provenance for a path.")
     git.add_argument("--path", required=True, help="Path to inspect.")
     git.add_argument("--ref", help="Optional ref to validate without checkout.")
+    replay = subparsers.add_parser("replay", help="Compare replay outputs.")
+    replay_subparsers = replay.add_subparsers(dest="replay_command", required=True)
+    replay_compare = replay_subparsers.add_parser("compare", help="Compare two completed run directories.")
+    replay_compare.add_argument("--expected", required=True, help="Expected run directory.")
+    replay_compare.add_argument("--actual", required=True, help="Actual run directory.")
+    replay_compare.add_argument("--out", help="Optional path for replay_fidelity_report.json.")
     snapshot = subparsers.add_parser("snapshot", help="Generate snapshot observability artifacts.")
     snapshot_subparsers = snapshot.add_subparsers(dest="snapshot_command", required=True)
     manifest = snapshot_subparsers.add_parser("manifest", help="Write snapshot manifests for a prepared dataset.")
@@ -74,6 +81,16 @@ def main(argv: list[str] | None = None) -> int:
             print("RetrievalArena Phase 1 validation passed")
         elif args.command == "provenance" and args.provenance_command == "git":
             print(manifest_json_text(describe_git_provenance(Path(args.path), ref=args.ref)), end="")
+        elif args.command == "replay" and args.replay_command == "compare":
+            report = compare_run_dirs(
+                Path(args.expected),
+                Path(args.actual),
+                out_path=Path(args.out) if args.out else None,
+            )
+            status = "PASSED" if report["passed"] else "FAILED"
+            changed_artifacts = report["summary"]["changed_artifact_count"]
+            changed_questions = report["summary"]["changed_question_count"]
+            print(f"Replay fidelity {status}: {changed_artifacts} changed artifacts, {changed_questions} changed questions")
         elif args.command == "snapshot" and args.snapshot_command == "manifest":
             dataset_path = Path(args.dataset)
             out_dir = Path(args.out_dir)
