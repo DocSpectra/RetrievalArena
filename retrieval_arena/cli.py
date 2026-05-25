@@ -5,7 +5,9 @@ import sys
 from pathlib import Path
 
 from .errors import RetrievalArenaError
+from .git_provenance import describe_git_provenance, plan_git_comparison
 from .harness import run_config, validate_phase1
+from .replay_manifests import manifest_json_text
 from .snapshots import write_corpus_snapshot_manifest, write_graph_snapshot_manifest, write_support_surface_manifest
 
 
@@ -13,9 +15,21 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="retrieval-arena")
     subparsers = parser.add_subparsers(dest="command", required=True)
     run = subparsers.add_parser("run", help="Run a RetrievalArena experiment.")
-    run.add_argument("--config", required=True, help="Path to experiment YAML config.")
+    run.add_argument("--config", help="Path to experiment YAML config.")
+    run_subparsers = run.add_subparsers(dest="run_command")
+    compare_git = run_subparsers.add_parser("compare-git", help="Plan a branch-aware comparison without checkout.")
+    compare_git.add_argument("--config", required=True, help="Path to experiment YAML config.")
+    compare_git.add_argument("--left-ref", required=True, help="Left Git ref.")
+    compare_git.add_argument("--right-ref", required=True, help="Right Git ref.")
+    compare_git.add_argument("--repo", default=".", help="Git repository path to resolve refs.")
+    compare_git.add_argument("--out-dir", help="Base output directory for planned isolated runs.")
     validate = subparsers.add_parser("validate", help="Run Phase 1 automated validation gate.")
     validate.add_argument("--config", required=True, help="Path to experiment YAML config.")
+    provenance = subparsers.add_parser("provenance", help="Inspect provenance sources.")
+    provenance_subparsers = provenance.add_subparsers(dest="provenance_command", required=True)
+    git = provenance_subparsers.add_parser("git", help="Print Git provenance for a path.")
+    git.add_argument("--path", required=True, help="Path to inspect.")
+    git.add_argument("--ref", help="Optional ref to validate without checkout.")
     snapshot = subparsers.add_parser("snapshot", help="Generate snapshot observability artifacts.")
     snapshot_subparsers = snapshot.add_subparsers(dest="snapshot_command", required=True)
     manifest = snapshot_subparsers.add_parser("manifest", help="Write snapshot manifests for a prepared dataset.")
@@ -42,11 +56,24 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "run":
-            rows = run_config(args.config)
-            print(f"RetrievalArena run complete: {len(rows)} dataset/test runs")
+            if args.run_command == "compare-git":
+                plan = plan_git_comparison(
+                    Path(args.repo),
+                    left_ref=args.left_ref,
+                    right_ref=args.right_ref,
+                    output_dir=Path(args.out_dir) if args.out_dir else None,
+                )
+                print(manifest_json_text(plan), end="")
+            else:
+                if not args.config:
+                    raise RetrievalArenaError("run requires --config.")
+                rows = run_config(args.config)
+                print(f"RetrievalArena run complete: {len(rows)} dataset/test runs")
         elif args.command == "validate":
             validate_phase1(args.config)
             print("RetrievalArena Phase 1 validation passed")
+        elif args.command == "provenance" and args.provenance_command == "git":
+            print(manifest_json_text(describe_git_provenance(Path(args.path), ref=args.ref)), end="")
         elif args.command == "snapshot" and args.snapshot_command == "manifest":
             dataset_path = Path(args.dataset)
             out_dir = Path(args.out_dir)

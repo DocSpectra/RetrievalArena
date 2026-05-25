@@ -11,6 +11,11 @@ from .errors import ValidationError
 class DatasetConfig:
     name: str
     path: Path
+    query_set_id: str | None = None
+    corpus_snapshot_manifest: Path | None = None
+    graph_snapshot_manifest: Path | None = None
+    support_surface_manifest: Path | None = None
+    git_ref: str | None = None
 
 
 @dataclass(frozen=True)
@@ -44,6 +49,8 @@ class ExperimentConfig:
     scoring: ScoringConfig
     output_dir: Path
     config_path: Path
+    retrieval_arena_git_ref: str | None = None
+    config_git_ref: str | None = None
 
 
 def _resolve_path(value: str, base: Path) -> Path:
@@ -154,8 +161,30 @@ def parse_config(raw: dict[str, Any], config_path: Path) -> ExperimentConfig:
             raise ValidationError(f"Duplicate dataset name: {name}")
         if not isinstance(path_value, str) or not path_value:
             raise ValidationError(f"Dataset {name} requires path.")
+        query_set_id = item.get("query_set_id")
+        if query_set_id is not None and not isinstance(query_set_id, str):
+            raise ValidationError(f"Dataset {name} query_set_id must be a string when present.")
+        git_ref = item.get("git_ref")
+        if git_ref is not None and not isinstance(git_ref, str):
+            raise ValidationError(f"Dataset {name} git_ref must be a string when present.")
+        manifest_paths: dict[str, Path | None] = {}
+        for key in ["corpus_snapshot_manifest", "graph_snapshot_manifest", "support_surface_manifest"]:
+            value = item.get(key)
+            if value is not None and not isinstance(value, str):
+                raise ValidationError(f"Dataset {name} {key} must be a string when present.")
+            manifest_paths[key] = _resolve_path(value, base) if value else None
         seen_datasets.add(name)
-        datasets.append(DatasetConfig(name=name, path=_resolve_path(path_value, base)))
+        datasets.append(
+            DatasetConfig(
+                name=name,
+                path=_resolve_path(path_value, base),
+                query_set_id=query_set_id,
+                corpus_snapshot_manifest=manifest_paths["corpus_snapshot_manifest"],
+                graph_snapshot_manifest=manifest_paths["graph_snapshot_manifest"],
+                support_surface_manifest=manifest_paths["support_surface_manifest"],
+                git_ref=git_ref,
+            )
+        )
 
     tests_raw = raw.get("tests")
     if not isinstance(tests_raw, list) or not tests_raw:
@@ -215,6 +244,12 @@ def parse_config(raw: dict[str, Any], config_path: Path) -> ExperimentConfig:
     output_dir_raw = raw.get("output_dir", "results")
     if not isinstance(output_dir_raw, str) or not output_dir_raw:
         raise ValidationError("output_dir must be a non-empty string.")
+    retrieval_arena_git_ref = raw.get("retrieval_arena_git_ref")
+    if retrieval_arena_git_ref is not None and not isinstance(retrieval_arena_git_ref, str):
+        raise ValidationError("retrieval_arena_git_ref must be a string when present.")
+    config_git_ref = raw.get("config_git_ref")
+    if config_git_ref is not None and not isinstance(config_git_ref, str):
+        raise ValidationError("config_git_ref must be a string when present.")
 
     return ExperimentConfig(
         experiment_name=experiment_name,
@@ -223,4 +258,6 @@ def parse_config(raw: dict[str, Any], config_path: Path) -> ExperimentConfig:
         scoring=ScoringConfig(method=method, match_threshold=float(threshold)),
         output_dir=_resolve_path(output_dir_raw, base),
         config_path=config_path.resolve(),
+        retrieval_arena_git_ref=retrieval_arena_git_ref,
+        config_git_ref=config_git_ref,
     )
