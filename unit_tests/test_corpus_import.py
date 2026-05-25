@@ -11,6 +11,7 @@ from typing import Iterator
 from retrieval_arena.corpus.dataset_export import build_graph_transformation, build_support_surface, prepare_dataset
 from retrieval_arena.corpus.importers import import_corpus_source
 from retrieval_arena.corpus.sources import CorpusSourceDescriptor
+from retrieval_arena.errors import ValidationError
 from retrieval_arena.manifests import read_manifest
 from studies.bigdata2026.toy_study import run_toy_study
 
@@ -113,6 +114,48 @@ class CorpusImportTests(unittest.TestCase):
             self.assertEqual((after["documents_path"] / "install.md").read_text(encoding="utf-8"), "Use uv.\n")
             self.assertEqual(read_manifest(before["manifest_path"])["source_provenance"]["resolved_commit"], first)
 
+    def test_git_source_import_can_reuse_clean_existing_snapshot(self):
+        with self.workspace_tempdir() as tmp:
+            repo, commit = self.git_repo_with_two_commits(tmp)
+            descriptor = CorpusSourceDescriptor(
+                corpus_id="toy",
+                snapshot_id="before",
+                source_type="git",
+                source_path=repo,
+                requested_ref=commit,
+                docs_root="docs",
+                destination_workspace=tmp / "workspace",
+                include=("*.md",),
+            )
+            first = import_corpus_source(descriptor, created_at=CREATED_AT)
+            sentinel = tmp / "workspace" / "toy" / "before" / "source" / "sentinel.txt"
+            sentinel.write_text("kept on reuse\n", encoding="utf-8")
+
+            second = import_corpus_source(descriptor, created_at=CREATED_AT, overwrite=False)
+
+            self.assertTrue(second["reused"])
+            self.assertTrue(sentinel.exists())
+            self.assertEqual(first["manifest"]["manifest_hash"], second["manifest"]["manifest_hash"])
+
+    def test_git_source_import_refuses_reuse_when_source_repo_is_dirty(self):
+        with self.workspace_tempdir() as tmp:
+            repo, commit = self.git_repo_with_two_commits(tmp)
+            descriptor = CorpusSourceDescriptor(
+                corpus_id="toy",
+                snapshot_id="before",
+                source_type="git",
+                source_path=repo,
+                requested_ref=commit,
+                docs_root="docs",
+                destination_workspace=tmp / "workspace",
+                include=("*.md",),
+            )
+            import_corpus_source(descriptor, created_at=CREATED_AT)
+            (repo / "untracked.md").write_text("dirty\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(ValidationError, "must be clean"):
+                import_corpus_source(descriptor, created_at=CREATED_AT, overwrite=False)
+
     def test_dataset_preparation_and_conditional_hooks_write_manifests(self):
         with self.workspace_tempdir() as tmp:
             source = tmp / "source"
@@ -172,6 +215,23 @@ class CorpusImportTests(unittest.TestCase):
         result = subprocess.run(["git", "-C", str(repo), *args], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.assertEqual(result.returncode, 0, result.stderr)
         return result
+
+    def git_repo_with_two_commits(self, tmp: Path) -> tuple[Path, str]:
+        repo = tmp / "repo"
+        repo.mkdir()
+        self.git(repo, "init")
+        self.git(repo, "config", "user.email", "toy@example.com")
+        self.git(repo, "config", "user.name", "Toy User")
+        self.git(repo, "config", "commit.gpgsign", "false")
+        self.git(repo, "config", "tag.gpgSign", "false")
+        (repo / "docs").mkdir()
+        (repo / "docs" / "install.md").write_text("Use pip.\n", encoding="utf-8")
+        self.git(repo, "add", "docs/install.md")
+        self.git(repo, "commit", "-m", "first")
+        first = self.git(repo, "rev-parse", "HEAD").stdout.strip()
+        (repo / "docs" / "install.md").write_text("Use uv.\n", encoding="utf-8")
+        self.git(repo, "commit", "-am", "second")
+        return repo, first
 
 
 if __name__ == "__main__":

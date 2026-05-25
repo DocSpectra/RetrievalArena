@@ -7,7 +7,7 @@ from typing import Any
 
 from ..errors import RetrievalArenaError, ValidationError
 from ..hashing import sha256_file, sha256_json
-from ..manifests import write_manifest
+from ..manifests import read_manifest, write_manifest
 from ..snapshots import corpus_doc_id, utc_now_iso
 from .sources import CorpusSourceDescriptor
 
@@ -15,11 +15,13 @@ from .sources import CorpusSourceDescriptor
 IMPORT_SCHEMA_VERSION = "retrieval_arena.corpus_import_manifest.v1"
 
 
-def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str | None = None) -> dict[str, Any]:
+def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str | None = None, overwrite: bool = True) -> dict[str, Any]:
     snapshot_workspace = descriptor.destination_workspace / descriptor.corpus_id / descriptor.snapshot_id
     source_workspace = snapshot_workspace / "source"
     documents_workspace = snapshot_workspace / "documents"
     if snapshot_workspace.exists():
+        if not overwrite:
+            return _reuse_existing_import(descriptor, snapshot_workspace)
         shutil.rmtree(snapshot_workspace)
     source_workspace.mkdir(parents=True)
     documents_workspace.mkdir(parents=True)
@@ -66,7 +68,60 @@ def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str 
         "stage_status": "ok",
     }
     written = write_manifest(snapshot_workspace / "corpus_import_manifest.json", manifest)
-    return {"manifest": written, "manifest_path": snapshot_workspace / "corpus_import_manifest.json", "documents_path": documents_workspace}
+    return {
+        "manifest": written,
+        "manifest_path": snapshot_workspace / "corpus_import_manifest.json",
+        "documents_path": documents_workspace,
+        "reused": False,
+    }
+
+
+def _reuse_existing_import(descriptor: CorpusSourceDescriptor, snapshot_workspace: Path) -> dict[str, Any]:
+    manifest_path = snapshot_workspace / "corpus_import_manifest.json"
+    if not manifest_path.exists():
+        raise ValidationError(f"Existing snapshot workspace has no import manifest: {manifest_path}")
+    manifest = read_manifest(manifest_path)
+    documents_path = Path(str(manifest.get("documents_path", snapshot_workspace / "documents")))
+    _validate_reusable_manifest(descriptor, manifest, documents_path)
+    return {
+        "manifest": manifest,
+        "manifest_path": manifest_path,
+        "documents_path": documents_path,
+        "reused": True,
+    }
+
+
+def _validate_reusable_manifest(descriptor: CorpusSourceDescriptor, manifest: dict[str, Any], documents_path: Path) -> None:
+    expected = {
+        "manifest_type": "corpus_import",
+        "corpus_id": descriptor.corpus_id,
+        "snapshot_id": descriptor.snapshot_id,
+        "source_type": descriptor.source_type,
+        "source_url": descriptor.source_url,
+        "source_path": str(descriptor.source_path) if descriptor.source_path else None,
+        "requested_ref": descriptor.requested_ref,
+        "docs_root": descriptor.docs_root,
+        "include": list(descriptor.include),
+        "exclude": list(descriptor.exclude),
+    }
+    for key, value in expected.items():
+        if manifest.get(key) != value:
+            raise ValidationError(f"Existing import does not match requested descriptor field: {key}")
+    if not documents_path.is_dir():
+        raise ValidationError(f"Existing import documents directory is missing: {documents_path}")
+    inventory = _documents_inventory(documents_path)
+    if inventory != manifest.get("file_inventory"):
+        raise ValidationError("Existing import documents no longer match corpus_import_manifest.json.")
+    if sha256_json({"files": inventory}) != manifest.get("content_hash"):
+        raise ValidationError("Existing import content hash does not match corpus_import_manifest.json.")
+    if descriptor.source_type == "git":
+        assert descriptor.source_path is not None
+        if not _git_worktree_clean(descriptor.source_path):
+            raise ValidationError(f"Git source worktree must be clean to reuse an existing import: {descriptor.source_path}")
+        ref = descriptor.requested_ref or "HEAD"
+        resolved_commit = _git_output(descriptor.source_path, ["rev-parse", "--verify", f"{ref}^{{commit}}"])
+        if manifest.get("source_provenance", {}).get("resolved_commit") != resolved_commit:
+            raise ValidationError("Existing import resolved commit does not match requested Git ref.")
 
 
 def _materialize_source(descriptor: CorpusSourceDescriptor, source_workspace: Path) -> dict[str, Any]:
@@ -115,6 +170,7 @@ def _materialize_git_source(descriptor: CorpusSourceDescriptor, source_workspace
         "source_url": descriptor.source_url,
         "requested_ref": descriptor.requested_ref,
         "resolved_commit": commit,
+        "source_worktree_clean": _git_worktree_clean(descriptor.source_path),
         "mutates_active_checkout": False,
     }
 
@@ -149,11 +205,23 @@ def _selection_root(source_workspace: Path, docs_root: str | None) -> Path:
 
 
 def _source_tree_hash(path: Path) -> str:
+    return sha256_json({"files": _documents_inventory(path)})
+
+
+def _documents_inventory(path: Path) -> list[dict[str, Any]]:
     entries = []
     for item in path.rglob("*"):
         if item.is_file():
-            entries.append({"path": item.relative_to(path).as_posix(), "size_bytes": item.stat().st_size, "sha256": sha256_file(item)})
-    return sha256_json({"files": sorted(entries, key=lambda item: item["path"])})
+            relative_path = item.relative_to(path).as_posix()
+            entries.append(
+                {
+                    "path": relative_path,
+                    "doc_id": corpus_doc_id(relative_path),
+                    "size_bytes": item.stat().st_size,
+                    "sha256": sha256_file(item),
+                }
+            )
+    return sorted(entries, key=lambda item: item["path"])
 
 
 def _git_output(repo: Path, args: list[str]) -> str:
@@ -165,3 +233,7 @@ def _git_output(repo: Path, args: list[str]) -> str:
         detail = result.stderr.strip() or result.stdout.strip()
         raise RetrievalArenaError(detail)
     return result.stdout.strip()
+
+
+def _git_worktree_clean(repo: Path) -> bool:
+    return _git_output(repo, ["status", "--porcelain", "--untracked-files=all"]) == ""
