@@ -1,0 +1,16 @@
+flowchart LR
+  source["Source descriptors\nGit refs or local paths"] --> import["Import\nmaterialize source snapshot\nselect files\nassign doc IDs"]
+  import --> import_manifest["Import manifest\nsource provenance\nfile inventory\ncontent hash"]
+  import_manifest --> transform["Transform\nprepare dataset\noptional graph\noptional support"]
+  transform --> snapshot["Snapshot manifests\ncorpus\ngraph\nsupport surface"]
+  snapshot --> test["Test\nretrieval runs\ncontainer outputs\nscoring"]
+  test --> replay["Replay manifests\nconfig\nsoftware\ninput/output hashes"]
+  snapshot --> analyze["Analyze\nsnapshot diff\ngraph/support drift\nretrieval drift"]
+  replay --> analyze
+  analyze --> audit["Audit and reports\nregressions\ncase studies\nsystems measurements"]
+
+  comparison["Comparison plans\nbefore descriptor\nafter descriptor\noutput dir"] --> import
+  command["Command layer\nCLI and studies"] --> import
+  command --> transform
+  command --> test
+  command --> analyze
