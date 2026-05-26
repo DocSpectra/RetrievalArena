@@ -13,6 +13,7 @@ from .commands import (
     run_experiment,
     snapshot_diff,
     snapshot_manifest,
+    systems_measurements,
     validate_experiment,
 )
 from .corpus.comparison import run_corpus_snapshot_comparison
@@ -60,6 +61,17 @@ def build_parser() -> argparse.ArgumentParser:
     audit_report.add_argument("--drift-summary", help="Optional existing retrieval_drift_summary.json path.")
     audit_report.add_argument("--snapshot-diff", help="Optional snapshot_diff.json path.")
     audit_report.add_argument("--out-dir", required=True, help="Directory for regression audit reports.")
+    measurements = subparsers.add_parser("measurements", help="Collect systems workload and artifact measurements.")
+    measurements_subparsers = measurements.add_subparsers(dest="measurements_command", required=True)
+    measurements_collect = measurements_subparsers.add_parser("collect", help="Write systems measurement reports.")
+    measurements_collect.add_argument("--snapshot-dir", help="Optional snapshot manifest directory.")
+    measurements_collect.add_argument("--run-dir", help="Optional completed run directory.")
+    measurements_collect.add_argument("--snapshot-diff", help="Optional snapshot_diff.json path.")
+    measurements_collect.add_argument("--drift-jsonl", help="Optional retrieval_drift.jsonl path.")
+    measurements_collect.add_argument("--drift-summary", help="Optional retrieval_drift_summary.json path.")
+    measurements_collect.add_argument("--audit-jsonl", help="Optional regression_audit.jsonl path.")
+    measurements_collect.add_argument("--audit-summary", help="Optional regression_audit_summary.json path.")
+    measurements_collect.add_argument("--out-dir", required=True, help="Directory for systems measurement reports.")
     corpus = subparsers.add_parser("corpus", help="Import and compare corpus snapshots.")
     corpus_subparsers = corpus.add_subparsers(dest="corpus_command", required=True)
     corpus_compare = corpus_subparsers.add_parser("compare-snapshots", help="Run a corpus source comparison plan.")
@@ -133,6 +145,18 @@ def main(argv: list[str] | None = None) -> int:
                 drift_jsonl=Path(args.drift_jsonl) if args.drift_jsonl else None,
                 drift_summary_json=Path(args.drift_summary) if args.drift_summary else None,
                 snapshot_diff_json=Path(args.snapshot_diff) if args.snapshot_diff else None,
+            )
+            print(result["summary"])
+        elif args.command == "measurements" and args.measurements_command == "collect":
+            result = systems_measurements(
+                Path(args.out_dir),
+                snapshot_dir=Path(args.snapshot_dir) if args.snapshot_dir else None,
+                run_dir=Path(args.run_dir) if args.run_dir else None,
+                snapshot_diff_json=Path(args.snapshot_diff) if args.snapshot_diff else None,
+                drift_jsonl=Path(args.drift_jsonl) if args.drift_jsonl else None,
+                drift_summary_json=Path(args.drift_summary) if args.drift_summary else None,
+                audit_jsonl=Path(args.audit_jsonl) if args.audit_jsonl else None,
+                audit_summary_json=Path(args.audit_summary) if args.audit_summary else None,
             )
             print(result["summary"])
         elif args.command == "corpus" and args.corpus_command == "compare-snapshots":

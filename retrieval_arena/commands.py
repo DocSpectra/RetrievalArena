@@ -7,6 +7,7 @@ from .git_provenance import describe_git_provenance, plan_git_comparison
 from .harness import run_config, validate_phase1
 from .audit import build_regression_audit
 from .drift import compare_retrieval_runs
+from .measurements import collect_systems_measurements
 from .replay_compare import compare_run_dirs
 from .snapshot_diff import compare_snapshot_bundles
 from .snapshots import write_corpus_snapshot_manifest, write_graph_snapshot_manifest, write_support_surface_manifest
@@ -84,6 +85,44 @@ def regression_audit(
             "Regression audit wrote "
             f"{summary['query_count']} query rows with "
             f"{summary['labeled_query_count']} labeled behavior-change candidates"
+        ),
+        "report": report,
+        "written_artifacts": report["written_artifacts"],
+    }
+
+
+def systems_measurements(
+    out_dir: Path,
+    *,
+    snapshot_dir: Path | None = None,
+    run_dir: Path | None = None,
+    snapshot_diff_json: Path | None = None,
+    drift_jsonl: Path | None = None,
+    drift_summary_json: Path | None = None,
+    audit_jsonl: Path | None = None,
+    audit_summary_json: Path | None = None,
+) -> dict[str, Any]:
+    report = collect_systems_measurements(
+        out_dir,
+        snapshot_dir=snapshot_dir,
+        run_dir=run_dir,
+        snapshot_diff_json=snapshot_diff_json,
+        drift_jsonl=drift_jsonl,
+        drift_summary_json=drift_summary_json,
+        audit_jsonl=audit_jsonl,
+        audit_summary_json=audit_summary_json,
+    )
+    workload = report["workload_metrics"]
+    artifacts = report["artifact_metrics"]
+    artifact_count = sum(artifacts[group]["artifact_count"] for group in ("input_artifacts", "output_artifacts", "manifest_artifacts", "report_artifacts"))
+    return {
+        "ok": True,
+        "summary": (
+            "Systems measurements wrote "
+            f"{len(report['written_artifacts'])} reports for "
+            f"{workload.get('page_count') or 0} pages, "
+            f"{workload.get('query_count') or 0} queries, "
+            f"and {artifact_count} measured artifacts"
         ),
         "report": report,
         "written_artifacts": report["written_artifacts"],
