@@ -146,6 +146,8 @@ def build_graph_snapshot_manifest(
         "snapshot_id": snapshot_id,
         "corpus_snapshot_id": corpus_snapshot_id,
         "graph_extraction_version": graph_extraction_version,
+        "source_dataset_identity_hash": _dataset_identity_hash(dataset_path),
+        "graph_extraction_config": _graph_transformation_config(dataset_path),
         "edge_file": "graph_edges.csv",
         "edge_file_hash": sha256_file(edge_path),
         "edge_inventory": edge_inventory,
@@ -248,6 +250,8 @@ def build_support_surface_manifest(
         "snapshot_id": snapshot_id,
         "corpus_snapshot_id": corpus_snapshot_id,
         "query_set_id": query_set_id,
+        "source_dataset_identity_hash": _dataset_identity_hash(dataset_path),
+        "support_construction_config": _support_construction_config(dataset_path),
         "query_set_file": "questions.jsonl",
         "query_set_hash": query_set_hash(dataset_path),
         "support_audit_file": "faq_support_audit.jsonl",
@@ -270,3 +274,48 @@ def write_graph_snapshot_manifest(output_path: Path, dataset_path: Path, **kwarg
 
 def write_support_surface_manifest(output_path: Path, dataset_path: Path, **kwargs: Any) -> dict[str, Any]:
     return write_manifest(output_path, build_support_surface_manifest(dataset_path, **kwargs))
+
+
+def _dataset_identity_hash(dataset_path: Path) -> str | None:
+    manifest_path = dataset_path / "dataset_preparation_manifest.json"
+    if not manifest_path.exists():
+        return None
+    try:
+        value = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValidationError(f"Invalid dataset_preparation_manifest.json: {exc}") from exc
+    return value.get("output_dataset_identity_hash") if isinstance(value, dict) else None
+
+
+def _graph_transformation_config(dataset_path: Path) -> dict[str, Any] | None:
+    manifest_path = dataset_path / "graph_transformation_manifest.json"
+    if not manifest_path.exists():
+        return None
+    try:
+        value = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValidationError(f"Invalid graph_transformation_manifest.json: {exc}") from exc
+    if not isinstance(value, dict):
+        return None
+    return {
+        "graph_extraction_version": value.get("graph_extraction_version"),
+        "link_extraction_configuration": value.get("link_extraction_configuration"),
+        "link_resolver_configuration": value.get("link_resolver_configuration"),
+    }
+
+
+def _support_construction_config(dataset_path: Path) -> dict[str, Any] | None:
+    manifest_path = dataset_path / "support_construction_manifest.json"
+    if not manifest_path.exists():
+        return None
+    try:
+        value = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValidationError(f"Invalid support_construction_manifest.json: {exc}") from exc
+    if not isinstance(value, dict):
+        return None
+    return {
+        "support_construction_method": value.get("support_construction_method"),
+        "support_audit_configuration": value.get("support_audit_configuration"),
+        "query_set_id": value.get("query_set_id"),
+    }

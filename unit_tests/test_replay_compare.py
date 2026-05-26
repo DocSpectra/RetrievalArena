@@ -98,6 +98,8 @@ class ReplayCompareTests(unittest.TestCase):
 
             self.assertTrue(report["passed"])
             self.assertEqual(report["summary"]["changed_artifact_count"], 0)
+            self.assertEqual(report["summary"]["replay_outcome"], "behaviorally_and_artifact_identical")
+            self.assertTrue(report["summary"]["artifact_byte_equality_passed"])
             self.assertEqual(report["prediction_results"]["changed_question_ids"], [])
 
     def test_changed_prediction_answer_fails_with_question_id(self):
@@ -110,6 +112,8 @@ class ReplayCompareTests(unittest.TestCase):
             report = compare_run_dirs(expected, actual, created_at=CREATED_AT)
 
             self.assertFalse(report["passed"])
+            self.assertEqual(report["summary"]["replay_outcome"], "true_retrieval_divergence")
+            self.assertFalse(report["summary"]["behavior_equality_passed"])
             self.assertEqual(report["prediction_results"]["changed_question_ids"], ["q1"])
             self.assertEqual(report["prediction_results"]["differences"][0]["type"], "generated_answer_changed")
 
@@ -175,6 +179,8 @@ class ReplayCompareTests(unittest.TestCase):
 
             self.assertTrue(report["passed"])
             self.assertTrue(report["manifest_result"]["only_volatile_differences"])
+            self.assertEqual(report["summary"]["replay_outcome"], "behaviorally_identical_with_provenance_or_artifact_differences")
+            self.assertGreater(report["summary"]["provenance_sensitive_difference_count"], 0)
             self.assertEqual(report["summary"]["manifest_field_difference_count"], 0)
 
     def test_report_json_formatting_and_stable_ordering(self):

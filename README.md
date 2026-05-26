@@ -29,6 +29,7 @@ calibration/bigdata2026/pilot_express_docs/observability_report.html
 - [Use the HTML observability report](docs/html_observability_report.md)
 - [Export paper evidence](docs/paper_evidence_export.md)
 - [Refresh an existing baseline](docs/incremental_baseline_refresh.md)
+- [Inspect manifest lineage](docs/manifest_lineage.md)
 - [Architecture diagram](docs/architecture.mmd)
 
 ## Selected Calibration Bundles

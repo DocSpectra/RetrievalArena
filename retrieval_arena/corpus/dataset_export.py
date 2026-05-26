@@ -18,6 +18,7 @@ from ..support.surface import SUPPORT_CONSTRUCTION_METHOD, write_answer_overlap_
 DATASET_PREPARATION_SCHEMA_VERSION = "retrieval_arena.dataset_preparation_manifest.v1"
 GRAPH_TRANSFORMATION_SCHEMA_VERSION = "retrieval_arena.graph_transformation_manifest.v1"
 SUPPORT_CONSTRUCTION_SCHEMA_VERSION = "retrieval_arena.support_construction_manifest.v1"
+DATASET_PREPARATION_VERSION = "retrieval_arena.dataset_preparation.copy-v1"
 
 
 def prepare_dataset(
@@ -48,6 +49,23 @@ def prepare_dataset(
     if support_records_path is not None:
         shutil.copy2(support_records_path, output_path / "faq_support_audit.jsonl")
         support_hash = sha256_jsonl(output_path / "faq_support_audit.jsonl")
+    corpus_inventory = _corpus_inventory(output_path / "corpus")
+    normalization_config = {"method": "copy_imported_documents", "version": DATASET_PREPARATION_VERSION}
+    chunking_config = {"method": "one_file_per_document", "chunking": "none"}
+    preparation_config = {
+        "normalization_config": normalization_config,
+        "chunking_config": chunking_config,
+        "query_set_id": query_set_id,
+        "questions_file": "questions.jsonl" if questions_path is not None else None,
+        "answers_file": "answers.jsonl" if answers_path is not None else None,
+    }
+    dataset_identity = {
+        "import_manifest_hash": import_manifest["manifest_hash"],
+        "corpus_directory_hash": sha256_directory(output_path / "corpus"),
+        "questions_file_hash": sha256_jsonl(output_path / "questions.jsonl") if questions_path is not None else None,
+        "answers_file_hash": sha256_jsonl(output_path / "answers.jsonl") if answers_path is not None else None,
+        "preparation_config_hash": sha256_json(preparation_config),
+    }
 
     validation_status = "not_requested"
     validation_error = None
@@ -67,8 +85,25 @@ def prepare_dataset(
         "snapshot_id": import_manifest["snapshot_id"],
         "import_manifest_path": str(import_manifest_path.resolve()),
         "import_manifest_hash": import_manifest["manifest_hash"],
+        "input_snapshot_identity_hash": import_manifest.get("snapshot_identity_hash"),
         "dataset_output_path": str(output_path.resolve()),
         "corpus_directory_hash": sha256_directory(output_path / "corpus"),
+        "normalization_config": normalization_config,
+        "chunking_config": chunking_config,
+        "preparation_config": preparation_config,
+        "preparation_config_hash": sha256_json(preparation_config),
+        "generated_document_ids": [item["doc_id"] for item in corpus_inventory],
+        "document_inventory": corpus_inventory,
+        "excluded_artifacts": [
+            {"path": "graph_edges.csv", "reason": "optional_graph_stage_not_requested"} if graph_edges_path is None else None,
+            {"path": "faq_support_audit.jsonl", "reason": "optional_support_stage_not_requested"} if support_records_path is None else None,
+        ],
+        "output_dataset_identity_hash": sha256_json(dataset_identity),
+        "software_lineage": {
+            "stage": "dataset_preparation",
+            "version": DATASET_PREPARATION_VERSION,
+            "import_schema_version": import_manifest.get("schema_version"),
+        },
         "query_set_id": query_set_id,
         "questions_file": "questions.jsonl" if questions_path is not None else None,
         "questions_file_hash": sha256_jsonl(output_path / "questions.jsonl") if questions_path is not None else None,
@@ -80,6 +115,7 @@ def prepare_dataset(
         "validation_error": validation_error,
         "stage_status": "ok" if validation_status != "failed" else "failed",
     }
+    manifest["excluded_artifacts"] = [item for item in manifest["excluded_artifacts"] if item is not None]
     written = write_manifest(output_path / "dataset_preparation_manifest.json", manifest)
     if validation_error:
         raise ValidationError(validation_error)
@@ -131,6 +167,7 @@ def build_graph_transformation(
         "snapshot_id": preparation["snapshot_id"],
         "dataset_preparation_manifest_path": str(dataset_preparation_manifest_path.resolve()),
         "dataset_preparation_manifest_hash": preparation["manifest_hash"],
+        "source_dataset_identity_hash": preparation.get("output_dataset_identity_hash"),
         "graph_extraction_version": version,
         "link_extraction_configuration": {"method": extraction_method},
         "link_resolver_configuration": resolver,
@@ -193,6 +230,7 @@ def build_support_surface(
         "snapshot_id": preparation["snapshot_id"],
         "dataset_preparation_manifest_path": str(dataset_preparation_manifest_path.resolve()),
         "dataset_preparation_manifest_hash": preparation["manifest_hash"],
+        "source_dataset_identity_hash": preparation.get("output_dataset_identity_hash"),
         "query_set_id": query_set_id or preparation.get("query_set_id"),
         "support_audit_file": "faq_support_audit.jsonl",
         "support_audit_file_hash": sha256_jsonl(destination),
@@ -230,3 +268,20 @@ def _row_doc_ids(row: dict[str, Any]) -> list[str]:
             elif isinstance(item, dict) and isinstance(item.get("doc_id"), str):
                 result.append(item["doc_id"])
     return result
+
+
+def _corpus_inventory(corpus_dir: Path) -> list[dict[str, Any]]:
+    rows = []
+    for path in corpus_dir.rglob("*"):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(corpus_dir).as_posix()
+        rows.append(
+            {
+                "path": relative,
+                "doc_id": Path(relative).with_suffix("").as_posix() if Path(relative).suffix else relative,
+                "size_bytes": path.stat().st_size,
+                "sha256": sha256_file(path),
+            }
+        )
+    return sorted(rows, key=lambda item: item["path"])

@@ -72,6 +72,11 @@ def compare_run_dirs(
             score_results=score_results,
             metadata_result=metadata_result,
             action_trace_results=action_trace_results,
+            required_artifacts_passed=required_artifacts_passed,
+            optional_artifacts_passed=optional_artifacts_passed,
+            behavior_artifacts_passed=behavior_artifacts_passed,
+            behavior_passed=behavior_passed,
+            manifest_passed=manifest_passed,
         ),
         "artifact_results": artifact_results,
         "manifest_result": manifest_result,
@@ -376,6 +381,11 @@ def _summary(
     score_results: dict[str, Any],
     metadata_result: dict[str, Any],
     action_trace_results: dict[str, Any] | None,
+    required_artifacts_passed: bool,
+    optional_artifacts_passed: bool,
+    behavior_artifacts_passed: bool,
+    behavior_passed: bool,
+    manifest_passed: bool,
 ) -> dict[str, Any]:
     changed_artifacts = sorted(item["path"] for item in artifact_results if not item["passed"])
     changed_question_ids = sorted(
@@ -383,11 +393,35 @@ def _summary(
         | set(score_results.get("item_scores", {}).get("changed_question_ids", []))
         | set((action_trace_results or {}).get("changed_question_ids", []))
     )
+    true_behavior_difference_count = (
+        len(prediction_results.get("differences", []))
+        + len(score_results.get("item_scores", {}).get("field_differences", []))
+        + len(metadata_result.get("field_differences", []))
+        + len((action_trace_results or {}).get("field_differences", []))
+    )
+    aggregate_score_difference_count = len(score_results.get("aggregate_scores", {}).get("field_differences", []))
+    artifact_byte_equality_passed = not changed_artifacts
+    provenance_sensitive = bool(manifest_result.get("volatile_differences")) or aggregate_score_difference_count > 0
+    if true_behavior_difference_count:
+        outcome = "true_retrieval_divergence"
+    elif not required_artifacts_passed or not optional_artifacts_passed:
+        outcome = "incomplete_artifacts"
+    elif not manifest_passed or provenance_sensitive or not artifact_byte_equality_passed:
+        outcome = "behaviorally_identical_with_provenance_or_artifact_differences"
+    else:
+        outcome = "behaviorally_and_artifact_identical"
     return {
+        "replay_outcome": outcome,
+        "behavior_equality_passed": behavior_passed and true_behavior_difference_count == 0,
+        "behavior_artifact_byte_equality_passed": behavior_artifacts_passed,
+        "provenance_equality_passed": bool(manifest_result.get("passed")),
+        "provenance_sensitive_difference_count": len(manifest_result.get("volatile_differences", [])) + aggregate_score_difference_count,
+        "artifact_byte_equality_passed": artifact_byte_equality_passed,
         "changed_artifact_count": len(changed_artifacts),
         "changed_artifacts": changed_artifacts,
         "changed_question_count": len(changed_question_ids),
         "changed_question_ids": changed_question_ids,
+        "true_behavior_difference_count": true_behavior_difference_count,
         "manifest_field_difference_count": len(manifest_result.get("field_differences", [])),
         "manifest_volatile_difference_count": len(manifest_result.get("volatile_differences", [])),
         "prediction_difference_count": len(prediction_results.get("differences", [])),

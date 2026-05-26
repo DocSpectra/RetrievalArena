@@ -13,6 +13,7 @@ from .sources import CorpusSourceDescriptor
 
 
 IMPORT_SCHEMA_VERSION = "retrieval_arena.corpus_import_manifest.v1"
+IMPORT_PARSER_VERSION = "retrieval_arena.corpus_import.copy-v1"
 
 
 def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str | None = None, overwrite: bool = True) -> dict[str, Any]:
@@ -31,6 +32,7 @@ def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str 
     provenance = _materialize_source(descriptor, source_workspace)
     selection_root = _selection_root(source_workspace, descriptor.docs_root)
     selected_files = _select_files(selection_root, include=descriptor.include, exclude=descriptor.exclude)
+    ignored_files = _ignored_files(selection_root, selected_files)
     inventory: list[dict[str, Any]] = []
     for source_file in selected_files:
         relative_path = source_file.relative_to(selection_root).as_posix()
@@ -46,6 +48,20 @@ def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str 
             }
         )
     inventory = sorted(inventory, key=lambda item: item["path"])
+    descriptor_payload = _descriptor_payload(descriptor)
+    import_config = {
+        "docs_root": descriptor.docs_root,
+        "include": list(descriptor.include),
+        "exclude": list(descriptor.exclude),
+        "parser_version": IMPORT_PARSER_VERSION,
+    }
+    snapshot_identity = {
+        "corpus_id": descriptor.corpus_id,
+        "snapshot_id": descriptor.snapshot_id,
+        "source_provenance": provenance,
+        "selected_files": inventory,
+        "import_config_hash": sha256_json(import_config),
+    }
     manifest = {
         "schema_version": IMPORT_SCHEMA_VERSION,
         "created_at": created_at or utc_now_iso(),
@@ -59,6 +75,11 @@ def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str 
         "docs_root": descriptor.docs_root,
         "include": list(descriptor.include),
         "exclude": list(descriptor.exclude),
+        "import_config": import_config,
+        "import_config_hash": sha256_json(import_config),
+        "parser_version": IMPORT_PARSER_VERSION,
+        "source_descriptor": descriptor_payload,
+        "source_descriptor_hash": sha256_json(descriptor_payload),
         "snapshot_workspace": str(snapshot_workspace.resolve()),
         "materialized_source_path": str(source_workspace.resolve()),
         "documents_path": str(documents_workspace.resolve()),
@@ -66,7 +87,11 @@ def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str 
         "selected_file_count": len(inventory),
         "selected_size_bytes": sum(int(item["size_bytes"]) for item in inventory),
         "file_inventory": inventory,
+        "selected_files": inventory,
+        "ignored_files": ignored_files,
+        "ignored_file_count": len(ignored_files),
         "content_hash": sha256_json({"files": inventory}),
+        "snapshot_identity_hash": sha256_json(snapshot_identity),
         "stage_status": "ok",
     }
     written = write_manifest(snapshot_workspace / "corpus_import_manifest.json", manifest)
@@ -203,6 +228,37 @@ def _select_files(root: Path, *, include: tuple[str, ...], exclude: tuple[str, .
             continue
         files.append(path)
     return sorted(files, key=lambda path: path.relative_to(root).as_posix())
+
+
+def _ignored_files(root: Path, selected_files: list[Path]) -> list[dict[str, Any]]:
+    selected = {path.resolve() for path in selected_files}
+    ignored = []
+    for path in root.rglob("*"):
+        if not path.is_file() or path.resolve() in selected:
+            continue
+        ignored.append(
+            {
+                "path": path.relative_to(root).as_posix(),
+                "size_bytes": path.stat().st_size,
+                "sha256": sha256_file(path),
+            }
+        )
+    return sorted(ignored, key=lambda item: item["path"])
+
+
+def _descriptor_payload(descriptor: CorpusSourceDescriptor) -> dict[str, Any]:
+    return {
+        "corpus_id": descriptor.corpus_id,
+        "snapshot_id": descriptor.snapshot_id,
+        "source_type": descriptor.source_type,
+        "source_url": descriptor.source_url,
+        "source_path": str(descriptor.source_path) if descriptor.source_path else None,
+        "requested_ref": descriptor.requested_ref,
+        "docs_root": descriptor.docs_root,
+        "include": list(descriptor.include),
+        "exclude": list(descriptor.exclude),
+        "destination_workspace": str(descriptor.destination_workspace),
+    }
 
 
 def _selection_root(source_workspace: Path, docs_root: str | None) -> Path:

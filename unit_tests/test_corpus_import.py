@@ -61,6 +61,11 @@ class CorpusImportTests(unittest.TestCase):
 
             self.assertEqual([item["path"] for item in manifest["file_inventory"]], ["guide/config.md", "install.md"])
             self.assertEqual([item["doc_id"] for item in manifest["file_inventory"]], ["guide/config", "install"])
+            self.assertEqual([item["path"] for item in manifest["ignored_files"]], ["draft.tmp"])
+            self.assertRegex(manifest["import_config_hash"], r"^[0-9a-f]{64}$")
+            self.assertRegex(manifest["source_descriptor_hash"], r"^[0-9a-f]{64}$")
+            self.assertRegex(manifest["snapshot_identity_hash"], r"^[0-9a-f]{64}$")
+            self.assertEqual(manifest["parser_version"], "retrieval_arena.corpus_import.copy-v1")
             self.assertTrue((result["documents_path"] / "guide" / "config.md").exists())
             self.assertTrue((result["manifest_path"]).read_text(encoding="utf-8").endswith("\n"))
 
@@ -201,7 +206,12 @@ class CorpusImportTests(unittest.TestCase):
             questions, answers = self.write_query_files(tmp)
             prepared = prepare_dataset(imported["manifest_path"], tmp / "dataset", questions_path=questions, answers_path=answers, query_set_id="toy-queries", created_at=CREATED_AT)
 
-            self.assertEqual(read_manifest(prepared["manifest_path"])["validation_status"], "ok")
+            preparation_manifest = read_manifest(prepared["manifest_path"])
+            self.assertEqual(preparation_manifest["validation_status"], "ok")
+            self.assertEqual(preparation_manifest["input_snapshot_identity_hash"], imported["manifest"]["snapshot_identity_hash"])
+            self.assertEqual(preparation_manifest["generated_document_ids"], ["install"])
+            self.assertRegex(preparation_manifest["output_dataset_identity_hash"], r"^[0-9a-f]{64}$")
+            self.assertEqual(preparation_manifest["chunking_config"]["method"], "one_file_per_document")
             self.assertIsNone(build_graph_transformation(prepared["dataset_path"], prepared["manifest_path"], created_at=CREATED_AT))
             self.assertIsNone(build_support_surface(prepared["dataset_path"], prepared["manifest_path"], created_at=CREATED_AT))
 
@@ -213,7 +223,9 @@ class CorpusImportTests(unittest.TestCase):
             support_result = build_support_surface(prepared["dataset_path"], prepared["manifest_path"], support_records_path=support, query_set_id="toy-queries", created_at=CREATED_AT)
 
             self.assertEqual(read_manifest(graph["manifest_path"])["edge_count"], 1)
+            self.assertEqual(read_manifest(graph["manifest_path"])["source_dataset_identity_hash"], preparation_manifest["output_dataset_identity_hash"])
             self.assertEqual(read_manifest(support_result["manifest_path"])["support_target_doc_ids"], ["install"])
+            self.assertEqual(read_manifest(support_result["manifest_path"])["source_dataset_identity_hash"], preparation_manifest["output_dataset_identity_hash"])
 
     def test_bigdata_toy_study_runs_source_to_snapshot_diff(self):
         with self.workspace_tempdir() as tmp:

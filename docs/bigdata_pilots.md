@@ -20,12 +20,12 @@ Run or refresh a baseline:
 python -m retrieval_arena.cli study bigdata pilot --plan configs\bigdata2026\pilot_express_docs.json --refresh-baseline
 ```
 
-The milestone pilots resolve 9 stages and 6 run comparisons:
+The milestone pilots resolve the configured source-to-observability stages and
+6 run comparisons:
 
 - prerequisites
-- source import
-- dataset preparation
-- snapshot manifests
+- source import, dataset preparation, and snapshot manifests through the
+  snapshot comparison stage
 - snapshot comparison
 - retrieval before
 - retrieval after
@@ -39,3 +39,7 @@ iterative search.
 Calibration bundles live under `calibration/bigdata2026/`. They are meant for
 review and paper evidence. Generated source trees and bulky retrieval outputs
 remain ignored by default.
+
+See [manifest lineage](manifest_lineage.md) for the source descriptor,
+dataset identity, graph/support lineage, replay comparison, and audit-label
+schema fields that pilots produce.

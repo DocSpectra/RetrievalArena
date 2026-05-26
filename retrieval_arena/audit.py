@@ -16,6 +16,30 @@ from .schemas import read_jsonl, write_jsonl
 AUDIT_ROW_SCHEMA_VERSION = "retrieval_arena.regression_audit_row.v1"
 AUDIT_SUMMARY_SCHEMA_VERSION = "retrieval_arena.regression_audit_summary.v1"
 EPSILON = 1e-12
+CAUSE_LABEL_SCHEMA_VERSION = "retrieval_arena.audit_cause_labels.v1"
+CAUSE_LABEL_SCHEMA = {
+    "action_trace_changed": "Deterministic or iterative retrieval trace changed.",
+    "answer_lexical_score_regressed": "Answer lexical coverage decreased.",
+    "corpus_page_added": "A retrieved or support document was added in the corpus snapshot.",
+    "corpus_page_changed": "A retrieved or support document changed in the corpus snapshot.",
+    "corpus_page_removed": "A retrieved or support document was removed from the corpus snapshot.",
+    "distance_to_support_increased": "Minimum observed graph distance to support increased.",
+    "evidence_coverage_regressed": "Evidence coverage decreased.",
+    "evidence_unavailable": "One or more optional evidence families were unavailable.",
+    "graph_edge_added": "A graph edge incident to retrieved or support documents was added.",
+    "graph_edge_removed": "A graph edge incident to retrieved or support documents was removed.",
+    "rank_changed": "Retained retrieved candidates moved in rank.",
+    "replay_manifest_changed": "Replay manifest lineage or references changed.",
+    "retrieval_config_changed": "Retrieval configuration identity changed.",
+    "retrieval_score_changed": "Retained retrieved candidate scores changed.",
+    "retrieved_candidate_changed": "Retrieved candidate set changed.",
+    "scoring_config_changed": "Scoring configuration identity changed.",
+    "support_exposure_regressed": "Retrieved support exposure decreased.",
+    "support_recall_regressed": "Support recall decreased.",
+    "support_target_added": "Support target was added for the query.",
+    "support_target_changed": "Support target set changed for the query.",
+    "support_target_removed": "Support target was removed for the query.",
+}
 
 
 def utc_now_iso() -> str:
@@ -173,6 +197,7 @@ def _audit_row(
         "before": {"doc_ids": before_docs},
         "after": {"doc_ids": after_docs},
         "cause_labels": sorted(labels),
+        "cause_label_schema_version": CAUSE_LABEL_SCHEMA_VERSION,
         "evidence_availability": evidence,
         "missing_evidence": notes,
         "associated_evidence": _associated_evidence(question_id, before_docs, after_docs, snapshot_index),
@@ -349,6 +374,8 @@ def _audit_summary(
         "query_count": len(rows),
         "labeled_query_count": sum(1 for row in rows if row["cause_labels"] and row["cause_labels"] != ["evidence_unavailable"]),
         "cause_label_counts": dict(sorted(label_counts.items())),
+        "cause_label_schema_version": CAUSE_LABEL_SCHEMA_VERSION,
+        "cause_label_schema": {key: CAUSE_LABEL_SCHEMA[key] for key in sorted(CAUSE_LABEL_SCHEMA)},
         "evidence_availability_counts": {name: dict(counter) for name, counter in sorted(availability.items())},
         "input_artifacts": _input_artifacts(
             before_run_dir,

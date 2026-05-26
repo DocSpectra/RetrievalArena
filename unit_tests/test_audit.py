@@ -141,6 +141,7 @@ class RegressionAuditTests(unittest.TestCase):
             row = self.first_row(build_regression_audit(before, after, out, created_at=CREATED_AT))
 
             self.assertEqual(row["cause_labels"], ["evidence_unavailable"])
+            self.assertEqual(row["cause_label_schema_version"], "retrieval_arena.audit_cause_labels.v1")
             self.assertIn("support_exposure:support_targets_unavailable", row["missing_evidence"])
 
     def test_metric_specific_regression_labels_are_conservative(self):
@@ -286,7 +287,10 @@ class RegressionAuditTests(unittest.TestCase):
             self.assertTrue(jsonl_text.endswith("\n"))
             self.assertTrue(summary_text.endswith("\n"))
             self.assertEqual(json.loads(jsonl_text)["question_id"], "q1")
-            self.assertEqual(read_manifest(out / "regression_audit_summary.json")["schema_version"], "retrieval_arena.regression_audit_summary.v1")
+            summary = read_manifest(out / "regression_audit_summary.json")
+            self.assertEqual(summary["schema_version"], "retrieval_arena.regression_audit_summary.v1")
+            self.assertEqual(summary["cause_label_schema_version"], "retrieval_arena.audit_cause_labels.v1")
+            self.assertIn("retrieved_candidate_changed", summary["cause_label_schema"])
             self.assertIn("Overall drift score: not computed", (out / "regression_audit.md").read_text(encoding="utf-8"))
 
 
