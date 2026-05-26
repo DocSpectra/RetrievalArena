@@ -106,6 +106,7 @@ def render_html_report(report: dict[str, Any]) -> str:
             _section("Retrieval Family Matrix", _family_matrix(comparisons)),
             _section("Retrieval Drift Metrics", _drift_table(comparisons)),
             _section("Regression Audit Labels", _audit_table(comparisons)),
+            _section("Query Case Studies", _case_studies(comparisons)),
             _section("Systems And Storage Measurements", _systems_table(comparisons)),
             _section("Provenance And Replay", _provenance(report, comparisons)),
             "</main>",
@@ -143,7 +144,7 @@ def _collect_comparisons(bundle_root: Path) -> list[dict[str, Any]]:
                 "drift": drift,
                 "audit": audit,
                 "systems": systems,
-                "top_audit_cases": _top_audit_cases(path / "regression_audit.jsonl"),
+                "case_studies": _select_case_studies(path / "regression_audit.jsonl"),
                 "before_replay": before_replay,
                 "after_replay": after_replay,
             }
@@ -294,10 +295,107 @@ def _audit_table(comparisons: list[dict[str, Any]]) -> str:
     ]
     top_cases = []
     for row in comparisons:
-        for case in row.get("top_audit_cases", []):
+        for case in row.get("case_studies", []):
             top_cases.append([row["comparison_id"], case.get("question_id"), ", ".join(case.get("cause_labels", [])[:5])])
     blocks.append(_table(["Family", "Question", "Labels"], top_cases[:12]))
     return "\n".join(blocks)
+
+
+def _case_studies(comparisons: list[dict[str, Any]]) -> str:
+    blocks: list[str] = []
+    for row in comparisons:
+        for case in row.get("case_studies", [])[:2]:
+            metrics = case.get("drift_metrics", {}) if isinstance(case.get("drift_metrics"), dict) else {}
+            labels = ", ".join(case.get("cause_labels", [])[:6]) if isinstance(case.get("cause_labels"), list) else "none"
+            blocks.append(
+                "\n".join(
+                    [
+                        '<article class="case">',
+                        f"<h3>{_esc(row['comparison_id'])} / {_esc(case.get('question_id'))}</h3>",
+                        f'<p class="muted">{_esc(labels)}</p>',
+                        _case_signal_table(metrics),
+                        _table(
+                            ["Before retrieved docs", "After retrieved docs"],
+                            [[_doc_list(case.get("before", {}).get("doc_ids", [])), _doc_list(case.get("after", {}).get("doc_ids", []))]],
+                        ),
+                        _case_rank_score_table(metrics),
+                        _case_evidence_table(case.get("associated_evidence", {})),
+                        "</article>",
+                    ]
+                )
+            )
+    if not blocks:
+        return '<p class="muted">No regression audit case studies available.</p>'
+    return "\n".join(blocks)
+
+
+def _case_signal_table(metrics: dict[str, Any]) -> str:
+    support_exposure = metrics.get("support_exposure", {}) if isinstance(metrics.get("support_exposure"), dict) else {}
+    coverage = metrics.get("evidence_coverage", {}) if isinstance(metrics.get("evidence_coverage"), dict) else {}
+    recall = metrics.get("support_recall", {}) if isinstance(metrics.get("support_recall"), dict) else {}
+    distance = metrics.get("distance_to_support", {}) if isinstance(metrics.get("distance_to_support"), dict) else {}
+    action = metrics.get("action_trace", {}) if isinstance(metrics.get("action_trace"), dict) else {}
+    top_k = metrics.get("top_k_jaccard", {}) if isinstance(metrics.get("top_k_jaccard"), dict) else {}
+    ordered = metrics.get("ordered_top_k_overlap", {}) if isinstance(metrics.get("ordered_top_k_overlap"), dict) else {}
+    return _table(
+        ["Signal", "Before", "After", "Delta"],
+        [
+            ["Top-k Jaccard", _fmt(top_k.get("value")), "same query pair", ""],
+            ["Ordered top-k overlap", _fmt(ordered.get("value")), "same query pair", ""],
+            ["Support exposure", support_exposure.get("before_exposed_count"), support_exposure.get("after_exposed_count"), _signed_or_missing(support_exposure.get("exposed_count_delta"))],
+            ["Evidence coverage", _fmt(coverage.get("before_coverage")), _fmt(coverage.get("after_coverage")), _signed_or_missing(coverage.get("coverage_delta"))],
+            ["Support recall", _fmt(recall.get("before_recall")), _fmt(recall.get("after_recall")), _signed_or_missing(recall.get("recall_delta"))],
+            ["Distance to support", distance.get("before_min_distance"), distance.get("after_min_distance"), _signed_or_missing(distance.get("min_distance_delta"))],
+            ["Action trace steps", action.get("before_action_count"), action.get("after_action_count"), _signed_or_missing(action.get("action_count_delta"))],
+            ["Final context Jaccard", _fmt(action.get("final_context_jaccard")), "same query pair", ""],
+        ],
+    )
+
+
+def _case_rank_score_table(metrics: dict[str, Any]) -> str:
+    rank = metrics.get("rank_displacement", {}) if isinstance(metrics.get("rank_displacement"), dict) else {}
+    scores = metrics.get("retained_score_delta", {}) if isinstance(metrics.get("retained_score_delta"), dict) else {}
+    score_by_doc = {
+        str(item.get("doc_id")): item
+        for item in scores.get("documents", [])
+        if isinstance(item, dict) and item.get("doc_id") is not None
+    }
+    rows = []
+    for item in rank.get("documents", [])[:8]:
+        if not isinstance(item, dict):
+            continue
+        doc_id = item.get("doc_id")
+        score = score_by_doc.get(str(doc_id), {})
+        rows.append(
+            [
+                doc_id,
+                item.get("before_rank"),
+                item.get("after_rank"),
+                _signed_or_missing(item.get("rank_delta")),
+                _fmt(score.get("before_score")) if score else "missing",
+                _fmt(score.get("after_score")) if score else "missing",
+                _signed_or_missing(score.get("score_delta")) if score else "missing",
+            ]
+        )
+    return _table(["Doc", "Before rank", "After rank", "Rank delta", "Before score", "After score", "Score delta"], rows)
+
+
+def _case_evidence_table(evidence: Any) -> str:
+    evidence = evidence if isinstance(evidence, dict) else {}
+    corpus = evidence.get("corpus", {}) if isinstance(evidence.get("corpus"), dict) else {}
+    graph = evidence.get("graph", {}) if isinstance(evidence.get("graph"), dict) else {}
+    support = evidence.get("support_surface", {}) if isinstance(evidence.get("support_surface"), dict) else {}
+    return _table(
+        ["Evidence", "Nearby or changed items"],
+        [
+            ["Added corpus docs", _doc_list(corpus.get("added_doc_ids", []))],
+            ["Changed corpus docs", _doc_list(corpus.get("changed_doc_ids", []))],
+            ["Removed corpus docs", _doc_list(corpus.get("removed_doc_ids", []))],
+            ["Added graph edges", _edge_list(graph.get("added_edges", []))],
+            ["Removed graph edges", _edge_list(graph.get("removed_edges", []))],
+            ["Support surface", _support_summary(support)],
+        ],
+    )
 
 
 def _systems_table(comparisons: list[dict[str, Any]]) -> str:
@@ -372,10 +470,71 @@ def _label_counts(counts: dict[str, Any], *, limit: int = 5) -> str:
     return ", ".join(f"{key}: {_fmt(value)}" for key, value in pairs)
 
 
-def _top_audit_cases(path: Path) -> list[dict[str, Any]]:
+def _doc_list(doc_ids: Any, *, limit: int = 8) -> str:
+    if not isinstance(doc_ids, list) or not doc_ids:
+        return "none"
+    items = "".join(f"<li>{_esc(item)}</li>" for item in doc_ids[:limit])
+    if len(doc_ids) > limit:
+        items += f"<li class=\"muted\">+{len(doc_ids) - limit} more</li>"
+    return f"<ol>{items}</ol>"
+
+
+def _edge_list(edges: Any, *, limit: int = 6) -> str:
+    if not isinstance(edges, list) or not edges:
+        return "none"
+    items = []
+    for edge in edges[:limit]:
+        if isinstance(edge, dict):
+            source = edge.get("source_doc_id") or edge.get("source") or edge.get("from") or edge.get("src") or "unknown"
+            target = edge.get("target_doc_id") or edge.get("target") or edge.get("to") or edge.get("dst") or "unknown"
+            relation = edge.get("relation") or edge.get("edge_type") or edge.get("type")
+            label = f"{source} -> {target}" + (f" ({relation})" if relation else "")
+        else:
+            label = str(edge)
+        items.append(f"<li>{_esc(label)}</li>")
+    if len(edges) > limit:
+        items.append(f"<li class=\"muted\">+{len(edges) - limit} more</li>")
+    return f"<ol>{''.join(items)}</ol>"
+
+
+def _support_summary(support: dict[str, Any]) -> str:
+    if not isinstance(support, dict) or not support:
+        return "none"
+    rows = []
+    for key in sorted(support):
+        value = support[key]
+        if isinstance(value, list):
+            rows.append(f"{key}: {len(value)} item(s)")
+        elif isinstance(value, dict):
+            rows.append(f"{key}: {len(value)} field(s)")
+        else:
+            rows.append(f"{key}: {_display(value)}")
+    return "<br>".join(_esc(item) for item in rows[:8])
+
+
+def _select_case_studies(path: Path, *, limit: int = 4) -> list[dict[str, Any]]:
     rows = _read_jsonl(path)
-    rows.sort(key=lambda row: len(row.get("cause_labels", [])) if isinstance(row.get("cause_labels"), list) else 0, reverse=True)
-    return rows[:3]
+    rows.sort(key=lambda row: (-_case_score(row), str(row.get("question_id") or "")))
+    return rows[:limit]
+
+
+def _case_score(row: dict[str, Any]) -> float:
+    labels = row.get("cause_labels", [])
+    score = float(len(labels)) if isinstance(labels, list) else 0.0
+    metrics = row.get("drift_metrics", {}) if isinstance(row.get("drift_metrics"), dict) else {}
+    score += max(0.0, 1.0 - _metric_value(metrics, "top_k_jaccard", "value")) * 10
+    score += max(0.0, 1.0 - _metric_value(metrics, "ordered_top_k_overlap", "value")) * 5
+    score += max(0.0, -_metric_value(metrics, "support_recall", "recall_delta")) * 10
+    score += max(0.0, -_metric_value(metrics, "evidence_coverage", "coverage_delta")) * 10
+    score += max(0.0, -_metric_value(metrics, "support_exposure", "exposed_count_delta"))
+    score += abs(_metric_value(metrics, "distance_to_support", "min_distance_delta"))
+    score += abs(_metric_value(metrics, "action_trace", "action_count_delta"))
+    return score
+
+
+def _metric_value(metrics: dict[str, Any], name: str, key: str) -> float:
+    raw = metrics.get(name, {}) if isinstance(metrics.get(name), dict) else {}
+    return _num(raw.get(key))
 
 
 def _ratio(row: dict[str, Any], key: str) -> str:
@@ -473,6 +632,12 @@ def _signed(value: Any) -> str:
     return f"{number:+,.0f}" if float(number).is_integer() else f"{number:+,.3f}"
 
 
+def _signed_or_missing(value: Any) -> str:
+    if value is None:
+        return "missing"
+    return _signed(value)
+
+
 def _num(value: Any, *, default: float = 0.0) -> float:
     try:
         if value is None or isinstance(value, bool):
@@ -517,6 +682,10 @@ th, td { text-align:left; vertical-align:top; padding:9px 10px; border-bottom:1p
 th { color:#23313f; background:#edf1f4; font-size:12px; text-transform:uppercase; }
 .muted { color:var(--muted); }
 ul { margin:8px 0 18px; padding-left:20px; }
+ol { margin:0; padding-left:18px; }
+.case { background:white; border:1px solid var(--line); border-radius:6px; padding:14px; margin:12px 0 18px; }
+.case h3 { margin-top:0; }
+.case table { margin-bottom:12px; }
 .bar { position:relative; height:22px; background:#eef1f3; border:1px solid var(--line); border-radius:4px; overflow:hidden; min-width:100px; }
 .bar span { display:block; height:100%; background:linear-gradient(90deg, var(--accent), var(--blue)); }
 .bar em { position:absolute; left:8px; top:1px; font-style:normal; font-size:12px; color:#111; }
