@@ -20,6 +20,61 @@
         "test": "rag_lexical_topk"
       },
       "comparison_id": "rag_lexical_topk"
+    },
+    {
+      "after_run_selector": {
+        "dataset": "express_docs",
+        "test": "rag_vector"
+      },
+      "before_run_selector": {
+        "dataset": "express_docs",
+        "test": "rag_vector"
+      },
+      "comparison_id": "rag_vector"
+    },
+    {
+      "after_run_selector": {
+        "dataset": "express_docs",
+        "test": "rag_graph_rerank"
+      },
+      "before_run_selector": {
+        "dataset": "express_docs",
+        "test": "rag_graph_rerank"
+      },
+      "comparison_id": "rag_graph_rerank"
+    },
+    {
+      "after_run_selector": {
+        "dataset": "express_docs",
+        "test": "oracle_graph_support"
+      },
+      "before_run_selector": {
+        "dataset": "express_docs",
+        "test": "oracle_graph_support"
+      },
+      "comparison_id": "oracle_graph_support"
+    },
+    {
+      "after_run_selector": {
+        "dataset": "express_docs",
+        "test": "rag_graph_multihop_rerank"
+      },
+      "before_run_selector": {
+        "dataset": "express_docs",
+        "test": "rag_graph_multihop_rerank"
+      },
+      "comparison_id": "rag_graph_multihop_rerank"
+    },
+    {
+      "after_run_selector": {
+        "dataset": "express_docs",
+        "test": "rag_iterative_search"
+      },
+      "before_run_selector": {
+        "dataset": "express_docs",
+        "test": "rag_iterative_search"
+      },
+      "comparison_id": "rag_iterative_search"
     }
   ],
   "corpus_id": "express_docs",
@@ -32,7 +87,12 @@
     "before_config": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_express_docs_before.yaml",
     "selected_dataset": "express_docs",
     "selected_tests": [
-      "rag_lexical_topk"
+      "rag_lexical_topk",
+      "rag_vector",
+      "rag_graph_rerank",
+      "oracle_graph_support",
+      "rag_graph_multihop_rerank",
+      "rag_iterative_search"
     ]
   },
   "reuse_policy": {

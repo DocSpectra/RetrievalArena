@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -11,7 +12,7 @@ from .audit import build_regression_audit
 from .config import load_config
 from .drift import compare_retrieval_runs
 from .errors import ValidationError
-from .harness import run_config
+from .harness import run_config, run_experiment
 from .hashing import sha256_file
 from .manifests import canonical_manifest_json, read_manifest, write_manifest
 from .measurements import collect_systems_measurements, environment_metadata
@@ -303,7 +304,7 @@ def _run_stage(stage_name: str, plan: dict[str, Any], context: dict[str, Any], *
         if not force and _experiment_manifest_path(config_path).exists() and plan["reuse_policy"].get("reuse_retrieval_runs"):
             manifest_path = _experiment_manifest_path(config_path)
         else:
-            run_config(config_path)
+            _run_selected_retrieval_config(config_path, plan["retrieval"].get("selected_tests", []))
             manifest_path = _experiment_manifest_path(config_path)
         context[f"{side}_experiment_manifest"] = manifest_path
         return _record([str(config_path)], [str(manifest_path)], [str(manifest_path)])
@@ -413,6 +414,18 @@ def _run_prerequisites(plan: dict[str, Any]) -> dict[str, Any]:
         "unavailable_optional_inputs": [],
         "checks": checks,
     }
+
+
+def _run_selected_retrieval_config(config_path: Path, selected_tests: list[str]) -> list[dict[str, Any]]:
+    config = load_config(config_path)
+    if not selected_tests:
+        return run_config(config_path)
+    requested = set(selected_tests)
+    selected = [test for test in config.tests if test.name in requested]
+    missing = sorted(requested - {test.name for test in selected})
+    if missing:
+        raise ValidationError(f"Retrieval config {config_path} missing selected tests {missing}.")
+    return run_experiment(replace(config, tests=selected))
 
 
 def _load_source_descriptor(path: Path) -> Any:

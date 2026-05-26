@@ -2,7 +2,7 @@
   "content_hash": "5cde60c825bdb2dd2641e78c80712dd73c7c8c93b0bd34cbad96ea3c66c2d4c3",
   "corpus_id": "express_docs",
   "corpus_size_bytes": 249743,
-  "created_at": "2026-05-26T05:41:27+00:00",
+  "created_at": "2026-05-26T10:01:49+00:00",
   "extraction_version": "corpus-import-v1",
   "file_count": 53,
   "file_inventory": [
@@ -325,7 +325,7 @@
       "size_bytes": 1541
     }
   ],
-  "manifest_hash": "82bebf38aabede529d83c1796e6963450e0e21446c251f4e23eb0ccce94237a4",
+  "manifest_hash": "4b4ba8319af6ddcc3abd3f885eb060bdd2ea3df8fb0399231cc7387a64469daf",
   "manifest_type": "corpus_snapshot",
   "page_count": 53,
   "parser_version": "copy-v1",

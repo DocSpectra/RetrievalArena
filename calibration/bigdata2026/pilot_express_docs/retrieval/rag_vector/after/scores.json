@@ -1,0 +1,28 @@
+{
+  "build_context": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_vector",
+  "completed_at": "2026-05-26T10:02:13.509973+00:00",
+  "config_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_express_docs_after.yaml",
+  "container_metadata": {
+    "deterministic": true,
+    "name": "rag_vector"
+  },
+  "dataset": "express_docs",
+  "diagnostic_overlay": {
+    "diagnostic_trace_available": true,
+    "distance_overlay_available": true,
+    "graph_node_count": 32,
+    "support_question_count": 8
+  },
+  "git_commit": "72793c918719f31dac41ff96e7f174912e67b0af",
+  "image": "retrieval-arena/rag-vector:latest",
+  "match_percent": 0.0,
+  "mean_f1": 0.11275700200615527,
+  "mean_lexical_overlap": 0.08890828157309984,
+  "mean_precision": 0.09027777777777778,
+  "mean_recall": 0.17871389632664472,
+  "num_questions": 8,
+  "retrieval_arena_version": "0.1.0",
+  "run_id": "6e7b60616a",
+  "started_at": "2026-05-26T10:02:12.909939+00:00",
+  "test": "rag_vector"
+}

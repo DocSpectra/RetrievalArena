@@ -2,7 +2,7 @@
   "after": {
     "base_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests",
     "corpus_id": "express_docs",
-    "corpus_manifest_hash": "49481beb89bf22018d3ac6066211e8742a3debe8546f18d2fd1d34ccfa16d23f",
+    "corpus_manifest_hash": "660f4e2dd236bdb5ab564985f8bd30cc2a1197fea37c02c536fb5d351a08f2f4",
     "corpus_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
     "input_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests",
     "snapshot_id": "2026-03-30"
@@ -10,7 +10,7 @@
   "before": {
     "base_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests",
     "corpus_id": "express_docs",
-    "corpus_manifest_hash": "82bebf38aabede529d83c1796e6963450e0e21446c251f4e23eb0ccce94237a4",
+    "corpus_manifest_hash": "4b4ba8319af6ddcc3abd3f885eb060bdd2ea3df8fb0399231cc7387a64469daf",
     "corpus_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
     "input_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests",
     "snapshot_id": "2025-09-20"
@@ -378,7 +378,7 @@
     "removed_file_count": 0,
     "removed_files": []
   },
-  "created_at": "2026-05-26T05:41:28+00:00",
+  "created_at": "2026-05-26T10:01:50+00:00",
   "graph_result": {
     "added_edge_count": 0,
     "added_edges": [],
@@ -440,10 +440,10 @@
   },
   "manifest_results": [
     {
-      "after_manifest_hash": "49481beb89bf22018d3ac6066211e8742a3debe8546f18d2fd1d34ccfa16d23f",
+      "after_manifest_hash": "660f4e2dd236bdb5ab564985f8bd30cc2a1197fea37c02c536fb5d351a08f2f4",
       "after_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
       "available": true,
-      "before_manifest_hash": "82bebf38aabede529d83c1796e6963450e0e21446c251f4e23eb0ccce94237a4",
+      "before_manifest_hash": "4b4ba8319af6ddcc3abd3f885eb060bdd2ea3df8fb0399231cc7387a64469daf",
       "before_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
       "field_differences": [
         {
@@ -483,13 +483,13 @@
       "passed": false,
       "volatile_differences": [
         {
-          "after": "2026-05-26T05:41:28+00:00",
-          "before": "2026-05-26T05:41:27+00:00",
+          "after": "2026-05-26T10:01:50+00:00",
+          "before": "2026-05-26T10:01:49+00:00",
           "field": "created_at"
         },
         {
-          "after": "49481beb89bf22018d3ac6066211e8742a3debe8546f18d2fd1d34ccfa16d23f",
-          "before": "82bebf38aabede529d83c1796e6963450e0e21446c251f4e23eb0ccce94237a4",
+          "after": "660f4e2dd236bdb5ab564985f8bd30cc2a1197fea37c02c536fb5d351a08f2f4",
+          "before": "4b4ba8319af6ddcc3abd3f885eb060bdd2ea3df8fb0399231cc7387a64469daf",
           "field": "manifest_hash"
         }
       ],
@@ -499,10 +499,10 @@
       ]
     },
     {
-      "after_manifest_hash": "89eeb6e99b90362902fa435da040e3921e90217faacbbff728d2a0d24c036116",
+      "after_manifest_hash": "d253db5c8a3eb232732e9156ca93550ab41cb1067382591aa5d140c5907b34d5",
       "after_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\graph_snapshot_manifest.json",
       "available": true,
-      "before_manifest_hash": "888584d2a1de16466e98a95b7ed24f4bb21e2f921fa903b122003d639f1eab27",
+      "before_manifest_hash": "05325635c1df74fc205778ce241a405a3bf8c6262547e06a5b245f017a18c73f",
       "before_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\graph_snapshot_manifest.json",
       "field_differences": [
         {
@@ -578,8 +578,8 @@
       "passed": false,
       "volatile_differences": [
         {
-          "after": "89eeb6e99b90362902fa435da040e3921e90217faacbbff728d2a0d24c036116",
-          "before": "888584d2a1de16466e98a95b7ed24f4bb21e2f921fa903b122003d639f1eab27",
+          "after": "d253db5c8a3eb232732e9156ca93550ab41cb1067382591aa5d140c5907b34d5",
+          "before": "05325635c1df74fc205778ce241a405a3bf8c6262547e06a5b245f017a18c73f",
           "field": "manifest_hash"
         }
       ],
@@ -589,10 +589,10 @@
       ]
     },
     {
-      "after_manifest_hash": "e273bd410fb05b5a6355252cd42dbd76ea692e38153a541ce8394027a7fd9397",
+      "after_manifest_hash": "130f0ccc3ec4013a2f56fb6dfbccdd5907193e83aff4795c64f7b69d7a6ac73f",
       "after_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\support_surface_manifest.json",
       "available": true,
-      "before_manifest_hash": "fb756b50058a81b87d23db4f10001b7ced06530e23a47e7e592440abcc905330",
+      "before_manifest_hash": "de53e85618fab3b8253c5ba6e23d62b876b6fdc3dcc92555700c1862433ce8da",
       "before_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\support_surface_manifest.json",
       "field_differences": [
         {
@@ -665,8 +665,8 @@
       "passed": false,
       "volatile_differences": [
         {
-          "after": "e273bd410fb05b5a6355252cd42dbd76ea692e38153a541ce8394027a7fd9397",
-          "before": "fb756b50058a81b87d23db4f10001b7ced06530e23a47e7e592440abcc905330",
+          "after": "130f0ccc3ec4013a2f56fb6dfbccdd5907193e83aff4795c64f7b69d7a6ac73f",
+          "before": "de53e85618fab3b8253c5ba6e23d62b876b6fdc3dcc92555700c1862433ce8da",
           "field": "manifest_hash"
         }
       ],

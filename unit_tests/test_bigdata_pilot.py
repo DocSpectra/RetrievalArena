@@ -10,6 +10,7 @@ from typing import Any, Iterator
 from unittest.mock import patch
 
 from retrieval_arena.bigdata_pilot import (
+    _run_selected_retrieval_config,
     assemble_baseline_bundle,
     bigdata_pilot,
     load_pilot_plan,
@@ -224,6 +225,69 @@ class BigDataPilotTests(unittest.TestCase):
                 select_run_from_experiment_manifest(manifest, {"dataset": "toy_docs", "test": "rag_lexical_topk", "run_id": "b"}),
                 tmp / "runs" / "toy_docs__rag_lexical_topk__b",
             )
+
+    def test_selected_retrieval_config_runs_only_requested_tests(self):
+        with self.workspace_tempdir() as tmp:
+            retrieval_yaml = "\n".join(
+                [
+                    "experiment_name: toy",
+                    "datasets:",
+                    "  - name: toy_docs",
+                    "    path: dataset",
+                    "tests:",
+                    "  - name: rag_lexical_topk",
+                    "    image: lexical:latest",
+                    "    config:",
+                    "      top_k: 1",
+                    "  - name: rag_graph_rerank",
+                    "    image: graph:latest",
+                    "    config:",
+                    "      top_k: 1",
+                    "scoring:",
+                    "  method: lexical_baseline",
+                    "output_dir: results",
+                    "",
+                ]
+            )
+            config_path = tmp / "retrieval.yaml"
+            config_path.write_text(retrieval_yaml, encoding="utf-8")
+            seen: list[list[str]] = []
+
+            def fake_run_experiment(config):
+                seen.append([test.name for test in config.tests])
+                return []
+
+            with patch("retrieval_arena.bigdata_pilot.run_experiment", side_effect=fake_run_experiment):
+                _run_selected_retrieval_config(config_path, ["rag_graph_rerank"])
+
+            self.assertEqual(seen, [["rag_graph_rerank"]])
+
+    def test_selected_retrieval_config_rejects_missing_selected_test(self):
+        with self.workspace_tempdir() as tmp:
+            config_path = tmp / "retrieval.yaml"
+            config_path.write_text(
+                "\n".join(
+                    [
+                        "experiment_name: toy",
+                        "datasets:",
+                        "  - name: toy_docs",
+                        "    path: dataset",
+                        "tests:",
+                        "  - name: rag_lexical_topk",
+                        "    image: lexical:latest",
+                        "    config:",
+                        "      top_k: 1",
+                        "scoring:",
+                        "  method: lexical_baseline",
+                        "output_dir: results",
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValidationError, "missing selected tests"):
+                _run_selected_retrieval_config(config_path, ["missing_test"])
 
     def test_baseline_bundle_excludes_raw_directories(self):
         with self.workspace_tempdir() as tmp:

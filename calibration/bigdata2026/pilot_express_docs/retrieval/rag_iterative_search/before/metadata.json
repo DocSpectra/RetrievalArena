@@ -1,0 +1,17 @@
+{
+  "deterministic": true,
+  "directed": false,
+  "experiment_id": "E007a",
+  "final_top_k": 5,
+  "follow_budget_per_page": 3,
+  "inspect_budget": 8,
+  "max_actions": 30,
+  "max_context_chars_per_doc": 1200,
+  "name": "rag_iterative_search",
+  "policy": "deterministic_bm25_link_walk_v1",
+  "provider": "none",
+  "ranker": "bm25",
+  "search_top_k": 5,
+  "trace_schema_version": "e007a.action_trace.v1",
+  "uses_llm": false
+}

@@ -1,6 +1,6 @@
 {
   "build_context": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_lexical_topk",
-  "completed_at": "2026-05-26T05:41:30.869556+00:00",
+  "completed_at": "2026-05-26T10:01:58.304943+00:00",
   "config_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_express_docs_before.yaml",
   "container_metadata": {
     "deterministic": true,
@@ -16,7 +16,7 @@
     "graph_node_count": 34,
     "support_question_count": 8
   },
-  "git_commit": "5096265f8f926331dd064632ce347270ace875d9",
+  "git_commit": "72793c918719f31dac41ff96e7f174912e67b0af",
   "image": "retrieval-arena/rag-lexical-topk:latest",
   "match_percent": 0.0,
   "mean_f1": 0.09005524723047044,
@@ -26,6 +26,6 @@
   "num_questions": 8,
   "retrieval_arena_version": "0.1.0",
   "run_id": "ddea72412e",
-  "started_at": "2026-05-26T05:41:29.942278+00:00",
+  "started_at": "2026-05-26T10:01:57.278312+00:00",
   "test": "rag_lexical_topk"
 }

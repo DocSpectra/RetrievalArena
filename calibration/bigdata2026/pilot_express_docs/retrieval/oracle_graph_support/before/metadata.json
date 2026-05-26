@@ -1,0 +1,18 @@
+{
+  "deterministic": true,
+  "diagnostic": true,
+  "directed": false,
+  "final_top_k": 8,
+  "hop_budget": 2,
+  "max_context_chars_per_doc": 1200,
+  "name": "oracle_graph_support",
+  "num_questions": 8,
+  "oracle_inputs": [
+    "faq_support_audit.jsonl"
+  ],
+  "seed_ranker": "bm25",
+  "seed_top_k": 5,
+  "support_reachability_rate": 0.0,
+  "support_target_reachability_rate": 0.0,
+  "target_top_k": 5
+}

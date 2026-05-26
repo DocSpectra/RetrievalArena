@@ -1,0 +1,127 @@
+{
+  "after": {
+    "corpus_snapshot_id": "2026-03-30",
+    "dataset": "express_docs",
+    "graph_snapshot_id": "2026-03-30",
+    "manifest_hash": "5859b29a76cfbf9b353479409024fa453750e142eb18442410bca43227cc49d9",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "04b843670063367e6bfb9a9039467bba5c1708468d7938e7c7380153229b08dc",
+    "retrieval_config_id": "rag_graph_rerank",
+    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_rerank__6a80ca385b",
+    "run_id": "6a80ca385b",
+    "support_surface_id": "2026-03-30",
+    "test": "rag_graph_rerank"
+  },
+  "artifact_hashes": {
+    "after": {
+      "action_traces.jsonl": {
+        "sha256": "feacfe297199477bf09fa27f2ad9a2ac06c3a0baad73b4d0e200b478dde4c8c5",
+        "size_bytes": 3224
+      },
+      "item_scores.jsonl": {
+        "sha256": "a2c3dd35679a79dfbafc9178ff1da079542e5b2f0d9d9b7ecba92233c9236946",
+        "size_bytes": 10466
+      },
+      "metadata.json": {
+        "sha256": "bb87e3606eba993a63a755e7cd405f3de564e9437c16e9252499e2df56431c37",
+        "size_bytes": 185
+      },
+      "predictions.jsonl": {
+        "sha256": "7479ea8ba90670d5b3e360580c9cfb6ae0837fb3376d6bb35b4ca8e4ad164ccd",
+        "size_bytes": 18094
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "cf97804dadea0fd6a22b4e7c86f4ee9ec433abac9363edd0751525d4633bdb1d",
+        "size_bytes": 14566
+      },
+      "scores.json": {
+        "sha256": "5ab24f0dfc0668b738d18b33670f015a961e5d9ebc9c0a6bd98f96b5204ac2d0",
+        "size_bytes": 1286
+      }
+    },
+    "before": {
+      "action_traces.jsonl": {
+        "sha256": "feacfe297199477bf09fa27f2ad9a2ac06c3a0baad73b4d0e200b478dde4c8c5",
+        "size_bytes": 3224
+      },
+      "item_scores.jsonl": {
+        "sha256": "a2c3dd35679a79dfbafc9178ff1da079542e5b2f0d9d9b7ecba92233c9236946",
+        "size_bytes": 10466
+      },
+      "metadata.json": {
+        "sha256": "bb87e3606eba993a63a755e7cd405f3de564e9437c16e9252499e2df56431c37",
+        "size_bytes": 185
+      },
+      "predictions.jsonl": {
+        "sha256": "49aa2db70624cb568458e61d6ca23680c81a4d83781a551842581b13314d89f0",
+        "size_bytes": 18058
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "2c28320134557bcbcdd12f6f5dc092de2fa7633696c2c558a36fabbeb7a567e7",
+        "size_bytes": 14572
+      },
+      "scores.json": {
+        "sha256": "7e9e6c14bbaab68e9af444797c2c2ae2508072fc570fc2f50c2ac5695d3534c8",
+        "size_bytes": 1287
+      }
+    }
+  },
+  "before": {
+    "corpus_snapshot_id": "2025-09-20",
+    "dataset": "express_docs",
+    "graph_snapshot_id": "2025-09-20",
+    "manifest_hash": "6f24d4863b92c1975a1dd8ebba73373a82bca973a98e67241eced590fc9edbea",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "78c0468a22a6d73701478e5d472da022869b16779f3a0d1cedf831d39c8bf158",
+    "retrieval_config_id": "rag_graph_rerank",
+    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_rerank__6a80ca385b",
+    "run_id": "6a80ca385b",
+    "support_surface_id": "2025-09-20",
+    "test": "rag_graph_rerank"
+  },
+  "comparison_type": "retrieval_drift",
+  "created_at": "2026-05-26T10:02:20+00:00",
+  "evidence_coverage_regression_count": 0,
+  "manifest_hash": "3b367a6d90c1fee19357ac3c33d687d436718ca9b7acce6aadbd0995fe512d7b",
+  "manifest_type": "retrieval_drift_summary",
+  "mean_distance_to_support_delta": null,
+  "mean_lexical_f1_delta": 0.0,
+  "mean_ordered_top_k_overlap": 1.0,
+  "mean_rank_displacement": 0.0,
+  "mean_support_recall_delta": 0.0,
+  "mean_top_k_jaccard": 1.0,
+  "optional_signal_availability": {
+    "action_trace": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "distance_to_support": {
+      "available_count": 0,
+      "unavailable_count": 8
+    },
+    "evidence_coverage": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "lexical_score_delta": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "retained_score_delta": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "support_exposure": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "support_recall": {
+      "available_count": 8,
+      "unavailable_count": 0
+    }
+  },
+  "query_count": 8,
+  "schema_version": "retrieval_arena.retrieval_drift_summary.v1",
+  "support_exposure_regression_count": 0,
+  "support_recall_regression_count": 0
+}

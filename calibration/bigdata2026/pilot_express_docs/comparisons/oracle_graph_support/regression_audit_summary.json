@@ -1,0 +1,131 @@
+{
+  "after": {
+    "corpus_snapshot_id": "2026-03-30",
+    "dataset": "express_docs",
+    "graph_snapshot_id": "2026-03-30",
+    "manifest_hash": "b898e3a48c2f3c6823661acf61621104019d473ec77bedf818fbd485aa72bc20",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "04b843670063367e6bfb9a9039467bba5c1708468d7938e7c7380153229b08dc",
+    "retrieval_config_id": "oracle_graph_support",
+    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__oracle_graph_support__fb402f1d83",
+    "run_id": "fb402f1d83",
+    "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
+    "support_surface_id": "2026-03-30",
+    "test": "oracle_graph_support"
+  },
+  "before": {
+    "corpus_snapshot_id": "2025-09-20",
+    "dataset": "express_docs",
+    "graph_snapshot_id": "2025-09-20",
+    "manifest_hash": "e3a5a7fd66648f526f2806a3f668f9e5040b4ca4daf0775d1a112091e13447e2",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "78c0468a22a6d73701478e5d472da022869b16779f3a0d1cedf831d39c8bf158",
+    "retrieval_config_id": "oracle_graph_support",
+    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__oracle_graph_support__fb402f1d83",
+    "run_id": "fb402f1d83",
+    "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
+    "support_surface_id": "2025-09-20",
+    "test": "oracle_graph_support"
+  },
+  "cause_label_counts": {
+    "corpus_page_changed": 3,
+    "graph_edge_removed": 3,
+    "replay_manifest_changed": 8,
+    "retrieval_config_changed": 8,
+    "support_target_added": 3,
+    "support_target_changed": 3,
+    "support_target_removed": 3
+  },
+  "comparison_type": "regression_audit",
+  "created_at": "2026-05-26T10:02:20+00:00",
+  "evidence_availability_counts": {
+    "action_trace": {
+      "available": 8
+    },
+    "corpus": {
+      "available": 8
+    },
+    "distance_to_support": {
+      "available": 8
+    },
+    "evidence_coverage": {
+      "available": 8
+    },
+    "graph": {
+      "available": 8
+    },
+    "lexical_answer_score": {
+      "available": 8
+    },
+    "rank": {
+      "available": 8
+    },
+    "replay_manifest": {
+      "available": 8
+    },
+    "retrieval_candidates": {
+      "available": 8
+    },
+    "retrieval_config": {
+      "available": 8
+    },
+    "retrieval_score": {
+      "available": 8
+    },
+    "scoring_config": {
+      "available": 8
+    },
+    "snapshot_diff": {
+      "available": 8
+    },
+    "support_exposure": {
+      "available": 8
+    },
+    "support_recall": {
+      "available": 8
+    },
+    "support_surface": {
+      "available": 8
+    }
+  },
+  "input_artifacts": {
+    "after_replay_manifest": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__oracle_graph_support__fb402f1d83\\retrieval_replay_manifest.json",
+      "sha256": "eae2206801c1a80fc21088ebe580c33f06641561b95d63a83c3c1dcf059554d4",
+      "size_bytes": 14578
+    },
+    "after_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__oracle_graph_support__fb402f1d83",
+    "before_replay_manifest": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__oracle_graph_support__fb402f1d83\\retrieval_replay_manifest.json",
+      "sha256": "4f23cf59cd069cfb8db3718b5cf2df452450284d83f65fb06485a5684f7e3bef",
+      "size_bytes": 14584
+    },
+    "before_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__oracle_graph_support__fb402f1d83",
+    "drift_jsonl": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift.jsonl",
+      "sha256": "9fafbb878038d3551b9faa8ceb2d50e68c60ba19f7959667080e540a46ad829f",
+      "size_bytes": 18296
+    },
+    "drift_summary_json": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift_summary.json",
+      "sha256": "6baa457eccdf3a21b7b16d990dc5eb94c8f46b8237798bea6ab8dd25fe6c62d9",
+      "size_bytes": 4885
+    },
+    "snapshot_diff_json": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\snapshot_diff.json",
+      "sha256": "93919782e3c699333234b17a2097dc74c58a8931405bf59706940582b232a42a",
+      "size_bytes": 32326
+    }
+  },
+  "labeled_query_count": 8,
+  "manifest_hash": "bb4fb5a3296a3a8a841dd949d5eda9bb24e878095e0e6c4ed244c51616a6aa40",
+  "manifest_type": "regression_audit_summary",
+  "overall_drift_score": null,
+  "overall_drift_score_note": "No overall drift score or composite summary metric is computed.",
+  "query_count": 8,
+  "schema_version": "retrieval_arena.regression_audit_summary.v1",
+  "source_report_references": {
+    "drift_summary_schema_version": "retrieval_arena.retrieval_drift_summary.v1",
+    "snapshot_diff_schema_version": "retrieval_arena.snapshot_diff.v1"
+  }
+}

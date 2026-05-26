@@ -1,10 +1,10 @@
 {
   "corpus_id": "express_docs",
-  "created_at": "2026-05-26T05:41:27+00:00",
-  "dataset_preparation_manifest_hash": "0728e7822b2aa3011d8341c21c15704ac094cb64b8f484e864c186f67f37e5b0",
+  "created_at": "2026-05-26T10:01:49+00:00",
+  "dataset_preparation_manifest_hash": "70f74b303ca65650f9df094affa31b6e79ef69f051664f7c16ddec54897cf3d6",
   "dataset_preparation_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\dataset\\dataset_preparation_manifest.json",
   "is_clean_qa_surface": true,
-  "manifest_hash": "a3bab26ec63a2ebe503d97f3fd0a2791841c303789cb512ed01790aa7200f731",
+  "manifest_hash": "036204d4955401b5831dd0965ca32fbf4e0ea96a02d3a793597b02b6c2ad0a5c",
   "manifest_type": "support_construction",
   "partial_threshold": 0.25,
   "qa_surface_type": "dedicated_faq",

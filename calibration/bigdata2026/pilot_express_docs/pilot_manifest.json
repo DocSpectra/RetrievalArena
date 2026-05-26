@@ -11,6 +11,36 @@
       "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\retrieval_replay_manifest.json",
       "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\scores.json",
       "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\metadata.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\retrieval_replay_manifest.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\scores.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\metadata.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\retrieval_replay_manifest.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\scores.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\metadata.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\retrieval_replay_manifest.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\scores.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\metadata.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\retrieval_replay_manifest.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\scores.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\metadata.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\retrieval_replay_manifest.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\scores.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\metadata.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\retrieval_replay_manifest.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\scores.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\metadata.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\retrieval_replay_manifest.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\scores.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\metadata.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\retrieval_replay_manifest.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\scores.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\metadata.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\retrieval_replay_manifest.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\scores.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\metadata.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\retrieval_replay_manifest.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\scores.json",
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\metadata.json",
       "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\BASELINE.md"
     ],
     "include_raw": false,
@@ -26,10 +56,60 @@
       "drift_jsonl": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift.jsonl",
       "drift_summary_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift_summary.json",
       "systems_measurements_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\systems_measurements.json"
+    },
+    {
+      "after_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_vector__6e7b60616a",
+      "audit_jsonl": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\regression_audit.jsonl",
+      "audit_summary_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\regression_audit_summary.json",
+      "before_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_vector__6e7b60616a",
+      "comparison_id": "rag_vector",
+      "drift_jsonl": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\retrieval_drift.jsonl",
+      "drift_summary_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\retrieval_drift_summary.json",
+      "systems_measurements_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\systems_measurements.json"
+    },
+    {
+      "after_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_rerank__6a80ca385b",
+      "audit_jsonl": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\regression_audit.jsonl",
+      "audit_summary_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\regression_audit_summary.json",
+      "before_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_rerank__6a80ca385b",
+      "comparison_id": "rag_graph_rerank",
+      "drift_jsonl": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\retrieval_drift.jsonl",
+      "drift_summary_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\retrieval_drift_summary.json",
+      "systems_measurements_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\systems_measurements.json"
+    },
+    {
+      "after_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__oracle_graph_support__fb402f1d83",
+      "audit_jsonl": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\regression_audit.jsonl",
+      "audit_summary_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\regression_audit_summary.json",
+      "before_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__oracle_graph_support__fb402f1d83",
+      "comparison_id": "oracle_graph_support",
+      "drift_jsonl": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift.jsonl",
+      "drift_summary_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift_summary.json",
+      "systems_measurements_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\systems_measurements.json"
+    },
+    {
+      "after_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_multihop_rerank__4d2d590171",
+      "audit_jsonl": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\regression_audit.jsonl",
+      "audit_summary_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\regression_audit_summary.json",
+      "before_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_multihop_rerank__4d2d590171",
+      "comparison_id": "rag_graph_multihop_rerank",
+      "drift_jsonl": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\retrieval_drift.jsonl",
+      "drift_summary_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\retrieval_drift_summary.json",
+      "systems_measurements_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\systems_measurements.json"
+    },
+    {
+      "after_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_iterative_search__feaac08533",
+      "audit_jsonl": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\regression_audit.jsonl",
+      "audit_summary_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\regression_audit_summary.json",
+      "before_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_iterative_search__feaac08533",
+      "comparison_id": "rag_iterative_search",
+      "drift_jsonl": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\retrieval_drift.jsonl",
+      "drift_summary_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\retrieval_drift_summary.json",
+      "systems_measurements_json": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\systems_measurements.json"
     }
   ],
   "corpus_id": "express_docs",
-  "created_at": "2026-05-26T05:41:26+00:00",
+  "created_at": "2026-05-26T10:01:48+00:00",
   "environment": {
     "available_memory_bytes": null,
     "available_memory_unavailable_reason": "standard_library_available_memory_unavailable",
@@ -41,8 +121,8 @@
     "python_version": "3.12.10",
     "retrieval_arena_git_provenance": {
       "branch": "IEEEBigData2026_metrics",
-      "commit": "5096265f8f926331dd064632ce347270ace875d9",
-      "diff_hash": "70d2e2ac64ab70131b7e130d58fa4648707aaadab89447bb0c9b2857d032b549",
+      "commit": "72793c918719f31dac41ff96e7f174912e67b0af",
+      "diff_hash": "706af06c70424c38811524eac09f433a843220eff04e8119df30415a7a2bda56",
       "dirty": true,
       "is_git_worktree": true,
       "ref": null,
@@ -50,14 +130,85 @@
       "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
       "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
       "tag": null,
-      "untracked_files": []
+      "untracked_files": [
+        "calibration/bigdata2026/pilot_express_docs/comparisons/oracle_graph_support/regression_audit.jsonl",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/oracle_graph_support/regression_audit.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/oracle_graph_support/regression_audit_summary.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/oracle_graph_support/retrieval_drift.jsonl",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/oracle_graph_support/retrieval_drift_summary.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/oracle_graph_support/retrieval_drift_summary.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/oracle_graph_support/systems_measurements.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/oracle_graph_support/systems_measurements.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_multihop_rerank/regression_audit.jsonl",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_multihop_rerank/regression_audit.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_multihop_rerank/regression_audit_summary.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_multihop_rerank/retrieval_drift.jsonl",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_multihop_rerank/retrieval_drift_summary.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_multihop_rerank/retrieval_drift_summary.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_multihop_rerank/systems_measurements.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_multihop_rerank/systems_measurements.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_rerank/regression_audit.jsonl",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_rerank/regression_audit.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_rerank/regression_audit_summary.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_rerank/retrieval_drift.jsonl",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_rerank/retrieval_drift_summary.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_rerank/retrieval_drift_summary.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_rerank/systems_measurements.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_graph_rerank/systems_measurements.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_iterative_search/regression_audit.jsonl",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_iterative_search/regression_audit.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_iterative_search/regression_audit_summary.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_iterative_search/retrieval_drift.jsonl",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_iterative_search/retrieval_drift_summary.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_iterative_search/retrieval_drift_summary.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_iterative_search/systems_measurements.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_iterative_search/systems_measurements.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_vector/regression_audit.jsonl",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_vector/regression_audit.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_vector/regression_audit_summary.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_vector/retrieval_drift.jsonl",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_vector/retrieval_drift_summary.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_vector/retrieval_drift_summary.md",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_vector/systems_measurements.json",
+        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_vector/systems_measurements.md",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/oracle_graph_support/after/metadata.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/oracle_graph_support/after/retrieval_replay_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/oracle_graph_support/after/scores.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/oracle_graph_support/before/metadata.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/oracle_graph_support/before/retrieval_replay_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/oracle_graph_support/before/scores.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_graph_multihop_rerank/after/metadata.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_graph_multihop_rerank/after/retrieval_replay_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_graph_multihop_rerank/after/scores.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_graph_multihop_rerank/before/metadata.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_graph_multihop_rerank/before/retrieval_replay_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_graph_multihop_rerank/before/scores.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_graph_rerank/after/metadata.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_graph_rerank/after/retrieval_replay_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_graph_rerank/after/scores.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_graph_rerank/before/metadata.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_graph_rerank/before/retrieval_replay_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_graph_rerank/before/scores.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_iterative_search/after/metadata.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_iterative_search/after/retrieval_replay_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_iterative_search/after/scores.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_iterative_search/before/metadata.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_iterative_search/before/retrieval_replay_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_iterative_search/before/scores.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_vector/after/metadata.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_vector/after/retrieval_replay_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_vector/after/scores.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_vector/before/metadata.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_vector/before/retrieval_replay_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/retrieval/rag_vector/before/scores.json"
+      ]
     },
     "retrieval_arena_version": "0.1.0"
   },
-  "manifest_hash": "5dfd4e6f6925867750e311db40fe1368bd3270862bfb7609a4ca93d30f534142",
+  "manifest_hash": "32f944bb2690f63c66e71df8a0403f6b0bd51761e41f8fdadfc7f3b41fa0313e",
   "manifest_type": "bigdata2026_pilot_run",
   "pilot_id": "pilot_express_docs_2025_09_20_to_2026_03_30",
-  "plan_hash": "db7020da6f7d5f4205b2fe0cf4e130e10f438b42e9582373024291a1b3cd4b52",
+  "plan_hash": "dfb0175b6a33687ceb8c1ca274d64f5163425ba07fe41caf0ca8a40e51cd6503",
   "plan_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\pilot_express_docs.json",
   "query_set_id": "express-docs-pilot-queries",
   "retrieval_runs": {
@@ -132,12 +283,42 @@
           "name": "retrieval_before_selected_tests",
           "status": "ok",
           "tests": [
-            "rag_lexical_topk"
+            "oracle_graph_support",
+            "rag_graph_multihop_rerank",
+            "rag_graph_rerank",
+            "rag_iterative_search",
+            "rag_lexical_topk",
+            "rag_vector"
           ]
         },
         {
           "name": "docker_build_context_before_rag_lexical_topk",
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_lexical_topk",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_before_rag_vector",
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_vector",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_before_rag_graph_rerank",
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_graph_rerank",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_before_oracle_graph_support",
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\oracle_graph_support",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_before_rag_graph_multihop_rerank",
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_graph_multihop_rerank",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_before_rag_iterative_search",
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_iterative_search",
           "status": "ok"
         },
         {
@@ -149,7 +330,12 @@
           "name": "retrieval_after_selected_tests",
           "status": "ok",
           "tests": [
-            "rag_lexical_topk"
+            "oracle_graph_support",
+            "rag_graph_multihop_rerank",
+            "rag_graph_rerank",
+            "rag_iterative_search",
+            "rag_lexical_topk",
+            "rag_vector"
           ]
         },
         {
@@ -158,12 +344,37 @@
           "status": "ok"
         },
         {
+          "name": "docker_build_context_after_rag_vector",
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_vector",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_after_rag_graph_rerank",
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_graph_rerank",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_after_oracle_graph_support",
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\oracle_graph_support",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_after_rag_graph_multihop_rerank",
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_graph_multihop_rerank",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_after_rag_iterative_search",
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_iterative_search",
+          "status": "ok"
+        },
+        {
           "name": "docker_engine",
           "server_version": "29.4.2",
           "status": "ok"
         }
       ],
-      "completed_at": "2026-05-26T05:41:27+00:00",
+      "completed_at": "2026-05-26T10:01:48+00:00",
       "input_artifacts": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\snapshot_comparison_express_docs.json"
@@ -178,12 +389,12 @@
       "manifest_references": [],
       "output_artifacts": [],
       "stage": "prerequisites",
-      "started_at": "2026-05-26T05:41:26+00:00",
+      "started_at": "2026-05-26T10:01:48+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
     {
-      "completed_at": "2026-05-26T05:41:28+00:00",
+      "completed_at": "2026-05-26T10:01:50+00:00",
       "input_artifacts": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\snapshot_comparison_express_docs.json"
@@ -206,12 +417,12 @@
         }
       ],
       "stage": "snapshot_compare",
-      "started_at": "2026-05-26T05:41:27+00:00",
+      "started_at": "2026-05-26T10:01:49+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
     {
-      "completed_at": "2026-05-26T05:41:31+00:00",
+      "completed_at": "2026-05-26T10:02:06+00:00",
       "input_artifacts": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_express_docs_before.yaml"
@@ -228,12 +439,12 @@
         }
       ],
       "stage": "retrieval_before",
-      "started_at": "2026-05-26T05:41:28+00:00",
+      "started_at": "2026-05-26T10:01:50+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
     {
-      "completed_at": "2026-05-26T05:41:34+00:00",
+      "completed_at": "2026-05-26T10:02:19+00:00",
       "input_artifacts": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_express_docs_after.yaml"
@@ -250,16 +461,31 @@
         }
       ],
       "stage": "retrieval_after",
-      "started_at": "2026-05-26T05:41:31+00:00",
+      "started_at": "2026-05-26T10:02:06+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
     {
-      "completed_at": "2026-05-26T05:41:34+00:00",
+      "completed_at": "2026-05-26T10:02:20+00:00",
       "input_artifacts": [],
       "manifest_references": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\retrieval_drift_summary.json"
         }
       ],
       "output_artifacts": [
@@ -271,19 +497,79 @@
         },
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift_summary.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\retrieval_drift.jsonl"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\retrieval_drift_summary.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\retrieval_drift.jsonl"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\retrieval_drift_summary.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift.jsonl"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift_summary.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\retrieval_drift.jsonl"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\retrieval_drift_summary.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\retrieval_drift.jsonl"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\retrieval_drift_summary.md"
         }
       ],
       "stage": "drift",
-      "started_at": "2026-05-26T05:41:34+00:00",
+      "started_at": "2026-05-26T10:02:20+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
     {
-      "completed_at": "2026-05-26T05:41:34+00:00",
+      "completed_at": "2026-05-26T10:02:20+00:00",
       "input_artifacts": [],
       "manifest_references": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\regression_audit_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\regression_audit_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\regression_audit_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\regression_audit_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\regression_audit_summary.json"
         }
       ],
       "output_artifacts": [
@@ -295,19 +581,79 @@
         },
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\regression_audit.jsonl"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\regression_audit_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\regression_audit.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\regression_audit.jsonl"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\regression_audit_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\regression_audit.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\regression_audit.jsonl"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\regression_audit_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\regression_audit.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\regression_audit.jsonl"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\regression_audit_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\regression_audit.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\regression_audit.jsonl"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\regression_audit_summary.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\regression_audit.md"
         }
       ],
       "stage": "audit",
-      "started_at": "2026-05-26T05:41:34+00:00",
+      "started_at": "2026-05-26T10:02:20+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
     {
-      "completed_at": "2026-05-26T05:41:35+00:00",
+      "completed_at": "2026-05-26T10:02:21+00:00",
       "input_artifacts": [],
       "manifest_references": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\systems_measurements.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\systems_measurements.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\systems_measurements.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\systems_measurements.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\systems_measurements.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\systems_measurements.json"
         }
       ],
       "output_artifacts": [
@@ -316,10 +662,40 @@
         },
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\systems_measurements.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\systems_measurements.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\systems_measurements.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\systems_measurements.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\systems_measurements.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\systems_measurements.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\systems_measurements.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\systems_measurements.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\systems_measurements.md"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\systems_measurements.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\systems_measurements.md"
         }
       ],
       "stage": "measurements",
-      "started_at": "2026-05-26T05:41:34+00:00",
+      "started_at": "2026-05-26T10:02:20+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
@@ -336,12 +712,42 @@
           "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\retrieval_replay_manifest.json",
           "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\scores.json",
           "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\metadata.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\retrieval_replay_manifest.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\scores.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\metadata.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\retrieval_replay_manifest.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\scores.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\metadata.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\retrieval_replay_manifest.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\scores.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\metadata.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\retrieval_replay_manifest.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\scores.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\metadata.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\retrieval_replay_manifest.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\scores.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\metadata.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\retrieval_replay_manifest.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\scores.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\metadata.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\retrieval_replay_manifest.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\scores.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\metadata.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\retrieval_replay_manifest.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\scores.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\metadata.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\retrieval_replay_manifest.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\scores.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\metadata.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\retrieval_replay_manifest.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\scores.json",
+          "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\metadata.json",
           "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\BASELINE.md"
         ],
         "include_raw": false,
         "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs"
       },
-      "completed_at": "2026-05-26T05:41:35+00:00",
+      "completed_at": "2026-05-26T10:02:22+00:00",
       "input_artifacts": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs"
@@ -380,11 +786,101 @@
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\metadata.json"
         },
         {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\scores.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\metadata.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\scores.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\metadata.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\scores.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\metadata.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\scores.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\metadata.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\scores.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\metadata.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\scores.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\metadata.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\scores.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\metadata.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\scores.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\metadata.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\scores.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\metadata.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\scores.json"
+        },
+        {
+          "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\metadata.json"
+        },
+        {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs\\BASELINE.md"
         }
       ],
       "stage": "baseline_bundle",
-      "started_at": "2026-05-26T05:41:35+00:00",
+      "started_at": "2026-05-26T10:02:22+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     }

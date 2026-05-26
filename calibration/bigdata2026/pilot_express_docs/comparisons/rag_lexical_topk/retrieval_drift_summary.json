@@ -3,9 +3,9 @@
     "corpus_snapshot_id": "2026-03-30",
     "dataset": "express_docs",
     "graph_snapshot_id": "2026-03-30",
-    "manifest_hash": "23eccc12cfa53bf0fa9d26ae6b8b476655839298fa5e3df63208e8b91754d3e6",
+    "manifest_hash": "78a1a423d448a32cf90341c3a1b7df3cf9bdc26f84c978892412e12b7d57f4a3",
     "query_set_id": "express-docs-pilot-queries",
-    "retrieval_config_hash": "facb96b68244d0d38fbb2b9c359ef70800563e90f7801208d8df04068104e03c",
+    "retrieval_config_hash": "04b843670063367e6bfb9a9039467bba5c1708468d7938e7c7380153229b08dc",
     "retrieval_config_id": "rag_lexical_topk",
     "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_lexical_topk__ddea72412e",
     "run_id": "ddea72412e",
@@ -31,11 +31,11 @@
         "size_bytes": 143493
       },
       "retrieval_replay_manifest.json": {
-        "sha256": "8064cfed21c297ad286c67cba5a4be5816ae86516294ad93a835cc0a22468494",
-        "size_bytes": 14569
+        "sha256": "3362600c8af4a4c0628895365bde28211d02d25eb651ea27b1cb9edf19a044cf",
+        "size_bytes": 14566
       },
       "scores.json": {
-        "sha256": "2f76c8e86f7e42474d541d8e1ba5bfa78402b244f8a21559ed1edecfdcd31b4b",
+        "sha256": "7cdd5285e0da61cc873e183ba28edc3bacd1c9c2a31d944b4e6df55399e11039",
         "size_bytes": 1223
       }
     },
@@ -57,11 +57,11 @@
         "size_bytes": 143188
       },
       "retrieval_replay_manifest.json": {
-        "sha256": "6f6048b5880e537bef5de6c78064cdd1f279c06811d76c06b9f3cd5fefacef29",
-        "size_bytes": 14575
+        "sha256": "277b8a1f3280ae6111bae37f4c88fceb829c631684840fca75af95836b34644f",
+        "size_bytes": 14572
       },
       "scores.json": {
-        "sha256": "42c858617300d67be5489cb997688071182c72193646b53bafa9f99eaa783ca0",
+        "sha256": "0e1f59087aa526c17a99d29a3c40379677b1e7954e087b20710d2aef9a8dbd3f",
         "size_bytes": 1224
       }
     }
@@ -70,9 +70,9 @@
     "corpus_snapshot_id": "2025-09-20",
     "dataset": "express_docs",
     "graph_snapshot_id": "2025-09-20",
-    "manifest_hash": "f65ec1141d9d8bb8f0cd2ccff7e7eddea99915c86d91850e1e526414b36d1427",
+    "manifest_hash": "fe977272a218452614d647839a679cdbcc3dd48e045f6e379f46d02c1a76f0cf",
     "query_set_id": "express-docs-pilot-queries",
-    "retrieval_config_hash": "d203059b00043ca7f2e0565376ee86c02ecac9ce25b9eb192a78d67d53806cc0",
+    "retrieval_config_hash": "78c0468a22a6d73701478e5d472da022869b16779f3a0d1cedf831d39c8bf158",
     "retrieval_config_id": "rag_lexical_topk",
     "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_lexical_topk__ddea72412e",
     "run_id": "ddea72412e",
@@ -80,9 +80,9 @@
     "test": "rag_lexical_topk"
   },
   "comparison_type": "retrieval_drift",
-  "created_at": "2026-05-26T05:41:34+00:00",
+  "created_at": "2026-05-26T10:02:20+00:00",
   "evidence_coverage_regression_count": 0,
-  "manifest_hash": "3c18bca62cdd5c6249305a31847ce745bd6b959b9ab7d5092c2e56a5374df784",
+  "manifest_hash": "9ad8fa66917bd21c634dfb11ca49e4cf650ba094f6f2a8cb138ebdb7e5bb95ad",
   "manifest_type": "retrieval_drift_summary",
   "mean_distance_to_support_delta": 0.0,
   "mean_lexical_f1_delta": -0.0009139910121593302,
