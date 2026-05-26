@@ -1,0 +1,119 @@
+{
+  "after": {
+    "corpus_snapshot_id": "2026-03-30",
+    "dataset": "express_docs",
+    "graph_snapshot_id": null,
+    "manifest_hash": "d8e53ed5d1de3acb596f181c596e0f141df0563c2a2fad15783221c27519a033",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "5562be679ac0a6bb7dbc20fb9d52111888bcb3c6436026df25ff1118f429f936",
+    "retrieval_config_id": "rag_lexical_topk",
+    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_lexical_topk__ddea72412e",
+    "run_id": "ddea72412e",
+    "support_surface_id": null,
+    "test": "rag_lexical_topk"
+  },
+  "artifact_hashes": {
+    "after": {
+      "item_scores.jsonl": {
+        "sha256": "4ff71d67ba1484a1f24d6e690044b5e41754a4b77592cee0fa2ce5be21841afb",
+        "size_bytes": 65324
+      },
+      "metadata.json": {
+        "sha256": "10311eb11a277a57d1fe64913f6e8e5c230a81938786c1051623bed0174e5d72",
+        "size_bytes": 129
+      },
+      "predictions.jsonl": {
+        "sha256": "34652805f021a25835afefc8f5bff92bec62c77a6dcbbb04c84f4add4d887bc6",
+        "size_bytes": 125425
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "5118fd448a10f1db68eec7984ec3d28fdc6d2a3e3858052294e2591c6a3cc3fc",
+        "size_bytes": 19984
+      },
+      "scores.json": {
+        "sha256": "9dbde6b32d56d8b647dfa763d50b47e816a02da6e72baa63036f4fcd38733424",
+        "size_bytes": 1046
+      }
+    },
+    "before": {
+      "item_scores.jsonl": {
+        "sha256": "9d65be9ee104c28378fe44dbce6d387d02f0d90478c816a4fc7c5bda071e4861",
+        "size_bytes": 65303
+      },
+      "metadata.json": {
+        "sha256": "10311eb11a277a57d1fe64913f6e8e5c230a81938786c1051623bed0174e5d72",
+        "size_bytes": 129
+      },
+      "predictions.jsonl": {
+        "sha256": "7c33111210975f82f296e2aeac286c0d34e8fc692d2bca38c9e4d24839676858",
+        "size_bytes": 125342
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "799b0dbe9d265c17ce167dfa8361868f66d716cd901a7fc8530e95b0e0707b0a",
+        "size_bytes": 19988
+      },
+      "scores.json": {
+        "sha256": "e1178ecd3db1cd7fa71913d5b448b01cd86e8fbd108fa3653c582483330759f1",
+        "size_bytes": 1047
+      }
+    }
+  },
+  "before": {
+    "corpus_snapshot_id": "2025-09-20",
+    "dataset": "express_docs",
+    "graph_snapshot_id": null,
+    "manifest_hash": "e30642dc9b3f2cb954f91933e9ff640b686d407c669d1aeb8e13d58318504ce0",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "4f50a574d36e8234c1f29b110c6ed13b218345ddd8994bf6ddd318067ac7fd1d",
+    "retrieval_config_id": "rag_lexical_topk",
+    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_lexical_topk__ddea72412e",
+    "run_id": "ddea72412e",
+    "support_surface_id": null,
+    "test": "rag_lexical_topk"
+  },
+  "comparison_type": "retrieval_drift",
+  "created_at": "2026-05-26T02:59:21+00:00",
+  "evidence_coverage_regression_count": 0,
+  "manifest_hash": "03cf22f3bf7138051502c2edb72e3eb5f2df7ea9a2a81f8e404960921093c622",
+  "manifest_type": "retrieval_drift_summary",
+  "mean_distance_to_support_delta": null,
+  "mean_lexical_f1_delta": -0.0009139910121593302,
+  "mean_ordered_top_k_overlap": 0.85,
+  "mean_rank_displacement": 0.15000000000000002,
+  "mean_support_recall_delta": null,
+  "mean_top_k_jaccard": 0.9583333333333334,
+  "optional_signal_availability": {
+    "action_trace": {
+      "available_count": 0,
+      "unavailable_count": 8
+    },
+    "distance_to_support": {
+      "available_count": 0,
+      "unavailable_count": 8
+    },
+    "evidence_coverage": {
+      "available_count": 0,
+      "unavailable_count": 8
+    },
+    "lexical_score_delta": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "retained_score_delta": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "support_exposure": {
+      "available_count": 0,
+      "unavailable_count": 8
+    },
+    "support_recall": {
+      "available_count": 0,
+      "unavailable_count": 8
+    }
+  },
+  "query_count": 8,
+  "schema_version": "retrieval_arena.retrieval_drift_summary.v1",
+  "support_exposure_regression_count": 0,
+  "support_recall_regression_count": 0
+}

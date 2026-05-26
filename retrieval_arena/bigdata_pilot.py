@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,7 @@ from .measurements import collect_systems_measurements, environment_metadata
 PILOT_PLAN_SCHEMA_VERSION = "retrieval_arena.bigdata2026_pilot_plan.v1"
 PILOT_RUN_SCHEMA_VERSION = "retrieval_arena.bigdata2026_pilot_run.v1"
 VALID_STAGES = (
+    "prerequisites",
     "snapshot_compare",
     "retrieval_before",
     "retrieval_after",
@@ -240,7 +242,13 @@ def bigdata_pilot(
     }
 
 
-def assemble_baseline_bundle(output_root: Path, calibration_store: Path, *, pilot_id: str) -> dict[str, Any]:
+def assemble_baseline_bundle(
+    output_root: Path,
+    calibration_store: Path,
+    *,
+    pilot_id: str,
+    comparisons: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     if calibration_store.exists():
         shutil.rmtree(calibration_store)
     calibration_store.mkdir(parents=True)
@@ -255,6 +263,7 @@ def assemble_baseline_bundle(output_root: Path, calibration_store: Path, *, pilo
             shutil.copy2(item, target)
         if target.exists():
             copied.append(str(target))
+    copied.extend(_copy_selected_retrieval_artifacts(calibration_store, comparisons or []))
     baseline_md = calibration_store / "BASELINE.md"
     baseline_md.write_text(
         "\n".join(
@@ -262,7 +271,7 @@ def assemble_baseline_bundle(output_root: Path, calibration_store: Path, *, pilo
                 f"# BigData Pilot Baseline: {pilot_id}",
                 "",
                 "This calibration store contains the current selected BigData pilot baseline.",
-                "Raw source trees and copied corpus content are excluded by policy.",
+                "Raw source trees, copied corpus content, and copied query/answer text are excluded by policy.",
                 "No efficiency score, overall scale score, or composite systems metric is included.",
                 "",
             ]
@@ -275,6 +284,8 @@ def assemble_baseline_bundle(output_root: Path, calibration_store: Path, *, pilo
 
 def _run_stage(stage_name: str, plan: dict[str, Any], context: dict[str, Any], *, force: bool, runtime_metrics: list[dict[str, Any]]) -> dict[str, Any]:
     output_root = Path(plan["output_root"])
+    if stage_name == "prerequisites":
+        return _run_prerequisites(plan)
     if stage_name == "snapshot_compare":
         from .corpus.comparison import run_corpus_snapshot_comparison
 
@@ -343,9 +354,156 @@ def _run_stage(stage_name: str, plan: dict[str, Any], context: dict[str, Any], *
             outputs.extend(report["written_artifacts"])
         return _record([], outputs, [path for item in context["selected_comparisons"] for path in (str(item["systems_measurements_json"]),)])
     if stage_name == "baseline_bundle":
-        bundle = assemble_baseline_bundle(output_root, Path(plan["calibration_store"]), pilot_id=plan["pilot_id"])
+        bundle = assemble_baseline_bundle(
+            output_root,
+            Path(plan["calibration_store"]),
+            pilot_id=plan["pilot_id"],
+            comparisons=context.get("selected_comparisons", []),
+        )
         return {**_record([str(output_root)], bundle["copied_artifacts"], []), "baseline_bundle": bundle}
     raise ValidationError(f"Unsupported BigData pilot stage: {stage_name}")
+
+
+def _run_prerequisites(plan: dict[str, Any]) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    _check_existing_file("snapshot_comparison_plan", Path(plan["snapshot_pair"]["comparison_plan"]), checks)
+    for side in ("before", "after"):
+        descriptor_path = Path(plan["snapshot_pair"][side]["source_descriptor"])
+        descriptor = _load_source_descriptor(descriptor_path)
+        _check_source_descriptor(side, descriptor_path, descriptor, checks)
+    before_config = load_config(Path(plan["retrieval"]["before_config"]))
+    after_config = load_config(Path(plan["retrieval"]["after_config"]))
+    checks.append({"name": "retrieval_before_config", "status": "ok", "path": str(before_config.config_path)})
+    checks.append({"name": "retrieval_after_config", "status": "ok", "path": str(after_config.config_path)})
+
+    selected_dataset = plan["retrieval"]["selected_dataset"]
+    selected_tests = set(plan["retrieval"].get("selected_tests", []))
+    for label, config in (("before", before_config), ("after", after_config)):
+        dataset_names = {dataset.name for dataset in config.datasets}
+        test_names = {test.name for test in config.tests}
+        if selected_dataset not in dataset_names:
+            raise ValidationError(f"Prerequisite failed: retrieval.{label}_config missing selected dataset {selected_dataset}.")
+        missing_tests = sorted(selected_tests - test_names)
+        if missing_tests:
+            raise ValidationError(f"Prerequisite failed: retrieval.{label}_config missing selected tests {missing_tests}.")
+        checks.append({"name": f"retrieval_{label}_selected_dataset", "status": "ok", "dataset": selected_dataset})
+        checks.append({"name": f"retrieval_{label}_selected_tests", "status": "ok", "tests": sorted(selected_tests)})
+        for test in config.tests:
+            if test.name not in selected_tests:
+                continue
+            if test.build_context is not None:
+                if not test.build_context.is_dir():
+                    raise ValidationError(f"Prerequisite failed: Docker build_context not found for {test.name}: {test.build_context}")
+                checks.append({"name": f"docker_build_context_{label}_{test.name}", "status": "ok", "path": str(test.build_context)})
+            for volume in test.volumes:
+                if not volume.host_path.exists():
+                    raise ValidationError(f"Prerequisite failed: Docker volume host_path not found for {test.name}: {volume.host_path}")
+                checks.append({"name": f"docker_volume_{label}_{test.name}", "status": "ok", "path": str(volume.host_path)})
+
+    server_version = _docker_server_version()
+    checks.append({"name": "docker_engine", "status": "ok", "server_version": server_version})
+    return {
+        "input_artifacts": [
+            {"path": plan["snapshot_pair"]["comparison_plan"]},
+            {"path": plan["retrieval"]["before_config"]},
+            {"path": plan["retrieval"]["after_config"]},
+        ],
+        "output_artifacts": [],
+        "manifest_references": [],
+        "unavailable_optional_inputs": [],
+        "checks": checks,
+    }
+
+
+def _load_source_descriptor(path: Path) -> Any:
+    from .corpus.sources import descriptor_from_dict
+
+    _check_existing_file("source_descriptor", path, [])
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValidationError(f"Prerequisite failed: invalid source descriptor JSON {path}: {exc}") from exc
+    return descriptor_from_dict(raw, base_path=path.parent)
+
+
+def _check_source_descriptor(side: str, descriptor_path: Path, descriptor: Any, checks: list[dict[str, Any]]) -> None:
+    _check_existing_file(f"source_descriptor_{side}", descriptor_path, checks)
+    if descriptor.source_type == "local":
+        if descriptor.source_path is None or not descriptor.source_path.is_dir():
+            raise ValidationError(f"Prerequisite failed: local source path not found for {side}: {descriptor.source_path}")
+        _check_docs_root(side, descriptor.source_path, descriptor.docs_root, checks)
+        checks.append({"name": f"local_source_{side}", "status": "ok", "path": str(descriptor.source_path)})
+        return
+    if descriptor.source_path is None:
+        raise ValidationError(f"Prerequisite failed: remote Git clone is not implemented for {side}; provide source_path.")
+    if not descriptor.source_path.is_dir():
+        raise ValidationError(f"Prerequisite failed: Git source path not found for {side}: {descriptor.source_path}")
+    commit = _git_output(descriptor.source_path, ["rev-parse", "--verify", f"{descriptor.requested_ref or 'HEAD'}^{{commit}}"])
+    clean = _git_output(descriptor.source_path, ["status", "--porcelain", "--untracked-files=all"]) == ""
+    if not clean:
+        raise ValidationError(f"Prerequisite failed: Git source worktree must be clean for {side}: {descriptor.source_path}")
+    if descriptor.docs_root:
+        _git_output(descriptor.source_path, ["cat-file", "-e", f"{commit}:{descriptor.docs_root}"])
+    checks.append(
+        {
+            "name": f"git_source_{side}",
+            "status": "ok",
+            "path": str(descriptor.source_path),
+            "requested_ref": descriptor.requested_ref,
+            "resolved_commit": commit,
+            "docs_root": descriptor.docs_root,
+            "source_worktree_clean": clean,
+        }
+    )
+
+
+def _check_docs_root(side: str, source_path: Path, docs_root: str | None, checks: list[dict[str, Any]]) -> None:
+    root = source_path / docs_root if docs_root else source_path
+    if not root.is_dir():
+        raise ValidationError(f"Prerequisite failed: docs_root not found for {side}: {root}")
+    checks.append({"name": f"docs_root_{side}", "status": "ok", "path": str(root)})
+
+
+def _check_existing_file(name: str, path: Path, checks: list[dict[str, Any]]) -> None:
+    if not path.is_file():
+        raise ValidationError(f"Prerequisite failed: {name} not found: {path}")
+    checks.append({"name": name, "status": "ok", "path": str(path)})
+
+
+def _docker_server_version() -> str:
+    try:
+        completed = subprocess.run(
+            ["docker", "version", "--format", "{{.Server.Version}}"],
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+    except OSError as exc:
+        raise ValidationError("Prerequisite failed: Docker executable is not available.") from exc
+    output = completed.stdout.strip()
+    if completed.returncode != 0:
+        raise ValidationError(f"Prerequisite failed: Docker engine is not available:\n{output}")
+    return output or "unknown"
+
+
+def _git_output(repo: Path, args: list[str]) -> str:
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(repo), *args],
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except OSError as exc:
+        raise ValidationError("Prerequisite failed: Git executable is not available.") from exc
+    if completed.returncode != 0:
+        detail = completed.stderr.strip() or completed.stdout.strip()
+        raise ValidationError(f"Prerequisite failed: Git command failed in {repo}: {detail}")
+    return completed.stdout.strip()
 
 
 def _ensure_runs_selected(plan: dict[str, Any], context: dict[str, Any]) -> None:
@@ -455,9 +613,29 @@ def _initial_context(plan: dict[str, Any], plan_path: Path) -> dict[str, Any]:
 
 def _copytree_excluding_raw(source: Path, target: Path) -> None:
     def ignore(_dir: str, names: list[str]) -> set[str]:
-        return {name for name in names if name in {"raw", "corpus"}}
+        return {name for name in names if name in {"raw", "corpus", "questions.jsonl", "answers.jsonl"}}
 
     shutil.copytree(source, target, ignore=ignore)
+
+
+def _copy_selected_retrieval_artifacts(calibration_store: Path, comparisons: list[dict[str, Any]]) -> list[str]:
+    copied: list[str] = []
+    safe_files = ("retrieval_replay_manifest.json", "scores.json", "metadata.json")
+    for comparison in comparisons:
+        comparison_id = str(comparison.get("comparison_id", "comparison"))
+        for side in ("before", "after"):
+            run_dir = comparison.get(f"{side}_run_dir")
+            if not isinstance(run_dir, Path):
+                continue
+            target_dir = calibration_store / "retrieval" / comparison_id / side
+            target_dir.mkdir(parents=True, exist_ok=True)
+            for filename in safe_files:
+                source_file = run_dir / filename
+                if source_file.exists():
+                    target_file = target_dir / filename
+                    shutil.copy2(source_file, target_file)
+                    copied.append(str(target_file))
+    return copied
 
 
 def _validate_selector(selector: dict[str, Any], field: str) -> None:

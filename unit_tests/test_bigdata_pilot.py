@@ -7,6 +7,7 @@ import uuid
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
+from unittest.mock import patch
 
 from retrieval_arena.bigdata_pilot import (
     assemble_baseline_bundle,
@@ -114,6 +115,81 @@ class BigDataPilotTests(unittest.TestCase):
             self.assertEqual(result["manifest"]["stage_status"], "dry_run")
             self.assertFalse((tmp / "reports").exists())
 
+    def test_prerequisites_stage_checks_sources_configs_build_context_and_docker(self):
+        with self.workspace_tempdir() as tmp:
+            source = tmp / "source"
+            docs = source / "docs"
+            docs.mkdir(parents=True)
+            (docs / "index.md").write_text("# Hello\n", encoding="utf-8")
+            for name, snapshot_id in (("before_source.json", "before"), ("after_source.json", "after")):
+                (tmp / name).write_text(
+                    json.dumps(
+                        {
+                            "schema_version": "retrieval_arena.corpus_source_descriptor.v1",
+                            "corpus_id": "toy_docs",
+                            "snapshot_id": snapshot_id,
+                            "source_type": "local",
+                            "source_path": str(source),
+                            "docs_root": "docs",
+                            "destination_workspace": str(tmp / "raw"),
+                            "include": ["*.md"],
+                            "exclude": [],
+                        },
+                        indent=2,
+                        sort_keys=True,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+            (tmp / "comparison.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": "retrieval_arena.corpus_snapshot_comparison_plan.v1",
+                        "comparison_id": "toy_pair",
+                        "corpus_id": "toy_docs",
+                        "before_descriptor": "before_source.json",
+                        "after_descriptor": "after_source.json",
+                        "output_dir": "reports/snapshot_comparison",
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            build_context = tmp / "build_context"
+            build_context.mkdir()
+            retrieval_yaml = "\n".join(
+                [
+                    "experiment_name: toy",
+                    "datasets:",
+                    "  - name: toy_docs",
+                    "    path: dataset",
+                    "tests:",
+                    "  - name: rag_lexical_topk",
+                    "    image: toy:latest",
+                    "    build_context: build_context",
+                    "    config:",
+                    "      top_k: 1",
+                    "scoring:",
+                    "  method: lexical_baseline",
+                    "output_dir: results",
+                    "",
+                ]
+            )
+            (tmp / "retrieval_before.yaml").write_text(retrieval_yaml, encoding="utf-8")
+            (tmp / "retrieval_after.yaml").write_text(retrieval_yaml, encoding="utf-8")
+            plan_path = self.write_plan(tmp / "pilot.json", stages=["prerequisites", "snapshot_compare"])
+
+            with patch("retrieval_arena.bigdata_pilot._docker_server_version", return_value="27.5.1"):
+                result = bigdata_pilot(plan_path, stage="prerequisites", created_at=CREATED_AT)
+
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["manifest"]["stage_status"], "completed")
+            checks = result["manifest"]["stages"][0]["checks"]
+            self.assertIn("docker_engine", {item["name"] for item in checks})
+            self.assertIn("local_source_before", {item["name"] for item in checks})
+
     def test_stage_and_from_stage_resolution(self):
         stages = ["snapshot_compare", "retrieval_before", "retrieval_after", "drift", "audit"]
 
@@ -156,14 +232,30 @@ class BigDataPilotTests(unittest.TestCase):
             (output_root / "raw" / "source.md").write_text("third-party docs\n", encoding="utf-8")
             (output_root / "snapshot_comparison" / "before" / "dataset" / "corpus").mkdir(parents=True)
             (output_root / "snapshot_comparison" / "before" / "dataset" / "corpus" / "copied.md").write_text("third-party docs\n", encoding="utf-8")
+            (output_root / "snapshot_comparison" / "before" / "dataset" / "questions.jsonl").write_text('{"question_id":"q1","question":"Q?"}\n', encoding="utf-8")
+            (output_root / "snapshot_comparison" / "before" / "dataset" / "answers.jsonl").write_text('{"question_id":"q1","answer":"A"}\n', encoding="utf-8")
             (output_root / "comparisons" / "c1").mkdir(parents=True)
             (output_root / "comparisons" / "c1" / "retrieval_drift_summary.md").write_text("# Drift\n", encoding="utf-8")
+            run_dir = tmp / "run"
+            run_dir.mkdir()
+            (run_dir / "retrieval_replay_manifest.json").write_text("{}\n", encoding="utf-8")
+            (run_dir / "scores.json").write_text("{}\n", encoding="utf-8")
+            (run_dir / "predictions.jsonl").write_text('{"generated_answer":"third-party docs"}\n', encoding="utf-8")
 
-            bundle = assemble_baseline_bundle(output_root, tmp / "calibration", pilot_id="toy_pilot")
+            bundle = assemble_baseline_bundle(
+                output_root,
+                tmp / "calibration",
+                pilot_id="toy_pilot",
+                comparisons=[{"comparison_id": "c1", "before_run_dir": run_dir}],
+            )
 
             self.assertFalse((tmp / "calibration" / "raw").exists())
             self.assertFalse((tmp / "calibration" / "snapshot_comparison" / "before" / "dataset" / "corpus").exists())
+            self.assertFalse((tmp / "calibration" / "snapshot_comparison" / "before" / "dataset" / "questions.jsonl").exists())
+            self.assertFalse((tmp / "calibration" / "snapshot_comparison" / "before" / "dataset" / "answers.jsonl").exists())
             self.assertTrue((tmp / "calibration" / "comparisons" / "c1" / "retrieval_drift_summary.md").exists())
+            self.assertTrue((tmp / "calibration" / "retrieval" / "c1" / "before" / "retrieval_replay_manifest.json").exists())
+            self.assertFalse((tmp / "calibration" / "retrieval" / "c1" / "before" / "predictions.jsonl").exists())
             self.assertFalse(bundle["include_raw"])
 
     def test_cli_smoke_for_dry_run(self):

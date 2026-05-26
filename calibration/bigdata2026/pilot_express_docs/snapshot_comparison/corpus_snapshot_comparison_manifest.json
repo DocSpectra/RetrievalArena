@@ -1,0 +1,59 @@
+{
+  "after": {
+    "corpus_id": "express_docs",
+    "corpus_snapshot_manifest": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
+    "dataset_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\dataset",
+    "dataset_preparation_manifest": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\dataset\\dataset_preparation_manifest.json",
+    "import_manifest": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\raw\\corpus_imports\\express_docs\\2026-03-30\\corpus_import_manifest.json",
+    "import_reused": true,
+    "requested_ref": "2d4df3f05fbd5d5f211f5938395ae965e8714d60",
+    "resolved_commit": "2d4df3f05fbd5d5f211f5938395ae965e8714d60",
+    "snapshot_id": "2026-03-30",
+    "snapshot_manifest_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests"
+  },
+  "before": {
+    "corpus_id": "express_docs",
+    "corpus_snapshot_manifest": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
+    "dataset_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\dataset",
+    "dataset_preparation_manifest": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\dataset\\dataset_preparation_manifest.json",
+    "import_manifest": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\raw\\corpus_imports\\express_docs\\2025-09-20\\corpus_import_manifest.json",
+    "import_reused": true,
+    "requested_ref": "74e27ec71d391c89829076063f4f5c29e43c6c9c",
+    "resolved_commit": "74e27ec71d391c89829076063f4f5c29e43c6c9c",
+    "snapshot_id": "2025-09-20",
+    "snapshot_manifest_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests"
+  },
+  "comparison_id": "bigdata2026_express_docs_2025_09_20_to_2026_03_30",
+  "comparison_plan_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\snapshot_comparison_express_docs.json",
+  "corpus_id": "express_docs",
+  "created_at": "2026-05-26T02:59:13+00:00",
+  "manifest_hash": "ccd6a1f20665a91d7808d4ce219a9b0a10115985456a64513526804059a48a43",
+  "manifest_type": "corpus_snapshot_comparison_run",
+  "schema_version": "retrieval_arena.corpus_snapshot_comparison_run.v1",
+  "snapshot_diff_markdown": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\snapshot_diff.md",
+  "snapshot_diff_passed": false,
+  "snapshot_diff_report": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\snapshot_diff.json",
+  "stage_status": "ok",
+  "summary": {
+    "added_edge_count": 0,
+    "added_file_count": 0,
+    "added_support_question_count": 0,
+    "changed_file_count": 31,
+    "changed_support_question_count": 0,
+    "corpus_size_delta_bytes": -20531,
+    "graph_available": false,
+    "graph_descriptor_delta_count": 0,
+    "page_count_delta": 0,
+    "removed_edge_count": 0,
+    "removed_file_count": 0,
+    "removed_support_question_count": 0,
+    "stable_manifest_difference_count": 5,
+    "support_surface_available": false,
+    "total_delta_count": 31,
+    "unavailable_optional_manifests": [
+      "graph",
+      "support_surface"
+    ],
+    "volatile_manifest_difference_count": 2
+  }
+}

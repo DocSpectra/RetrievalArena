@@ -53,6 +53,7 @@
     "comparison_plan": "snapshot_comparison_express_docs.json"
   },
   "stages": [
+    "prerequisites",
     "snapshot_compare",
     "retrieval_before",
     "retrieval_after",

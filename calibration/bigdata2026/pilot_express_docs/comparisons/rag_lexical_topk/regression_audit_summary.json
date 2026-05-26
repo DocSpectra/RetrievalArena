@@ -1,0 +1,132 @@
+{
+  "after": {
+    "corpus_snapshot_id": "2026-03-30",
+    "dataset": "express_docs",
+    "graph_snapshot_id": null,
+    "manifest_hash": "d8e53ed5d1de3acb596f181c596e0f141df0563c2a2fad15783221c27519a033",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "5562be679ac0a6bb7dbc20fb9d52111888bcb3c6436026df25ff1118f429f936",
+    "retrieval_config_id": "rag_lexical_topk",
+    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_lexical_topk__ddea72412e",
+    "run_id": "ddea72412e",
+    "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
+    "support_surface_id": null,
+    "test": "rag_lexical_topk"
+  },
+  "before": {
+    "corpus_snapshot_id": "2025-09-20",
+    "dataset": "express_docs",
+    "graph_snapshot_id": null,
+    "manifest_hash": "e30642dc9b3f2cb954f91933e9ff640b686d407c669d1aeb8e13d58318504ce0",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "4f50a574d36e8234c1f29b110c6ed13b218345ddd8994bf6ddd318067ac7fd1d",
+    "retrieval_config_id": "rag_lexical_topk",
+    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_lexical_topk__ddea72412e",
+    "run_id": "ddea72412e",
+    "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
+    "support_surface_id": null,
+    "test": "rag_lexical_topk"
+  },
+  "cause_label_counts": {
+    "answer_lexical_score_regressed": 8,
+    "corpus_page_changed": 8,
+    "evidence_unavailable": 8,
+    "rank_changed": 2,
+    "replay_manifest_changed": 8,
+    "retrieval_config_changed": 8,
+    "retrieval_score_changed": 8,
+    "retrieved_candidate_changed": 1
+  },
+  "comparison_type": "regression_audit",
+  "created_at": "2026-05-26T02:59:21+00:00",
+  "evidence_availability_counts": {
+    "action_trace": {
+      "unavailable": 8
+    },
+    "corpus": {
+      "available": 8
+    },
+    "distance_to_support": {
+      "unavailable": 8
+    },
+    "evidence_coverage": {
+      "unavailable": 8
+    },
+    "graph": {
+      "unavailable": 8
+    },
+    "lexical_answer_score": {
+      "available": 8
+    },
+    "rank": {
+      "available": 8
+    },
+    "replay_manifest": {
+      "available": 8
+    },
+    "retrieval_candidates": {
+      "available": 8
+    },
+    "retrieval_config": {
+      "available": 8
+    },
+    "retrieval_score": {
+      "available": 8
+    },
+    "scoring_config": {
+      "available": 8
+    },
+    "snapshot_diff": {
+      "available": 8
+    },
+    "support_exposure": {
+      "unavailable": 8
+    },
+    "support_recall": {
+      "unavailable": 8
+    },
+    "support_surface": {
+      "unavailable": 8
+    }
+  },
+  "input_artifacts": {
+    "after_replay_manifest": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_lexical_topk__ddea72412e\\retrieval_replay_manifest.json",
+      "sha256": "5118fd448a10f1db68eec7984ec3d28fdc6d2a3e3858052294e2591c6a3cc3fc",
+      "size_bytes": 19984
+    },
+    "after_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_lexical_topk__ddea72412e",
+    "before_replay_manifest": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_lexical_topk__ddea72412e\\retrieval_replay_manifest.json",
+      "sha256": "799b0dbe9d265c17ce167dfa8361868f66d716cd901a7fc8530e95b0e0707b0a",
+      "size_bytes": 19988
+    },
+    "before_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_lexical_topk__ddea72412e",
+    "drift_jsonl": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift.jsonl",
+      "sha256": "c25280128ccaae298214459c52f6132ef3ea4dcb52201b427ab52c978b02ebcc",
+      "size_bytes": 25638
+    },
+    "drift_summary_json": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift_summary.json",
+      "sha256": "b0840d9f231179aa25cd8c5d72c6752cf2f0cc6b3338d810cbef75fcd858e208",
+      "size_bytes": 4570
+    },
+    "snapshot_diff_json": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\snapshot_diff.json",
+      "sha256": "9f0acf81a87d76d86a1e31a2cc7b1b6e5626e9df5113a91173cc2d8f8f85c345",
+      "size_bytes": 22007
+    }
+  },
+  "labeled_query_count": 8,
+  "manifest_hash": "29591974685fcd899315a6e300062c69f8f25beeea14fa3ef23fd9d83c6d8623",
+  "manifest_type": "regression_audit_summary",
+  "overall_drift_score": null,
+  "overall_drift_score_note": "No overall drift score or composite summary metric is computed.",
+  "query_count": 8,
+  "schema_version": "retrieval_arena.regression_audit_summary.v1",
+  "source_report_references": {
+    "drift_summary_schema_version": "retrieval_arena.retrieval_drift_summary.v1",
+    "snapshot_diff_schema_version": "retrieval_arena.snapshot_diff.v1"
+  }
+}
