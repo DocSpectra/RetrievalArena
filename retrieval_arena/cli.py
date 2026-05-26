@@ -7,6 +7,7 @@ from pathlib import Path
 from .commands import (
     git_comparison_plan,
     git_provenance,
+    regression_audit,
     replay_compare,
     retrieval_drift,
     run_experiment,
@@ -50,6 +51,15 @@ def build_parser() -> argparse.ArgumentParser:
     drift_compare.add_argument("--before-run", required=True, help="Before run directory.")
     drift_compare.add_argument("--after-run", required=True, help="After run directory.")
     drift_compare.add_argument("--out-dir", help="Directory for retrieval_drift reports.")
+    audit = subparsers.add_parser("audit", help="Assemble regression audit reports.")
+    audit_subparsers = audit.add_subparsers(dest="audit_command", required=True)
+    audit_report = audit_subparsers.add_parser("report", help="Write regression audit reports for two completed run directories.")
+    audit_report.add_argument("--before-run", required=True, help="Before run directory.")
+    audit_report.add_argument("--after-run", required=True, help="After run directory.")
+    audit_report.add_argument("--drift-jsonl", help="Optional existing retrieval_drift.jsonl path.")
+    audit_report.add_argument("--drift-summary", help="Optional existing retrieval_drift_summary.json path.")
+    audit_report.add_argument("--snapshot-diff", help="Optional snapshot_diff.json path.")
+    audit_report.add_argument("--out-dir", required=True, help="Directory for regression audit reports.")
     corpus = subparsers.add_parser("corpus", help="Import and compare corpus snapshots.")
     corpus_subparsers = corpus.add_subparsers(dest="corpus_command", required=True)
     corpus_compare = corpus_subparsers.add_parser("compare-snapshots", help="Run a corpus source comparison plan.")
@@ -113,6 +123,16 @@ def main(argv: list[str] | None = None) -> int:
                 Path(args.before_run),
                 Path(args.after_run),
                 out_dir=Path(args.out_dir) if args.out_dir else None,
+            )
+            print(result["summary"])
+        elif args.command == "audit" and args.audit_command == "report":
+            result = regression_audit(
+                Path(args.before_run),
+                Path(args.after_run),
+                Path(args.out_dir),
+                drift_jsonl=Path(args.drift_jsonl) if args.drift_jsonl else None,
+                drift_summary_json=Path(args.drift_summary) if args.drift_summary else None,
+                snapshot_diff_json=Path(args.snapshot_diff) if args.snapshot_diff else None,
             )
             print(result["summary"])
         elif args.command == "corpus" and args.corpus_command == "compare-snapshots":

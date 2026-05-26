@@ -5,6 +5,7 @@ from typing import Any
 
 from .git_provenance import describe_git_provenance, plan_git_comparison
 from .harness import run_config, validate_phase1
+from .audit import build_regression_audit
 from .drift import compare_retrieval_runs
 from .replay_compare import compare_run_dirs
 from .snapshot_diff import compare_snapshot_bundles
@@ -53,6 +54,36 @@ def retrieval_drift(before_run_dir: Path, after_run_dir: Path, *, out_dir: Path 
             f"{summary['query_count']} queries: "
             f"mean top-k Jaccard {summary['mean_top_k_jaccard']}, "
             f"mean ordered overlap {summary['mean_ordered_top_k_overlap']}"
+        ),
+        "report": report,
+        "written_artifacts": report["written_artifacts"],
+    }
+
+
+def regression_audit(
+    before_run_dir: Path,
+    after_run_dir: Path,
+    out_dir: Path,
+    *,
+    drift_jsonl: Path | None = None,
+    drift_summary_json: Path | None = None,
+    snapshot_diff_json: Path | None = None,
+) -> dict[str, Any]:
+    report = build_regression_audit(
+        before_run_dir,
+        after_run_dir,
+        out_dir,
+        drift_jsonl=drift_jsonl,
+        drift_summary_json=drift_summary_json,
+        snapshot_diff_json=snapshot_diff_json,
+    )
+    summary = report["summary"]
+    return {
+        "ok": True,
+        "summary": (
+            "Regression audit wrote "
+            f"{summary['query_count']} query rows with "
+            f"{summary['labeled_query_count']} labeled behavior-change candidates"
         ),
         "report": report,
         "written_artifacts": report["written_artifacts"],
