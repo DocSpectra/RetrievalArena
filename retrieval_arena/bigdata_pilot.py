@@ -14,6 +14,7 @@ from .drift import compare_retrieval_runs
 from .errors import ValidationError
 from .harness import run_config, run_experiment
 from .hashing import sha256_file, sha256_jsonl
+from .html_report import build_html_observability_report
 from .manifests import canonical_manifest_json, read_manifest, write_manifest
 from .measurements import collect_systems_measurements, environment_metadata
 from .replay_manifests import resolved_run_identity_hash, scoring_hash, write_experiment_manifest
@@ -29,6 +30,7 @@ VALID_STAGES = (
     "drift",
     "audit",
     "measurements",
+    "html_report",
     "baseline_bundle",
 )
 
@@ -408,6 +410,10 @@ def _run_stage(stage_name: str, plan: dict[str, Any], context: dict[str, Any], *
             outputs.extend(report["written_artifacts"])
         context.setdefault("reuse_decisions", []).extend(decisions)
         return {**_record([], outputs, [path for item in context["selected_comparisons"] for path in (str(item["systems_measurements_json"]),)]), "reuse_decisions": decisions}
+    if stage_name == "html_report":
+        report = build_html_observability_report(output_root, out_path=output_root / "observability_report.html")
+        context["html_report"] = Path(report["report_path"])
+        return _record([str(output_root)], report["written_artifacts"], [])
     if stage_name == "baseline_bundle":
         bundle = assemble_baseline_bundle(
             output_root,

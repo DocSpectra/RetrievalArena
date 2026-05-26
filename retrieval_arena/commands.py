@@ -8,6 +8,7 @@ from .git_provenance import describe_git_provenance, plan_git_comparison
 from .harness import run_config, validate_phase1
 from .audit import build_regression_audit
 from .drift import compare_retrieval_runs
+from .html_report import build_html_observability_report
 from .measurements import collect_systems_measurements
 from .replay_compare import compare_run_dirs
 from .snapshot_diff import compare_snapshot_bundles
@@ -148,6 +149,17 @@ def systems_measurements(
         ),
         "report": report,
         "written_artifacts": report["written_artifacts"],
+    }
+
+
+def html_observability_report(bundle_root: Path, *, out_path: Path | None = None) -> dict[str, Any]:
+    result = build_html_observability_report(bundle_root, out_path=out_path)
+    return {
+        "ok": True,
+        "summary": result["summary"],
+        "report": result["report"],
+        "written_artifacts": result["written_artifacts"],
+        "report_path": result["report_path"],
     }
 
 

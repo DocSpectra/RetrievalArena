@@ -120,6 +120,7 @@
     "drift",
     "audit",
     "measurements",
+    "html_report",
     "baseline_bundle"
   ]
 }
