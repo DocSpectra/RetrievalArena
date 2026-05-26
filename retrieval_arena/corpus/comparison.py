@@ -7,8 +7,13 @@ from typing import Any
 from ..commands import snapshot_diff
 from ..errors import ValidationError
 from ..manifests import write_manifest
-from ..snapshots import utc_now_iso, write_corpus_snapshot_manifest
-from .dataset_export import prepare_dataset
+from ..snapshots import (
+    utc_now_iso,
+    write_corpus_snapshot_manifest,
+    write_graph_snapshot_manifest,
+    write_support_surface_manifest,
+)
+from .dataset_export import build_graph_transformation, build_support_surface, prepare_dataset
 from .importers import import_corpus_source
 from .sources import CorpusSourceDescriptor, descriptor_from_dict
 
@@ -38,6 +43,8 @@ def run_corpus_snapshot_comparison(plan_path: Path, *, created_at: str | None = 
         questions_path=plan.get("questions_path"),
         answers_path=plan.get("answers_path"),
         query_set_id=plan.get("query_set_id"),
+        graph_config=plan.get("graph"),
+        support_config=plan.get("support"),
     )
     after = _materialize_snapshot(
         after_descriptor,
@@ -47,6 +54,8 @@ def run_corpus_snapshot_comparison(plan_path: Path, *, created_at: str | None = 
         questions_path=plan.get("questions_path"),
         answers_path=plan.get("answers_path"),
         query_set_id=plan.get("query_set_id"),
+        graph_config=plan.get("graph"),
+        support_config=plan.get("support"),
     )
     diff = snapshot_diff(
         Path(before["snapshot_manifest_dir"]),
@@ -110,6 +119,8 @@ def load_comparison_plan(plan_path: Path) -> dict[str, Any]:
     overwrite_imports = raw.get("overwrite_imports", False)
     if not isinstance(overwrite_imports, bool):
         raise ValidationError("overwrite_imports must be boolean when present.")
+    graph = _stage_config(raw.get("graph"), "graph", base)
+    support = _stage_config(raw.get("support"), "support", base)
     return {
         "schema_version": schema_version,
         "comparison_id": comparison_id,
@@ -121,6 +132,8 @@ def load_comparison_plan(plan_path: Path) -> dict[str, Any]:
         "answers_path": answers_path,
         "query_set_id": query_set_id,
         "overwrite_imports": overwrite_imports,
+        "graph": graph,
+        "support": support,
     }
 
 
@@ -133,6 +146,8 @@ def _materialize_snapshot(
     questions_path: Path | None,
     answers_path: Path | None,
     query_set_id: str | None,
+    graph_config: dict[str, Any],
+    support_config: dict[str, Any],
 ) -> dict[str, Any]:
     imported = import_corpus_source(descriptor, created_at=created_at, overwrite=overwrite_import)
     dataset_dir = output_dir / "dataset"
@@ -159,6 +174,51 @@ def _materialize_snapshot(
         source_url=descriptor.source_url,
         source_commit=source_provenance.get("resolved_commit"),
     )
+    graph_manifest_path = None
+    graph_transformation = None
+    if graph_config.get("enabled"):
+        graph_source_path = graph_config.get("edges_path")
+        graph_transformation = build_graph_transformation(
+            dataset_dir,
+            prepared["manifest_path"],
+            graph_edges_path=Path(graph_source_path) if graph_source_path else None,
+            extraction_method=str(graph_config.get("method", "markdown_links")),
+            created_at=created_at,
+        )
+        if graph_transformation is not None:
+            graph_manifest_path = snapshot_dir / "graph_snapshot_manifest.json"
+            write_graph_snapshot_manifest(
+                graph_manifest_path,
+                dataset_dir,
+                corpus_id=descriptor.corpus_id,
+                snapshot_id=descriptor.snapshot_id,
+                corpus_snapshot_id=descriptor.snapshot_id,
+                graph_extraction_version=graph_transformation["manifest"].get("graph_extraction_version", "graph-v1"),
+                created_at=created_at,
+            )
+    support_manifest_path = None
+    support_construction = None
+    if support_config.get("enabled"):
+        support_source_path = support_config.get("records_path")
+        support_construction = build_support_surface(
+            dataset_dir,
+            prepared["manifest_path"],
+            support_records_path=Path(support_source_path) if support_source_path else None,
+            query_set_id=query_set_id,
+            construction_method=str(support_config.get("method", "answer_lexical_overlap")),
+            created_at=created_at,
+        )
+        if support_construction is not None:
+            support_manifest_path = snapshot_dir / "support_surface_manifest.json"
+            write_support_surface_manifest(
+                support_manifest_path,
+                dataset_dir,
+                corpus_id=descriptor.corpus_id,
+                snapshot_id=descriptor.snapshot_id,
+                corpus_snapshot_id=descriptor.snapshot_id,
+                query_set_id=query_set_id or "default",
+                created_at=created_at,
+            )
     return {
         "corpus_id": descriptor.corpus_id,
         "snapshot_id": descriptor.snapshot_id,
@@ -170,6 +230,10 @@ def _materialize_snapshot(
         "dataset_path": str(dataset_dir.resolve()),
         "snapshot_manifest_dir": str(snapshot_dir.resolve()),
         "corpus_snapshot_manifest": str(corpus_manifest_path.resolve()),
+        "graph_transformation_manifest": str(graph_transformation["manifest_path"].resolve()) if graph_transformation else None,
+        "graph_snapshot_manifest": str(graph_manifest_path.resolve()) if graph_manifest_path else None,
+        "support_construction_manifest": str(support_construction["manifest_path"].resolve()) if support_construction else None,
+        "support_surface_manifest": str(support_manifest_path.resolve()) if support_manifest_path else None,
     }
 
 
@@ -202,3 +266,21 @@ def _optional_path(raw: dict[str, Any], key: str, base: Path) -> Path | None:
     if not isinstance(value, str) or not value:
         raise ValidationError(f"{key} must be a non-empty string when present.")
     return _resolve_path(value, base)
+
+
+def _stage_config(value: Any, name: str, base: Path) -> dict[str, Any]:
+    if value is None:
+        return {"enabled": False}
+    if not isinstance(value, dict):
+        raise ValidationError(f"{name} must be a mapping when present.")
+    enabled = value.get("enabled", False)
+    if not isinstance(enabled, bool):
+        raise ValidationError(f"{name}.enabled must be boolean when present.")
+    result = dict(value)
+    result["enabled"] = enabled
+    for key in ("edges_path", "records_path"):
+        if key in result and result[key] is not None:
+            if not isinstance(result[key], str) or not result[key]:
+                raise ValidationError(f"{name}.{key} must be a non-empty string when present.")
+            result[key] = str(_resolve_path(result[key], base))
+    return result

@@ -136,6 +136,7 @@ def build_graph_snapshot_manifest(
     edge_path = dataset_path / "graph_edges.csv"
     edges = read_graph_edges(edge_path)
     nodes = sorted({node for edge in edges for node in edge})
+    edge_inventory = [{"source": source, "target": target} for source, target in edges]
     manifest: dict[str, Any] = {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
         "created_at": created_at or utc_now_iso(),
@@ -146,7 +147,8 @@ def build_graph_snapshot_manifest(
         "graph_extraction_version": graph_extraction_version,
         "edge_file": "graph_edges.csv",
         "edge_file_hash": sha256_file(edge_path),
-        "graph_hash": sha256_json({"edges": [{"source": source, "target": target} for source, target in edges]}),
+        "edge_inventory": edge_inventory,
+        "graph_hash": sha256_json({"edges": edge_inventory}),
         "node_count": len(nodes),
         "edge_count": len(edges),
     }
@@ -161,6 +163,10 @@ def build_graph_snapshot_manifest(
         manifest["graph_metrics_file"] = "graph_metrics.json"
         manifest["graph_metrics_file_hash"] = sha256_file(metrics_path)
         manifest["graph_metrics"] = graph_metrics
+        if isinstance(graph_metrics.get("node_count"), int):
+            manifest["node_count"] = graph_metrics["node_count"]
+        if isinstance(graph_metrics.get("edge_count"), int):
+            manifest["edge_count"] = graph_metrics["edge_count"]
     return manifest
 
 

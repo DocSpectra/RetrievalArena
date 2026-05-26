@@ -54,7 +54,9 @@ class CorpusComparisonTests(unittest.TestCase):
             before_source.mkdir()
             after_source.mkdir()
             (before_source / "install.md").write_text("Use pip.\n", encoding="utf-8")
+            (before_source / "guide.md").write_text("Read [install](install.md).\n", encoding="utf-8")
             (after_source / "install.md").write_text("Use uv.\n", encoding="utf-8")
+            (after_source / "guide.md").write_text("Read install.\n", encoding="utf-8")
             before_descriptor = tmp / "before.json"
             after_descriptor = tmp / "after.json"
             self.write_descriptor(before_descriptor, source=before_source, snapshot_id="before")
@@ -75,7 +77,9 @@ class CorpusComparisonTests(unittest.TestCase):
                         "output_dir": str(tmp / "reports"),
                         "questions_path": str(questions),
                         "answers_path": str(answers),
+                        "graph": {"enabled": True, "method": "markdown_links"},
                         "query_set_id": "toy-queries",
+                        "support": {"enabled": True, "method": "answer_lexical_overlap"},
                         "overwrite_imports": False,
                     },
                     indent=2,
@@ -88,10 +92,16 @@ class CorpusComparisonTests(unittest.TestCase):
             first = run_corpus_snapshot_comparison(plan, created_at=CREATED_AT)
             second = run_corpus_snapshot_comparison(plan, created_at=CREATED_AT)
 
-            self.assertEqual(first["snapshot_diff"]["summary"]["changed_file_count"], 1)
+            self.assertEqual(first["snapshot_diff"]["summary"]["changed_file_count"], 2)
             self.assertTrue(second["manifest"]["before"]["import_reused"])
             self.assertTrue(second["manifest"]["after"]["import_reused"])
             self.assertEqual(read_manifest(tmp / "reports" / "before" / "snapshot_manifests" / "corpus_snapshot_manifest.json")["manifest_type"], "corpus_snapshot")
+            graph = read_manifest(tmp / "reports" / "before" / "snapshot_manifests" / "graph_snapshot_manifest.json")
+            self.assertEqual(graph["manifest_type"], "graph_snapshot")
+            self.assertEqual(graph["edge_inventory"], [{"source": "guide", "target": "install"}])
+            support = read_manifest(tmp / "reports" / "before" / "snapshot_manifests" / "support_surface_manifest.json")
+            self.assertEqual(support["manifest_type"], "support_surface")
+            self.assertEqual(support["support_targets_by_question"]["q1"], ["install"])
             preparation = read_manifest(tmp / "reports" / "before" / "dataset" / "dataset_preparation_manifest.json")
             self.assertEqual(preparation["query_set_id"], "toy-queries")
             self.assertEqual(preparation["validation_status"], "ok")

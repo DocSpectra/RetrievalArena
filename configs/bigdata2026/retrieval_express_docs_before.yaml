@@ -5,6 +5,8 @@ datasets:
     path: ../../reports/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset
     query_set_id: express-docs-pilot-queries
     corpus_snapshot_manifest: ../../reports/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/corpus_snapshot_manifest.json
+    graph_snapshot_manifest: ../../reports/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/graph_snapshot_manifest.json
+    support_surface_manifest: ../../reports/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/support_surface_manifest.json
 
 tests:
   - name: rag_lexical_topk

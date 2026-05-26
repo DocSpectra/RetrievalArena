@@ -11,6 +11,8 @@ from ..hashing import sha256_directory, sha256_file, sha256_json, sha256_jsonl
 from ..manifests import read_manifest, write_manifest
 from ..schemas import validate_dataset
 from ..snapshots import utc_now_iso
+from ..graph.links import GRAPH_EXTRACTION_VERSION, write_markdown_link_graph
+from ..support.surface import SUPPORT_CONSTRUCTION_METHOD, write_answer_overlap_support
 
 
 DATASET_PREPARATION_SCHEMA_VERSION = "retrieval_arena.dataset_preparation_manifest.v1"
@@ -89,17 +91,38 @@ def build_graph_transformation(
     dataset_preparation_manifest_path: Path,
     *,
     graph_edges_path: Path | None = None,
+    extraction_method: str | None = None,
     created_at: str | None = None,
 ) -> dict[str, Any] | None:
-    if graph_edges_path is None:
-        return None
     preparation = read_manifest(dataset_preparation_manifest_path)
-    destination = dataset_path / "graph_edges.csv"
-    shutil.copy2(graph_edges_path, destination)
-    edges = _read_edges(destination)
-    nodes = sorted({node for edge in edges for node in edge})
-    metrics = {"node_count": len(nodes), "edge_count": len(edges)}
-    (dataset_path / "graph_metrics.json").write_text(json.dumps(metrics, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if graph_edges_path is not None:
+        destination = dataset_path / "graph_edges.csv"
+        shutil.copy2(graph_edges_path, destination)
+        edges = _read_edges(destination)
+        nodes = sorted({node for edge in edges for node in edge})
+        metrics = {"node_count": len(nodes), "edge_count": len(edges)}
+        (dataset_path / "graph_metrics.json").write_text(json.dumps(metrics, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        graph_artifacts = {
+            "edge_file": "graph_edges.csv",
+            "edge_file_hash": sha256_file(destination),
+            "graph_metrics_file": "graph_metrics.json",
+            "graph_metrics_file_hash": sha256_file(dataset_path / "graph_metrics.json"),
+            "graph_hash": sha256_json({"edges": [{"source": source, "target": target} for source, target in edges]}),
+            "node_count": len(nodes),
+            "edge_count": len(edges),
+            "graph_metrics": metrics,
+        }
+        version = "copy-v1"
+        resolver = {"source": "provided_graph_edges_csv"}
+    elif extraction_method == "markdown_links":
+        graph_artifacts = write_markdown_link_graph(dataset_path)
+        version = GRAPH_EXTRACTION_VERSION
+        resolver = {
+            "source": "dataset_corpus_markdown",
+            "internal_link_policy": "resolve_relative_absolute_html_and_markdown_links_to_dataset_doc_ids",
+        }
+    else:
+        return None
     manifest = {
         "schema_version": GRAPH_TRANSFORMATION_SCHEMA_VERSION,
         "created_at": created_at or utc_now_iso(),
@@ -108,14 +131,10 @@ def build_graph_transformation(
         "snapshot_id": preparation["snapshot_id"],
         "dataset_preparation_manifest_path": str(dataset_preparation_manifest_path.resolve()),
         "dataset_preparation_manifest_hash": preparation["manifest_hash"],
-        "graph_extraction_version": "copy-v1",
-        "edge_file": "graph_edges.csv",
-        "edge_file_hash": sha256_file(destination),
-        "graph_metrics_file": "graph_metrics.json",
-        "graph_metrics_file_hash": sha256_file(dataset_path / "graph_metrics.json"),
-        "graph_hash": sha256_json({"edges": [{"source": source, "target": target} for source, target in edges]}),
-        "node_count": len(nodes),
-        "edge_count": len(edges),
+        "graph_extraction_version": version,
+        "link_extraction_configuration": {"method": extraction_method},
+        "link_resolver_configuration": resolver,
+        **graph_artifacts,
         "stage_status": "ok",
     }
     written = write_manifest(dataset_path / "graph_transformation_manifest.json", manifest)
@@ -128,15 +147,34 @@ def build_support_surface(
     *,
     support_records_path: Path | None = None,
     query_set_id: str | None = None,
+    construction_method: str | None = None,
     created_at: str | None = None,
 ) -> dict[str, Any] | None:
-    if support_records_path is None:
-        return None
     preparation = read_manifest(dataset_preparation_manifest_path)
-    destination = dataset_path / "faq_support_audit.jsonl"
-    shutil.copy2(support_records_path, destination)
-    rows = _read_jsonl(destination)
-    targets = sorted({doc_id for row in rows for doc_id in _row_doc_ids(row)})
+    if support_records_path is not None:
+        destination = dataset_path / "faq_support_audit.jsonl"
+        shutil.copy2(support_records_path, destination)
+        rows = _read_jsonl(destination)
+        targets = sorted({doc_id for row in rows for doc_id in _row_doc_ids(row)})
+        support_artifacts = {
+            "support_construction_method": "copy-v1",
+            "support_audit_configuration": {"source": "provided_support_records_jsonl"},
+            "supported_question_ids": sorted(row["question_id"] for row in rows if _row_doc_ids(row)),
+            "support_target_doc_ids": targets,
+            "support_target_count": len(targets),
+        }
+    elif construction_method == "answer_lexical_overlap":
+        support_artifacts = write_answer_overlap_support(dataset_path)
+        destination = dataset_path / "faq_support_audit.jsonl"
+        rows = _read_jsonl(destination)
+        support_artifacts["support_audit_configuration"] = {
+            "source": "answers_jsonl_and_dataset_corpus",
+            "method": SUPPORT_CONSTRUCTION_METHOD,
+            "top_k": support_artifacts["top_k"],
+            "min_answer_token_coverage": support_artifacts["min_answer_token_coverage"],
+        }
+    else:
+        return None
     manifest = {
         "schema_version": SUPPORT_CONSTRUCTION_SCHEMA_VERSION,
         "created_at": created_at or utc_now_iso(),
@@ -146,12 +184,9 @@ def build_support_surface(
         "dataset_preparation_manifest_path": str(dataset_preparation_manifest_path.resolve()),
         "dataset_preparation_manifest_hash": preparation["manifest_hash"],
         "query_set_id": query_set_id or preparation.get("query_set_id"),
-        "support_construction_method": "copy-v1",
         "support_audit_file": "faq_support_audit.jsonl",
         "support_audit_file_hash": sha256_jsonl(destination),
-        "supported_question_ids": sorted(row["question_id"] for row in rows if _row_doc_ids(row)),
-        "support_target_doc_ids": targets,
-        "support_target_count": len(targets),
+        **support_artifacts,
         "stage_status": "ok",
     }
     written = write_manifest(dataset_path / "support_construction_manifest.json", manifest)
