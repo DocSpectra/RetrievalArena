@@ -1,93 +1,56 @@
 # RetrievalArena
 
-RetrievalArena is a dependency-light observability harness for documentation
-retrieval experiments. It can import explicit documentation source revisions,
-prepare RetrievalArena dataset contracts, run Dockerized retrieval/generation
-tests, validate outputs, compute deterministic scores, and compare snapshot or
-replay artifacts through manifest-backed reports.
+RetrievalArena is a replayable observability harness for retrieval over
+evolving documentation ecosystems. It imports explicit source revisions,
+prepares dataset contracts, runs selected retrieval families, writes provenance
+and replay manifests, compares drift, audits regressions, measures artifact
+footprint, and emits user-facing reports.
 
-## Quick start
+The BigData 2026 pipeline is implemented on branch
+`IEEEBigData2026_metrics`.
 
-```cmd
+## Quick Start
+
+```powershell
 pip install -e .
-retrieval-arena run --config configs\experiment.example.yaml
-retrieval-arena validate --config configs\experiment.example.yaml
+python -m retrieval_arena.cli study bigdata pilot --plan configs\bigdata2026\pilot_express_docs.json --dry-run
+python -m retrieval_arena.cli report html --bundle calibration\bigdata2026\pilot_express_docs
 ```
 
-The example run writes:
+Open the generated report at:
 
 ```text
-results/toy_faq_reconstruction/summary.csv
-results/toy_faq_reconstruction/summary.md
+calibration/bigdata2026/pilot_express_docs/observability_report.html
 ```
 
-See the parent workspace specification at `project_specifications/RetrievalArenaSpec.md` for the v1 contract and validation plan.
+## BigData User Docs
 
-## Source-to-snapshot comparison
+- [Run BigData pilots](docs/bigdata_pilots.md)
+- [Use the HTML observability report](docs/html_observability_report.md)
+- [Export paper evidence](docs/paper_evidence_export.md)
+- [Refresh an existing baseline](docs/incremental_baseline_refresh.md)
+- [Architecture diagram](docs/architecture.mmd)
 
-Committed corpus source descriptors live under:
+## Selected Calibration Bundles
 
-```text
-configs/corpus_sources/
+- `calibration/bigdata2026/pilot_express_docs/`
+- `calibration/bigdata2026/pilot_docker_docs/`
+
+These bundles are reviewable evidence packages. They include manifests,
+snapshot diffs, retrieval drift reports, regression audits, systems
+measurements, replay references, and generated reports. They intentionally
+exclude raw source trees, copied corpora, copied question/answer files,
+predictions, and item scores unless explicitly approved.
+
+## Core Commands
+
+```powershell
+python -m retrieval_arena.cli study bigdata pilot --plan configs\bigdata2026\pilot_express_docs.json --dry-run
+python -m retrieval_arena.cli study bigdata pilot --plan configs\bigdata2026\pilot_express_docs.json --refresh-baseline
+python -m retrieval_arena.cli report html --bundle calibration\bigdata2026\pilot_express_docs
+python -m retrieval_arena.cli report evidence --bundle calibration\bigdata2026\pilot_express_docs --out-dir ..\IEEEBigData2026_paper\evidence\bigdata2026\express_docs
+python -m unittest discover -s unit_tests
 ```
 
-Each descriptor names a corpus, source type, source path or URL, requested Git
-ref, docs root, include/exclude patterns, snapshot ID, and ignored destination
-workspace. Generated source imports are written under `raw/`, which is ignored
-by Git.
-
-Committed snapshot comparison plans live under:
-
-```text
-configs/corpus_comparisons/
-```
-
-A comparison plan names two source descriptors and an ignored report directory.
-The command below imports both snapshots with reuse enabled, prepares
-corpus-only datasets, writes corpus snapshot manifests, and runs snapshot diff:
-
-```cmd
-python -m retrieval_arena.cli corpus compare-snapshots --plan configs\corpus_comparisons\express_docs_2025_09_20_to_2026_03_30.json
-```
-
-The generated comparison report is written under `reports/`, which is also
-ignored by Git. The Express example compares:
-
-- `express_docs` at `74e27ec71d391c89829076063f4f5c29e43c6c9c`
-- `express_docs` at `2d4df3f05fbd5d5f211f5938395ae965e8714d60`
-
-Use `overwrite_imports: false` in comparison plans to reuse existing imports
-when the import manifest, selected documents, requested ref, and clean Git
-source still match.
-
-## Retrieval drift comparison
-
-Completed run directories can be compared without rerunning retrieval:
-
-```cmd
-python -m retrieval_arena.cli drift compare --before-run RUN_DIR --after-run RUN_DIR --out-dir reports\drift
-```
-
-The command writes deterministic query-level and aggregate reports:
-
-```text
-retrieval_drift.jsonl
-retrieval_drift_summary.json
-retrieval_drift_summary.md
-```
-
-Optional support, evidence, graph-distance, and action-trace signals are marked
-unavailable when the corresponding fields or artifacts are absent.
-
-## Architecture
-
-The high-level BigData observability flow is documented as a Mermaid diagram in
-[docs/architecture.mmd](docs/architecture.mmd).
-
-## Output contract validation
-
-`retrieval-arena validate` runs the deterministic Phase 1 gate and negative
-contract checks before results should be trusted for analysis. Container outputs
-fail validation on invalid JSONL, duplicate predictions, unknown question IDs,
-missing required prediction fields, mismatched question text for a claimed
-`question_id`, missing predictions, or incomplete `metadata.json`.
+Use `python -m retrieval_arena.cli validate --config <config>` for the
+deterministic output-contract gate on standard RetrievalArena experiments.
