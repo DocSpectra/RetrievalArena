@@ -10,6 +10,7 @@ from typing import Any
 
 from . import __version__
 from .config import ExperimentConfig, TestConfig, load_config
+from .diagnostics import enrich_run_diagnostics
 from .docker import build_image, run_container
 from .errors import RetrievalArenaError, ValidationError
 from .reports import write_run_scores, write_summary
@@ -77,6 +78,10 @@ def run_experiment(config: ExperimentConfig, *, output_dir: Path | None = None) 
             if action_trace_path.exists():
                 validate_action_traces(action_trace_path, questions)
                 shutil.copy2(action_trace_path, run_dir / "action_traces.jsonl")
+            diagnostic_overlay = enrich_run_diagnostics(run_dir, dataset.path)
+            predictions = validate_predictions(run_dir / "predictions.jsonl", questions)
+            if (run_dir / "action_traces.jsonl").exists():
+                validate_action_traces(run_dir / "action_traces.jsonl", questions)
             item_scores, aggregate = score_predictions(predictions, answers, config.scoring.match_threshold)
             completed_at = datetime.now(timezone.utc).isoformat()
             aggregate.update({
@@ -91,6 +96,7 @@ def run_experiment(config: ExperimentConfig, *, output_dir: Path | None = None) 
                 "retrieval_arena_version": __version__,
                 "git_commit": git_commit(repo_root),
                 "container_metadata": metadata,
+                "diagnostic_overlay": diagnostic_overlay,
             })
             write_run_scores(run_dir, item_scores, aggregate)
             manifest_path = run_dir / "retrieval_replay_manifest.json"

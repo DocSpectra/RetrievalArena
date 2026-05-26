@@ -53,9 +53,9 @@ class CorpusComparisonTests(unittest.TestCase):
             after_source = tmp / "after_source"
             before_source.mkdir()
             after_source.mkdir()
-            (before_source / "install.md").write_text("Use pip.\n", encoding="utf-8")
+            (before_source / "install.md").write_text("Install MiniDocs with pip package manager.\n", encoding="utf-8")
             (before_source / "guide.md").write_text("Read [install](install.md).\n", encoding="utf-8")
-            (after_source / "install.md").write_text("Use uv.\n", encoding="utf-8")
+            (after_source / "install.md").write_text("Install MiniDocs with uv package manager.\n", encoding="utf-8")
             (after_source / "guide.md").write_text("Read install.\n", encoding="utf-8")
             before_descriptor = tmp / "before.json"
             after_descriptor = tmp / "after.json"
@@ -64,7 +64,7 @@ class CorpusComparisonTests(unittest.TestCase):
             questions = tmp / "questions.jsonl"
             answers = tmp / "answers.jsonl"
             questions.write_text('{"question_id":"q1","question":"How install?"}\n', encoding="utf-8")
-            answers.write_text('{"question_id":"q1","answer":"Use pip."}\n', encoding="utf-8")
+            answers.write_text('{"question_id":"q1","answer":"Install MiniDocs with pip package manager."}\n', encoding="utf-8")
             plan = tmp / "comparison.json"
             plan.write_text(
                 json.dumps(
@@ -101,7 +101,8 @@ class CorpusComparisonTests(unittest.TestCase):
             self.assertEqual(graph["edge_inventory"], [{"source": "guide", "target": "install"}])
             support = read_manifest(tmp / "reports" / "before" / "snapshot_manifests" / "support_surface_manifest.json")
             self.assertEqual(support["manifest_type"], "support_surface")
-            self.assertEqual(support["support_targets_by_question"]["q1"], ["install"])
+            self.assertIn("install", support["support_targets_by_question"]["q1"])
+            self.assertEqual(support["support_label_counts"], {"supported": 1})
             preparation = read_manifest(tmp / "reports" / "before" / "dataset" / "dataset_preparation_manifest.json")
             self.assertEqual(preparation["query_set_id"], "toy-queries")
             self.assertEqual(preparation["validation_status"], "ok")

@@ -148,6 +148,9 @@ def build_support_surface(
     support_records_path: Path | None = None,
     query_set_id: str | None = None,
     construction_method: str | None = None,
+    qa_surface_type: str = "unknown",
+    supported_threshold: float = 0.6,
+    partial_threshold: float = 0.25,
     created_at: str | None = None,
 ) -> dict[str, Any] | None:
     preparation = read_manifest(dataset_preparation_manifest_path)
@@ -164,14 +167,21 @@ def build_support_surface(
             "support_target_count": len(targets),
         }
     elif construction_method == "answer_lexical_overlap":
-        support_artifacts = write_answer_overlap_support(dataset_path)
+        support_artifacts = write_answer_overlap_support(
+            dataset_path,
+            qa_surface_type=qa_surface_type,
+            supported_threshold=supported_threshold,
+            partial_threshold=partial_threshold,
+        )
         destination = dataset_path / "faq_support_audit.jsonl"
         rows = _read_jsonl(destination)
         support_artifacts["support_audit_configuration"] = {
             "source": "answers_jsonl_and_dataset_corpus",
             "method": SUPPORT_CONSTRUCTION_METHOD,
             "top_k": support_artifacts["top_k"],
-            "min_answer_token_coverage": support_artifacts["min_answer_token_coverage"],
+            "qa_surface_type": support_artifacts["qa_surface_type"],
+            "supported_threshold": support_artifacts["supported_threshold"],
+            "partial_threshold": support_artifacts["partial_threshold"],
         }
     else:
         return None

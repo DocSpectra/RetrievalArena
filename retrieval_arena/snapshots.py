@@ -4,6 +4,7 @@ import csv
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from collections import Counter
 from typing import Any
 
 from .errors import ValidationError
@@ -217,6 +218,12 @@ def read_support_targets(path: Path) -> tuple[list[str], dict[str, list[str]], l
     return sorted(supported_question_ids), dict(sorted(support_targets_by_question.items())), sorted(all_targets)
 
 
+def support_label_counts(path: Path) -> dict[str, int]:
+    rows = read_jsonl(path)
+    counts = Counter(str(row.get("support_label", "unknown")) for row in rows)
+    return dict(sorted(counts.items()))
+
+
 def build_support_surface_manifest(
     dataset_path: Path,
     *,
@@ -249,6 +256,7 @@ def build_support_surface_manifest(
         "support_targets_by_question": targets_by_question,
         "support_target_doc_ids": target_doc_ids,
         "support_target_count": len(target_doc_ids),
+        "support_label_counts": support_label_counts(audit_path),
     }
 
 

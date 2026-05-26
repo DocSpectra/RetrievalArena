@@ -206,6 +206,9 @@ def _materialize_snapshot(
             support_records_path=Path(support_source_path) if support_source_path else None,
             query_set_id=query_set_id,
             construction_method=str(support_config.get("method", "answer_lexical_overlap")),
+            qa_surface_type=str(support_config.get("qa_surface_type", "unknown")),
+            supported_threshold=float(support_config.get("supported_threshold", 0.6)),
+            partial_threshold=float(support_config.get("partial_threshold", 0.25)),
             created_at=created_at,
         )
         if support_construction is not None:
