@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from .bigdata_pilot import bigdata_pilot as run_bigdata_pilot
 from .git_provenance import describe_git_provenance, plan_git_comparison
 from .harness import run_config, validate_phase1
 from .audit import build_regression_audit
@@ -21,6 +22,25 @@ def run_experiment(config_path: Path | str) -> dict[str, Any]:
 def validate_experiment(config_path: Path | str) -> dict[str, Any]:
     validate_phase1(config_path)
     return {"ok": True, "summary": "RetrievalArena Phase 1 validation passed"}
+
+
+def bigdata_pilot(
+    plan_path: Path,
+    *,
+    dry_run: bool = False,
+    stage: str | None = None,
+    from_stage: str | None = None,
+    force: bool = False,
+    no_baseline_bundle: bool = False,
+) -> dict[str, Any]:
+    return run_bigdata_pilot(
+        plan_path,
+        dry_run=dry_run,
+        stage=stage,
+        from_stage=from_stage,
+        force=force,
+        no_baseline_bundle=no_baseline_bundle,
+    )
 
 
 def git_provenance(path: Path, *, ref: str | None = None) -> dict[str, Any]:

@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from .commands import (
+    bigdata_pilot,
     git_comparison_plan,
     git_provenance,
     regression_audit,
@@ -99,6 +100,17 @@ def build_parser() -> argparse.ArgumentParser:
     snapshot_diff.add_argument("--after", required=True, help="After snapshot directory or corpus manifest path.")
     snapshot_diff.add_argument("--out", help="Optional path for snapshot_diff.json.")
     snapshot_diff.add_argument("--markdown-out", help="Optional path for snapshot_diff.md.")
+    study = subparsers.add_parser("study", help="Run paper study orchestration commands.")
+    study_subparsers = study.add_subparsers(dest="study_command", required=True)
+    bigdata = study_subparsers.add_parser("bigdata", help="Run BigData 2026 study commands.")
+    bigdata_subparsers = bigdata.add_subparsers(dest="bigdata_command", required=True)
+    pilot = bigdata_subparsers.add_parser("pilot", help="Run the BigData 2026 pilot orchestrator.")
+    pilot.add_argument("--plan", required=True, help="Path to the top-level BigData pilot plan JSON.")
+    pilot.add_argument("--dry-run", action="store_true", help="Validate and resolve the pilot without writing generated artifacts.")
+    pilot.add_argument("--stage", help="Run one stage and required predecessors.")
+    pilot.add_argument("--from-stage", help="Run from this stage through the end of the plan.")
+    pilot.add_argument("--force", action="store_true", help="Override reuse policy for generated reports and selected runs.")
+    pilot.add_argument("--no-baseline-bundle", action="store_true", help="Run observability stages without refreshing the calibration store.")
     return parser
 
 
@@ -190,6 +202,16 @@ def main(argv: list[str] | None = None) -> int:
                 Path(args.after),
                 out_path=Path(args.out) if args.out else None,
                 markdown_out_path=Path(args.markdown_out) if args.markdown_out else None,
+            )
+            print(result["summary"])
+        elif args.command == "study" and args.study_command == "bigdata" and args.bigdata_command == "pilot":
+            result = bigdata_pilot(
+                Path(args.plan),
+                dry_run=args.dry_run,
+                stage=args.stage,
+                from_stage=args.from_stage,
+                force=args.force,
+                no_baseline_bundle=args.no_baseline_bundle,
             )
             print(result["summary"])
         return 0

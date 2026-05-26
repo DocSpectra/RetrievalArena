@@ -1,0 +1,22 @@
+experiment_name: bigdata2026_express_docs_after
+
+datasets:
+  - name: express_docs
+    path: ../../reports/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset
+    query_set_id: express-docs-pilot-queries
+    corpus_snapshot_manifest: ../../reports/bigdata2026/pilot_express_docs/snapshot_comparison/after/snapshot_manifests/corpus_snapshot_manifest.json
+
+tests:
+  - name: rag_lexical_topk
+    image: retrieval-arena/rag-lexical-topk:latest
+    build_context: ../../tests/rag_lexical_topk
+    config:
+      top_k: 5
+      max_context_chars_per_doc: 1500
+      experiment_id: bigdata2026_pilot
+
+scoring:
+  method: lexical_baseline
+  match_threshold: 0.5
+
+output_dir: ../../results/bigdata2026/pilot_express_docs/retrieval/after
