@@ -2,7 +2,7 @@
   "after": {
     "base_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests",
     "corpus_id": "express_docs",
-    "corpus_manifest_hash": "57bfab9d915a0ecc76e633a42a02787215a57ad1987370525151b70c4e286016",
+    "corpus_manifest_hash": "49481beb89bf22018d3ac6066211e8742a3debe8546f18d2fd1d34ccfa16d23f",
     "corpus_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
     "input_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests",
     "snapshot_id": "2026-03-30"
@@ -10,7 +10,7 @@
   "before": {
     "base_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests",
     "corpus_id": "express_docs",
-    "corpus_manifest_hash": "f075f4096e30b6243b00f7e3036805076ea4b758a8b911e7843e2db1623a27c7",
+    "corpus_manifest_hash": "82bebf38aabede529d83c1796e6963450e0e21446c251f4e23eb0ccce94237a4",
     "corpus_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
     "input_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests",
     "snapshot_id": "2025-09-20"
@@ -378,7 +378,7 @@
     "removed_file_count": 0,
     "removed_files": []
   },
-  "created_at": "2026-05-26T05:31:50+00:00",
+  "created_at": "2026-05-26T05:41:28+00:00",
   "graph_result": {
     "added_edge_count": 0,
     "added_edges": [],
@@ -440,10 +440,10 @@
   },
   "manifest_results": [
     {
-      "after_manifest_hash": "57bfab9d915a0ecc76e633a42a02787215a57ad1987370525151b70c4e286016",
+      "after_manifest_hash": "49481beb89bf22018d3ac6066211e8742a3debe8546f18d2fd1d34ccfa16d23f",
       "after_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
       "available": true,
-      "before_manifest_hash": "f075f4096e30b6243b00f7e3036805076ea4b758a8b911e7843e2db1623a27c7",
+      "before_manifest_hash": "82bebf38aabede529d83c1796e6963450e0e21446c251f4e23eb0ccce94237a4",
       "before_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
       "field_differences": [
         {
@@ -483,8 +483,13 @@
       "passed": false,
       "volatile_differences": [
         {
-          "after": "57bfab9d915a0ecc76e633a42a02787215a57ad1987370525151b70c4e286016",
-          "before": "f075f4096e30b6243b00f7e3036805076ea4b758a8b911e7843e2db1623a27c7",
+          "after": "2026-05-26T05:41:28+00:00",
+          "before": "2026-05-26T05:41:27+00:00",
+          "field": "created_at"
+        },
+        {
+          "after": "49481beb89bf22018d3ac6066211e8742a3debe8546f18d2fd1d34ccfa16d23f",
+          "before": "82bebf38aabede529d83c1796e6963450e0e21446c251f4e23eb0ccce94237a4",
           "field": "manifest_hash"
         }
       ],
@@ -494,10 +499,10 @@
       ]
     },
     {
-      "after_manifest_hash": "3d2e3bb4e631d94ae34b738a0c568dcc7b63d3bf8f39cec773256322aef493f5",
+      "after_manifest_hash": "89eeb6e99b90362902fa435da040e3921e90217faacbbff728d2a0d24c036116",
       "after_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\graph_snapshot_manifest.json",
       "available": true,
-      "before_manifest_hash": "99db6a939353f23313b5c22bdd360d397c7f77011669e8cdbac7cf6c159373ef",
+      "before_manifest_hash": "888584d2a1de16466e98a95b7ed24f4bb21e2f921fa903b122003d639f1eab27",
       "before_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\graph_snapshot_manifest.json",
       "field_differences": [
         {
@@ -573,8 +578,8 @@
       "passed": false,
       "volatile_differences": [
         {
-          "after": "3d2e3bb4e631d94ae34b738a0c568dcc7b63d3bf8f39cec773256322aef493f5",
-          "before": "99db6a939353f23313b5c22bdd360d397c7f77011669e8cdbac7cf6c159373ef",
+          "after": "89eeb6e99b90362902fa435da040e3921e90217faacbbff728d2a0d24c036116",
+          "before": "888584d2a1de16466e98a95b7ed24f4bb21e2f921fa903b122003d639f1eab27",
           "field": "manifest_hash"
         }
       ],
@@ -584,10 +589,10 @@
       ]
     },
     {
-      "after_manifest_hash": "e03669be00723d5ed5507cccb434600e146f9bba95955cb8d3425dcd060b61c8",
+      "after_manifest_hash": "e273bd410fb05b5a6355252cd42dbd76ea692e38153a541ce8394027a7fd9397",
       "after_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\support_surface_manifest.json",
       "available": true,
-      "before_manifest_hash": "8e7c631f737047f50878cfa28ed238af50292932203e861c65c7efb2359503a3",
+      "before_manifest_hash": "fb756b50058a81b87d23db4f10001b7ced06530e23a47e7e592440abcc905330",
       "before_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\support_surface_manifest.json",
       "field_differences": [
         {
@@ -601,58 +606,58 @@
           "field": "snapshot_id"
         },
         {
-          "after": "6545b031ae95bd8cac32f3789b6a20d00f2f35b55c7759fcbdbd85ae21c68615",
-          "before": "24c0c56abbee7919f8bf2c4af76a0eee4d7647bb2dcd6ac911345044d2b1e72f",
+          "after": "2df3c48d646aa1a3adb7050ca787ffdd313d07e35dd09a11bdc56370693a1fc4",
+          "before": "94a961aefc635ac8e17975ee46fcc2242a4ae41e57706ab9631bb59004883e9f",
           "field": "support_audit_file_hash"
         },
         {
-          "after": 12,
-          "before": 13,
+          "after": 13,
+          "before": 14,
           "field": "support_target_count"
         },
         {
           "after": {
-            "sha256": "1d63849b5b2bebf85fce11073be9cabbaff0303309b8c9aa1696c1f9162803b0",
+            "sha256": "a55cfa550891a80b47b339e96a2c4cc47bcd3b9130589fd9210557751b6c218f",
             "type": "list"
           },
           "before": {
-            "sha256": "4bf6be4cbcaa462340e92e405d92173f95e69037445311faca2e7a305cc75955",
+            "sha256": "714b4f9d2fa0a679f0b3041b9d4fc21ee4e5dcaf8795c70da4c36dcc49f2de9c",
             "type": "list"
           },
           "field": "support_target_doc_ids"
         },
         {
           "after": {
-            "sha256": "26ac4584ba545f7d887ee7745722cd4419c4215afbe3151f5b1ae356f1e8e160",
+            "sha256": "0191c1c17aed3cbb80c2d00b7d149af25cd119293212d853ce8ad91097c253fc",
             "type": "list"
           },
           "before": {
-            "sha256": "3f7c54c286daae93bac7087ae88cb346fc8c18a7fb43e974efa2c95eef9ef7f2",
+            "sha256": "7db4076de8cbdb36dc045987d2a748b11e9437b372f11c88c9b4e0a93eb5135f",
             "type": "list"
           },
-          "field": "support_targets_by_question.express_docs_faq_0001"
+          "field": "support_targets_by_question.express_docs_faq_0004"
         },
         {
           "after": {
-            "sha256": "cf22039a46521fb1576546cff90eaa993e0f852fc59b71cf7b800a700434463a",
+            "sha256": "2007215c1a8408ed1c134b7b71d055336c881966a2898fd4b74dd8674b0649de",
             "type": "list"
           },
           "before": {
-            "sha256": "d4992282d5445411a281b6a15cd2c8f281125c9257a22ac855246c4a5d670aca",
+            "sha256": "3e20cf6a43bf34e579c422a81df706bac2c6d243b9825473db66bf8caf2adf73",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.express_docs_faq_0005"
+        },
+        {
+          "after": {
+            "sha256": "ae8fc5026404a91954504eac2b6bb267252aca05b37dd774cf9e1fdfa1c29026",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "7c1f340238218929f25ac42fe4e80b01f9cf2678bf2e910846b4eb09cf8aba82",
             "type": "list"
           },
           "field": "support_targets_by_question.express_docs_faq_0007"
-        },
-        {
-          "after": {
-            "sha256": "29d18239eeb6be31d97665f5c3f0245c9be75ad05e665765cfc38776205416fc",
-            "type": "list"
-          },
-          "before": {
-            "sha256": "1b7f020fb3cd82e67b4491f7172cd93a46fb629c7a22fda720ecc76f979e3396",
-            "type": "list"
-          },
-          "field": "support_targets_by_question.express_docs_faq_0008"
         }
       ],
       "manifest": "support_surface",
@@ -660,8 +665,8 @@
       "passed": false,
       "volatile_differences": [
         {
-          "after": "e03669be00723d5ed5507cccb434600e146f9bba95955cb8d3425dcd060b61c8",
-          "before": "8e7c631f737047f50878cfa28ed238af50292932203e861c65c7efb2359503a3",
+          "after": "e273bd410fb05b5a6355252cd42dbd76ea692e38153a541ce8394027a7fd9397",
+          "before": "fb756b50058a81b87d23db4f10001b7ced06530e23a47e7e592440abcc905330",
           "field": "manifest_hash"
         }
       ],
@@ -690,7 +695,7 @@
     "support_surface_available": true,
     "total_delta_count": 40,
     "unavailable_optional_manifests": [],
-    "volatile_manifest_difference_count": 3
+    "volatile_manifest_difference_count": 4
   },
   "support_surface_result": {
     "added_question_count": 0,
@@ -699,32 +704,55 @@
     "added_target_reference_count": 3,
     "after_query_set_id": "express-docs-pilot-queries",
     "after_snapshot_id": "2026-03-30",
-    "after_support_target_count": 12,
+    "after_support_target_count": 13,
     "available": true,
     "before_query_set_id": "express-docs-pilot-queries",
     "before_snapshot_id": "2025-09-20",
-    "before_support_target_count": 13,
+    "before_support_target_count": 14,
     "changed_question_count": 3,
     "changed_questions": [
       {
         "added_targets": [
-          "guide/migrating-4"
+          "advanced/best-practice-security"
         ],
         "after_targets": [
-          "advanced/best-practice-performance",
+          "advanced/best-practice-security",
+          "guide/migrating-5",
+          "guide/routing",
+          "guide/using-template-engines",
+          "starter/faq"
+        ],
+        "before_targets": [
           "guide/migrating-4",
           "guide/migrating-5",
+          "guide/routing",
+          "guide/using-template-engines",
+          "starter/faq"
+        ],
+        "question_id": "express_docs_faq_0004",
+        "removed_targets": [
+          "guide/migrating-4"
+        ]
+      },
+      {
+        "added_targets": [
+          "resources/contributing"
+        ],
+        "after_targets": [
+          "advanced/best-practice-security",
+          "guide/error-handling",
+          "guide/routing",
           "resources/contributing",
           "starter/faq"
         ],
         "before_targets": [
-          "advanced/best-practice-performance",
+          "advanced/best-practice-security",
           "changelog/index",
-          "guide/migrating-5",
-          "resources/contributing",
+          "guide/error-handling",
+          "guide/routing",
           "starter/faq"
         ],
-        "question_id": "express_docs_faq_0001",
+        "question_id": "express_docs_faq_0005",
         "removed_targets": [
           "changelog/index"
         ]
@@ -734,45 +762,22 @@
           "resources/contributing"
         ],
         "after_targets": [
-          "advanced/best-practice-performance",
           "guide/migrating-5",
           "guide/routing",
+          "guide/using-middleware",
           "resources/contributing",
           "starter/faq"
         ],
         "before_targets": [
           "advanced/best-practice-performance",
-          "advanced/best-practice-security",
           "guide/migrating-5",
           "guide/routing",
+          "guide/using-middleware",
           "starter/faq"
         ],
         "question_id": "express_docs_faq_0007",
         "removed_targets": [
-          "advanced/best-practice-security"
-        ]
-      },
-      {
-        "added_targets": [
-          "guide/migrating-5"
-        ],
-        "after_targets": [
-          "guide/migrating-4",
-          "guide/migrating-5",
-          "starter/faq",
-          "starter/installing",
-          "support/index"
-        ],
-        "before_targets": [
-          "changelog/index",
-          "guide/migrating-4",
-          "starter/faq",
-          "starter/installing",
-          "support/index"
-        ],
-        "question_id": "express_docs_faq_0008",
-        "removed_targets": [
-          "changelog/index"
+          "advanced/best-practice-performance"
         ]
       }
     ],

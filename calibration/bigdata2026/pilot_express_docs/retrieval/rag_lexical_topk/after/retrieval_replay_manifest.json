@@ -2,64 +2,34 @@
   "build_context_hash": "79a2d74eddab9519c0c5e7ec5ec84e56cb2312641459c7ce8a135b86a02109c9",
   "config_git_provenance": {
     "branch": "IEEEBigData2026_metrics",
-    "commit": "ed9bfd1ce556f1c562455ca43d26de8734158773",
-    "diff_hash": "a220742a868cc327189622ea33c70296100fcf711fd9a83b94f85777e4d26598",
-    "dirty": true,
+    "commit": "5096265f8f926331dd064632ce347270ace875d9",
+    "diff_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "dirty": false,
     "is_git_worktree": true,
     "ref": null,
     "ref_commit": null,
     "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
     "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
     "tag": null,
-    "untracked_files": [
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/faq_support_audit.jsonl",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_edges.csv",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_metrics.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_transformation_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/support_construction_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/snapshot_manifests/graph_snapshot_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/snapshot_manifests/support_surface_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/faq_support_audit.jsonl",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_edges.csv",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_metrics.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_transformation_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/support_construction_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/graph_snapshot_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/support_surface_manifest.json"
-    ]
+    "untracked_files": []
   },
   "container_image": "retrieval-arena/rag-lexical-topk:latest",
   "container_metadata_hash": "e0630fa5d2b3374a522a1b80970a1faa3b864793d88b82580a7c03a35f1cca6e",
   "corpus_snapshot_id": "2026-03-30",
-  "created_at": "2026-05-26T05:31:56+00:00",
+  "created_at": "2026-05-26T05:41:33+00:00",
   "dataset": "express_docs",
   "dataset_git_provenance": {
     "branch": "IEEEBigData2026_metrics",
-    "commit": "ed9bfd1ce556f1c562455ca43d26de8734158773",
-    "diff_hash": "a220742a868cc327189622ea33c70296100fcf711fd9a83b94f85777e4d26598",
-    "dirty": true,
+    "commit": "5096265f8f926331dd064632ce347270ace875d9",
+    "diff_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "dirty": false,
     "is_git_worktree": true,
     "ref": null,
     "ref_commit": null,
     "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
     "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
     "tag": null,
-    "untracked_files": [
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/faq_support_audit.jsonl",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_edges.csv",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_metrics.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_transformation_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/support_construction_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/snapshot_manifests/graph_snapshot_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/snapshot_manifests/support_surface_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/faq_support_audit.jsonl",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_edges.csv",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_metrics.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_transformation_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/support_construction_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/graph_snapshot_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/support_surface_manifest.json"
-    ]
+    "untracked_files": []
   },
   "experiment_name": "bigdata2026_express_docs_after",
   "graph_snapshot_id": "2026-03-30",
@@ -285,8 +255,8 @@
       "size_bytes": 1541
     },
     "faq_support_audit.jsonl": {
-      "sha256": "f0b5ed0dbd86066fcdc52edba1e020618d354142804a65ec7ee979ed7e21ccfd",
-      "size_bytes": 18116
+      "sha256": "4dd3231f76791762d0b50bbff063b55428e518fa89c198002d3a4e2a8c6ae176",
+      "size_bytes": 20601
     },
     "graph_edges.csv": {
       "sha256": "4445f9dd2506040c8adfc58cdd37ef7b7c6a3b192b4b5cc21351abb47484f852",
@@ -301,9 +271,13 @@
       "size_bytes": 724
     }
   },
-  "manifest_hash": "71af6487a35d3d0b4fb621bfb39bd7a94e59c1096a4197909fd81ce8247e952c",
+  "manifest_hash": "23eccc12cfa53bf0fa9d26ae6b8b476655839298fa5e3df63208e8b91754d3e6",
   "manifest_type": "retrieval_replay",
   "output_artifact_hashes": {
+    "action_traces.jsonl": {
+      "sha256": "6f4cbeacfca3ee7b9df8a5ef998a8d029a90edb5e34500ebf3ea49aa4afe1281",
+      "size_bytes": 5172
+    },
     "item_scores.jsonl": {
       "sha256": "4ff71d67ba1484a1f24d6e690044b5e41754a4b77592cee0fa2ce5be21841afb",
       "size_bytes": 65324
@@ -313,68 +287,53 @@
       "size_bytes": 129
     },
     "predictions.jsonl": {
-      "sha256": "34652805f021a25835afefc8f5bff92bec62c77a6dcbbb04c84f4add4d887bc6",
-      "size_bytes": 125425
+      "sha256": "0fd44a9fb2f07def409a8c4b5dda52a29fa0ef3325cda7b5776befc89f487808",
+      "size_bytes": 143493
     },
     "scores.json": {
-      "sha256": "10fd505cb6e88f3fb6340deac0677c87a318fba271631b488b23e1563a4a0c03",
-      "size_bytes": 1046
+      "sha256": "2f76c8e86f7e42474d541d8e1ba5bfa78402b244f8a21559ed1edecfdcd31b4b",
+      "size_bytes": 1223
     }
   },
   "query_set_hash": "534484d3ef392d9820e587ee8b64ee8a92984f5f1124384236b78799231c3a71",
   "query_set_id": "express-docs-pilot-queries",
   "retrieval_arena_git_provenance": {
     "branch": "IEEEBigData2026_metrics",
-    "commit": "ed9bfd1ce556f1c562455ca43d26de8734158773",
-    "diff_hash": "a220742a868cc327189622ea33c70296100fcf711fd9a83b94f85777e4d26598",
-    "dirty": true,
+    "commit": "5096265f8f926331dd064632ce347270ace875d9",
+    "diff_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "dirty": false,
     "is_git_worktree": true,
     "ref": null,
     "ref_commit": null,
     "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
     "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
     "tag": null,
-    "untracked_files": [
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/faq_support_audit.jsonl",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_edges.csv",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_metrics.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_transformation_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/support_construction_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/snapshot_manifests/graph_snapshot_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/snapshot_manifests/support_surface_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/faq_support_audit.jsonl",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_edges.csv",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_metrics.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_transformation_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/support_construction_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/graph_snapshot_manifest.json",
-      "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/support_surface_manifest.json"
-    ]
+    "untracked_files": []
   },
   "retrieval_arena_version": "0.1.0",
   "retrieval_config_hash": "facb96b68244d0d38fbb2b9c359ef70800563e90f7801208d8df04068104e03c",
   "retrieval_config_id": "rag_lexical_topk",
-  "run_completed_at": "2026-05-26T05:31:56.078136+00:00",
+  "run_completed_at": "2026-05-26T05:41:33.621535+00:00",
   "run_id": "ddea72412e",
-  "run_started_at": "2026-05-26T05:31:55.188473+00:00",
+  "run_started_at": "2026-05-26T05:41:32.586924+00:00",
   "schema_version": "retrieval_arena.replay_manifest.v1",
   "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
   "scoring_method": "lexical_baseline",
   "snapshot_manifest_references": {
     "corpus": {
-      "manifest_hash": "57bfab9d915a0ecc76e633a42a02787215a57ad1987370525151b70c4e286016",
+      "manifest_hash": "49481beb89bf22018d3ac6066211e8742a3debe8546f18d2fd1d34ccfa16d23f",
       "manifest_type": "corpus_snapshot",
       "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
       "snapshot_id": "2026-03-30"
     },
     "graph": {
-      "manifest_hash": "3d2e3bb4e631d94ae34b738a0c568dcc7b63d3bf8f39cec773256322aef493f5",
+      "manifest_hash": "89eeb6e99b90362902fa435da040e3921e90217faacbbff728d2a0d24c036116",
       "manifest_type": "graph_snapshot",
       "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\graph_snapshot_manifest.json",
       "snapshot_id": "2026-03-30"
     },
     "support_surface": {
-      "manifest_hash": "e03669be00723d5ed5507cccb434600e146f9bba95955cb8d3425dcd060b61c8",
+      "manifest_hash": "e273bd410fb05b5a6355252cd42dbd76ea692e38153a541ce8394027a7fd9397",
       "manifest_type": "support_surface",
       "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\support_surface_manifest.json",
       "snapshot_id": "2026-03-30"

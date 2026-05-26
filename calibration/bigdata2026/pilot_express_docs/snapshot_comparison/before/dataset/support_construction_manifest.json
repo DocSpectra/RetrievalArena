@@ -1,26 +1,33 @@
 {
   "corpus_id": "express_docs",
-  "created_at": "2026-05-26T05:31:49+00:00",
-  "dataset_preparation_manifest_hash": "86badf61e5f77e5be341c6cd57d15d1ecb3a75253da53690ef7d9368a9bcb35a",
+  "created_at": "2026-05-26T05:41:27+00:00",
+  "dataset_preparation_manifest_hash": "0728e7822b2aa3011d8341c21c15704ac094cb64b8f484e864c186f67f37e5b0",
   "dataset_preparation_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\dataset\\dataset_preparation_manifest.json",
-  "manifest_hash": "2c4c73ef7f17c45ff22fa4a26813c232da24baf81e5eee80f509dc4a641e2714",
+  "is_clean_qa_surface": true,
+  "manifest_hash": "a3bab26ec63a2ebe503d97f3fd0a2791841c303789cb512ed01790aa7200f731",
   "manifest_type": "support_construction",
-  "min_answer_token_coverage": 0.25,
+  "partial_threshold": 0.25,
+  "qa_surface_type": "dedicated_faq",
   "query_set_id": "express-docs-pilot-queries",
   "schema_version": "retrieval_arena.support_construction_manifest.v1",
   "snapshot_id": "2025-09-20",
   "stage_status": "ok",
   "support_audit_configuration": {
-    "method": "answer_lexical_overlap_v1",
-    "min_answer_token_coverage": 0.25,
+    "method": "idf_weighted_answer_support_v1",
+    "partial_threshold": 0.25,
+    "qa_surface_type": "dedicated_faq",
     "source": "answers_jsonl_and_dataset_corpus",
+    "supported_threshold": 0.6,
     "top_k": 5
   },
   "support_audit_file": "faq_support_audit.jsonl",
-  "support_audit_file_hash": "24c0c56abbee7919f8bf2c4af76a0eee4d7647bb2dcd6ac911345044d2b1e72f",
-  "support_construction_method": "answer_lexical_overlap_v1",
+  "support_audit_file_hash": "94a961aefc635ac8e17975ee46fcc2242a4ae41e57706ab9631bb59004883e9f",
+  "support_construction_method": "idf_weighted_answer_support_v1",
+  "support_label_counts": {
+    "supported": 8
+  },
   "support_query_count": 8,
-  "support_target_count": 13,
+  "support_target_count": 14,
   "support_target_doc_ids": [
     "advanced/best-practice-performance",
     "advanced/best-practice-security",
@@ -31,6 +38,7 @@
     "guide/migrating-5",
     "guide/routing",
     "guide/using-middleware",
+    "guide/using-template-engines",
     "resources/contributing",
     "starter/faq",
     "starter/installing",
@@ -46,5 +54,6 @@
     "express_docs_faq_0007",
     "express_docs_faq_0008"
   ],
+  "supported_threshold": 0.6,
   "top_k": 5
 }

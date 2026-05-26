@@ -29,7 +29,7 @@
     }
   ],
   "corpus_id": "express_docs",
-  "created_at": "2026-05-26T05:31:49+00:00",
+  "created_at": "2026-05-26T05:41:26+00:00",
   "environment": {
     "available_memory_bytes": null,
     "available_memory_unavailable_reason": "standard_library_available_memory_unavailable",
@@ -41,8 +41,8 @@
     "python_version": "3.12.10",
     "retrieval_arena_git_provenance": {
       "branch": "IEEEBigData2026_metrics",
-      "commit": "ed9bfd1ce556f1c562455ca43d26de8734158773",
-      "diff_hash": "81984ec60a1a71ac6560dc5d5b7c133043c9ad8b0f1eb3b79c858394acce7b42",
+      "commit": "5096265f8f926331dd064632ce347270ace875d9",
+      "diff_hash": "70d2e2ac64ab70131b7e130d58fa4648707aaadab89447bb0c9b2857d032b549",
       "dirty": true,
       "is_git_worktree": true,
       "ref": null,
@@ -50,26 +50,11 @@
       "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
       "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
       "tag": null,
-      "untracked_files": [
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/faq_support_audit.jsonl",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_edges.csv",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_metrics.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_transformation_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/support_construction_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/snapshot_manifests/graph_snapshot_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/snapshot_manifests/support_surface_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/faq_support_audit.jsonl",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_edges.csv",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_metrics.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_transformation_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/support_construction_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/graph_snapshot_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/support_surface_manifest.json"
-      ]
+      "untracked_files": []
     },
     "retrieval_arena_version": "0.1.0"
   },
-  "manifest_hash": "deab7d70b64bff4215678a668932983ab6d826b46ae6f6c22a40d445f8b02b79",
+  "manifest_hash": "5dfd4e6f6925867750e311db40fe1368bd3270862bfb7609a4ca93d30f534142",
   "manifest_type": "bigdata2026_pilot_run",
   "pilot_id": "pilot_express_docs_2025_09_20_to_2026_03_30",
   "plan_hash": "db7020da6f7d5f4205b2fe0cf4e130e10f438b42e9582373024291a1b3cd4b52",
@@ -178,7 +163,7 @@
           "status": "ok"
         }
       ],
-      "completed_at": "2026-05-26T05:31:49+00:00",
+      "completed_at": "2026-05-26T05:41:27+00:00",
       "input_artifacts": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\snapshot_comparison_express_docs.json"
@@ -193,12 +178,12 @@
       "manifest_references": [],
       "output_artifacts": [],
       "stage": "prerequisites",
-      "started_at": "2026-05-26T05:31:49+00:00",
+      "started_at": "2026-05-26T05:41:26+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
     {
-      "completed_at": "2026-05-26T05:31:50+00:00",
+      "completed_at": "2026-05-26T05:41:28+00:00",
       "input_artifacts": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\snapshot_comparison_express_docs.json"
@@ -221,12 +206,12 @@
         }
       ],
       "stage": "snapshot_compare",
-      "started_at": "2026-05-26T05:31:49+00:00",
+      "started_at": "2026-05-26T05:41:27+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
     {
-      "completed_at": "2026-05-26T05:31:54+00:00",
+      "completed_at": "2026-05-26T05:41:31+00:00",
       "input_artifacts": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_express_docs_before.yaml"
@@ -243,12 +228,12 @@
         }
       ],
       "stage": "retrieval_before",
-      "started_at": "2026-05-26T05:31:50+00:00",
+      "started_at": "2026-05-26T05:41:28+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
     {
-      "completed_at": "2026-05-26T05:31:57+00:00",
+      "completed_at": "2026-05-26T05:41:34+00:00",
       "input_artifacts": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_express_docs_after.yaml"
@@ -265,12 +250,12 @@
         }
       ],
       "stage": "retrieval_after",
-      "started_at": "2026-05-26T05:31:54+00:00",
+      "started_at": "2026-05-26T05:41:31+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
     {
-      "completed_at": "2026-05-26T05:31:57+00:00",
+      "completed_at": "2026-05-26T05:41:34+00:00",
       "input_artifacts": [],
       "manifest_references": [
         {
@@ -289,12 +274,12 @@
         }
       ],
       "stage": "drift",
-      "started_at": "2026-05-26T05:31:57+00:00",
+      "started_at": "2026-05-26T05:41:34+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
     {
-      "completed_at": "2026-05-26T05:31:57+00:00",
+      "completed_at": "2026-05-26T05:41:34+00:00",
       "input_artifacts": [],
       "manifest_references": [
         {
@@ -313,12 +298,12 @@
         }
       ],
       "stage": "audit",
-      "started_at": "2026-05-26T05:31:57+00:00",
+      "started_at": "2026-05-26T05:41:34+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
     {
-      "completed_at": "2026-05-26T05:31:57+00:00",
+      "completed_at": "2026-05-26T05:41:35+00:00",
       "input_artifacts": [],
       "manifest_references": [
         {
@@ -334,7 +319,7 @@
         }
       ],
       "stage": "measurements",
-      "started_at": "2026-05-26T05:31:57+00:00",
+      "started_at": "2026-05-26T05:41:34+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     },
@@ -356,7 +341,7 @@
         "include_raw": false,
         "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs"
       },
-      "completed_at": "2026-05-26T05:31:58+00:00",
+      "completed_at": "2026-05-26T05:41:35+00:00",
       "input_artifacts": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs"
@@ -399,7 +384,7 @@
         }
       ],
       "stage": "baseline_bundle",
-      "started_at": "2026-05-26T05:31:58+00:00",
+      "started_at": "2026-05-26T05:41:35+00:00",
       "status": "completed",
       "unavailable_optional_inputs": []
     }

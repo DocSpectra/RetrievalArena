@@ -1,8 +1,8 @@
 {
   "corpus_id": "express_docs",
   "corpus_snapshot_id": "2025-09-20",
-  "created_at": "2026-05-26T05:31:49+00:00",
-  "manifest_hash": "8e7c631f737047f50878cfa28ed238af50292932203e861c65c7efb2359503a3",
+  "created_at": "2026-05-26T05:41:27+00:00",
+  "manifest_hash": "fb756b50058a81b87d23db4f10001b7ced06530e23a47e7e592440abcc905330",
   "manifest_type": "support_surface",
   "query_set_file": "questions.jsonl",
   "query_set_hash": "534484d3ef392d9820e587ee8b64ee8a92984f5f1124384236b78799231c3a71",
@@ -10,8 +10,11 @@
   "schema_version": "retrieval_arena.snapshot_manifest.v1",
   "snapshot_id": "2025-09-20",
   "support_audit_file": "faq_support_audit.jsonl",
-  "support_audit_file_hash": "24c0c56abbee7919f8bf2c4af76a0eee4d7647bb2dcd6ac911345044d2b1e72f",
-  "support_target_count": 13,
+  "support_audit_file_hash": "94a961aefc635ac8e17975ee46fcc2242a4ae41e57706ab9631bb59004883e9f",
+  "support_label_counts": {
+    "supported": 8
+  },
+  "support_target_count": 14,
   "support_target_doc_ids": [
     "advanced/best-practice-performance",
     "advanced/best-practice-security",
@@ -22,6 +25,7 @@
     "guide/migrating-5",
     "guide/routing",
     "guide/using-middleware",
+    "guide/using-template-engines",
     "resources/contributing",
     "starter/faq",
     "starter/installing",
@@ -31,35 +35,35 @@
     "express_docs_faq_0001": [
       "starter/faq",
       "resources/contributing",
-      "guide/migrating-5",
       "advanced/best-practice-performance",
-      "changelog/index"
+      "guide/migrating-5",
+      "guide/migrating-4"
     ],
     "express_docs_faq_0002": [
       "starter/faq",
       "guide/using-middleware",
-      "resources/contributing",
-      "advanced/best-practice-security",
-      "advanced/best-practice-performance"
+      "guide/routing",
+      "guide/migrating-4",
+      "resources/contributing"
     ],
     "express_docs_faq_0003": [
       "starter/faq",
       "resources/contributing",
-      "advanced/best-practice-performance",
       "advanced/best-practice-security",
-      "guide/database-integration"
+      "guide/database-integration",
+      "guide/routing"
     ],
     "express_docs_faq_0004": [
       "starter/faq",
       "guide/migrating-5",
+      "guide/using-template-engines",
       "guide/routing",
-      "advanced/best-practice-security",
       "guide/migrating-4"
     ],
     "express_docs_faq_0005": [
       "starter/faq",
+      "changelog/index",
       "guide/error-handling",
-      "advanced/best-practice-performance",
       "advanced/best-practice-security",
       "guide/routing"
     ],
@@ -73,16 +77,16 @@
     "express_docs_faq_0007": [
       "starter/faq",
       "guide/migrating-5",
-      "advanced/best-practice-performance",
       "guide/routing",
-      "advanced/best-practice-security"
+      "guide/using-middleware",
+      "advanced/best-practice-performance"
     ],
     "express_docs_faq_0008": [
       "starter/faq",
       "starter/installing",
-      "changelog/index",
-      "guide/migrating-4",
-      "support/index"
+      "guide/migrating-5",
+      "support/index",
+      "guide/migrating-4"
     ]
   },
   "supported_question_ids": [

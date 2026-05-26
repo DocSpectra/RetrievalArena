@@ -56,6 +56,6 @@
 
 ## Support Surface
 
-- Changed question `express_docs_faq_0001`
+- Changed question `express_docs_faq_0004`
+- Changed question `express_docs_faq_0005`
 - Changed question `express_docs_faq_0007`
-- Changed question `express_docs_faq_0008`

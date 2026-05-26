@@ -10,9 +10,9 @@
 
 ## Optional Signals
 
-- action_trace: 0 available / 8 unavailable
-- distance_to_support: 0 available / 8 unavailable
-- evidence_coverage: 0 available / 8 unavailable
+- action_trace: 8 available / 0 unavailable
+- distance_to_support: 8 available / 0 unavailable
+- evidence_coverage: 8 available / 0 unavailable
 - lexical_score_delta: 8 available / 0 unavailable
 - retained_score_delta: 8 available / 0 unavailable
 - support_exposure: 8 available / 0 unavailable
