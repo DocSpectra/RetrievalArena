@@ -1,8 +1,8 @@
 {
   "corpus_id": "express_docs",
   "corpus_snapshot_id": "2025-09-20",
-  "created_at": "2026-05-26T10:01:49+00:00",
-  "manifest_hash": "de53e85618fab3b8253c5ba6e23d62b876b6fdc3dcc92555700c1862433ce8da",
+  "created_at": "2026-05-26T10:51:02+00:00",
+  "manifest_hash": "11f2fdf4348ee2e89e9763cf4df4a115325c6101ea26c2a5486105f4fd924c81",
   "manifest_type": "support_surface",
   "query_set_file": "questions.jsonl",
   "query_set_hash": "534484d3ef392d9820e587ee8b64ee8a92984f5f1124384236b78799231c3a71",

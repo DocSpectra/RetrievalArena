@@ -3,7 +3,7 @@
     "corpus_snapshot_id": "2026-03-30",
     "dataset": "express_docs",
     "graph_snapshot_id": "2026-03-30",
-    "manifest_hash": "915fe0cb9a7ddbfaebe40bb4733eee5dc68627ae68d95930c507128b6a60cac2",
+    "manifest_hash": "a9c327ff86fc248fb535dfd112bd2577a1880b25b7c8f3303fec563f45ff91f7",
     "query_set_id": "express-docs-pilot-queries",
     "retrieval_config_hash": "04b843670063367e6bfb9a9039467bba5c1708468d7938e7c7380153229b08dc",
     "retrieval_config_id": "rag_graph_multihop_rerank",
@@ -31,11 +31,11 @@
         "size_bytes": 19470
       },
       "retrieval_replay_manifest.json": {
-        "sha256": "648bbd3745a455d98125d4f4b8ac418b8abd6a9c31343324217a824232f8648f",
-        "size_bytes": 14593
+        "sha256": "7e20548ad84004ec798d41d641452ce400e66d513c753ff9f293bbc99b595845",
+        "size_bytes": 14850
       },
       "scores.json": {
-        "sha256": "7a7ce5e3b2c16d98a048010aaa6ce69fa9d97638fd4b2f9b6c7ad8fd4b90a84f",
+        "sha256": "407461bf8c60752f55da71fb32b4a8ee98ec159f54aa00ecd28fb92fc2867ab2",
         "size_bytes": 1556
       }
     },
@@ -57,11 +57,11 @@
         "size_bytes": 19434
       },
       "retrieval_replay_manifest.json": {
-        "sha256": "81bab2762a1989badb17b7796f4c0b56cc9d9ab5e88695d181853a8f64063dea",
-        "size_bytes": 14599
+        "sha256": "50f85e1fb53b440979bd79ff1340106f83c6c990488887b936178b7d4362ea95",
+        "size_bytes": 14856
       },
       "scores.json": {
-        "sha256": "bee88071b77479c9a70416999ba508b5176e2fc468adb4b3923de0a79052fc8e",
+        "sha256": "2a0bccf4939424a533d692b98326fa8c8c869a767c690599e0f7c71a555de5fa",
         "size_bytes": 1557
       }
     }
@@ -70,7 +70,7 @@
     "corpus_snapshot_id": "2025-09-20",
     "dataset": "express_docs",
     "graph_snapshot_id": "2025-09-20",
-    "manifest_hash": "57e5e8e697638166e1ccf8797f9373660e4e9d1d0ac8ab06a65d50c020998a60",
+    "manifest_hash": "b5f34d3befe2f172c6d4f68a47cc83ac89a51bc6f7355128274149cff9f6bf94",
     "query_set_id": "express-docs-pilot-queries",
     "retrieval_config_hash": "78c0468a22a6d73701478e5d472da022869b16779f3a0d1cedf831d39c8bf158",
     "retrieval_config_id": "rag_graph_multihop_rerank",
@@ -80,9 +80,9 @@
     "test": "rag_graph_multihop_rerank"
   },
   "comparison_type": "retrieval_drift",
-  "created_at": "2026-05-26T10:02:20+00:00",
+  "created_at": "2026-05-26T10:51:33+00:00",
   "evidence_coverage_regression_count": 0,
-  "manifest_hash": "dc5ab80645b40b23983cb9041adc11afc0c571f2c3d24644cb284b7022281f24",
+  "manifest_hash": "b73e0979538527fabed85356ba98ee9c032e1ed30a9d4e6c492938f2650e9a39",
   "manifest_type": "retrieval_drift_summary",
   "mean_distance_to_support_delta": 0.0,
   "mean_lexical_f1_delta": 0.0,

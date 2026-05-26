@@ -1,6 +1,6 @@
 {
   "build_context": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\oracle_graph_support",
-  "completed_at": "2026-05-26T10:02:02.347475+00:00",
+  "completed_at": "2026-05-26T10:51:14.929806+00:00",
   "config_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_express_docs_before.yaml",
   "container_metadata": {
     "deterministic": true,
@@ -27,7 +27,7 @@
     "graph_node_count": 34,
     "support_question_count": 8
   },
-  "git_commit": "72793c918719f31dac41ff96e7f174912e67b0af",
+  "git_commit": "77dbb3d777f3d3a4ea463ea0b6b36df75c820a5c",
   "image": "retrieval-arena/oracle-graph-support:latest",
   "match_percent": 0.0,
   "mean_f1": 0.11275700200615527,
@@ -37,6 +37,6 @@
   "num_questions": 8,
   "retrieval_arena_version": "0.1.0",
   "run_id": "fb402f1d83",
-  "started_at": "2026-05-26T10:02:01.760898+00:00",
+  "started_at": "2026-05-26T10:51:14.357190+00:00",
   "test": "oracle_graph_support"
 }

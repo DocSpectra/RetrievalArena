@@ -1,7 +1,7 @@
 {
   "corpus_id": "express_docs",
   "corpus_snapshot_id": "2026-03-30",
-  "created_at": "2026-05-26T10:01:49+00:00",
+  "created_at": "2026-05-26T10:51:02+00:00",
   "edge_count": 29,
   "edge_file": "graph_edges.csv",
   "edge_file_hash": "4445f9dd2506040c8adfc58cdd37ef7b7c6a3b192b4b5cc21351abb47484f852",
@@ -632,7 +632,7 @@
   },
   "graph_metrics_file": "graph_metrics.json",
   "graph_metrics_file_hash": "0bfb6d140d93f5648cea169d8b2e310b819567bb4a75c8af3c3eda3b32ca3701",
-  "manifest_hash": "d253db5c8a3eb232732e9156ca93550ab41cb1067382591aa5d140c5907b34d5",
+  "manifest_hash": "246ebdf448aee7346889453bb93aaaccda721fe693e70e64fc3824d57007f414",
   "manifest_type": "graph_snapshot",
   "node_count": 53,
   "schema_version": "retrieval_arena.snapshot_manifest.v1",

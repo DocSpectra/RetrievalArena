@@ -3,7 +3,7 @@
     "corpus_snapshot_id": "2026-03-30",
     "dataset": "express_docs",
     "graph_snapshot_id": "2026-03-30",
-    "manifest_hash": "78a1a423d448a32cf90341c3a1b7df3cf9bdc26f84c978892412e12b7d57f4a3",
+    "manifest_hash": "fc88363b87154731e09524f10495f5da1b4521253b3430fd5d325e1064f22875",
     "query_set_id": "express-docs-pilot-queries",
     "retrieval_config_hash": "04b843670063367e6bfb9a9039467bba5c1708468d7938e7c7380153229b08dc",
     "retrieval_config_id": "rag_lexical_topk",
@@ -31,11 +31,11 @@
         "size_bytes": 143493
       },
       "retrieval_replay_manifest.json": {
-        "sha256": "3362600c8af4a4c0628895365bde28211d02d25eb651ea27b1cb9edf19a044cf",
-        "size_bytes": 14566
+        "sha256": "213179d1570f1fc2b6376e7bf2c463592f6d7d267345c706fcfb6057ba3e6864",
+        "size_bytes": 14823
       },
       "scores.json": {
-        "sha256": "7cdd5285e0da61cc873e183ba28edc3bacd1c9c2a31d944b4e6df55399e11039",
+        "sha256": "1b326c0b3786f03cb3b5186107eb70f82e071053109a5ea9b0a341ef462b5850",
         "size_bytes": 1223
       }
     },
@@ -57,11 +57,11 @@
         "size_bytes": 143188
       },
       "retrieval_replay_manifest.json": {
-        "sha256": "277b8a1f3280ae6111bae37f4c88fceb829c631684840fca75af95836b34644f",
-        "size_bytes": 14572
+        "sha256": "c933d1f5ca93b044c0da8f84beb00f36c30f970200fb50b2c916c33583c38938",
+        "size_bytes": 14829
       },
       "scores.json": {
-        "sha256": "0e1f59087aa526c17a99d29a3c40379677b1e7954e087b20710d2aef9a8dbd3f",
+        "sha256": "62f96b985b978ad2900dbba64f006f8d23444b212b1906737f12339f99267823",
         "size_bytes": 1224
       }
     }
@@ -70,7 +70,7 @@
     "corpus_snapshot_id": "2025-09-20",
     "dataset": "express_docs",
     "graph_snapshot_id": "2025-09-20",
-    "manifest_hash": "fe977272a218452614d647839a679cdbcc3dd48e045f6e379f46d02c1a76f0cf",
+    "manifest_hash": "1283cc6d5055f1ee4af8de3b51af8952b262826a253c63f99033aa38efceb4b4",
     "query_set_id": "express-docs-pilot-queries",
     "retrieval_config_hash": "78c0468a22a6d73701478e5d472da022869b16779f3a0d1cedf831d39c8bf158",
     "retrieval_config_id": "rag_lexical_topk",
@@ -80,9 +80,9 @@
     "test": "rag_lexical_topk"
   },
   "comparison_type": "retrieval_drift",
-  "created_at": "2026-05-26T10:02:20+00:00",
+  "created_at": "2026-05-26T10:51:33+00:00",
   "evidence_coverage_regression_count": 0,
-  "manifest_hash": "9ad8fa66917bd21c634dfb11ca49e4cf650ba094f6f2a8cb138ebdb7e5bb95ad",
+  "manifest_hash": "c55b39ccf2c301733be80c87ca21bd6953f2dbfcd6268a83aac038aa2099a9e8",
   "manifest_type": "retrieval_drift_summary",
   "mean_distance_to_support_delta": 0.0,
   "mean_lexical_f1_delta": -0.0009139910121593302,

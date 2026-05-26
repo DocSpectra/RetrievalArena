@@ -2,8 +2,8 @@
   "build_context_hash": "463397d4c596527efc6d9fa55a9a775fc6f36b21ff593260ecaae0b721e99a7e",
   "config_git_provenance": {
     "branch": "IEEEBigData2026_metrics",
-    "commit": "72793c918719f31dac41ff96e7f174912e67b0af",
-    "diff_hash": "d1e1bf2d514202c2158598b79fd01b527e32e973b9712f165a7fffb0e640531c",
+    "commit": "77dbb3d777f3d3a4ea463ea0b6b36df75c820a5c",
+    "diff_hash": "5f4ac6f7d5c30fab221beffc30e2610f6c8e5d0ab76d626a4bc365cdf99df459",
     "dirty": true,
     "is_git_worktree": true,
     "ref": null,
@@ -11,17 +11,19 @@
     "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
     "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
     "tag": null,
-    "untracked_files": []
+    "untracked_files": [
+      "docs/incremental_baseline_refresh.md"
+    ]
   },
   "container_image": "retrieval-arena/rag-vector:latest",
   "container_metadata_hash": "ab32c9818d69705d921852bd3e6353a172345bcb26f9effbd15f25bccabf35c7",
   "corpus_snapshot_id": "2025-09-20",
-  "created_at": "2026-05-26T10:01:59+00:00",
+  "created_at": "2026-05-26T10:51:12+00:00",
   "dataset": "express_docs",
   "dataset_git_provenance": {
     "branch": "IEEEBigData2026_metrics",
-    "commit": "72793c918719f31dac41ff96e7f174912e67b0af",
-    "diff_hash": "d1e1bf2d514202c2158598b79fd01b527e32e973b9712f165a7fffb0e640531c",
+    "commit": "77dbb3d777f3d3a4ea463ea0b6b36df75c820a5c",
+    "diff_hash": "5f4ac6f7d5c30fab221beffc30e2610f6c8e5d0ab76d626a4bc365cdf99df459",
     "dirty": true,
     "is_git_worktree": true,
     "ref": null,
@@ -29,7 +31,9 @@
     "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
     "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
     "tag": null,
-    "untracked_files": []
+    "untracked_files": [
+      "docs/incremental_baseline_refresh.md"
+    ]
   },
   "experiment_name": "bigdata2026_express_docs_before",
   "graph_snapshot_id": "2025-09-20",
@@ -271,7 +275,7 @@
       "size_bytes": 724
     }
   },
-  "manifest_hash": "441f0c2ac6c9245d69b4c091f51bbc913fa851c035c72666579387a336a29650",
+  "manifest_hash": "220c368268681ac97717ef4e59fe55121de11e90b2c8cc1faccbc30c2c9c617e",
   "manifest_type": "retrieval_replay",
   "output_artifact_hashes": {
     "action_traces.jsonl": {
@@ -291,16 +295,17 @@
       "size_bytes": 18020
     },
     "scores.json": {
-      "sha256": "ad3897825704f4452eb61a23ab1292bd32cb56ba224127ee5c57e23fcda05388",
+      "sha256": "752a15a3ab4d429f22c3c88aac41f1397196172d04f95969460908b6222d5624",
       "size_bytes": 1121
     }
   },
   "query_set_hash": "534484d3ef392d9820e587ee8b64ee8a92984f5f1124384236b78799231c3a71",
   "query_set_id": "express-docs-pilot-queries",
+  "resolved_run_identity_hash": "1cf9e277495222974978f854fac09fcb4bfd55837bb571200c05d07ff8a69e30",
   "retrieval_arena_git_provenance": {
     "branch": "IEEEBigData2026_metrics",
-    "commit": "72793c918719f31dac41ff96e7f174912e67b0af",
-    "diff_hash": "d1e1bf2d514202c2158598b79fd01b527e32e973b9712f165a7fffb0e640531c",
+    "commit": "77dbb3d777f3d3a4ea463ea0b6b36df75c820a5c",
+    "diff_hash": "5f4ac6f7d5c30fab221beffc30e2610f6c8e5d0ab76d626a4bc365cdf99df459",
     "dirty": true,
     "is_git_worktree": true,
     "ref": null,
@@ -308,32 +313,34 @@
     "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
     "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
     "tag": null,
-    "untracked_files": []
+    "untracked_files": [
+      "docs/incremental_baseline_refresh.md"
+    ]
   },
   "retrieval_arena_version": "0.1.0",
   "retrieval_config_hash": "78c0468a22a6d73701478e5d472da022869b16779f3a0d1cedf831d39c8bf158",
   "retrieval_config_id": "rag_vector",
-  "run_completed_at": "2026-05-26T10:01:59.515938+00:00",
+  "run_completed_at": "2026-05-26T10:51:11.996756+00:00",
   "run_id": "6e7b60616a",
-  "run_started_at": "2026-05-26T10:01:58.943604+00:00",
+  "run_started_at": "2026-05-26T10:51:11.438104+00:00",
   "schema_version": "retrieval_arena.replay_manifest.v1",
   "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
   "scoring_method": "lexical_baseline",
   "snapshot_manifest_references": {
     "corpus": {
-      "manifest_hash": "4b4ba8319af6ddcc3abd3f885eb060bdd2ea3df8fb0399231cc7387a64469daf",
+      "manifest_hash": "2d4e924b1c1a6d1a15d42a73520549642d43381e77d1734ae3f0922908c67d89",
       "manifest_type": "corpus_snapshot",
       "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
       "snapshot_id": "2025-09-20"
     },
     "graph": {
-      "manifest_hash": "05325635c1df74fc205778ce241a405a3bf8c6262547e06a5b245f017a18c73f",
+      "manifest_hash": "ea63a75e843a1603fdd09b5fc73cfc07d1211128b7e7016b965a2883a3069e56",
       "manifest_type": "graph_snapshot",
       "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\graph_snapshot_manifest.json",
       "snapshot_id": "2025-09-20"
     },
     "support_surface": {
-      "manifest_hash": "de53e85618fab3b8253c5ba6e23d62b876b6fdc3dcc92555700c1862433ce8da",
+      "manifest_hash": "11f2fdf4348ee2e89e9763cf4df4a115325c6101ea26c2a5486105f4fd924c81",
       "manifest_type": "support_surface",
       "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\support_surface_manifest.json",
       "snapshot_id": "2025-09-20"

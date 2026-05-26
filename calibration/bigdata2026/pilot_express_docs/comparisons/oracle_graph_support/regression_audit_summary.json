@@ -3,7 +3,7 @@
     "corpus_snapshot_id": "2026-03-30",
     "dataset": "express_docs",
     "graph_snapshot_id": "2026-03-30",
-    "manifest_hash": "b898e3a48c2f3c6823661acf61621104019d473ec77bedf818fbd485aa72bc20",
+    "manifest_hash": "e737426d551197640aeddae869226b49e5dc88fcbb5ffb1e7f37ada1c9ee3f22",
     "query_set_id": "express-docs-pilot-queries",
     "retrieval_config_hash": "04b843670063367e6bfb9a9039467bba5c1708468d7938e7c7380153229b08dc",
     "retrieval_config_id": "oracle_graph_support",
@@ -17,7 +17,7 @@
     "corpus_snapshot_id": "2025-09-20",
     "dataset": "express_docs",
     "graph_snapshot_id": "2025-09-20",
-    "manifest_hash": "e3a5a7fd66648f526f2806a3f668f9e5040b4ca4daf0775d1a112091e13447e2",
+    "manifest_hash": "d2925aa4b22aa8852bdf4ccbfc3d40cbd8a00e594f16ae056d73abcaa54a03af",
     "query_set_id": "express-docs-pilot-queries",
     "retrieval_config_hash": "78c0468a22a6d73701478e5d472da022869b16779f3a0d1cedf831d39c8bf158",
     "retrieval_config_id": "oracle_graph_support",
@@ -37,7 +37,7 @@
     "support_target_removed": 3
   },
   "comparison_type": "regression_audit",
-  "created_at": "2026-05-26T10:02:20+00:00",
+  "created_at": "2026-05-26T10:51:34+00:00",
   "evidence_availability_counts": {
     "action_trace": {
       "available": 8
@@ -91,34 +91,34 @@
   "input_artifacts": {
     "after_replay_manifest": {
       "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__oracle_graph_support__fb402f1d83\\retrieval_replay_manifest.json",
-      "sha256": "eae2206801c1a80fc21088ebe580c33f06641561b95d63a83c3c1dcf059554d4",
-      "size_bytes": 14578
+      "sha256": "81dd53be27c7c982bfb500bb9bfc3c5664b5892599906ef864bb155e336c780c",
+      "size_bytes": 14835
     },
     "after_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__oracle_graph_support__fb402f1d83",
     "before_replay_manifest": {
       "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__oracle_graph_support__fb402f1d83\\retrieval_replay_manifest.json",
-      "sha256": "4f23cf59cd069cfb8db3718b5cf2df452450284d83f65fb06485a5684f7e3bef",
-      "size_bytes": 14584
+      "sha256": "9688725749356bde289bf6f8dce2d5e4b1f1c55f8af3005b15e613e8da34b806",
+      "size_bytes": 14841
     },
     "before_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__oracle_graph_support__fb402f1d83",
     "drift_jsonl": {
       "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift.jsonl",
-      "sha256": "9fafbb878038d3551b9faa8ceb2d50e68c60ba19f7959667080e540a46ad829f",
+      "sha256": "81e007d9c3fc2b1b1f89c78ff656490f1667b8cb09e9252de577639301a044c6",
       "size_bytes": 18296
     },
     "drift_summary_json": {
       "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift_summary.json",
-      "sha256": "6baa457eccdf3a21b7b16d990dc5eb94c8f46b8237798bea6ab8dd25fe6c62d9",
+      "sha256": "9834080c653b3a6990b9fe8eda540730cb21ac046933b4aa4f952bef50f3dda6",
       "size_bytes": 4885
     },
     "snapshot_diff_json": {
       "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\snapshot_diff.json",
-      "sha256": "93919782e3c699333234b17a2097dc74c58a8931405bf59706940582b232a42a",
-      "size_bytes": 32326
+      "sha256": "1c56ab17f4c241c1c0d075d568ed8f56cc5b92483c6cfd1d90f13be7e4a06319",
+      "size_bytes": 32171
     }
   },
   "labeled_query_count": 8,
-  "manifest_hash": "bb4fb5a3296a3a8a841dd949d5eda9bb24e878095e0e6c4ed244c51616a6aa40",
+  "manifest_hash": "492065e2c67d89c78dd5e5294fd23fed973b6b60b3af9aa9089bcbcd76edc6a7",
   "manifest_type": "regression_audit_summary",
   "overall_drift_score": null,
   "overall_drift_score_note": "No overall drift score or composite summary metric is computed.",

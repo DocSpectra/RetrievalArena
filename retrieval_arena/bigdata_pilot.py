@@ -13,9 +13,10 @@ from .config import load_config
 from .drift import compare_retrieval_runs
 from .errors import ValidationError
 from .harness import run_config, run_experiment
-from .hashing import sha256_file
+from .hashing import sha256_file, sha256_jsonl
 from .manifests import canonical_manifest_json, read_manifest, write_manifest
 from .measurements import collect_systems_measurements, environment_metadata
+from .replay_manifests import resolved_run_identity_hash, scoring_hash, write_experiment_manifest
 
 
 PILOT_PLAN_SCHEMA_VERSION = "retrieval_arena.bigdata2026_pilot_plan.v1"
@@ -162,6 +163,7 @@ def bigdata_pilot(
     from_stage: str | None = None,
     force: bool = False,
     no_baseline_bundle: bool = False,
+    refresh_baseline: bool = False,
     created_at: str | None = None,
 ) -> dict[str, Any]:
     plan = load_pilot_plan(plan_path)
@@ -173,6 +175,8 @@ def bigdata_pilot(
     stage_records: list[dict[str, Any]] = []
     runtime_metrics: list[dict[str, Any]] = []
     context = _initial_context(plan, plan_path)
+    if refresh_baseline:
+        context["refresh_baseline"] = True
 
     if dry_run:
         manifest = _build_pilot_manifest(
@@ -288,72 +292,122 @@ def _run_stage(stage_name: str, plan: dict[str, Any], context: dict[str, Any], *
     if stage_name == "prerequisites":
         return _run_prerequisites(plan)
     if stage_name == "snapshot_compare":
-        from .corpus.comparison import run_corpus_snapshot_comparison
+        from .corpus.comparison import load_comparison_plan, run_corpus_snapshot_comparison
 
-        result = run_corpus_snapshot_comparison(Path(plan["snapshot_pair"]["comparison_plan"]))
+        comparison_plan = Path(plan["snapshot_pair"]["comparison_plan"])
+        comparison_output = load_comparison_plan(comparison_plan)["output_dir"]
+        existing_manifest = comparison_output / "corpus_snapshot_comparison_manifest.json"
+        if context.get("refresh_baseline") and not force and _snapshot_comparison_reusable(existing_manifest, comparison_plan):
+            manifest = read_manifest(existing_manifest, verify_hash=False)
+            context["snapshot_comparison_manifest"] = existing_manifest
+            context["snapshot_diff_json"] = Path(manifest["snapshot_diff_report"])
+            context["snapshot_diff_md"] = Path(manifest["snapshot_diff_markdown"])
+            context["before_snapshot_dir"] = Path(manifest["before"]["snapshot_manifest_dir"])
+            context["after_snapshot_dir"] = Path(manifest["after"]["snapshot_manifest_dir"])
+            decision = _stage_decision("snapshot_compare", "reused", "existing snapshot comparison manifest and diff reports matched the active plan", artifact=str(existing_manifest))
+            context.setdefault("reuse_decisions", []).append(decision)
+            return {**_record([str(comparison_plan)], [str(existing_manifest), str(context["snapshot_diff_json"]), str(context["snapshot_diff_md"])], [str(existing_manifest)]), "reuse_decisions": [decision]}
+        result = run_corpus_snapshot_comparison(comparison_plan)
         context["snapshot_comparison_manifest"] = Path(result["manifest_path"])
         context["snapshot_diff_json"] = Path(result["manifest_path"]).parent / "snapshot_diff.json"
         context["snapshot_diff_md"] = Path(result["manifest_path"]).parent / "snapshot_diff.md"
         manifest = result["manifest"]
         context["before_snapshot_dir"] = Path(manifest["before"]["snapshot_manifest_dir"])
         context["after_snapshot_dir"] = Path(manifest["after"]["snapshot_manifest_dir"])
-        return _record([plan["snapshot_pair"]["comparison_plan"]], result["written_artifacts"], [str(result["manifest_path"])])
+        decision = _stage_decision("snapshot_compare", "generated", "snapshot comparison generated", artifact=str(result["manifest_path"]))
+        context.setdefault("reuse_decisions", []).append(decision)
+        return {**_record([plan["snapshot_pair"]["comparison_plan"]], result["written_artifacts"], [str(result["manifest_path"])]), "reuse_decisions": [decision]}
     if stage_name in {"retrieval_before", "retrieval_after"}:
         side = "before" if stage_name.endswith("before") else "after"
         config_path = Path(plan["retrieval"][f"{side}_config"])
+        if context.get("refresh_baseline") and not force:
+            refresh = _refresh_selected_retrieval_config(config_path, plan, side=side)
+            manifest_path = refresh["experiment_manifest"]
+            context[f"{side}_experiment_manifest"] = manifest_path
+            context.setdefault("reuse_decisions", []).extend(refresh["decisions"])
+            context.setdefault("retrieval_refresh", {})[side] = refresh
+            return {
+                **_record([str(config_path)], [str(manifest_path), *refresh["written_artifacts"]], [str(manifest_path)]),
+                "reuse_decisions": refresh["decisions"],
+            }
         if not force and _experiment_manifest_path(config_path).exists() and plan["reuse_policy"].get("reuse_retrieval_runs"):
             manifest_path = _experiment_manifest_path(config_path)
+            decision = _stage_decision("retrieval_runs", "reused", f"{side} experiment manifest reuse_policy allowed reuse", artifact=str(manifest_path))
+            context.setdefault("reuse_decisions", []).append(decision)
         else:
             _run_selected_retrieval_config(config_path, plan["retrieval"].get("selected_tests", []))
             manifest_path = _experiment_manifest_path(config_path)
+            decision = _stage_decision("retrieval_runs", "generated", f"{side} selected retrieval tests executed", artifact=str(manifest_path))
+            context.setdefault("reuse_decisions", []).append(decision)
         context[f"{side}_experiment_manifest"] = manifest_path
-        return _record([str(config_path)], [str(manifest_path)], [str(manifest_path)])
+        return {**_record([str(config_path)], [str(manifest_path)], [str(manifest_path)]), "reuse_decisions": [decision]}
     if stage_name == "drift":
         _ensure_runs_selected(plan, context)
         outputs = []
+        decisions = []
         for comparison in context["selected_comparisons"]:
             out_dir = output_root / "comparisons" / comparison["comparison_id"]
-            report = compare_retrieval_runs(comparison["before_run_dir"], comparison["after_run_dir"], out_dir=out_dir)
+            if context.get("refresh_baseline") and not _comparison_invalidated(comparison, context) and _comparison_reports_valid(out_dir, ["retrieval_drift.jsonl", "retrieval_drift_summary.json"], comparison, "retrieval_drift_summary.json"):
+                report = {"written_artifacts": []}
+                decisions.append(_comparison_decision(comparison["comparison_id"], "drift", "reused", "existing drift reports are present", artifact=str(out_dir)))
+            else:
+                report = compare_retrieval_runs(comparison["before_run_dir"], comparison["after_run_dir"], out_dir=out_dir)
+                decisions.append(_comparison_decision(comparison["comparison_id"], "drift", "generated", "drift reports refreshed", artifact=str(out_dir)))
             comparison["drift_jsonl"] = out_dir / "retrieval_drift.jsonl"
             comparison["drift_summary_json"] = out_dir / "retrieval_drift_summary.json"
             outputs.extend(report["written_artifacts"])
-        return _record([], outputs, [path for item in context["selected_comparisons"] for path in (str(item["drift_summary_json"]),)])
+        context.setdefault("reuse_decisions", []).extend(decisions)
+        return {**_record([], outputs, [path for item in context["selected_comparisons"] for path in (str(item["drift_summary_json"]),)]), "reuse_decisions": decisions}
     if stage_name == "audit":
         _ensure_runs_selected(plan, context)
         outputs = []
+        decisions = []
         for comparison in context["selected_comparisons"]:
             out_dir = output_root / "comparisons" / comparison["comparison_id"]
-            report = build_regression_audit(
-                comparison["before_run_dir"],
-                comparison["after_run_dir"],
-                out_dir,
-                drift_jsonl=comparison.get("drift_jsonl"),
-                drift_summary_json=comparison.get("drift_summary_json"),
-                snapshot_diff_json=context.get("snapshot_diff_json"),
-            )
+            if context.get("refresh_baseline") and not _comparison_invalidated(comparison, context) and _comparison_reports_valid(out_dir, ["regression_audit.jsonl", "regression_audit_summary.json"], comparison, "regression_audit_summary.json"):
+                report = {"written_artifacts": []}
+                decisions.append(_comparison_decision(comparison["comparison_id"], "audit", "reused", "existing audit reports are present", artifact=str(out_dir)))
+            else:
+                report = build_regression_audit(
+                    comparison["before_run_dir"],
+                    comparison["after_run_dir"],
+                    out_dir,
+                    drift_jsonl=comparison.get("drift_jsonl"),
+                    drift_summary_json=comparison.get("drift_summary_json"),
+                    snapshot_diff_json=context.get("snapshot_diff_json"),
+                )
+                decisions.append(_comparison_decision(comparison["comparison_id"], "audit", "generated", "audit reports refreshed", artifact=str(out_dir)))
             comparison["audit_jsonl"] = out_dir / "regression_audit.jsonl"
             comparison["audit_summary_json"] = out_dir / "regression_audit_summary.json"
             outputs.extend(report["written_artifacts"])
-        return _record([], outputs, [path for item in context["selected_comparisons"] for path in (str(item["audit_summary_json"]),)])
+        context.setdefault("reuse_decisions", []).extend(decisions)
+        return {**_record([], outputs, [path for item in context["selected_comparisons"] for path in (str(item["audit_summary_json"]),)]), "reuse_decisions": decisions}
     if stage_name == "measurements":
         _ensure_runs_selected(plan, context)
         outputs = []
+        decisions = []
         for comparison in context["selected_comparisons"]:
             out_dir = output_root / "comparisons" / comparison["comparison_id"]
-            report = collect_systems_measurements(
-                out_dir,
-                snapshot_dir=context.get("after_snapshot_dir"),
-                run_dir=comparison["after_run_dir"],
-                snapshot_diff_json=context.get("snapshot_diff_json"),
-                drift_jsonl=comparison.get("drift_jsonl"),
-                drift_summary_json=comparison.get("drift_summary_json"),
-                audit_jsonl=comparison.get("audit_jsonl"),
-                audit_summary_json=comparison.get("audit_summary_json"),
-                stage_runtime_metrics=runtime_metrics,
-            )
+            if context.get("refresh_baseline") and not _comparison_invalidated(comparison, context) and _comparison_reports_valid(out_dir, ["systems_measurements.json"]):
+                report = {"written_artifacts": []}
+                decisions.append(_comparison_decision(comparison["comparison_id"], "measurements", "reused", "existing systems measurements are present", artifact=str(out_dir)))
+            else:
+                report = collect_systems_measurements(
+                    out_dir,
+                    snapshot_dir=context.get("after_snapshot_dir"),
+                    run_dir=comparison["after_run_dir"],
+                    snapshot_diff_json=context.get("snapshot_diff_json"),
+                    drift_jsonl=comparison.get("drift_jsonl"),
+                    drift_summary_json=comparison.get("drift_summary_json"),
+                    audit_jsonl=comparison.get("audit_jsonl"),
+                    audit_summary_json=comparison.get("audit_summary_json"),
+                    stage_runtime_metrics=runtime_metrics,
+                )
+                decisions.append(_comparison_decision(comparison["comparison_id"], "measurements", "generated", "systems measurements refreshed", artifact=str(out_dir)))
             comparison["systems_measurements_json"] = out_dir / "systems_measurements.json"
             outputs.extend(report["written_artifacts"])
-        return _record([], outputs, [path for item in context["selected_comparisons"] for path in (str(item["systems_measurements_json"]),)])
+        context.setdefault("reuse_decisions", []).extend(decisions)
+        return {**_record([], outputs, [path for item in context["selected_comparisons"] for path in (str(item["systems_measurements_json"]),)]), "reuse_decisions": decisions}
     if stage_name == "baseline_bundle":
         bundle = assemble_baseline_bundle(
             output_root,
@@ -426,6 +480,190 @@ def _run_selected_retrieval_config(config_path: Path, selected_tests: list[str])
     if missing:
         raise ValidationError(f"Retrieval config {config_path} missing selected tests {missing}.")
     return run_experiment(replace(config, tests=selected))
+
+
+def _refresh_selected_retrieval_config(config_path: Path, plan: dict[str, Any], *, side: str) -> dict[str, Any]:
+    config = load_config(config_path)
+    selected_tests = plan["retrieval"].get("selected_tests", [])
+    selected_dataset = plan["retrieval"]["selected_dataset"]
+    dataset = next((item for item in config.datasets if item.name == selected_dataset), None)
+    if dataset is None:
+        raise ValidationError(f"Retrieval config {config_path} missing selected dataset {selected_dataset}.")
+    requested = set(selected_tests)
+    selected = [test for test in config.tests if test.name in requested]
+    missing = sorted(requested - {test.name for test in selected})
+    if missing:
+        raise ValidationError(f"Retrieval config {config_path} missing selected tests {missing}.")
+
+    experiment_manifest = _experiment_manifest_path(config_path)
+    existing_by_test = _existing_run_manifests_by_test(experiment_manifest, selected_dataset)
+    valid_manifests: list[Path] = []
+    invalid_tests: list[str] = []
+    decisions: list[dict[str, Any]] = []
+    for test in selected:
+        manifest_path = existing_by_test.get(test.name)
+        if manifest_path is None:
+            invalid_tests.append(test.name)
+            decisions.append(_stage_decision("retrieval_runs", "new", f"{side} {test.name} has no existing run manifest", dataset=selected_dataset, test=test.name))
+            continue
+        decision = _validate_reusable_run_manifest(manifest_path, config, dataset, test, plan)
+        decision.update({"stage": "retrieval_runs", "side": side, "dataset": selected_dataset, "test": test.name, "artifact": str(manifest_path)})
+        decisions.append(decision)
+        if decision["decision"] == "reused":
+            valid_manifests.append(manifest_path)
+        else:
+            invalid_tests.append(test.name)
+
+    written_artifacts: list[str] = []
+    if invalid_tests:
+        run_experiment(replace(config, datasets=[dataset], tests=[test for test in selected if test.name in set(invalid_tests)]))
+        written_artifacts.append(str(experiment_manifest))
+    for test in selected:
+        run_dir = _run_dir_for(config, dataset.name, test.name)
+        manifest_path = run_dir / "retrieval_replay_manifest.json"
+        if not manifest_path.is_file():
+            raise ValidationError(f"Refresh failed to produce run manifest for {dataset.name}/{test.name}: {manifest_path}")
+        if manifest_path not in valid_manifests:
+            valid_manifests.append(manifest_path)
+
+    experiment_manifest.parent.mkdir(parents=True, exist_ok=True)
+    write_experiment_manifest(
+        experiment_manifest,
+        config=replace(config, datasets=[dataset], tests=selected),
+        experiment_dir=experiment_manifest.parent,
+        run_manifests=valid_manifests,
+    )
+    return {
+        "experiment_manifest": experiment_manifest,
+        "decisions": decisions,
+        "written_artifacts": written_artifacts,
+        "reused_count": sum(1 for item in decisions if item["decision"] == "reused"),
+        "generated_count": len(invalid_tests),
+        "generated_tests": sorted(invalid_tests),
+    }
+
+
+def _existing_run_manifests_by_test(experiment_manifest: Path, dataset_name: str) -> dict[str, Path]:
+    if not experiment_manifest.is_file():
+        return {}
+    manifest = read_manifest(experiment_manifest, verify_hash=False)
+    base = experiment_manifest.parent
+    result: dict[str, Path] = {}
+    for item in manifest.get("run_manifests", []):
+        if not isinstance(item, dict) or item.get("dataset") != dataset_name:
+            continue
+        test = item.get("test")
+        path_value = item.get("path")
+        if not isinstance(test, str) or not isinstance(path_value, str):
+            continue
+        path = Path(path_value)
+        result[test] = (path if path.is_absolute() else base / path).resolve()
+    return result
+
+
+def _validate_reusable_run_manifest(
+    manifest_path: Path,
+    config: Any,
+    dataset: Any,
+    test: Any,
+    plan: dict[str, Any],
+) -> dict[str, Any]:
+    required_files = ["retrieval_replay_manifest.json", "predictions.jsonl", "metadata.json", "scores.json", "item_scores.jsonl"]
+    missing = [name for name in required_files if not (manifest_path.parent / name).is_file()]
+    if missing:
+        return {"decision": "invalidated", "reason": f"missing required run outputs: {missing}"}
+    manifest = read_manifest(manifest_path, verify_hash=False)
+    checks = {
+        "dataset": manifest.get("dataset") == dataset.name,
+        "test": manifest.get("test") == test.name,
+        "query_set_id": manifest.get("query_set_id") == (dataset.query_set_id or plan["query_set_id"]),
+        "query_set_hash": manifest.get("query_set_hash") == sha256_jsonl(dataset.path / "questions.jsonl"),
+        "scoring_hash": manifest.get("scoring_hash") == scoring_hash(config.scoring),
+        "resolved_run_identity_hash": manifest.get("resolved_run_identity_hash") == resolved_run_identity_hash(dataset=dataset, test=test, scoring=config.scoring),
+    }
+    snapshot_refs = manifest.get("snapshot_manifest_references", {})
+    if isinstance(snapshot_refs, dict):
+        checks["corpus_manifest_hash"] = _manifest_hash_matches(snapshot_refs.get("corpus"), dataset.corpus_snapshot_manifest)
+        checks["graph_manifest_hash"] = _manifest_hash_matches(snapshot_refs.get("graph"), dataset.graph_snapshot_manifest)
+        checks["support_manifest_hash"] = _manifest_hash_matches(snapshot_refs.get("support_surface"), dataset.support_surface_manifest)
+    if manifest.get("resolved_run_identity_hash") is None:
+        checks["retrieval_config_hash"] = manifest.get("retrieval_config_hash") == sha256_file(config.config_path)
+        checks.pop("resolved_run_identity_hash", None)
+    failed = [key for key, ok in checks.items() if not ok]
+    if failed:
+        return {"decision": "invalidated", "reason": f"reuse validation failed: {failed}", "hash_checks": checks}
+    return {"decision": "reused", "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched", "hash_checks": checks}
+
+
+def _manifest_hash_matches(reference: Any, path: Path | None) -> bool:
+    if path is None:
+        return reference is None
+    if not isinstance(reference, dict):
+        return False
+    if not path.is_file():
+        return False
+    expected = read_manifest(path, verify_hash=False).get("manifest_hash")
+    return reference.get("manifest_hash") == expected
+
+
+def _run_dir_for(config: Any, dataset_name: str, test_name: str) -> Path:
+    from .harness import stable_run_id
+
+    return (config.output_dir / config.experiment_name / "runs" / f"{dataset_name}__{test_name}__{stable_run_id(dataset_name, test_name)}").resolve()
+
+
+def _stage_decision(stage: str, decision: str, reason: str, **details: Any) -> dict[str, Any]:
+    return {"stage": stage, "decision": decision, "reason": reason, **details}
+
+
+def _comparison_decision(comparison_id: str, stage: str, decision: str, reason: str, **details: Any) -> dict[str, Any]:
+    return {"comparison_id": comparison_id, "stage": stage, "decision": decision, "reason": reason, **details}
+
+
+def _comparison_reports_valid(out_dir: Path, filenames: list[str], comparison: dict[str, Any] | None = None, summary_filename: str | None = None) -> bool:
+    if not all((out_dir / filename).is_file() for filename in filenames):
+        return False
+    if comparison is None or summary_filename is None:
+        return True
+    summary_path = out_dir / summary_filename
+    if not summary_path.is_file():
+        return False
+    summary = read_manifest(summary_path, verify_hash=False)
+    return _summary_run_hash_matches(summary.get("before"), comparison["before_run_dir"]) and _summary_run_hash_matches(summary.get("after"), comparison["after_run_dir"])
+
+
+def _summary_run_hash_matches(reference: Any, run_dir: Path) -> bool:
+    if not isinstance(reference, dict):
+        return False
+    manifest_path = run_dir / "retrieval_replay_manifest.json"
+    if not manifest_path.is_file():
+        return False
+    manifest = read_manifest(manifest_path, verify_hash=False)
+    return reference.get("manifest_hash") == manifest.get("manifest_hash")
+
+
+def _snapshot_comparison_reusable(manifest_path: Path, comparison_plan: Path) -> bool:
+    if not manifest_path.is_file():
+        return False
+    manifest = read_manifest(manifest_path, verify_hash=False)
+    if Path(str(manifest.get("comparison_plan_path", ""))).resolve() != comparison_plan.resolve():
+        return False
+    required = [
+        manifest.get("snapshot_diff_report"),
+        manifest.get("snapshot_diff_markdown"),
+        manifest.get("before", {}).get("corpus_snapshot_manifest") if isinstance(manifest.get("before"), dict) else None,
+        manifest.get("after", {}).get("corpus_snapshot_manifest") if isinstance(manifest.get("after"), dict) else None,
+    ]
+    return all(isinstance(path, str) and Path(path).is_file() for path in required)
+
+
+def _comparison_invalidated(comparison: dict[str, Any], context: dict[str, Any]) -> bool:
+    refresh = context.get("retrieval_refresh", {})
+    before_tests = set(refresh.get("before", {}).get("generated_tests", []))
+    after_tests = set(refresh.get("after", {}).get("generated_tests", []))
+    before_name = Path(comparison["before_run_dir"]).name
+    after_name = Path(comparison["after_run_dir"]).name
+    return any(f"__{test}__" in before_name for test in before_tests) or any(f"__{test}__" in after_name for test in after_tests)
 
 
 def _load_source_descriptor(path: Path) -> Any:
@@ -564,6 +802,7 @@ def _build_pilot_manifest(
         "snapshot_pair": plan["snapshot_pair"],
         "retrieval_runs": _retrieval_run_refs(context),
         "comparisons": _comparison_refs(context),
+        "reuse_decisions": context.get("reuse_decisions", []),
         "baseline_bundle": baseline_ref or {"include_raw": False, "status": "not_refreshed"},
         "environment": environment_metadata(),
     }

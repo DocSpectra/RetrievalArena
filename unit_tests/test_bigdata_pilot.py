@@ -10,6 +10,7 @@ from typing import Any, Iterator
 from unittest.mock import patch
 
 from retrieval_arena.bigdata_pilot import (
+    _refresh_selected_retrieval_config,
     _run_selected_retrieval_config,
     assemble_baseline_bundle,
     bigdata_pilot,
@@ -17,9 +18,13 @@ from retrieval_arena.bigdata_pilot import (
     resolve_stage_list,
     select_run_from_experiment_manifest,
 )
+from retrieval_arena.config import load_config
 from retrieval_arena.cli import main
 from retrieval_arena.errors import ValidationError
-from retrieval_arena.manifests import write_manifest
+from retrieval_arena.harness import stable_run_id
+from retrieval_arena.hashing import sha256_file, sha256_jsonl
+from retrieval_arena.manifests import read_manifest, write_manifest
+from retrieval_arena.replay_manifests import resolved_run_identity_hash, scoring_hash
 
 
 CREATED_AT = "2026-05-26T00:00:00+00:00"
@@ -289,6 +294,111 @@ class BigDataPilotTests(unittest.TestCase):
             with self.assertRaisesRegex(ValidationError, "missing selected tests"):
                 _run_selected_retrieval_config(config_path, ["missing_test"])
 
+    def test_refresh_baseline_reuses_valid_runs_and_runs_only_missing_test(self):
+        with self.workspace_tempdir() as tmp:
+            config_path = self.write_refresh_config(tmp, ["rag_lexical_topk", "rag_graph_rerank"])
+            plan_path = self.write_plan(
+                tmp / "pilot.json",
+                retrieval={
+                    "before_config": "retrieval_before.yaml",
+                    "after_config": "retrieval_before.yaml",
+                    "selected_tests": ["rag_lexical_topk", "rag_graph_rerank"],
+                    "selected_dataset": "toy_docs",
+                },
+            )
+            plan = load_pilot_plan(plan_path)
+            config = load_config(config_path)
+            self.write_completed_run(config, "rag_lexical_topk")
+            called: list[list[str]] = []
+
+            def fake_run_experiment(config):
+                called.append([test.name for test in config.tests])
+                for test in config.tests:
+                    self.write_completed_run(config, test.name)
+                return []
+
+            with patch("retrieval_arena.bigdata_pilot.run_experiment", side_effect=fake_run_experiment):
+                refresh = _refresh_selected_retrieval_config(config_path, plan, side="before")
+
+            self.assertEqual(called, [["rag_graph_rerank"]])
+            decisions = {(item.get("test"), item["decision"]) for item in refresh["decisions"]}
+            self.assertIn(("rag_lexical_topk", "reused"), decisions)
+            self.assertIn(("rag_graph_rerank", "new"), decisions)
+            manifest = read_manifest(refresh["experiment_manifest"], verify_hash=False)
+            self.assertEqual(manifest["run_manifest_count"], 2)
+
+    def test_refresh_baseline_invalidates_changed_test_config(self):
+        with self.workspace_tempdir() as tmp:
+            config_path = self.write_refresh_config(tmp, ["rag_lexical_topk"], top_k=1)
+            plan_path = self.write_plan(tmp / "pilot.json")
+            plan = load_pilot_plan(plan_path)
+            config = load_config(config_path)
+            self.write_completed_run(config, "rag_lexical_topk")
+            config_path = self.write_refresh_config(tmp, ["rag_lexical_topk"], top_k=3)
+            called: list[list[str]] = []
+
+            def fake_run_experiment(config):
+                called.append([test.name for test in config.tests])
+                for test in config.tests:
+                    self.write_completed_run(config, test.name)
+                return []
+
+            with patch("retrieval_arena.bigdata_pilot.run_experiment", side_effect=fake_run_experiment):
+                refresh = _refresh_selected_retrieval_config(config_path, plan, side="before")
+
+            self.assertEqual(called, [["rag_lexical_topk"]])
+            self.assertEqual(refresh["decisions"][0]["decision"], "invalidated")
+            self.assertIn("resolved_run_identity_hash", refresh["decisions"][0]["reason"])
+
+    def test_refresh_baseline_invalidates_changed_query_hash(self):
+        with self.workspace_tempdir() as tmp:
+            config_path = self.write_refresh_config(tmp, ["rag_lexical_topk"])
+            plan_path = self.write_plan(tmp / "pilot.json")
+            plan = load_pilot_plan(plan_path)
+            config = load_config(config_path)
+            self.write_completed_run(config, "rag_lexical_topk")
+            (tmp / "dataset" / "questions.jsonl").write_text('{"question_id":"q1","question":"Changed?"}\n', encoding="utf-8")
+
+            def fake_run_experiment(config):
+                for test in config.tests:
+                    self.write_completed_run(config, test.name)
+                return []
+
+            with patch("retrieval_arena.bigdata_pilot.run_experiment", side_effect=fake_run_experiment):
+                refresh = _refresh_selected_retrieval_config(config_path, plan, side="before")
+
+            self.assertEqual(refresh["decisions"][0]["decision"], "invalidated")
+            self.assertIn("query_set_hash", refresh["decisions"][0]["reason"])
+
+    def test_refresh_baseline_invalidates_changed_snapshot_manifest_hash(self):
+        with self.workspace_tempdir() as tmp:
+            config_path = self.write_refresh_config(tmp, ["rag_lexical_topk"])
+            plan_path = self.write_plan(tmp / "pilot.json")
+            plan = load_pilot_plan(plan_path)
+            config = load_config(config_path)
+            self.write_completed_run(config, "rag_lexical_topk")
+            write_manifest(
+                tmp / "snapshots" / "corpus_snapshot_manifest.json",
+                {
+                    "schema_version": "retrieval_arena.corpus_snapshot_manifest.v1",
+                    "created_at": CREATED_AT,
+                    "manifest_type": "corpus_snapshot",
+                    "corpus_id": "toy_docs",
+                    "snapshot_id": "changed",
+                },
+            )
+
+            def fake_run_experiment(config):
+                for test in config.tests:
+                    self.write_completed_run(config, test.name)
+                return []
+
+            with patch("retrieval_arena.bigdata_pilot.run_experiment", side_effect=fake_run_experiment):
+                refresh = _refresh_selected_retrieval_config(config_path, plan, side="before")
+
+            self.assertEqual(refresh["decisions"][0]["decision"], "invalidated")
+            self.assertIn("corpus_manifest_hash", refresh["decisions"][0]["reason"])
+
     def test_baseline_bundle_excludes_raw_directories(self):
         with self.workspace_tempdir() as tmp:
             output_root = tmp / "reports"
@@ -331,6 +441,14 @@ class BigDataPilotTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertFalse((tmp / "reports").exists())
 
+    def test_cli_accepts_refresh_baseline_flag(self):
+        with self.workspace_tempdir() as tmp:
+            plan_path = self.write_plan(tmp / "pilot.json")
+
+            exit_code = main(["study", "bigdata", "pilot", "--plan", str(plan_path), "--dry-run", "--refresh-baseline"])
+
+            self.assertEqual(exit_code, 0)
+
     def write_experiment_manifest(self, tmp: Path, rows: list[dict[str, str]]) -> Path:
         run_entries = []
         for row in rows:
@@ -364,6 +482,118 @@ class BigDataPilotTests(unittest.TestCase):
             },
         )
         return manifest_path
+
+    def write_refresh_config(self, tmp: Path, tests: list[str], top_k: int = 1) -> Path:
+        dataset = tmp / "dataset"
+        (dataset / "corpus").mkdir(parents=True, exist_ok=True)
+        (dataset / "corpus" / "doc.md").write_text("hello\n", encoding="utf-8")
+        (dataset / "questions.jsonl").write_text('{"question_id":"q1","question":"Q?"}\n', encoding="utf-8")
+        (dataset / "answers.jsonl").write_text('{"question_id":"q1","answer":"hello"}\n', encoding="utf-8")
+        snapshot_dir = tmp / "snapshots"
+        snapshot_dir.mkdir(exist_ok=True)
+        write_manifest(
+            snapshot_dir / "corpus_snapshot_manifest.json",
+            {
+                "schema_version": "retrieval_arena.corpus_snapshot_manifest.v1",
+                "created_at": CREATED_AT,
+                "manifest_type": "corpus_snapshot",
+                "corpus_id": "toy_docs",
+                "snapshot_id": "before",
+            },
+        )
+        test_lines: list[str] = []
+        for test in tests:
+            test_lines.extend(
+                [
+                    f"  - name: {test}",
+                    f"    image: {test}:latest",
+                    "    config:",
+                    f"      top_k: {top_k}",
+                ]
+            )
+        config_path = tmp / "retrieval_before.yaml"
+        config_path.write_text(
+            "\n".join(
+                [
+                    "experiment_name: toy",
+                    "datasets:",
+                    "  - name: toy_docs",
+                    "    path: dataset",
+                    "    query_set_id: toy-queries",
+                    "    corpus_snapshot_manifest: snapshots/corpus_snapshot_manifest.json",
+                    "tests:",
+                    *test_lines,
+                    "scoring:",
+                    "  method: lexical_baseline",
+                    "output_dir: results",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        return config_path
+
+    def write_completed_run(self, config, test_name: str) -> Path:
+        dataset = config.datasets[0]
+        test = next(item for item in config.tests if item.name == test_name)
+        run_id = stable_run_id(dataset.name, test.name)
+        experiment_dir = config.output_dir / config.experiment_name
+        run_dir = experiment_dir / "runs" / f"{dataset.name}__{test.name}__{run_id}"
+        run_dir.mkdir(parents=True, exist_ok=True)
+        for filename in ["predictions.jsonl", "item_scores.jsonl"]:
+            (run_dir / filename).write_text("{}\n", encoding="utf-8")
+        (run_dir / "metadata.json").write_text("{}\n", encoding="utf-8")
+        (run_dir / "scores.json").write_text("{}\n", encoding="utf-8")
+        corpus_manifest = read_manifest(dataset.corpus_snapshot_manifest, verify_hash=False)
+        manifest_path = run_dir / "retrieval_replay_manifest.json"
+        write_manifest(
+            manifest_path,
+            {
+                "schema_version": "retrieval_arena.replay_manifest.v1",
+                "created_at": CREATED_AT,
+                "manifest_type": "retrieval_replay",
+                "run_id": run_id,
+                "experiment_name": config.experiment_name,
+                "dataset": dataset.name,
+                "test": test.name,
+                "query_set_id": dataset.query_set_id,
+                "query_set_hash": sha256_jsonl(dataset.path / "questions.jsonl"),
+                "snapshot_manifest_references": {
+                    "corpus": {
+                        "path": str(dataset.corpus_snapshot_manifest),
+                        "manifest_type": corpus_manifest["manifest_type"],
+                        "manifest_hash": corpus_manifest["manifest_hash"],
+                        "snapshot_id": corpus_manifest["snapshot_id"],
+                    },
+                    "graph": None,
+                    "support_surface": None,
+                },
+                "retrieval_config_hash": sha256_file(config.config_path),
+                "resolved_run_identity_hash": resolved_run_identity_hash(dataset=dataset, test=test, scoring=config.scoring),
+                "scoring_hash": scoring_hash(config.scoring),
+            },
+        )
+        write_manifest(
+            experiment_dir / "experiment_manifest.json",
+            {
+                "schema_version": "retrieval_arena.experiment_manifest.v1",
+                "created_at": CREATED_AT,
+                "manifest_type": "experiment",
+                "experiment_name": config.experiment_name,
+                "run_manifest_count": 1,
+                "run_manifests": [
+                    {
+                        "path": manifest_path.relative_to(experiment_dir).as_posix(),
+                        "manifest_hash": read_manifest(manifest_path, verify_hash=False)["manifest_hash"],
+                        "run_id": run_id,
+                        "dataset": dataset.name,
+                        "test": test.name,
+                        "query_set_id": dataset.query_set_id,
+                    }
+                ],
+            },
+        )
+        return run_dir
 
 
 if __name__ == "__main__":

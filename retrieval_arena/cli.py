@@ -110,6 +110,7 @@ def build_parser() -> argparse.ArgumentParser:
     pilot.add_argument("--stage", help="Run one stage and required predecessors.")
     pilot.add_argument("--from-stage", help="Run from this stage through the end of the plan.")
     pilot.add_argument("--force", action="store_true", help="Override reuse policy for generated reports and selected runs.")
+    pilot.add_argument("--refresh-baseline", action="store_true", help="Reuse valid baseline artifacts and run only missing or invalidated selected tests.")
     pilot.add_argument("--no-baseline-bundle", action="store_true", help="Run observability stages without refreshing the calibration store.")
     return parser
 
@@ -212,6 +213,7 @@ def main(argv: list[str] | None = None) -> int:
                 from_stage=args.from_stage,
                 force=args.force,
                 no_baseline_bundle=args.no_baseline_bundle,
+                refresh_baseline=args.refresh_baseline,
             )
             print(result["summary"])
         return 0

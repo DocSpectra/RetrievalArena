@@ -21,3 +21,10 @@ scores, and metadata for the before and after runs. The full CIKM family is
 mapped in `git/context/cikm_family_observability_matrix.md`; semantic MiniLM and
 provider-style variants are deferred until their model/provider prerequisites
 are promoted into the BigData pilot contract.
+
+## S018 Refresh Metadata
+
+This baseline was refreshed after adding incremental baseline refresh support.
+The pilot manifest records snapshot, run, drift, audit, and measurement reuse
+decisions, and replay manifests include a resolved per-run identity hash for
+future family-matrix updates.

@@ -32,6 +32,7 @@ def bigdata_pilot(
     from_stage: str | None = None,
     force: bool = False,
     no_baseline_bundle: bool = False,
+    refresh_baseline: bool = False,
 ) -> dict[str, Any]:
     return run_bigdata_pilot(
         plan_path,
@@ -40,6 +41,7 @@ def bigdata_pilot(
         from_stage=from_stage,
         force=force,
         no_baseline_bundle=no_baseline_bundle,
+        refresh_baseline=refresh_baseline,
     )
 
 

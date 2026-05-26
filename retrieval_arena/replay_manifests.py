@@ -50,6 +50,42 @@ def scoring_hash(scoring: Any) -> str:
     )
 
 
+def resolved_run_identity_hash(*, dataset: DatasetConfig, test: TestConfig, scoring: Any) -> str:
+    """Hash the resolved inputs that define one dataset/test run."""
+    return sha256_json(
+        {
+            "dataset": {
+                "name": dataset.name,
+                "path": str(dataset.path),
+                "query_set_id": dataset.query_set_id or dataset.name,
+                "corpus_snapshot_manifest": _manifest_reference(dataset.corpus_snapshot_manifest),
+                "graph_snapshot_manifest": _manifest_reference(dataset.graph_snapshot_manifest),
+                "support_surface_manifest": _manifest_reference(dataset.support_surface_manifest),
+            },
+            "test": {
+                "name": test.name,
+                "image": test.image,
+                "build_context_hash": sha256_json({"build_context": artifact_hashes(test.build_context)}) if test.build_context else sha256_json({"build_context": None}),
+                "config": test.config,
+                "volumes": [
+                    {
+                        "host_path": str(volume.host_path),
+                        "container_path": volume.container_path,
+                        "read_only": volume.read_only,
+                    }
+                    for volume in test.volumes
+                ],
+                "network_disabled": test.network_disabled,
+            },
+            "scoring": {
+                "method": scoring.method,
+                "match_threshold": scoring.match_threshold,
+                "scoring_hash": scoring_hash(scoring),
+            },
+        }
+    )
+
+
 def container_metadata_hash(metadata: dict[str, Any]) -> str:
     return sha256_json(metadata)
 
@@ -121,6 +157,7 @@ def build_run_replay_manifest(
         },
         "retrieval_config_id": test.name,
         "retrieval_config_hash": sha256_file(config_path),
+        "resolved_run_identity_hash": resolved_run_identity_hash(dataset=dataset, test=test, scoring=config.scoring),
         "container_image": test.image,
         "container_metadata_hash": container_metadata_hash(metadata),
         "build_context_hash": build_context_hash,

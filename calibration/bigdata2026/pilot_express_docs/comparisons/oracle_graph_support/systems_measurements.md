@@ -14,26 +14,26 @@ Portable workload and artifact measurements are primary evidence. Runtime values
 ## Artifacts
 
 - Input artifacts: 3 files, 10225 bytes
-- Output artifacts: 6 files, 51012 bytes
+- Output artifacts: 6 files, 51269 bytes
 - Manifests: 3 files, 28531 bytes
-- Reports: 61 files, 343457 bytes
+- Reports: 61 files, 343302 bytes
 
 ## Ratios
 
-- artifact_bytes_per_page: 8174.056603773585 (433225 / 53)
+- artifact_bytes_per_page: 8175.981132075472 (433327 / 53)
 - audit_rows_per_query: 1.0 (8 / 8)
 - bytes_per_page: 4324.754716981132 (229212 / 53)
 - edges_per_page: 0.5471698113207547 (29 / 53)
-- report_bytes_per_query: 42932.125 (343457 / 8)
+- report_bytes_per_query: 42912.75 (343302 / 8)
 
 ## Runtime
 
-- audit: completed, 0.10065 seconds
-- drift: completed, 0.084861 seconds
-- prerequisites: completed, 0.217631 seconds
-- retrieval_after: completed, 13.671247 seconds
-- retrieval_before: completed, 15.649352 seconds
-- snapshot_compare: completed, 0.970727 seconds
+- audit: completed, 0.116963 seconds
+- drift: completed, 0.07149 seconds
+- prerequisites: completed, 0.204097 seconds
+- retrieval_after: completed, 14.358507 seconds
+- retrieval_before: completed, 14.785778 seconds
+- snapshot_compare: completed, 1.782608 seconds
 
 ## Missing Optional Evidence
 
