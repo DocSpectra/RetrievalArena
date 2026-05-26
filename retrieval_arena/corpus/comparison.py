@@ -35,12 +35,18 @@ def run_corpus_snapshot_comparison(plan_path: Path, *, created_at: str | None = 
         output_dir / "before",
         created_at=timestamp,
         overwrite_import=overwrite_imports,
+        questions_path=plan.get("questions_path"),
+        answers_path=plan.get("answers_path"),
+        query_set_id=plan.get("query_set_id"),
     )
     after = _materialize_snapshot(
         after_descriptor,
         output_dir / "after",
         created_at=timestamp,
         overwrite_import=overwrite_imports,
+        questions_path=plan.get("questions_path"),
+        answers_path=plan.get("answers_path"),
+        query_set_id=plan.get("query_set_id"),
     )
     diff = snapshot_diff(
         Path(before["snapshot_manifest_dir"]),
@@ -94,6 +100,13 @@ def load_comparison_plan(plan_path: Path) -> dict[str, Any]:
     before_descriptor_path = _resolve_path(_required_str(raw, "before_descriptor"), base)
     after_descriptor_path = _resolve_path(_required_str(raw, "after_descriptor"), base)
     output_dir = _resolve_path(_required_str(raw, "output_dir"), base)
+    questions_path = _optional_path(raw, "questions_path", base)
+    answers_path = _optional_path(raw, "answers_path", base)
+    query_set_id = raw.get("query_set_id")
+    if query_set_id is not None and (not isinstance(query_set_id, str) or not query_set_id):
+        raise ValidationError("query_set_id must be a non-empty string when present.")
+    if (questions_path is None) != (answers_path is None):
+        raise ValidationError("questions_path and answers_path must be provided together.")
     overwrite_imports = raw.get("overwrite_imports", False)
     if not isinstance(overwrite_imports, bool):
         raise ValidationError("overwrite_imports must be boolean when present.")
@@ -104,6 +117,9 @@ def load_comparison_plan(plan_path: Path) -> dict[str, Any]:
         "before_descriptor_path": before_descriptor_path,
         "after_descriptor_path": after_descriptor_path,
         "output_dir": output_dir,
+        "questions_path": questions_path,
+        "answers_path": answers_path,
+        "query_set_id": query_set_id,
         "overwrite_imports": overwrite_imports,
     }
 
@@ -114,10 +130,20 @@ def _materialize_snapshot(
     *,
     created_at: str,
     overwrite_import: bool,
+    questions_path: Path | None,
+    answers_path: Path | None,
+    query_set_id: str | None,
 ) -> dict[str, Any]:
     imported = import_corpus_source(descriptor, created_at=created_at, overwrite=overwrite_import)
     dataset_dir = output_dir / "dataset"
-    prepared = prepare_dataset(imported["manifest_path"], dataset_dir, created_at=created_at)
+    prepared = prepare_dataset(
+        imported["manifest_path"],
+        dataset_dir,
+        questions_path=questions_path,
+        answers_path=answers_path,
+        query_set_id=query_set_id,
+        created_at=created_at,
+    )
     snapshot_dir = output_dir / "snapshot_manifests"
     corpus_manifest_path = snapshot_dir / "corpus_snapshot_manifest.json"
     source_provenance = imported["manifest"].get("source_provenance", {})
@@ -167,3 +193,12 @@ def _resolve_path(value: str, base: Path) -> Path:
     if not path.is_absolute():
         path = base / path
     return path.resolve()
+
+
+def _optional_path(raw: dict[str, Any], key: str, base: Path) -> Path | None:
+    value = raw.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value:
+        raise ValidationError(f"{key} must be a non-empty string when present.")
+    return _resolve_path(value, base)

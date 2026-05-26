@@ -69,7 +69,11 @@ top_k = max(1, int(config.get("top_k", 5)))
 max_context_chars = max(0, int(config.get("max_context_chars_per_doc", 1500)))
 
 questions = read_jsonl(input_dir / "questions.jsonl")
-corpus = {path.stem: path.read_text(encoding="utf-8") for path in (input_dir / "corpus").glob("*.md")}
+corpus_root = input_dir / "corpus"
+corpus = {
+    path.relative_to(corpus_root).with_suffix("").as_posix(): path.read_text(encoding="utf-8")
+    for path in corpus_root.rglob("*.md")
+}
 corpus_tokens = {doc_id: tokens(text) for doc_id, text in corpus.items()}
 
 with (output_dir / "predictions.jsonl").open("w", encoding="utf-8", newline="\n") as handle:

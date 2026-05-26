@@ -59,6 +59,10 @@ class CorpusComparisonTests(unittest.TestCase):
             after_descriptor = tmp / "after.json"
             self.write_descriptor(before_descriptor, source=before_source, snapshot_id="before")
             self.write_descriptor(after_descriptor, source=after_source, snapshot_id="after")
+            questions = tmp / "questions.jsonl"
+            answers = tmp / "answers.jsonl"
+            questions.write_text('{"question_id":"q1","question":"How install?"}\n', encoding="utf-8")
+            answers.write_text('{"question_id":"q1","answer":"Use pip."}\n', encoding="utf-8")
             plan = tmp / "comparison.json"
             plan.write_text(
                 json.dumps(
@@ -69,6 +73,9 @@ class CorpusComparisonTests(unittest.TestCase):
                         "before_descriptor": str(before_descriptor),
                         "after_descriptor": str(after_descriptor),
                         "output_dir": str(tmp / "reports"),
+                        "questions_path": str(questions),
+                        "answers_path": str(answers),
+                        "query_set_id": "toy-queries",
                         "overwrite_imports": False,
                     },
                     indent=2,
@@ -85,6 +92,9 @@ class CorpusComparisonTests(unittest.TestCase):
             self.assertTrue(second["manifest"]["before"]["import_reused"])
             self.assertTrue(second["manifest"]["after"]["import_reused"])
             self.assertEqual(read_manifest(tmp / "reports" / "before" / "snapshot_manifests" / "corpus_snapshot_manifest.json")["manifest_type"], "corpus_snapshot")
+            preparation = read_manifest(tmp / "reports" / "before" / "dataset" / "dataset_preparation_manifest.json")
+            self.assertEqual(preparation["query_set_id"], "toy-queries")
+            self.assertEqual(preparation["validation_status"], "ok")
 
 
 if __name__ == "__main__":

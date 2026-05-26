@@ -262,7 +262,7 @@ def assemble_baseline_bundle(output_root: Path, calibration_store: Path, *, pilo
                 f"# BigData Pilot Baseline: {pilot_id}",
                 "",
                 "This calibration store contains the current selected BigData pilot baseline.",
-                "Raw source trees are excluded by policy.",
+                "Raw source trees and copied corpus content are excluded by policy.",
                 "No efficiency score, overall scale score, or composite systems metric is included.",
                 "",
             ]
@@ -455,7 +455,7 @@ def _initial_context(plan: dict[str, Any], plan_path: Path) -> dict[str, Any]:
 
 def _copytree_excluding_raw(source: Path, target: Path) -> None:
     def ignore(_dir: str, names: list[str]) -> set[str]:
-        return {name for name in names if name == "raw"}
+        return {name for name in names if name in {"raw", "corpus"}}
 
     shutil.copytree(source, target, ignore=ignore)
 

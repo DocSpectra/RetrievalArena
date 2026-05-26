@@ -154,12 +154,15 @@ class BigDataPilotTests(unittest.TestCase):
             output_root = tmp / "reports"
             (output_root / "raw").mkdir(parents=True)
             (output_root / "raw" / "source.md").write_text("third-party docs\n", encoding="utf-8")
+            (output_root / "snapshot_comparison" / "before" / "dataset" / "corpus").mkdir(parents=True)
+            (output_root / "snapshot_comparison" / "before" / "dataset" / "corpus" / "copied.md").write_text("third-party docs\n", encoding="utf-8")
             (output_root / "comparisons" / "c1").mkdir(parents=True)
             (output_root / "comparisons" / "c1" / "retrieval_drift_summary.md").write_text("# Drift\n", encoding="utf-8")
 
             bundle = assemble_baseline_bundle(output_root, tmp / "calibration", pilot_id="toy_pilot")
 
             self.assertFalse((tmp / "calibration" / "raw").exists())
+            self.assertFalse((tmp / "calibration" / "snapshot_comparison" / "before" / "dataset" / "corpus").exists())
             self.assertTrue((tmp / "calibration" / "comparisons" / "c1" / "retrieval_drift_summary.md").exists())
             self.assertFalse(bundle["include_raw"])
 
