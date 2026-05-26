@@ -9,6 +9,7 @@ from .commands import (
     git_comparison_plan,
     git_provenance,
     html_observability_report,
+    paper_evidence_export,
     regression_audit,
     replay_compare,
     retrieval_drift,
@@ -79,6 +80,9 @@ def build_parser() -> argparse.ArgumentParser:
     html_report = report_subparsers.add_parser("html", help="Write a self-contained HTML observability report.")
     html_report.add_argument("--bundle", required=True, help="Completed BigData pilot output or calibration bundle root.")
     html_report.add_argument("--out", help="Optional HTML output path. Defaults to observability_report.html in the bundle root.")
+    evidence_report = report_subparsers.add_parser("evidence", help="Export paper-facing evidence tables from a completed report bundle.")
+    evidence_report.add_argument("--bundle", required=True, help="Completed BigData pilot output or calibration bundle root.")
+    evidence_report.add_argument("--out-dir", required=True, help="Directory for exported CSV and Markdown evidence artifacts.")
     corpus = subparsers.add_parser("corpus", help="Import and compare corpus snapshots.")
     corpus_subparsers = corpus.add_subparsers(dest="corpus_command", required=True)
     corpus_compare = corpus_subparsers.add_parser("compare-snapshots", help="Run a corpus source comparison plan.")
@@ -182,6 +186,12 @@ def main(argv: list[str] | None = None) -> int:
             result = html_observability_report(
                 Path(args.bundle),
                 out_path=Path(args.out) if args.out else None,
+            )
+            print(result["summary"])
+        elif args.command == "report" and args.report_command == "evidence":
+            result = paper_evidence_export(
+                Path(args.bundle),
+                Path(args.out_dir),
             )
             print(result["summary"])
         elif args.command == "corpus" and args.corpus_command == "compare-snapshots":

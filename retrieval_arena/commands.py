@@ -8,6 +8,7 @@ from .git_provenance import describe_git_provenance, plan_git_comparison
 from .harness import run_config, validate_phase1
 from .audit import build_regression_audit
 from .drift import compare_retrieval_runs
+from .evidence_export import export_paper_evidence
 from .html_report import build_html_observability_report
 from .measurements import collect_systems_measurements
 from .replay_compare import compare_run_dirs
@@ -161,6 +162,10 @@ def html_observability_report(bundle_root: Path, *, out_path: Path | None = None
         "written_artifacts": result["written_artifacts"],
         "report_path": result["report_path"],
     }
+
+
+def paper_evidence_export(bundle_root: Path, out_dir: Path) -> dict[str, Any]:
+    return export_paper_evidence(bundle_root, out_dir)
 
 
 def snapshot_manifest(

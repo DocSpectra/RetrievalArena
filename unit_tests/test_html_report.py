@@ -8,6 +8,7 @@ import unittest
 import uuid
 from pathlib import Path
 
+from retrieval_arena.evidence_export import export_paper_evidence
 from retrieval_arena.html_report import assemble_report_data, build_html_observability_report, _select_case_studies
 
 
@@ -217,6 +218,45 @@ class HtmlReportTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("HTML observability report wrote", result.stdout)
         self.assertTrue(out.exists())
+
+    def test_paper_evidence_export_writes_report_derived_tables(self):
+        root = self.write_bundle(self.tmp_root / "bundle")
+        out_dir = self.tmp_root / "evidence"
+        result = export_paper_evidence(root, out_dir)
+
+        self.assertTrue(result["ok"])
+        family_csv = (out_dir / "family_drift_matrix.csv").read_text(encoding="utf-8")
+        case_csv = (out_dir / "selected_case_studies.csv").read_text(encoding="utf-8")
+        provenance = (out_dir / "provenance_replay_summary.md").read_text(encoding="utf-8")
+        self.assertIn("mean_top_k_jaccard", family_csv)
+        self.assertIn("rag_lexical_topk", family_csv)
+        self.assertIn("q1", case_csv)
+        self.assertIn("pilot_manifest.json", provenance)
+
+    def test_cli_smoke_writes_paper_evidence_export(self):
+        root = self.write_bundle(self.tmp_root / "bundle")
+        out_dir = self.tmp_root / "cli_evidence"
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "retrieval_arena.cli",
+                "report",
+                "evidence",
+                "--bundle",
+                str(root),
+                "--out-dir",
+                str(out_dir),
+            ],
+            cwd=Path(__file__).resolve().parents[1],
+            text=True,
+            encoding="utf-8",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Paper evidence exported", result.stdout)
+        self.assertTrue((out_dir / "corpus_graph_support_summary.csv").exists())
 
     def test_real_baseline_smoke_has_nonempty_key_sections(self):
         repo = Path(__file__).resolve().parents[1]
