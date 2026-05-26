@@ -1,40 +1,63 @@
 {
   "artifact_metrics": {
     "input_artifacts": {
-      "artifact_count": 1,
+      "artifact_count": 3,
       "artifacts": [
         {
           "path": "config.yaml",
           "sha256": "0a9d574b16cd98c5dbf6249199ce64ad078c27ba42db5aa77dcbdb744dfec1f3",
           "size_bytes": 99
+        },
+        {
+          "path": "graph_edges.csv",
+          "sha256": "4445f9dd2506040c8adfc58cdd37ef7b7c6a3b192b4b5cc21351abb47484f852",
+          "size_bytes": 1421
+        },
+        {
+          "path": "graph_metrics.json",
+          "sha256": "0bfb6d140d93f5648cea169d8b2e310b819567bb4a75c8af3c3eda3b32ca3701",
+          "size_bytes": 8628
         }
       ],
-      "byte_size": 99
+      "byte_size": 10148
     },
     "jsonl_row_counts": {
       "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit.jsonl": 8,
       "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift.jsonl": 8,
       "answers.jsonl": 8,
+      "faq_support_audit.jsonl": 8,
       "item_scores.jsonl": 8,
       "predictions.jsonl": 8,
       "questions.jsonl": 8
     },
     "manifest_artifacts": {
-      "artifact_count": 1,
+      "artifact_count": 3,
       "artifacts": [
         {
           "path": "corpus_snapshot_manifest.json",
-          "sha256": "7cac32651935846ec099f09430bf3f9a0ee7a7ab40ec95a3b1e19e15f5330c76",
+          "sha256": "99a8bc0754ec905c5116baa8efe5c76fca29015dec760bdff0f8f88ceb5d98b5",
           "size_bytes": 12100
+        },
+        {
+          "path": "graph_snapshot_manifest.json",
+          "sha256": "01e6a9b4a9d0f231c995ed22ade8c4b1d5bca54c7142ae2a15b2b07f1425baf5",
+          "size_bytes": 13416
+        },
+        {
+          "path": "support_surface_manifest.json",
+          "sha256": "7f15e1c4046e7d602077490c7d5984e6d1227c9b4dc8445b6823d663848b16bb",
+          "size_bytes": 2992
         }
       ],
-      "byte_size": 12100
+      "byte_size": 28508
     },
     "manifest_size_bytes": {
-      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit_summary.json": 6067,
-      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift_summary.json": 4570,
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit_summary.json": 6221,
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift_summary.json": 4601,
       "corpus_snapshot_manifest.json": 12100,
-      "retrieval_replay_manifest.json": 19984
+      "graph_snapshot_manifest.json": 13416,
+      "retrieval_replay_manifest.json": 19367,
+      "support_surface_manifest.json": 2992
     },
     "output_artifacts": {
       "artifact_count": 5,
@@ -56,23 +79,23 @@
         },
         {
           "path": "retrieval_replay_manifest.json",
-          "sha256": "5118fd448a10f1db68eec7984ec3d28fdc6d2a3e3858052294e2591c6a3cc3fc",
-          "size_bytes": 19984
+          "sha256": "010d5509ab6ac33c331e727fe180e9332113a294975d1a6e091384988eb1b7bb",
+          "size_bytes": 19367
         },
         {
           "path": "scores.json",
-          "sha256": "9dbde6b32d56d8b647dfa763d50b47e816a02da6e72baa63036f4fcd38733424",
+          "sha256": "10fd505cb6e88f3fb6340deac0677c87a318fba271631b488b23e1563a4a0c03",
           "size_bytes": 1046
         }
       ],
-      "byte_size": 211908
+      "byte_size": 211291
     },
     "ratios": {
       "artifact_bytes_per_page": {
         "available": true,
         "denominator": 53,
-        "numerator": 555601,
-        "value": 10483.037735849057
+        "numerator": 613815,
+        "value": 11581.415094339623
       },
       "audit_rows_per_query": {
         "available": true,
@@ -87,45 +110,45 @@
         "value": 4324.754716981132
       },
       "edges_per_page": {
-        "available": false,
+        "available": true,
         "denominator": 53,
-        "numerator": null,
-        "reason": "missing_or_zero_denominator"
+        "numerator": 29,
+        "value": 0.5471698113207547
       },
       "report_bytes_per_query": {
         "available": true,
         "denominator": 8,
-        "numerator": 331494,
-        "value": 41436.75
+        "numerator": 363868,
+        "value": 45483.5
       }
     },
     "report_artifacts": {
-      "artifact_count": 60,
+      "artifact_count": 61,
       "artifacts": [
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit.jsonl",
-          "sha256": "fb3fe1d694fbf32a041f16e6c49561288f2edefb5bb6e0b19aa42a1787c61188",
-          "size_bytes": 39628
+          "sha256": "791d5110d849bb4e73347467f236b2a754081cbe46717418553554e83e0ef169",
+          "size_bytes": 41223
         },
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit_summary.json",
-          "sha256": "5a0b6235cc54e3474f4f952f914d8e6630452a45ffbe4e6607c09c972fe9a580",
-          "size_bytes": 6067
+          "sha256": "bfb59595a80f478ece60a09922c1348269161a418190069522093603bc09c920",
+          "size_bytes": 6221
         },
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift.jsonl",
-          "sha256": "c25280128ccaae298214459c52f6132ef3ea4dcb52201b427ab52c978b02ebcc",
-          "size_bytes": 25638
+          "sha256": "0ddfdfa446bad505f300560e73f3218efabcedd51be98f686335a522f8afb1f6",
+          "size_bytes": 27978
         },
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift_summary.json",
-          "sha256": "b0840d9f231179aa25cd8c5d72c6752cf2f0cc6b3338d810cbef75fcd858e208",
-          "size_bytes": 4570
+          "sha256": "ccbad719e98be022a6f80bd7554821e689bb97114a2d256194af09abe6e220d0",
+          "size_bytes": 4601
         },
         {
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\snapshot_diff.json",
-          "sha256": "9f0acf81a87d76d86a1e31a2cc7b1b6e5626e9df5113a91173cc2d8f8f85c345",
-          "size_bytes": 22007
+          "sha256": "9cdd290115c858c1956931eabf1f1d40d67fd1b229ea4091b1c68bcbe269113f",
+          "size_bytes": 32145
         },
         {
           "path": "answers.jsonl",
@@ -398,22 +421,28 @@
           "size_bytes": 1541
         },
         {
+          "path": "faq_support_audit.jsonl",
+          "sha256": "f0b5ed0dbd86066fcdc52edba1e020618d354142804a65ec7ee979ed7e21ccfd",
+          "size_bytes": 18116
+        },
+        {
           "path": "questions.jsonl",
           "sha256": "11c0c46f28db2381d028c340a7c2a83c309c1bec1bc48b6bcdff0806b52ed09e",
           "size_bytes": 724
         }
       ],
-      "byte_size": 331494
+      "byte_size": 363868
     },
     "report_size_bytes": {
-      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit.jsonl": 39628,
-      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit_summary.json": 6067,
-      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift.jsonl": 25638,
-      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift_summary.json": 4570,
-      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\snapshot_diff.json": 22007
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit.jsonl": 41223,
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit_summary.json": 6221,
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift.jsonl": 27978,
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift_summary.json": 4601,
+      "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\snapshot_diff.json": 32145,
+      "faq_support_audit.jsonl": 18116
     }
   },
-  "created_at": "2026-05-26T02:59:21+00:00",
+  "created_at": "2026-05-26T05:31:57+00:00",
   "environment": {
     "available_memory_bytes": null,
     "available_memory_unavailable_reason": "standard_library_available_memory_unavailable",
@@ -425,8 +454,8 @@
     "python_version": "3.12.10",
     "retrieval_arena_git_provenance": {
       "branch": "IEEEBigData2026_metrics",
-      "commit": "86c798e5e4a58c8103b0142d0290eaa27fd07626",
-      "diff_hash": "ea7d826d1fabd91df89f60d5324cd7699b3f763222271fbc536be2f504b79189",
+      "commit": "ed9bfd1ce556f1c562455ca43d26de8734158773",
+      "diff_hash": "a220742a868cc327189622ea33c70296100fcf711fd9a83b94f85777e4d26598",
       "dirty": true,
       "is_git_worktree": true,
       "ref": null,
@@ -435,28 +464,20 @@
       "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
       "tag": null,
       "untracked_files": [
-        "calibration/bigdata2026/pilot_express_docs/BASELINE.md",
-        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_lexical_topk/regression_audit.jsonl",
-        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_lexical_topk/regression_audit.md",
-        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_lexical_topk/regression_audit_summary.json",
-        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_lexical_topk/retrieval_drift.jsonl",
-        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_lexical_topk/retrieval_drift_summary.json",
-        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_lexical_topk/retrieval_drift_summary.md",
-        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_lexical_topk/systems_measurements.json",
-        "calibration/bigdata2026/pilot_express_docs/comparisons/rag_lexical_topk/systems_measurements.md",
-        "calibration/bigdata2026/pilot_express_docs/pilot_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/plan_resolved.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/answers.jsonl",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/dataset_preparation_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/questions.jsonl",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/snapshot_manifests/corpus_snapshot_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/answers.jsonl",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/dataset_preparation_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/questions.jsonl",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/corpus_snapshot_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/corpus_snapshot_comparison_manifest.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/snapshot_diff.json",
-        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/snapshot_diff.md"
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/faq_support_audit.jsonl",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_edges.csv",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_metrics.json",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/graph_transformation_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/dataset/support_construction_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/snapshot_manifests/graph_snapshot_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/after/snapshot_manifests/support_surface_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/faq_support_audit.jsonl",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_edges.csv",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_metrics.json",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/graph_transformation_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/dataset/support_construction_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/graph_snapshot_manifest.json",
+        "calibration/bigdata2026/pilot_express_docs/snapshot_comparison/before/snapshot_manifests/support_surface_manifest.json"
       ]
     },
     "retrieval_arena_version": "0.1.0"
@@ -475,10 +496,10 @@
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit.md"
         }
       ],
-      "completed_at": "2026-05-26T02:59:21+00:00",
-      "duration_seconds": 0.031829,
+      "completed_at": "2026-05-26T05:31:57+00:00",
+      "duration_seconds": 0.01626,
       "stage_name": "audit",
-      "started_at": "2026-05-26T02:59:21+00:00",
+      "started_at": "2026-05-26T05:31:57+00:00",
       "status": "completed"
     },
     {
@@ -493,18 +514,18 @@
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift_summary.md"
         }
       ],
-      "completed_at": "2026-05-26T02:59:21+00:00",
-      "duration_seconds": 0.012617,
+      "completed_at": "2026-05-26T05:31:57+00:00",
+      "duration_seconds": 0.021337,
       "stage_name": "drift",
-      "started_at": "2026-05-26T02:59:21+00:00",
+      "started_at": "2026-05-26T05:31:57+00:00",
       "status": "completed"
     },
     {
       "artifact_references": [],
-      "completed_at": "2026-05-26T02:59:13+00:00",
-      "duration_seconds": 0.179492,
+      "completed_at": "2026-05-26T05:31:49+00:00",
+      "duration_seconds": 0.193917,
       "stage_name": "prerequisites",
-      "started_at": "2026-05-26T02:59:12+00:00",
+      "started_at": "2026-05-26T05:31:49+00:00",
       "status": "completed"
     },
     {
@@ -513,10 +534,10 @@
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\experiment_manifest.json"
         }
       ],
-      "completed_at": "2026-05-26T02:59:20+00:00",
-      "duration_seconds": 2.501155,
+      "completed_at": "2026-05-26T05:31:57+00:00",
+      "duration_seconds": 2.684102,
       "stage_name": "retrieval_after",
-      "started_at": "2026-05-26T02:59:18+00:00",
+      "started_at": "2026-05-26T05:31:54+00:00",
       "status": "completed"
     },
     {
@@ -525,10 +546,10 @@
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\experiment_manifest.json"
         }
       ],
-      "completed_at": "2026-05-26T02:59:18+00:00",
-      "duration_seconds": 3.935579,
+      "completed_at": "2026-05-26T05:31:54+00:00",
+      "duration_seconds": 3.360467,
       "stage_name": "retrieval_before",
-      "started_at": "2026-05-26T02:59:14+00:00",
+      "started_at": "2026-05-26T05:31:50+00:00",
       "status": "completed"
     },
     {
@@ -543,10 +564,10 @@
           "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\snapshot_diff.md"
         }
       ],
-      "completed_at": "2026-05-26T02:59:14+00:00",
-      "duration_seconds": 0.716866,
+      "completed_at": "2026-05-26T05:31:50+00:00",
+      "duration_seconds": 0.909258,
       "stage_name": "snapshot_compare",
-      "started_at": "2026-05-26T02:59:13+00:00",
+      "started_at": "2026-05-26T05:31:49+00:00",
       "status": "completed"
     }
   ],
@@ -555,16 +576,6 @@
       "artifact_family": "run",
       "metric": "action_trace_metrics",
       "reason": "action_traces_jsonl_missing"
-    },
-    {
-      "artifact_family": "snapshot",
-      "metric": "graph_manifest",
-      "reason": "graph_snapshot_manifest_missing"
-    },
-    {
-      "artifact_family": "snapshot",
-      "metric": "support_manifest",
-      "reason": "support_surface_manifest_missing"
     }
   ],
   "workload_metrics": {
@@ -574,11 +585,15 @@
       "answer_lexical_score_regressed": 8,
       "corpus_page_changed": 8,
       "evidence_unavailable": 8,
+      "graph_edge_removed": 4,
       "rank_changed": 2,
       "replay_manifest_changed": 8,
       "retrieval_config_changed": 8,
       "retrieval_score_changed": 8,
-      "retrieved_candidate_changed": 1
+      "retrieved_candidate_changed": 1,
+      "support_target_added": 3,
+      "support_target_changed": 3,
+      "support_target_removed": 3
     },
     "audit_row_count": 8,
     "corpus_byte_size": 229212,
@@ -597,7 +612,7 @@
         "unavailable": 8
       },
       "graph": {
-        "unavailable": 8
+        "available": 8
       },
       "lexical_answer_score": {
         "available": 8
@@ -624,19 +639,19 @@
         "available": 8
       },
       "support_exposure": {
-        "unavailable": 8
+        "available": 8
       },
       "support_recall": {
-        "unavailable": 8
+        "available": 8
       },
       "support_surface": {
-        "unavailable": 8
+        "available": 8
       }
     },
-    "graph_edge_count": null,
-    "graph_node_count": null,
+    "graph_edge_count": 29,
+    "graph_node_count": 53,
     "item_score_row_count": 8,
-    "largest_component_size": null,
+    "largest_component_size": 27,
     "normalized_document_count": 53,
     "page_count": 53,
     "prediction_row_count": 8,
@@ -655,16 +670,16 @@
     "snapshot_diff_counts": {
       "added_graph_edges": 0,
       "added_pages": 0,
-      "added_support_targets": null,
+      "added_support_targets": 3,
       "changed_pages": 31,
-      "changed_support_targets": 0,
-      "removed_graph_edges": 0,
+      "changed_support_targets": 3,
+      "removed_graph_edges": 1,
       "removed_pages": 0,
-      "removed_support_targets": null
+      "removed_support_targets": 3
     },
-    "strong_component_count": null,
-    "support_target_count": null,
-    "supported_query_count": null,
-    "weak_component_count": null
+    "strong_component_count": 53,
+    "support_target_count": 12,
+    "supported_query_count": 8,
+    "weak_component_count": 24
   }
 }

@@ -15,5 +15,5 @@
 - evidence_coverage: 0 available / 8 unavailable
 - lexical_score_delta: 8 available / 0 unavailable
 - retained_score_delta: 8 available / 0 unavailable
-- support_exposure: 0 available / 8 unavailable
-- support_recall: 0 available / 8 unavailable
+- support_exposure: 8 available / 0 unavailable
+- support_recall: 8 available / 0 unavailable

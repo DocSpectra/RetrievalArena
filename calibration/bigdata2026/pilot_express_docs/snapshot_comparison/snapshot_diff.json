@@ -2,7 +2,7 @@
   "after": {
     "base_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests",
     "corpus_id": "express_docs",
-    "corpus_manifest_hash": "a3ecb4fe9cd8df4d4ef377105f087f922a84065425c8d53f0c2d692f7a0b07cc",
+    "corpus_manifest_hash": "57bfab9d915a0ecc76e633a42a02787215a57ad1987370525151b70c4e286016",
     "corpus_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
     "input_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests",
     "snapshot_id": "2026-03-30"
@@ -10,7 +10,7 @@
   "before": {
     "base_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests",
     "corpus_id": "express_docs",
-    "corpus_manifest_hash": "27dbb67b2cb9518a59e48192e5059b0eb0f3b60f4249d843f50a863009274992",
+    "corpus_manifest_hash": "f075f4096e30b6243b00f7e3036805076ea4b758a8b911e7843e2db1623a27c7",
     "corpus_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
     "input_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests",
     "snapshot_id": "2025-09-20"
@@ -378,22 +378,72 @@
     "removed_file_count": 0,
     "removed_files": []
   },
-  "created_at": "2026-05-26T02:59:14+00:00",
+  "created_at": "2026-05-26T05:31:50+00:00",
   "graph_result": {
-    "available": false,
-    "manifest_type": "graph",
-    "missing": [
-      "before",
-      "after"
+    "added_edge_count": 0,
+    "added_edges": [],
+    "after_edge_count": 29,
+    "after_graph_hash": "c508c73ea7be758ef9bfd7cb437d002668a26b868d3b04fd67ce5f5ae07a8c72",
+    "after_node_count": 53,
+    "after_snapshot_id": "2026-03-30",
+    "available": true,
+    "before_edge_count": 30,
+    "before_graph_hash": "751c26818bdd671669ea5cd26ec4d30d3b3d1ba67548c7872fa17fec15699893",
+    "before_node_count": 53,
+    "before_snapshot_id": "2025-09-20",
+    "descriptor_delta_count": 5,
+    "descriptor_deltas": [
+      {
+        "after": 29,
+        "before": 30,
+        "field": "edge_count"
+      },
+      {
+        "after": 29,
+        "before": 30,
+        "field": "graph_metrics.edge_count"
+      },
+      {
+        "after": 21,
+        "before": 19,
+        "field": "graph_metrics.isolated_node_count"
+      },
+      {
+        "after": 24,
+        "before": 23,
+        "field": "graph_metrics.weak_component_count"
+      },
+      {
+        "after": {
+          "sha256": "5d662fb843b77b0137f24b83c601b7322cfef6dd833dadae0a4e6d48032d30ad",
+          "type": "list"
+        },
+        "before": {
+          "sha256": "b3a5cc3e52ec9a1e8aed9e297a2dcb5387eaf7f645fcfa5c6b86f6b1f09ab0e4",
+          "type": "list"
+        },
+        "field": "graph_metrics.weak_components"
+      }
     ],
-    "passed": false
+    "edge_count_delta": -1,
+    "edge_source": "manifest_or_referenced_file",
+    "node_count_delta": 0,
+    "passed": false,
+    "removed_edge_count": 1,
+    "removed_edges": [
+      {
+        "edge_id": "changelog/index->guide/migrating-5",
+        "source": "changelog/index",
+        "target": "guide/migrating-5"
+      }
+    ]
   },
   "manifest_results": [
     {
-      "after_manifest_hash": "a3ecb4fe9cd8df4d4ef377105f087f922a84065425c8d53f0c2d692f7a0b07cc",
+      "after_manifest_hash": "57bfab9d915a0ecc76e633a42a02787215a57ad1987370525151b70c4e286016",
       "after_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
       "available": true,
-      "before_manifest_hash": "27dbb67b2cb9518a59e48192e5059b0eb0f3b60f4249d843f50a863009274992",
+      "before_manifest_hash": "f075f4096e30b6243b00f7e3036805076ea4b758a8b911e7843e2db1623a27c7",
       "before_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
       "field_differences": [
         {
@@ -433,13 +483,8 @@
       "passed": false,
       "volatile_differences": [
         {
-          "after": "2026-05-26T02:59:14+00:00",
-          "before": "2026-05-26T02:59:13+00:00",
-          "field": "created_at"
-        },
-        {
-          "after": "a3ecb4fe9cd8df4d4ef377105f087f922a84065425c8d53f0c2d692f7a0b07cc",
-          "before": "27dbb67b2cb9518a59e48192e5059b0eb0f3b60f4249d843f50a863009274992",
+          "after": "57bfab9d915a0ecc76e633a42a02787215a57ad1987370525151b70c4e286016",
+          "before": "f075f4096e30b6243b00f7e3036805076ea4b758a8b911e7843e2db1623a27c7",
           "field": "manifest_hash"
         }
       ],
@@ -449,28 +494,181 @@
       ]
     },
     {
-      "available": false,
-      "field_differences": [],
-      "manifest": "graph",
-      "missing": [
-        "before",
-        "after"
+      "after_manifest_hash": "3d2e3bb4e631d94ae34b738a0c568dcc7b63d3bf8f39cec773256322aef493f5",
+      "after_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\graph_snapshot_manifest.json",
+      "available": true,
+      "before_manifest_hash": "99db6a939353f23313b5c22bdd360d397c7f77011669e8cdbac7cf6c159373ef",
+      "before_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\graph_snapshot_manifest.json",
+      "field_differences": [
+        {
+          "after": "2026-03-30",
+          "before": "2025-09-20",
+          "field": "corpus_snapshot_id"
+        },
+        {
+          "after": 29,
+          "before": 30,
+          "field": "edge_count"
+        },
+        {
+          "after": "4445f9dd2506040c8adfc58cdd37ef7b7c6a3b192b4b5cc21351abb47484f852",
+          "before": "da7e108ea0cffa3db0ec6b1a1041a4234c4168da45b0386886910b7d4f659a7a",
+          "field": "edge_file_hash"
+        },
+        {
+          "after": {
+            "sha256": "1db109f30113d86da912a52f4a981132f3deed98ef7e2730e4ad09b95dc013fd",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "95c08a4ce5350c8066ca66d39d58bd690607918c9b1b5f2f03d559f93e20c365",
+            "type": "list"
+          },
+          "field": "edge_inventory"
+        },
+        {
+          "after": "c508c73ea7be758ef9bfd7cb437d002668a26b868d3b04fd67ce5f5ae07a8c72",
+          "before": "751c26818bdd671669ea5cd26ec4d30d3b3d1ba67548c7872fa17fec15699893",
+          "field": "graph_hash"
+        },
+        {
+          "after": 29,
+          "before": 30,
+          "field": "graph_metrics.edge_count"
+        },
+        {
+          "after": 21,
+          "before": 19,
+          "field": "graph_metrics.isolated_node_count"
+        },
+        {
+          "after": 24,
+          "before": 23,
+          "field": "graph_metrics.weak_component_count"
+        },
+        {
+          "after": {
+            "sha256": "5d662fb843b77b0137f24b83c601b7322cfef6dd833dadae0a4e6d48032d30ad",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "b3a5cc3e52ec9a1e8aed9e297a2dcb5387eaf7f645fcfa5c6b86f6b1f09ab0e4",
+            "type": "list"
+          },
+          "field": "graph_metrics.weak_components"
+        },
+        {
+          "after": "0bfb6d140d93f5648cea169d8b2e310b819567bb4a75c8af3c3eda3b32ca3701",
+          "before": "3f000881c4af6fea6a3b091ea22bfa27cf2fe7a54bf84463ab44d77aa5eec07c",
+          "field": "graph_metrics_file_hash"
+        },
+        {
+          "after": "2026-03-30",
+          "before": "2025-09-20",
+          "field": "snapshot_id"
+        }
       ],
+      "manifest": "graph",
       "only_volatile_differences": false,
       "passed": false,
-      "volatile_differences": []
+      "volatile_differences": [
+        {
+          "after": "3d2e3bb4e631d94ae34b738a0c568dcc7b63d3bf8f39cec773256322aef493f5",
+          "before": "99db6a939353f23313b5c22bdd360d397c7f77011669e8cdbac7cf6c159373ef",
+          "field": "manifest_hash"
+        }
+      ],
+      "volatile_fields": [
+        "created_at",
+        "manifest_hash"
+      ]
     },
     {
-      "available": false,
-      "field_differences": [],
-      "manifest": "support_surface",
-      "missing": [
-        "before",
-        "after"
+      "after_manifest_hash": "e03669be00723d5ed5507cccb434600e146f9bba95955cb8d3425dcd060b61c8",
+      "after_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\support_surface_manifest.json",
+      "available": true,
+      "before_manifest_hash": "8e7c631f737047f50878cfa28ed238af50292932203e861c65c7efb2359503a3",
+      "before_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\support_surface_manifest.json",
+      "field_differences": [
+        {
+          "after": "2026-03-30",
+          "before": "2025-09-20",
+          "field": "corpus_snapshot_id"
+        },
+        {
+          "after": "2026-03-30",
+          "before": "2025-09-20",
+          "field": "snapshot_id"
+        },
+        {
+          "after": "6545b031ae95bd8cac32f3789b6a20d00f2f35b55c7759fcbdbd85ae21c68615",
+          "before": "24c0c56abbee7919f8bf2c4af76a0eee4d7647bb2dcd6ac911345044d2b1e72f",
+          "field": "support_audit_file_hash"
+        },
+        {
+          "after": 12,
+          "before": 13,
+          "field": "support_target_count"
+        },
+        {
+          "after": {
+            "sha256": "1d63849b5b2bebf85fce11073be9cabbaff0303309b8c9aa1696c1f9162803b0",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "4bf6be4cbcaa462340e92e405d92173f95e69037445311faca2e7a305cc75955",
+            "type": "list"
+          },
+          "field": "support_target_doc_ids"
+        },
+        {
+          "after": {
+            "sha256": "26ac4584ba545f7d887ee7745722cd4419c4215afbe3151f5b1ae356f1e8e160",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "3f7c54c286daae93bac7087ae88cb346fc8c18a7fb43e974efa2c95eef9ef7f2",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.express_docs_faq_0001"
+        },
+        {
+          "after": {
+            "sha256": "cf22039a46521fb1576546cff90eaa993e0f852fc59b71cf7b800a700434463a",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "d4992282d5445411a281b6a15cd2c8f281125c9257a22ac855246c4a5d670aca",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.express_docs_faq_0007"
+        },
+        {
+          "after": {
+            "sha256": "29d18239eeb6be31d97665f5c3f0245c9be75ad05e665765cfc38776205416fc",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "1b7f020fb3cd82e67b4491f7172cd93a46fb629c7a22fda720ecc76f979e3396",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.express_docs_faq_0008"
+        }
       ],
+      "manifest": "support_surface",
       "only_volatile_differences": false,
       "passed": false,
-      "volatile_differences": []
+      "volatile_differences": [
+        {
+          "after": "e03669be00723d5ed5507cccb434600e146f9bba95955cb8d3425dcd060b61c8",
+          "before": "8e7c631f737047f50878cfa28ed238af50292932203e861c65c7efb2359503a3",
+          "field": "manifest_hash"
+        }
+      ],
+      "volatile_fields": [
+        "created_at",
+        "manifest_hash"
+      ]
     }
   ],
   "passed": false,
@@ -480,30 +678,111 @@
     "added_file_count": 0,
     "added_support_question_count": 0,
     "changed_file_count": 31,
-    "changed_support_question_count": 0,
+    "changed_support_question_count": 3,
     "corpus_size_delta_bytes": -20531,
-    "graph_available": false,
-    "graph_descriptor_delta_count": 0,
+    "graph_available": true,
+    "graph_descriptor_delta_count": 5,
     "page_count_delta": 0,
-    "removed_edge_count": 0,
+    "removed_edge_count": 1,
     "removed_file_count": 0,
     "removed_support_question_count": 0,
-    "stable_manifest_difference_count": 5,
-    "support_surface_available": false,
-    "total_delta_count": 31,
-    "unavailable_optional_manifests": [
-      "graph",
-      "support_surface"
-    ],
-    "volatile_manifest_difference_count": 2
+    "stable_manifest_difference_count": 24,
+    "support_surface_available": true,
+    "total_delta_count": 40,
+    "unavailable_optional_manifests": [],
+    "volatile_manifest_difference_count": 3
   },
   "support_surface_result": {
-    "available": false,
-    "manifest_type": "support_surface",
-    "missing": [
-      "before",
-      "after"
+    "added_question_count": 0,
+    "added_questions": [],
+    "added_support_target_doc_ids": [],
+    "added_target_reference_count": 3,
+    "after_query_set_id": "express-docs-pilot-queries",
+    "after_snapshot_id": "2026-03-30",
+    "after_support_target_count": 12,
+    "available": true,
+    "before_query_set_id": "express-docs-pilot-queries",
+    "before_snapshot_id": "2025-09-20",
+    "before_support_target_count": 13,
+    "changed_question_count": 3,
+    "changed_questions": [
+      {
+        "added_targets": [
+          "guide/migrating-4"
+        ],
+        "after_targets": [
+          "advanced/best-practice-performance",
+          "guide/migrating-4",
+          "guide/migrating-5",
+          "resources/contributing",
+          "starter/faq"
+        ],
+        "before_targets": [
+          "advanced/best-practice-performance",
+          "changelog/index",
+          "guide/migrating-5",
+          "resources/contributing",
+          "starter/faq"
+        ],
+        "question_id": "express_docs_faq_0001",
+        "removed_targets": [
+          "changelog/index"
+        ]
+      },
+      {
+        "added_targets": [
+          "resources/contributing"
+        ],
+        "after_targets": [
+          "advanced/best-practice-performance",
+          "guide/migrating-5",
+          "guide/routing",
+          "resources/contributing",
+          "starter/faq"
+        ],
+        "before_targets": [
+          "advanced/best-practice-performance",
+          "advanced/best-practice-security",
+          "guide/migrating-5",
+          "guide/routing",
+          "starter/faq"
+        ],
+        "question_id": "express_docs_faq_0007",
+        "removed_targets": [
+          "advanced/best-practice-security"
+        ]
+      },
+      {
+        "added_targets": [
+          "guide/migrating-5"
+        ],
+        "after_targets": [
+          "guide/migrating-4",
+          "guide/migrating-5",
+          "starter/faq",
+          "starter/installing",
+          "support/index"
+        ],
+        "before_targets": [
+          "changelog/index",
+          "guide/migrating-4",
+          "starter/faq",
+          "starter/installing",
+          "support/index"
+        ],
+        "question_id": "express_docs_faq_0008",
+        "removed_targets": [
+          "changelog/index"
+        ]
+      }
     ],
-    "passed": false
+    "passed": false,
+    "removed_question_count": 0,
+    "removed_questions": [],
+    "removed_support_target_doc_ids": [
+      "changelog/index"
+    ],
+    "removed_target_reference_count": 3,
+    "support_target_count_delta": -1
   }
 }

@@ -1,0 +1,97 @@
+{
+  "corpus_id": "express_docs",
+  "corpus_snapshot_id": "2026-03-30",
+  "created_at": "2026-05-26T05:31:49+00:00",
+  "manifest_hash": "e03669be00723d5ed5507cccb434600e146f9bba95955cb8d3425dcd060b61c8",
+  "manifest_type": "support_surface",
+  "query_set_file": "questions.jsonl",
+  "query_set_hash": "534484d3ef392d9820e587ee8b64ee8a92984f5f1124384236b78799231c3a71",
+  "query_set_id": "express-docs-pilot-queries",
+  "schema_version": "retrieval_arena.snapshot_manifest.v1",
+  "snapshot_id": "2026-03-30",
+  "support_audit_file": "faq_support_audit.jsonl",
+  "support_audit_file_hash": "6545b031ae95bd8cac32f3789b6a20d00f2f35b55c7759fcbdbd85ae21c68615",
+  "support_target_count": 12,
+  "support_target_doc_ids": [
+    "advanced/best-practice-performance",
+    "advanced/best-practice-security",
+    "guide/database-integration",
+    "guide/error-handling",
+    "guide/migrating-4",
+    "guide/migrating-5",
+    "guide/routing",
+    "guide/using-middleware",
+    "resources/contributing",
+    "starter/faq",
+    "starter/installing",
+    "support/index"
+  ],
+  "support_targets_by_question": {
+    "express_docs_faq_0001": [
+      "starter/faq",
+      "resources/contributing",
+      "guide/migrating-5",
+      "advanced/best-practice-performance",
+      "guide/migrating-4"
+    ],
+    "express_docs_faq_0002": [
+      "starter/faq",
+      "guide/using-middleware",
+      "resources/contributing",
+      "advanced/best-practice-security",
+      "advanced/best-practice-performance"
+    ],
+    "express_docs_faq_0003": [
+      "starter/faq",
+      "resources/contributing",
+      "advanced/best-practice-performance",
+      "advanced/best-practice-security",
+      "guide/database-integration"
+    ],
+    "express_docs_faq_0004": [
+      "starter/faq",
+      "guide/migrating-5",
+      "guide/routing",
+      "advanced/best-practice-security",
+      "guide/migrating-4"
+    ],
+    "express_docs_faq_0005": [
+      "starter/faq",
+      "guide/error-handling",
+      "advanced/best-practice-performance",
+      "advanced/best-practice-security",
+      "guide/routing"
+    ],
+    "express_docs_faq_0006": [
+      "starter/faq",
+      "guide/using-middleware",
+      "guide/error-handling",
+      "advanced/best-practice-performance",
+      "advanced/best-practice-security"
+    ],
+    "express_docs_faq_0007": [
+      "starter/faq",
+      "guide/migrating-5",
+      "advanced/best-practice-performance",
+      "resources/contributing",
+      "guide/routing"
+    ],
+    "express_docs_faq_0008": [
+      "starter/faq",
+      "starter/installing",
+      "guide/migrating-4",
+      "guide/migrating-5",
+      "support/index"
+    ]
+  },
+  "supported_question_ids": [
+    "express_docs_faq_0001",
+    "express_docs_faq_0002",
+    "express_docs_faq_0003",
+    "express_docs_faq_0004",
+    "express_docs_faq_0005",
+    "express_docs_faq_0006",
+    "express_docs_faq_0007",
+    "express_docs_faq_0008"
+  ]
+}

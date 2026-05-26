@@ -1,0 +1,49 @@
+{
+  "corpus_id": "express_docs",
+  "created_at": "2026-05-26T05:31:49+00:00",
+  "dataset_preparation_manifest_hash": "2df478f92761c551f84448a2cd63506ea72a99b5d26de207945e8c8233c178d0",
+  "dataset_preparation_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\dataset\\dataset_preparation_manifest.json",
+  "manifest_hash": "b2fa74305ef765fc1439cb777c60d41b7d5cf66f3fc2dd6accd85aa88c060cb5",
+  "manifest_type": "support_construction",
+  "min_answer_token_coverage": 0.25,
+  "query_set_id": "express-docs-pilot-queries",
+  "schema_version": "retrieval_arena.support_construction_manifest.v1",
+  "snapshot_id": "2026-03-30",
+  "stage_status": "ok",
+  "support_audit_configuration": {
+    "method": "answer_lexical_overlap_v1",
+    "min_answer_token_coverage": 0.25,
+    "source": "answers_jsonl_and_dataset_corpus",
+    "top_k": 5
+  },
+  "support_audit_file": "faq_support_audit.jsonl",
+  "support_audit_file_hash": "6545b031ae95bd8cac32f3789b6a20d00f2f35b55c7759fcbdbd85ae21c68615",
+  "support_construction_method": "answer_lexical_overlap_v1",
+  "support_query_count": 8,
+  "support_target_count": 12,
+  "support_target_doc_ids": [
+    "advanced/best-practice-performance",
+    "advanced/best-practice-security",
+    "guide/database-integration",
+    "guide/error-handling",
+    "guide/migrating-4",
+    "guide/migrating-5",
+    "guide/routing",
+    "guide/using-middleware",
+    "resources/contributing",
+    "starter/faq",
+    "starter/installing",
+    "support/index"
+  ],
+  "supported_question_ids": [
+    "express_docs_faq_0001",
+    "express_docs_faq_0002",
+    "express_docs_faq_0003",
+    "express_docs_faq_0004",
+    "express_docs_faq_0005",
+    "express_docs_faq_0006",
+    "express_docs_faq_0007",
+    "express_docs_faq_0008"
+  ],
+  "top_k": 5
+}

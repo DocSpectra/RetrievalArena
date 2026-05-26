@@ -2,8 +2,8 @@
 
 - Status: FAILED
 - Corpus files: +0 / -0 / changed 31
-- Graph edges: +0 / -0
-- Support questions changed: 0
+- Graph edges: +0 / -1
+- Support questions changed: 3
 
 ## Corpus
 
@@ -45,3 +45,17 @@
 - `starter/hello-world.md`
 - `starter/installing.md`
 - `starter/static-files.md`
+
+## Graph
+
+### Added Edges
+- None
+
+### Removed Edges
+- `changelog/index` -> `guide/migrating-5`
+
+## Support Surface
+
+- Changed question `express_docs_faq_0001`
+- Changed question `express_docs_faq_0007`
+- Changed question `express_docs_faq_0008`
