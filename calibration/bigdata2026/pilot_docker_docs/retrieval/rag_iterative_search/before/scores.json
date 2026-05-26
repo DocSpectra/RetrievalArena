@@ -1,0 +1,41 @@
+{
+  "build_context": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_iterative_search",
+  "completed_at": "2026-05-26T10:15:56.895477+00:00",
+  "config_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_docker_docs_before.yaml",
+  "container_metadata": {
+    "deterministic": true,
+    "directed": false,
+    "experiment_id": "E007a",
+    "final_top_k": 5,
+    "follow_budget_per_page": 3,
+    "inspect_budget": 8,
+    "max_actions": 30,
+    "max_context_chars_per_doc": 1200,
+    "name": "rag_iterative_search",
+    "policy": "deterministic_bm25_link_walk_v1",
+    "provider": "none",
+    "ranker": "bm25",
+    "search_top_k": 5,
+    "trace_schema_version": "e007a.action_trace.v1",
+    "uses_llm": false
+  },
+  "dataset": "docker_docs",
+  "diagnostic_overlay": {
+    "diagnostic_trace_available": false,
+    "distance_overlay_available": true,
+    "graph_node_count": 895,
+    "support_question_count": 144
+  },
+  "git_commit": "cb95294f32e266c72f6414c08dca374d081ea30e",
+  "image": "retrieval-arena/rag-iterative-search:latest",
+  "match_percent": 0.0,
+  "mean_f1": 0.1140378446790904,
+  "mean_lexical_overlap": 0.07874672698157413,
+  "mean_precision": 0.09063390313390313,
+  "mean_recall": 0.22334721444928007,
+  "num_questions": 144,
+  "retrieval_arena_version": "0.1.0",
+  "run_id": "bac59b0e9a",
+  "started_at": "2026-05-26T10:15:56.264042+00:00",
+  "test": "rag_iterative_search"
+}

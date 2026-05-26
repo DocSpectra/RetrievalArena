@@ -149,8 +149,11 @@ def _materialize_git_source(descriptor: CorpusSourceDescriptor, source_workspace
         raise ValidationError(f"Git source path must be a directory: {descriptor.source_path}")
     ref = descriptor.requested_ref or "HEAD"
     commit = _git_output(descriptor.source_path, ["rev-parse", "--verify", f"{ref}^{{commit}}"])
+    archive_args = ["git", "-C", str(descriptor.source_path), "archive", "--format=tar", commit]
+    if descriptor.docs_root:
+        archive_args.append(descriptor.docs_root)
     archive = subprocess.run(
-        ["git", "-C", str(descriptor.source_path), "archive", "--format=tar", commit],
+        archive_args,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )

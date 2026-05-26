@@ -1,0 +1,274 @@
+# Snapshot Diff
+
+- Status: FAILED
+- Corpus files: +5 / -1 / changed 185
+- Graph edges: +46 / -3
+- Support questions changed: 11
+
+## Corpus
+
+### Added Files
+- `guides/claude-code-sandbox-model-runner.md`
+- `guides/grafana-mcp-server-gemini.md`
+- `manuals/ai/gordon/usage-limits.md`
+- `manuals/ai/sandboxes/release-notes.md`
+- `manuals/ai/sandboxes/security/governance.md`
+
+### Removed Files
+- `tags/labs/_index.md`
+
+### Changed Files
+- `get-started/_index.md`
+- `get-started/docker-concepts/building-images/writing-a-dockerfile.md`
+- `get-started/resources.md`
+- `guides/_index.md`
+- `guides/angular/containerize.md`
+- `guides/angular/develop.md`
+- `guides/angular/run-tests.md`
+- `guides/cpp/security.md`
+- `guides/dotnet/containerize.md`
+- `guides/dotnet/develop.md`
+- `guides/genai-pdf-bot/containerize.md`
+- `guides/java/containerize.md`
+- `guides/nextjs/containerize.md`
+- `guides/nextjs/develop.md`
+- `guides/nextjs/run-tests.md`
+- `guides/nodejs/containerize.md`
+- `guides/php/containerize.md`
+- `guides/php/develop.md`
+- `guides/python/containerize.md`
+- `guides/python/develop.md`
+- `guides/r/develop.md`
+- `guides/reactjs/containerize.md`
+- `guides/reactjs/develop.md`
+- `guides/reactjs/run-tests.md`
+- `guides/ruby/containerize.md`
+- `guides/rust/build-images.md`
+- `guides/rust/develop.md`
+- `guides/vuejs/containerize.md`
+- `guides/vuejs/develop.md`
+- `guides/vuejs/run-tests.md`
+- `manuals/_index.md`
+- `manuals/accounts/_index.md`
+- `manuals/admin/_index.md`
+- `manuals/admin/company/_index.md`
+- `manuals/admin/company/manage/organizations.md`
+- `manuals/admin/organization/_index.md`
+- `manuals/admin/organization/manage/manage-a-team.md`
+- `manuals/admin/organization/setup/convert-account.md`
+- `manuals/admin/organization/setup/onboard.md`
+- `manuals/ai-overview.md`
+- `manuals/ai/compose/_index.md`
+- `manuals/ai/docker-agent/_index.md`
+- `manuals/ai/gordon/_index.md`
+- `manuals/ai/gordon/concepts/data-privacy.md`
+- `manuals/ai/gordon/how-to/cli.md`
+- `manuals/ai/gordon/how-to/configure-tools.md`
+- `manuals/ai/gordon/how-to/docker-desktop.md`
+- `manuals/ai/gordon/how-to/permissions.md`
+- `manuals/ai/gordon/use-cases.md`
+- `manuals/ai/mcp-catalog-and-toolkit/_index.md`
+- `manuals/ai/model-runner/_index.md`
+- `manuals/ai/model-runner/ide-integrations.md`
+- `manuals/ai/sandboxes/_index.md`
+- `manuals/ai/sandboxes/agents/_index.md`
+- `manuals/ai/sandboxes/agents/claude-code.md`
+- `manuals/ai/sandboxes/agents/codex.md`
+- `manuals/ai/sandboxes/agents/copilot.md`
+- `manuals/ai/sandboxes/agents/cursor.md`
+- `manuals/ai/sandboxes/agents/docker-agent.md`
+- `manuals/ai/sandboxes/agents/droid.md`
+- `manuals/ai/sandboxes/agents/gemini.md`
+- `manuals/ai/sandboxes/agents/kiro.md`
+- `manuals/ai/sandboxes/agents/opencode.md`
+- `manuals/ai/sandboxes/agents/shell.md`
+- `manuals/ai/sandboxes/architecture.md`
+- `manuals/ai/sandboxes/customize/_index.md`
+- `manuals/ai/sandboxes/customize/build-an-agent.md`
+- `manuals/ai/sandboxes/customize/kit-examples.md`
+- `manuals/ai/sandboxes/customize/kits.md`
+- `manuals/ai/sandboxes/customize/templates.md`
+- `manuals/ai/sandboxes/faq.md`
+- `manuals/ai/sandboxes/get-started.md`
+- `manuals/ai/sandboxes/security/_index.md`
+- `manuals/ai/sandboxes/security/credentials.md`
+- `manuals/ai/sandboxes/security/defaults.md`
+- `manuals/ai/sandboxes/security/isolation.md`
+- `manuals/ai/sandboxes/security/policy.md`
+- `manuals/ai/sandboxes/security/workspace.md`
+- `manuals/ai/sandboxes/troubleshooting.md`
+- `manuals/ai/sandboxes/usage.md`
+- `manuals/billing/_index.md`
+- `manuals/build-cloud/_index.md`
+- `manuals/build-cloud/setup.md`
+- `manuals/build/_index.md`
+- `manuals/build/building/best-practices.md`
+- `manuals/build/building/multi-platform.md`
+- `manuals/build/building/secrets.md`
+- `manuals/build/ci/github-actions/github-builder/architecture.md`
+- `manuals/build/ci/github-actions/github-builder/bake.md`
+- `manuals/build/ci/github-actions/github-builder/build.md`
+- `manuals/build/ci/github-actions/multi-platform.md`
+- `manuals/compose/_index.md`
+- `manuals/compose/how-tos/lifecycle.md`
+- `manuals/compose/how-tos/multiple-compose-files/extends.md`
+- `manuals/compose/how-tos/networking.md`
+- `manuals/compose/trust-model.md`
+- `manuals/desktop/_index.md`
+- `manuals/desktop/release-notes.md`
+- `manuals/desktop/settings-and-maintenance/backup-and-restore.md`
+- `manuals/desktop/settings-and-maintenance/settings.md`
+- `manuals/desktop/setup/allow-list.md`
+- `manuals/desktop/setup/install/linux/rhel.md`
+- `manuals/desktop/setup/install/linux/ubuntu.md`
+- `manuals/desktop/setup/install/windows-install.md`
+- `manuals/desktop/setup/install/windows-permission-requirements.md`
+- `manuals/desktop/troubleshoot-and-support/troubleshoot/_index.md`
+- `manuals/desktop/uninstall.md`
+- `manuals/desktop/use-desktop/kubernetes.md`
+- `manuals/desktop/use-desktop/logs.md`
+- `manuals/dhi/_index.md`
+- `manuals/dhi/core-concepts/_index.md`
+- `manuals/dhi/explore/_index.md`
+- `manuals/dhi/features.md`
+- `manuals/dhi/how-to/_index.md`
+- `manuals/dhi/how-to/cli.md`
+- `manuals/dhi/how-to/customize.md`
+- `manuals/dhi/how-to/hardened-packages.md`
+- `manuals/dhi/how-to/mirror.md`
+- `manuals/dhi/how-to/select-enterprise.md`
+- `manuals/dhi/migration/_index.md`
+- `manuals/dhi/migration/examples/_index.md`
+- `manuals/docker-hub/_index.md`
+- `manuals/docker-hub/release-notes.md`
+- `manuals/docker-hub/repos/manage/builds/_index.md`
+- `manuals/docker-hub/repos/manage/builds/advanced.md`
+- `manuals/docker-hub/repos/manage/builds/automated-testing.md`
+- `manuals/docker-hub/repos/manage/builds/link-source.md`
+- `manuals/docker-hub/repos/manage/builds/manage-builds.md`
+- `manuals/docker-hub/repos/manage/builds/migrate.md`
+- `manuals/docker-hub/repos/manage/builds/setup.md`
+- `manuals/docker-hub/repos/manage/builds/troubleshoot.md`
+- `manuals/docker-hub/repos/manage/hub-images/_index.md`
+- `manuals/docker-hub/repos/manage/webhooks.md`
+- `manuals/engine/_index.md`
+- `manuals/engine/cli/formatting.md`
+- `manuals/engine/install/debian.md`
+- `manuals/engine/release-notes/29.md`
+- `manuals/engine/security/rootless/troubleshoot.md`
+- `manuals/engine/security/trust/_index.md`
+- `manuals/engine/storage/containerd.md`
+- `manuals/enterprise/enterprise-deployment/faq.md`
+- `manuals/enterprise/enterprise-deployment/msi-install-and-configure.md`
+- `manuals/enterprise/security/_index.md`
+- `manuals/enterprise/security/enforce-sign-in/_index.md`
+- `manuals/enterprise/security/enforce-sign-in/methods.md`
+- `manuals/enterprise/security/hardened-desktop/_index.md`
+- `manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/faq.md`
+- `manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/limitations.md`
+- `manuals/enterprise/security/hardened-desktop/settings-management/_index.md`
+- `manuals/enterprise/security/hardened-desktop/settings-management/configure-admin-console.md`
+- `manuals/enterprise/security/hardened-desktop/settings-management/configure-json-file.md`
+- `manuals/enterprise/security/provisioning/_index.md`
+- `manuals/enterprise/security/provisioning/scim/group-mapping.md`
+- `manuals/enterprise/security/roles-and-permissions/_index.md`
+- `manuals/extensions/_index.md`
+- `manuals/extensions/extensions-sdk/_index.md`
+- `manuals/extensions/extensions-sdk/dev/api/backend.md`
+- `manuals/extensions/extensions-sdk/dev/api/dashboard.md`
+- `manuals/extensions/extensions-sdk/dev/api/overview.md`
+- `manuals/extensions/private-marketplace.md`
+- `manuals/extensions/settings-feedback.md`
+- `manuals/offload/_index.md`
+- `manuals/offload/about.md`
+- `manuals/release-lifecycle.md`
+- `manuals/retired.md`
+- `manuals/scout/_index.md`
+- `manuals/security/_index.md`
+- `manuals/security/security-announcements.md`
+- `manuals/subscription/_index.md`
+- `manuals/subscription/change.md`
+- `manuals/subscription/desktop-license.md`
+- `manuals/subscription/details.md`
+- `manuals/subscription/faq.md`
+- `manuals/subscription/manage-seats.md`
+- `manuals/subscription/scale.md`
+- `manuals/subscription/setup.md`
+- `manuals/testcontainers.md`
+- `manuals/unassociated-machines/_index.md`
+- `reference/_index.md`
+- `reference/api/engine/_index.md`
+- `reference/compose-file/_index.md`
+- `reference/compose-file/secrets.md`
+- `reference/compose-file/services.md`
+- `reference/compose-file/volumes.md`
+- `reference/glossary.md`
+
+## Graph
+
+### Added Edges
+- `guides/claude-code-sandbox-model-runner` -> `get-started/get-docker`
+- `guides/claude-code-sandbox-model-runner` -> `guides/claude-code-model-runner`
+- `guides/claude-code-sandbox-model-runner` -> `manuals/ai/model-runner/_index`
+- `guides/claude-code-sandbox-model-runner` -> `manuals/ai/model-runner/api-reference`
+- `guides/claude-code-sandbox-model-runner` -> `manuals/ai/model-runner/get-started`
+- `guides/claude-code-sandbox-model-runner` -> `manuals/ai/sandboxes/agents/claude-code`
+- `guides/claude-code-sandbox-model-runner` -> `manuals/ai/sandboxes/faq`
+- `guides/claude-code-sandbox-model-runner` -> `manuals/ai/sandboxes/get-started`
+- `guides/claude-code-sandbox-model-runner` -> `manuals/ai/sandboxes/security/credentials`
+- `guides/claude-code-sandbox-model-runner` -> `manuals/ai/sandboxes/usage`
+- `manuals/ai/gordon/_index` -> `manuals/ai/gordon/how-to/cli`
+- `manuals/ai/gordon/_index` -> `manuals/ai/gordon/how-to/docker-desktop`
+- `manuals/ai/gordon/_index` -> `manuals/ai/gordon/usage-limits`
+- `manuals/ai/gordon/how-to/docker-desktop` -> `manuals/ai/gordon/usage-limits`
+- `manuals/ai/model-runner/ide-integrations` -> `guides/claude-code-model-runner`
+- `manuals/ai/model-runner/ide-integrations` -> `guides/claude-code-sandbox-model-runner`
+- `manuals/ai/sandboxes/_index` -> `manuals/ai/sandboxes/security/governance`
+- `manuals/ai/sandboxes/agents/claude-code` -> `guides/claude-code-model-runner`
+- `manuals/ai/sandboxes/agents/claude-code` -> `guides/claude-code-sandbox-model-runner`
+- `manuals/ai/sandboxes/customize/kits` -> `manuals/ai/sandboxes/security/credentials`
+- `manuals/ai/sandboxes/faq` -> `manuals/ai/sandboxes/customize/kits`
+- `manuals/ai/sandboxes/faq` -> `manuals/ai/sandboxes/security/governance`
+- `manuals/ai/sandboxes/security/_index` -> `manuals/ai/sandboxes/security/governance`
+- `manuals/ai/sandboxes/security/credentials` -> `manuals/ai/sandboxes/customize/kits`
+- `manuals/ai/sandboxes/security/defaults` -> `manuals/ai/sandboxes/security/governance`
+- `manuals/ai/sandboxes/security/governance` -> `manuals/ai/sandboxes/security/policy`
+- `manuals/ai/sandboxes/security/policy` -> `manuals/ai/sandboxes/security/governance`
+- `manuals/ai/sandboxes/troubleshooting` -> `manuals/ai/sandboxes/security/governance`
+- `manuals/ai/sandboxes/usage` -> `manuals/ai/sandboxes/security/governance`
+- `manuals/build/ci/github-actions/github-builder/bake` -> `manuals/build/ci/github-actions/github-builder/architecture`
+- `manuals/build/ci/github-actions/github-builder/build` -> `manuals/build/ci/github-actions/github-builder/architecture`
+- `manuals/build/ci/github-actions/multi-platform` -> `manuals/build/ci/github-actions/github-builder/architecture`
+- `manuals/desktop/settings-and-maintenance/settings` -> `manuals/ai/gordon/_index`
+- `manuals/desktop/settings-and-maintenance/settings` -> `manuals/ai/model-runner/_index`
+- `manuals/desktop/setup/install/windows-permission-requirements` -> `manuals/desktop/setup/install/windows-install`
+- `manuals/dhi/how-to/select-enterprise` -> `manuals/subscription/setup`
+- `manuals/docker-hub/release-notes` -> `manuals/desktop/setup/allow-list`
+- `manuals/docker-hub/release-notes` -> `manuals/docker-hub/repos/manage/builds/migrate`
+- `manuals/extensions/extensions-sdk/dev/api/overview` -> `reference/api/extensions-sdk/_index`
+- `manuals/subscription/scale` -> `manuals/build-cloud/_index`
+- `manuals/subscription/scale` -> `manuals/dhi/how-to/select-enterprise`
+- `manuals/subscription/scale` -> `manuals/testcontainers`
+- `manuals/subscription/setup` -> `manuals/dhi/how-to/select-enterprise`
+- `manuals/subscription/setup` -> `manuals/subscription/scale`
+- `reference/compose-file/secrets` -> `manuals/engine/swarm/stack-deploy`
+- `reference/compose-file/volumes` -> `manuals/engine/storage/bind-mounts`
+
+### Removed Edges
+- `manuals/admin/company/manage/organizations` -> `manuals/subscription/details`
+- `manuals/dhi/how-to/hardened-packages` -> `manuals/dhi/how-to/cli`
+- `manuals/subscription/manage-seats` -> `manuals/billing/payment-method`
+
+## Support Surface
+
+- Changed question `docker_docs_faq_0028`
+- Changed question `docker_docs_faq_0030`
+- Changed question `docker_docs_faq_0033`
+- Changed question `docker_docs_faq_0074`
+- Changed question `docker_docs_faq_0086`
+- Changed question `docker_docs_faq_0105`
+- Changed question `docker_docs_faq_0110`
+- Changed question `docker_docs_faq_0115`
+- Changed question `docker_docs_faq_0116`
+- Changed question `docker_docs_faq_0138`
+- Changed question `docker_docs_faq_0143`

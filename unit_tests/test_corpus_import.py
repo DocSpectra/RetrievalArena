@@ -75,7 +75,8 @@ class CorpusImportTests(unittest.TestCase):
             self.git(repo, "config", "tag.gpgSign", "false")
             (repo / "docs").mkdir()
             (repo / "docs" / "install.md").write_text("Use pip.\n", encoding="utf-8")
-            self.git(repo, "add", "docs/install.md")
+            (repo / "outside.md").write_text("Not documentation.\n", encoding="utf-8")
+            self.git(repo, "add", "docs/install.md", "outside.md")
             self.git(repo, "commit", "-m", "first")
             first = self.git(repo, "rev-parse", "HEAD").stdout.strip()
             (repo / "docs" / "install.md").write_text("Use uv.\n", encoding="utf-8")
@@ -112,6 +113,7 @@ class CorpusImportTests(unittest.TestCase):
             self.assertEqual(self.git(repo, "rev-parse", "HEAD").stdout.strip(), second)
             self.assertEqual((before["documents_path"] / "install.md").read_text(encoding="utf-8"), "Use pip.\n")
             self.assertEqual((after["documents_path"] / "install.md").read_text(encoding="utf-8"), "Use uv.\n")
+            self.assertFalse((before["manifest_path"].parent / "source" / "outside.md").exists())
             self.assertEqual(read_manifest(before["manifest_path"])["source_provenance"]["resolved_commit"], first)
 
     def test_git_source_import_can_reuse_clean_existing_snapshot(self):
