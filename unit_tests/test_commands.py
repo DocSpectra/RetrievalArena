@@ -96,7 +96,7 @@ class CommandLayerTests(unittest.TestCase):
             result = replay_compare(expected, actual, out_path=tmp / "report.json")
 
             self.assertTrue(result["ok"])
-            self.assertIn("Replay fidelity PASSED", result["summary"])
+            self.assertIn("Replay MATCHED_EXACTLY", result["summary"])
             self.assertEqual(result["written_artifacts"], [str(tmp / "report.json")])
 
 

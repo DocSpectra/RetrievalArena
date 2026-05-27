@@ -59,11 +59,17 @@ def git_comparison_plan(repo_path: Path, *, left_ref: str, right_ref: str, outpu
 
 def replay_compare(expected_run_dir: Path, actual_run_dir: Path, *, out_path: Path | None = None) -> dict[str, Any]:
     report = compare_run_dirs(expected_run_dir, actual_run_dir, out_path=out_path)
-    status = "PASSED" if report["passed"] else "FAILED"
     summary = report["summary"]
+    status = summary["operator_status"]
+    detail = (
+        f"{summary['changed_question_count']} changed questions, "
+        f"{summary['changed_artifact_count']} changed artifacts"
+    )
+    if summary["changed_artifacts"]:
+        detail += f" ({', '.join(summary['changed_artifacts'])})"
     return {
-        "ok": bool(report["passed"]),
-        "summary": f"Replay fidelity {status}: {summary['changed_artifact_count']} changed artifacts, {summary['changed_question_count']} changed questions",
+        "ok": bool(summary["replay_matched"]),
+        "summary": f"Replay {status}: {detail}",
         "report": report,
         "written_artifacts": [str(out_path)] if out_path is not None else [],
     }

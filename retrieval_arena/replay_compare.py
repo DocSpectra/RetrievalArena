@@ -14,7 +14,7 @@ from .schemas import read_jsonl
 REPLAY_COMPARISON_SCHEMA_VERSION = "retrieval_arena.replay_fidelity_report.v1"
 REQUIRED_ARTIFACTS = ("retrieval_replay_manifest.json", "predictions.jsonl", "metadata.json", "item_scores.jsonl", "scores.json")
 OPTIONAL_ARTIFACTS = ("action_traces.jsonl",)
-BEHAVIOR_ARTIFACTS = ("predictions.jsonl", "metadata.json", "item_scores.jsonl", "scores.json", "action_traces.jsonl")
+BEHAVIOR_ARTIFACTS = ("predictions.jsonl", "metadata.json", "item_scores.jsonl", "action_traces.jsonl")
 VOLATILE_MANIFEST_FIELDS = ("created_at", "manifest_hash", "run_started_at", "run_completed_at")
 
 
@@ -50,13 +50,9 @@ def compare_run_dirs(
     )
     optional_artifacts_passed = all(item["passed"] for item in artifact_results if item["path"] in OPTIONAL_ARTIFACTS)
     behavior_artifacts_passed = all(item["passed"] for item in artifact_results if item["path"] in BEHAVIOR_ARTIFACTS)
-    behavior_passed = all(
-        result["passed"]
-        for result in [prediction_results, score_results, metadata_result, action_trace_results]
-        if result is not None
-    )
+    behavior_passed = _behavior_passed(prediction_results, score_results, metadata_result, action_trace_results)
     manifest_passed = manifest_result["passed"] or manifest_result["only_volatile_differences"]
-    passed = required_artifacts_passed and optional_artifacts_passed and behavior_artifacts_passed and behavior_passed and manifest_passed
+    replay_matched = required_artifacts_passed and optional_artifacts_passed and behavior_passed
 
     report = {
         "schema_version": REPLAY_COMPARISON_SCHEMA_VERSION,
@@ -64,7 +60,8 @@ def compare_run_dirs(
         "comparison_type": "replay_fidelity",
         "expected_run_dir": str(expected),
         "actual_run_dir": str(actual),
-        "passed": passed,
+        "passed": replay_matched,
+        "replay_matched": replay_matched,
         "summary": _summary(
             artifact_results=artifact_results,
             manifest_result=manifest_result,
@@ -88,6 +85,22 @@ def compare_run_dirs(
     if out_path is not None:
         write_replay_fidelity_report(out_path, report)
     return report
+
+
+def _behavior_passed(
+    prediction_results: dict[str, Any],
+    score_results: dict[str, Any],
+    metadata_result: dict[str, Any],
+    action_trace_results: dict[str, Any] | None,
+) -> bool:
+    results = [
+        prediction_results.get("passed"),
+        score_results.get("item_scores", {}).get("passed"),
+        metadata_result.get("passed"),
+    ]
+    if action_trace_results is not None:
+        results.append(action_trace_results.get("passed"))
+    return all(bool(item) for item in results)
 
 
 def _compare_artifacts(expected: Path, actual: Path) -> list[dict[str, Any]]:
@@ -402,21 +415,30 @@ def _summary(
     aggregate_score_difference_count = len(score_results.get("aggregate_scores", {}).get("field_differences", []))
     artifact_byte_equality_passed = not changed_artifacts
     provenance_sensitive = bool(manifest_result.get("volatile_differences")) or aggregate_score_difference_count > 0
+    required_or_optional_missing = not required_artifacts_passed or not optional_artifacts_passed
+    replay_matched = not required_or_optional_missing and true_behavior_difference_count == 0
     if true_behavior_difference_count:
-        outcome = "true_retrieval_divergence"
-    elif not required_artifacts_passed or not optional_artifacts_passed:
+        outcome = "behavior_mismatch"
+        operator_status = "MISMATCHED"
+    elif required_or_optional_missing:
         outcome = "incomplete_artifacts"
+        operator_status = "INCOMPLETE"
     elif not manifest_passed or provenance_sensitive or not artifact_byte_equality_passed:
-        outcome = "behaviorally_identical_with_provenance_or_artifact_differences"
+        outcome = "matched_with_provenance_or_artifact_differences"
+        operator_status = "MATCHED_WITH_DIFFERENCES"
     else:
-        outcome = "behaviorally_and_artifact_identical"
+        outcome = "exact_match"
+        operator_status = "MATCHED_EXACTLY"
     return {
         "replay_outcome": outcome,
-        "behavior_equality_passed": behavior_passed and true_behavior_difference_count == 0,
+        "operator_status": operator_status,
+        "replay_matched": replay_matched,
+        "behavior_equality_passed": replay_matched,
         "behavior_artifact_byte_equality_passed": behavior_artifacts_passed,
         "provenance_equality_passed": bool(manifest_result.get("passed")),
-        "provenance_sensitive_difference_count": len(manifest_result.get("volatile_differences", [])) + aggregate_score_difference_count,
+        "provenance_sensitive_difference_count": len(manifest_result.get("field_differences", [])) + len(manifest_result.get("volatile_differences", [])) + aggregate_score_difference_count,
         "artifact_byte_equality_passed": artifact_byte_equality_passed,
+        "aggregate_score_equality_passed": aggregate_score_difference_count == 0,
         "changed_artifact_count": len(changed_artifacts),
         "changed_artifacts": changed_artifacts,
         "changed_question_count": len(changed_question_ids),

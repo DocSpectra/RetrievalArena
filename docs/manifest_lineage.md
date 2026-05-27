@@ -47,10 +47,21 @@ support targets, support label counts, and support artifact hashes.
 
 ## Replay And Audit
 
-Replay comparison reports separate behavior equality, provenance equality, and
-byte-level artifact equality in the report summary. This allows a rerun to be
-reported as behaviorally identical while still exposing timestamp, config path,
-Git lineage, manifest schema, or aggregate artifact movement.
+Replay comparison reports separate operational replay match, behavior
+equality, provenance equality, aggregate-score equality, and byte-level
+artifact equality in the report summary. The operator-facing status is one of:
+
+- `MATCHED_EXACTLY`: behavior, provenance, and compared artifact bytes match.
+- `MATCHED_WITH_DIFFERENCES`: retrieved IDs, rankings, item diagnostics,
+  metadata, and action traces match, but provenance-bearing or aggregate
+  artifacts differ.
+- `INCOMPLETE`: required artifacts are missing or optional traces are present
+  on only one side, so replay cannot be judged confidently.
+- `MISMATCHED`: per-query retrieval behavior differs.
+
+This allows a rerun to be reported as matched while still exposing timestamp,
+config path, Git lineage, manifest schema, aggregate score, or artifact-byte
+movement for operational follow-up.
 
 Regression audit reports include `cause_label_schema_version` and a stable
 cause-label schema in `regression_audit_summary.json`, so manuscript tables do

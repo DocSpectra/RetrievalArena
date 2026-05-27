@@ -98,7 +98,9 @@ class ReplayCompareTests(unittest.TestCase):
 
             self.assertTrue(report["passed"])
             self.assertEqual(report["summary"]["changed_artifact_count"], 0)
-            self.assertEqual(report["summary"]["replay_outcome"], "behaviorally_and_artifact_identical")
+            self.assertEqual(report["summary"]["operator_status"], "MATCHED_EXACTLY")
+            self.assertEqual(report["summary"]["replay_outcome"], "exact_match")
+            self.assertTrue(report["summary"]["replay_matched"])
             self.assertTrue(report["summary"]["artifact_byte_equality_passed"])
             self.assertEqual(report["prediction_results"]["changed_question_ids"], [])
 
@@ -112,7 +114,8 @@ class ReplayCompareTests(unittest.TestCase):
             report = compare_run_dirs(expected, actual, created_at=CREATED_AT)
 
             self.assertFalse(report["passed"])
-            self.assertEqual(report["summary"]["replay_outcome"], "true_retrieval_divergence")
+            self.assertEqual(report["summary"]["operator_status"], "MISMATCHED")
+            self.assertEqual(report["summary"]["replay_outcome"], "behavior_mismatch")
             self.assertFalse(report["summary"]["behavior_equality_passed"])
             self.assertEqual(report["prediction_results"]["changed_question_ids"], ["q1"])
             self.assertEqual(report["prediction_results"]["differences"][0]["type"], "generated_answer_changed")
@@ -127,6 +130,7 @@ class ReplayCompareTests(unittest.TestCase):
             report = compare_run_dirs(expected, actual, created_at=CREATED_AT)
 
             self.assertFalse(report["passed"])
+            self.assertEqual(report["summary"]["operator_status"], "MISMATCHED")
             context_diffs = [diff for diff in report["prediction_results"]["differences"] if diff["type"] == "retrieved_context_changed"]
             self.assertEqual(context_diffs[0]["rank"], 1)
             self.assertEqual(context_diffs[0]["field"], "doc_id")
@@ -149,8 +153,32 @@ class ReplayCompareTests(unittest.TestCase):
             report = compare_run_dirs(expected, actual, created_at=CREATED_AT)
 
             self.assertFalse(report["passed"])
+            self.assertEqual(report["summary"]["operator_status"], "MISMATCHED")
             self.assertEqual(report["score_results"]["aggregate_scores"]["field_differences"][0]["field"], "mean_f1")
             self.assertEqual(report["score_results"]["item_scores"]["changed_question_ids"], ["q1"])
+
+    def test_changed_aggregate_scores_match_when_per_question_behavior_matches(self):
+        with self.workspace_tempdir() as tmp:
+            expected = tmp / "expected"
+            actual = tmp / "actual"
+            self.write_run(expected)
+            self.write_run(actual)
+            (actual / "scores.json").write_text(
+                json.dumps({"mean_f1": 1.0, "num_questions": 1, "run_completed_at": "2026-05-25T01:00:00+00:00"}, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+            report = compare_run_dirs(expected, actual, created_at=CREATED_AT)
+
+            self.assertTrue(report["passed"])
+            self.assertTrue(report["summary"]["replay_matched"])
+            self.assertTrue(report["summary"]["behavior_equality_passed"])
+            self.assertFalse(report["summary"]["aggregate_score_equality_passed"])
+            self.assertFalse(report["summary"]["artifact_byte_equality_passed"])
+            self.assertEqual(report["summary"]["operator_status"], "MATCHED_WITH_DIFFERENCES")
+            self.assertEqual(report["summary"]["replay_outcome"], "matched_with_provenance_or_artifact_differences")
+            self.assertEqual(report["summary"]["changed_question_count"], 0)
+            self.assertEqual(report["summary"]["aggregate_score_difference_count"], 1)
 
     def test_missing_required_artifact_fails_clearly(self):
         with self.workspace_tempdir() as tmp:
@@ -163,6 +191,7 @@ class ReplayCompareTests(unittest.TestCase):
             report = compare_run_dirs(expected, actual, created_at=CREATED_AT)
 
             self.assertFalse(report["passed"])
+            self.assertEqual(report["summary"]["operator_status"], "INCOMPLETE")
             prediction_artifact = next(item for item in report["artifact_results"] if item["path"] == "predictions.jsonl")
             self.assertEqual(prediction_artifact["status"], "missing")
             self.assertEqual(report["prediction_results"]["missing"], ["actual"])
@@ -179,7 +208,8 @@ class ReplayCompareTests(unittest.TestCase):
 
             self.assertTrue(report["passed"])
             self.assertTrue(report["manifest_result"]["only_volatile_differences"])
-            self.assertEqual(report["summary"]["replay_outcome"], "behaviorally_identical_with_provenance_or_artifact_differences")
+            self.assertEqual(report["summary"]["operator_status"], "MATCHED_WITH_DIFFERENCES")
+            self.assertEqual(report["summary"]["replay_outcome"], "matched_with_provenance_or_artifact_differences")
             self.assertGreater(report["summary"]["provenance_sensitive_difference_count"], 0)
             self.assertEqual(report["summary"]["manifest_field_difference_count"], 0)
 
@@ -229,7 +259,7 @@ class ReplayCompareTests(unittest.TestCase):
             )
 
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("Replay fidelity PASSED", result.stdout)
+            self.assertIn("Replay MATCHED_EXACTLY", result.stdout)
             self.assertTrue(out.exists())
 
 
