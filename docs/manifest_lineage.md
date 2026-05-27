@@ -13,8 +13,12 @@ configuration hash, parser version, content hash, and
 `snapshot_identity_hash`.
 
 Remote Git clone support is still deliberately scaffolded. Real-corpus pilots
-use local Git source paths plus explicit refs, so imports can be reproduced
-offline without mutating the active checkout.
+use local Git source paths plus explicit refs, or non-Git local snapshot
+directories that record the official source URL, requested upstream revision,
+resolved local revision identity, local source hash, and descriptor hash. This
+lets large documentation sites such as the Kubernetes website enter the same
+snapshot lineage contract without requiring the import stage to mutate or
+checkout a live upstream repository.
 
 ## Dataset Preparation
 

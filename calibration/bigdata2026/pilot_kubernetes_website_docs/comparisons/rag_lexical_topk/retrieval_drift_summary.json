@@ -1,0 +1,127 @@
+{
+  "after": {
+    "corpus_snapshot_id": "2026-05-26",
+    "dataset": "kubernetes_website_docs",
+    "graph_snapshot_id": "2026-05-26",
+    "manifest_hash": "2f4196943042dbe51b05671c6dc12ac49a5589b85b725bd805bf341d6441da1c",
+    "query_set_id": "kubernetes-website-docs-pilot-queries",
+    "retrieval_config_hash": "e2f244b4e07f086f1d8eaf7c865bf684410c41da607210d4d161e26e804be661",
+    "retrieval_config_id": "rag_lexical_topk",
+    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_lexical_topk__f568db7fd7",
+    "run_id": "f568db7fd7",
+    "support_surface_id": "2026-05-26",
+    "test": "rag_lexical_topk"
+  },
+  "artifact_hashes": {
+    "after": {
+      "action_traces.jsonl": {
+        "sha256": "d9f21d4da14715ec5f8dd928752cb787d371499d86ab62f76100853813b7bbdd",
+        "size_bytes": 22602
+      },
+      "item_scores.jsonl": {
+        "sha256": "e86401c6f76df5cd56065a01a520091e44f88c489b8dddbea48190ed36846385",
+        "size_bytes": 289235
+      },
+      "metadata.json": {
+        "sha256": "10311eb11a277a57d1fe64913f6e8e5c230a81938786c1051623bed0174e5d72",
+        "size_bytes": 129
+      },
+      "predictions.jsonl": {
+        "sha256": "f454b60d5008c3b44d54a501654378f364baed0bc698148a08dcf037fee17a96",
+        "size_bytes": 476681
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "7f1953176670092790690fe5ba7d43ee348d41b9ca6f7bf35e9d6b5d8774ee77",
+        "size_bytes": 488655
+      },
+      "scores.json": {
+        "sha256": "a29d11f0ed5526f0dfcb9a03ab6b0815b22d94f20f9a29563e450fe34d6ce6fe",
+        "size_bytes": 1248
+      }
+    },
+    "before": {
+      "action_traces.jsonl": {
+        "sha256": "d82b2716aed47f1a32fa94ee29592be47c1c9a6ff056e9f85e488b7e69014cab",
+        "size_bytes": 22684
+      },
+      "item_scores.jsonl": {
+        "sha256": "730c403c5074e431f5b70077e158e51777796fdfa3ef6f38b12e35f5438715c5",
+        "size_bytes": 289263
+      },
+      "metadata.json": {
+        "sha256": "10311eb11a277a57d1fe64913f6e8e5c230a81938786c1051623bed0174e5d72",
+        "size_bytes": 129
+      },
+      "predictions.jsonl": {
+        "sha256": "fc5df35fa5ae21dea962af136899099e8389dd624a3dfff8dbcdcdb10d98df9f",
+        "size_bytes": 478828
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "a44c967c9038633c4725b6b813f3d91e5d6c737f97c821ad96c0d1d240bd3122",
+        "size_bytes": 477249
+      },
+      "scores.json": {
+        "sha256": "e84876693e52eff54c8fd346362dabc28c5069475c9e2126732682a63841653a",
+        "size_bytes": 1246
+      }
+    }
+  },
+  "before": {
+    "corpus_snapshot_id": "2026-05-01",
+    "dataset": "kubernetes_website_docs",
+    "graph_snapshot_id": "2026-05-01",
+    "manifest_hash": "3cfbf37fb400a6805e8bb154f8ed9e25db519c88fc20e3cb9cb2e2adae88418a",
+    "query_set_id": "kubernetes-website-docs-pilot-queries",
+    "retrieval_config_hash": "7f878d965e5c7a3b1221ddb92815657ba90a83e10f8f5bce5b90116c666512ce",
+    "retrieval_config_id": "rag_lexical_topk",
+    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_lexical_topk__f568db7fd7",
+    "run_id": "f568db7fd7",
+    "support_surface_id": "2026-05-01",
+    "test": "rag_lexical_topk"
+  },
+  "comparison_type": "retrieval_drift",
+  "created_at": "2026-05-27T06:48:41+00:00",
+  "evidence_coverage_regression_count": 0,
+  "manifest_hash": "f6a364db466d5735d320ac69d92c0a03c90fe2c10d17aef75fbbfa26aa33a62c",
+  "manifest_type": "retrieval_drift_summary",
+  "mean_distance_to_support_delta": 0.041666666666666664,
+  "mean_lexical_f1_delta": 5.652213182989607e-05,
+  "mean_ordered_top_k_overlap": 0.8083333333333332,
+  "mean_rank_displacement": 0.15,
+  "mean_support_recall_delta": 0.0,
+  "mean_top_k_jaccard": 0.875,
+  "optional_signal_availability": {
+    "action_trace": {
+      "available_count": 24,
+      "unavailable_count": 0
+    },
+    "distance_to_support": {
+      "available_count": 24,
+      "unavailable_count": 0
+    },
+    "evidence_coverage": {
+      "available_count": 24,
+      "unavailable_count": 0
+    },
+    "lexical_score_delta": {
+      "available_count": 24,
+      "unavailable_count": 0
+    },
+    "retained_score_delta": {
+      "available_count": 24,
+      "unavailable_count": 0
+    },
+    "support_exposure": {
+      "available_count": 24,
+      "unavailable_count": 0
+    },
+    "support_recall": {
+      "available_count": 24,
+      "unavailable_count": 0
+    }
+  },
+  "query_count": 24,
+  "schema_version": "retrieval_arena.retrieval_drift_summary.v1",
+  "support_exposure_regression_count": 0,
+  "support_recall_regression_count": 0
+}

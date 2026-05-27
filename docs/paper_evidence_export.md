@@ -6,6 +6,7 @@ HTML observability report:
 ```powershell
 python -m retrieval_arena.cli report evidence --bundle calibration\bigdata2026\pilot_express_docs --out-dir ..\IEEEBigData2026_paper\evidence\bigdata2026\express_docs
 python -m retrieval_arena.cli report evidence --bundle calibration\bigdata2026\pilot_docker_docs --out-dir ..\IEEEBigData2026_paper\evidence\bigdata2026\docker_docs
+python -m retrieval_arena.cli report evidence --bundle calibration\bigdata2026\pilot_kubernetes_website_docs --out-dir ..\IEEEBigData2026_paper\evidence\bigdata2026\kubernetes_website_docs
 ```
 
 Each export writes:

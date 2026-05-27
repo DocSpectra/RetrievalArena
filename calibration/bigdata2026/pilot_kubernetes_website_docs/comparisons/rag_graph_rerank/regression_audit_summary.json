@@ -1,0 +1,143 @@
+{
+  "after": {
+    "corpus_snapshot_id": "2026-05-26",
+    "dataset": "kubernetes_website_docs",
+    "graph_snapshot_id": "2026-05-26",
+    "manifest_hash": "7813e175947fb5b4fcb3dd623a153bda935c57a5e92f91e08fa0aef110f93cf4",
+    "query_set_id": "kubernetes-website-docs-pilot-queries",
+    "retrieval_config_hash": "e2f244b4e07f086f1d8eaf7c865bf684410c41da607210d4d161e26e804be661",
+    "retrieval_config_id": "rag_graph_rerank",
+    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_graph_rerank__98ae75b811",
+    "run_id": "98ae75b811",
+    "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
+    "support_surface_id": "2026-05-26",
+    "test": "rag_graph_rerank"
+  },
+  "before": {
+    "corpus_snapshot_id": "2026-05-01",
+    "dataset": "kubernetes_website_docs",
+    "graph_snapshot_id": "2026-05-01",
+    "manifest_hash": "6c363f62d83c78b692f3177f5c910f121fad1cac2439d07b3d1586b46e04f3a1",
+    "query_set_id": "kubernetes-website-docs-pilot-queries",
+    "retrieval_config_hash": "7f878d965e5c7a3b1221ddb92815657ba90a83e10f8f5bce5b90116c666512ce",
+    "retrieval_config_id": "rag_graph_rerank",
+    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_graph_rerank__98ae75b811",
+    "run_id": "98ae75b811",
+    "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
+    "support_surface_id": "2026-05-01",
+    "test": "rag_graph_rerank"
+  },
+  "cause_label_counts": {
+    "evidence_unavailable": 24,
+    "replay_manifest_changed": 24,
+    "retrieval_config_changed": 24
+  },
+  "cause_label_schema": {
+    "action_trace_changed": "Deterministic or iterative retrieval trace changed.",
+    "answer_lexical_score_regressed": "Answer lexical coverage decreased.",
+    "corpus_page_added": "A retrieved or support document was added in the corpus snapshot.",
+    "corpus_page_changed": "A retrieved or support document changed in the corpus snapshot.",
+    "corpus_page_removed": "A retrieved or support document was removed from the corpus snapshot.",
+    "distance_to_support_increased": "Minimum observed graph distance to support increased.",
+    "evidence_coverage_regressed": "Evidence coverage decreased.",
+    "evidence_unavailable": "One or more optional evidence families were unavailable.",
+    "graph_edge_added": "A graph edge incident to retrieved or support documents was added.",
+    "graph_edge_removed": "A graph edge incident to retrieved or support documents was removed.",
+    "rank_changed": "Retained retrieved candidates moved in rank.",
+    "replay_manifest_changed": "Replay manifest lineage or references changed.",
+    "retrieval_config_changed": "Retrieval configuration identity changed.",
+    "retrieval_score_changed": "Retained retrieved candidate scores changed.",
+    "retrieved_candidate_changed": "Retrieved candidate set changed.",
+    "scoring_config_changed": "Scoring configuration identity changed.",
+    "support_exposure_regressed": "Retrieved support exposure decreased.",
+    "support_recall_regressed": "Support recall decreased.",
+    "support_target_added": "Support target was added for the query.",
+    "support_target_changed": "Support target set changed for the query.",
+    "support_target_removed": "Support target was removed for the query."
+  },
+  "cause_label_schema_version": "retrieval_arena.audit_cause_labels.v1",
+  "comparison_type": "regression_audit",
+  "created_at": "2026-05-27T06:48:41+00:00",
+  "evidence_availability_counts": {
+    "action_trace": {
+      "available": 24
+    },
+    "distance_to_support": {
+      "unavailable": 24
+    },
+    "evidence_coverage": {
+      "available": 24
+    },
+    "graph": {
+      "unavailable": 24
+    },
+    "lexical_answer_score": {
+      "available": 24
+    },
+    "rank": {
+      "available": 24
+    },
+    "replay_manifest": {
+      "available": 24
+    },
+    "retrieval_candidates": {
+      "available": 24
+    },
+    "retrieval_config": {
+      "available": 24
+    },
+    "retrieval_score": {
+      "available": 24
+    },
+    "scoring_config": {
+      "available": 24
+    },
+    "snapshot_diff": {
+      "unavailable": 24
+    },
+    "support_exposure": {
+      "available": 24
+    },
+    "support_recall": {
+      "available": 24
+    },
+    "support_surface": {
+      "unavailable": 24
+    }
+  },
+  "input_artifacts": {
+    "after_replay_manifest": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_graph_rerank__98ae75b811\\retrieval_replay_manifest.json",
+      "sha256": "4687f3da62140d3a1f3b798220fe2a4659c1cdcb1c8274b9248d06e785fd10b2",
+      "size_bytes": 488655
+    },
+    "after_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_graph_rerank__98ae75b811",
+    "before_replay_manifest": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_graph_rerank__98ae75b811\\retrieval_replay_manifest.json",
+      "sha256": "7c65d78f1bf312176d6e098d47c0c1a1a787ea18e4febd95048cbd9b88bcbf06",
+      "size_bytes": 477249
+    },
+    "before_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_graph_rerank__98ae75b811",
+    "drift_jsonl": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_kubernetes_website_docs\\comparisons\\rag_graph_rerank\\retrieval_drift.jsonl",
+      "sha256": "9a766b2da25e3caf2868deb65a5a26226dd51d94dcac2927019a3bcbf4aa0e8c",
+      "size_bytes": 51976
+    },
+    "drift_summary_json": {
+      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_kubernetes_website_docs\\comparisons\\rag_graph_rerank\\retrieval_drift_summary.json",
+      "sha256": "df70ae56f0420e94d5e2180f602b27d2c6dc54dca5f0cb47ee2f6f1f8f3ac555",
+      "size_bytes": 4986
+    }
+  },
+  "labeled_query_count": 24,
+  "manifest_hash": "734a9baaeb889cd9dc9e6faed88236ef69aa723d350862082152005f816032d6",
+  "manifest_type": "regression_audit_summary",
+  "overall_drift_score": null,
+  "overall_drift_score_note": "No overall drift score or composite summary metric is computed.",
+  "query_count": 24,
+  "schema_version": "retrieval_arena.regression_audit_summary.v1",
+  "source_report_references": {
+    "drift_summary_schema_version": "retrieval_arena.retrieval_drift_summary.v1",
+    "snapshot_diff_schema_version": null
+  }
+}

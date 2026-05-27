@@ -36,6 +36,7 @@ calibration/bigdata2026/pilot_express_docs/observability_report.html
 
 - `calibration/bigdata2026/pilot_express_docs/`
 - `calibration/bigdata2026/pilot_docker_docs/`
+- `calibration/bigdata2026/pilot_kubernetes_website_docs/`
 
 These bundles are reviewable evidence packages. They include manifests,
 snapshot diffs, retrieval drift reports, regression audits, systems

@@ -157,10 +157,14 @@ def _materialize_source(descriptor: CorpusSourceDescriptor, source_workspace: Pa
         if not descriptor.source_path.is_dir():
             raise ValidationError(f"Local source path must be a directory: {descriptor.source_path}")
         _copy_tree_contents(descriptor.source_path, source_workspace)
+        source_hash = _source_tree_hash(descriptor.source_path)
         return {
             "source_kind": "local_directory",
             "source_path": str(descriptor.source_path),
-            "source_hash": _source_tree_hash(descriptor.source_path),
+            "source_url": descriptor.source_url,
+            "requested_ref": descriptor.requested_ref,
+            "resolved_revision": descriptor.requested_ref,
+            "source_hash": source_hash,
             "mutates_active_checkout": False,
         }
     return _materialize_git_source(descriptor, source_workspace)

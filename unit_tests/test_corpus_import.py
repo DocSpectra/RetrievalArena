@@ -62,12 +62,40 @@ class CorpusImportTests(unittest.TestCase):
             self.assertEqual([item["path"] for item in manifest["file_inventory"]], ["guide/config.md", "install.md"])
             self.assertEqual([item["doc_id"] for item in manifest["file_inventory"]], ["guide/config", "install"])
             self.assertEqual([item["path"] for item in manifest["ignored_files"]], ["draft.tmp"])
+            self.assertEqual(manifest["source_provenance"]["source_kind"], "local_directory")
+            self.assertRegex(manifest["source_provenance"]["source_hash"], r"^[0-9a-f]{64}$")
             self.assertRegex(manifest["import_config_hash"], r"^[0-9a-f]{64}$")
             self.assertRegex(manifest["source_descriptor_hash"], r"^[0-9a-f]{64}$")
             self.assertRegex(manifest["snapshot_identity_hash"], r"^[0-9a-f]{64}$")
             self.assertEqual(manifest["parser_version"], "retrieval_arena.corpus_import.copy-v1")
             self.assertTrue((result["documents_path"] / "guide" / "config.md").exists())
             self.assertTrue((result["manifest_path"]).read_text(encoding="utf-8").endswith("\n"))
+
+    def test_local_source_import_records_requested_snapshot_revision(self):
+        with self.workspace_tempdir() as tmp:
+            source = tmp / "source"
+            source.mkdir()
+            (source / "install.md").write_text("Use pip.\n", encoding="utf-8")
+            descriptor = CorpusSourceDescriptor(
+                corpus_id="toy",
+                snapshot_id="s1",
+                source_type="local",
+                source_url="https://example.com/docs",
+                source_path=source,
+                requested_ref="upstream-commit-1",
+                destination_workspace=tmp / "workspace",
+                include=("*.md",),
+            )
+
+            result = import_corpus_source(descriptor, created_at=CREATED_AT)
+            manifest = read_manifest(result["manifest_path"])
+
+            self.assertEqual(manifest["requested_ref"], "upstream-commit-1")
+            self.assertEqual(manifest["source_url"], "https://example.com/docs")
+            self.assertEqual(manifest["source_provenance"]["requested_ref"], "upstream-commit-1")
+            self.assertEqual(manifest["source_provenance"]["resolved_revision"], "upstream-commit-1")
+            self.assertEqual(manifest["source_provenance"]["source_url"], "https://example.com/docs")
+            self.assertRegex(manifest["snapshot_identity_hash"], r"^[0-9a-f]{64}$")
 
     def test_git_source_import_uses_explicit_commits_without_mutating_checkout(self):
         with self.workspace_tempdir() as tmp:

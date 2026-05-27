@@ -1,0 +1,268 @@
+{
+  "corpus_id": "kubernetes_website_docs",
+  "corpus_snapshot_id": "2026-05-01",
+  "created_at": "2026-05-27T06:42:47+00:00",
+  "manifest_hash": "520854195e33a5dee4d7a6b5b7db7a076090c7f533c055aaad32425704833af6",
+  "manifest_type": "support_surface",
+  "query_set_file": "questions.jsonl",
+  "query_set_hash": "73169b3a422d2a193294ceb6d40c268e988d37d195ab606b5a7fd8272452f49d",
+  "query_set_id": "kubernetes-website-docs-pilot-queries",
+  "schema_version": "retrieval_arena.snapshot_manifest.v1",
+  "snapshot_id": "2026-05-01",
+  "source_dataset_identity_hash": "eda4c002314dd3cb8070d1d43aa3e0a775c9ff5df8f742984ef92cdba1ee85ae",
+  "support_audit_file": "faq_support_audit.jsonl",
+  "support_audit_file_hash": "14d6d855625d98db41f6a2248e26965bc65e3def42370dd4c2b20f4df48a2b1e",
+  "support_construction_config": {
+    "query_set_id": "kubernetes-website-docs-pilot-queries",
+    "support_audit_configuration": {
+      "method": "idf_weighted_answer_support_v1",
+      "partial_threshold": 0.25,
+      "qa_surface_type": "extracted_questions",
+      "source": "answers_jsonl_and_dataset_corpus",
+      "supported_threshold": 0.6,
+      "top_k": 5
+    },
+    "support_construction_method": "idf_weighted_answer_support_v1"
+  },
+  "support_label_counts": {
+    "supported": 24
+  },
+  "support_target_count": 39,
+  "support_target_doc_ids": [
+    "blog/_posts/2016/why-kubernetes-doesnt-use-libnetwork",
+    "blog/_posts/2018/ipvs-in-cluster-load-balancing",
+    "blog/_posts/2019/a-guide-to-kubernetes-admission-controllers",
+    "blog/_posts/2019/kubernetes-1-16-release-announcement",
+    "blog/_posts/2020/topology-manager-beta",
+    "blog/_posts/2021/kubernetes-in-kubernetes-and-pxe-bootable-server-farm",
+    "blog/_posts/2021/pod-security-admission-beta",
+    "blog/_posts/2025/kubernetes-v1-34-release/index",
+    "blog/_posts/2025/kubernetes-v1-35-release/index",
+    "blog/_posts/2026/kubernetes-v1-36-release/index",
+    "docs/concepts/cluster-administration/flow-control",
+    "docs/concepts/scheduling-eviction/dynamic-resource-allocation",
+    "docs/concepts/services-networking/dns-pod-service",
+    "docs/concepts/services-networking/service",
+    "docs/concepts/storage/persistent-volumes",
+    "docs/concepts/workloads/controllers/job",
+    "docs/concepts/workloads/pods/pod-lifecycle",
+    "docs/reference/access-authn-authz/admission-controllers",
+    "docs/reference/access-authn-authz/authentication",
+    "docs/reference/access-authn-authz/extensible-admission-controllers",
+    "docs/reference/access-authn-authz/rbac",
+    "docs/reference/command-line-tools-reference/kube-apiserver",
+    "docs/reference/kubernetes-api/extend-resources/mutating-webhook-configuration-v1",
+    "docs/reference/kubernetes-api/workload-resources/pod-v1",
+    "docs/reference/labels-annotations-taints/_index",
+    "docs/reference/networking/virtual-ips",
+    "docs/reference/setup-tools/kubeadm/implementation-details",
+    "docs/reference/using-api/api-concepts",
+    "docs/setup/production-environment/tools/kubeadm/troubleshooting-kubeadm",
+    "docs/tasks/administer-cluster/dns-custom-nameservers",
+    "docs/tasks/administer-cluster/dns-debugging-resolution",
+    "docs/tasks/configure-pod-container/configure-service-account",
+    "docs/tasks/configure-pod-container/migrate-from-psp",
+    "docs/tasks/debug/debug-application/debug-service",
+    "docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning",
+    "docs/tutorials/security/seccomp",
+    "docs/tutorials/services/connect-applications-service",
+    "docs/tutorials/stateful-application/basic-stateful-set",
+    "docs/tutorials/stateful-application/cassandra"
+  ],
+  "support_targets_by_question": {
+    "kubernetes_website_docs_faq_0001": [
+      "docs/reference/access-authn-authz/admission-controllers",
+      "docs/reference/using-api/api-concepts",
+      "blog/_posts/2025/kubernetes-v1-34-release/index",
+      "docs/reference/access-authn-authz/extensible-admission-controllers",
+      "docs/concepts/workloads/pods/pod-lifecycle"
+    ],
+    "kubernetes_website_docs_faq_0002": [
+      "docs/reference/access-authn-authz/admission-controllers",
+      "blog/_posts/2020/topology-manager-beta",
+      "blog/_posts/2025/kubernetes-v1-35-release/index",
+      "docs/reference/networking/virtual-ips",
+      "docs/reference/labels-annotations-taints/_index"
+    ],
+    "kubernetes_website_docs_faq_0003": [
+      "docs/reference/access-authn-authz/admission-controllers",
+      "docs/reference/labels-annotations-taints/_index",
+      "blog/_posts/2019/a-guide-to-kubernetes-admission-controllers",
+      "docs/reference/setup-tools/kubeadm/implementation-details",
+      "blog/_posts/2021/pod-security-admission-beta"
+    ],
+    "kubernetes_website_docs_faq_0004": [
+      "docs/reference/access-authn-authz/admission-controllers",
+      "docs/reference/command-line-tools-reference/kube-apiserver",
+      "docs/concepts/storage/persistent-volumes",
+      "blog/_posts/2025/kubernetes-v1-35-release/index",
+      "docs/concepts/cluster-administration/flow-control"
+    ],
+    "kubernetes_website_docs_faq_0005": [
+      "docs/reference/access-authn-authz/admission-controllers",
+      "docs/reference/command-line-tools-reference/kube-apiserver",
+      "blog/_posts/2021/pod-security-admission-beta",
+      "docs/tasks/configure-pod-container/migrate-from-psp",
+      "blog/_posts/2019/a-guide-to-kubernetes-admission-controllers"
+    ],
+    "kubernetes_website_docs_faq_0006": [
+      "docs/reference/access-authn-authz/admission-controllers",
+      "docs/reference/labels-annotations-taints/_index",
+      "docs/reference/kubernetes-api/workload-resources/pod-v1",
+      "docs/concepts/scheduling-eviction/dynamic-resource-allocation",
+      "blog/_posts/2025/kubernetes-v1-35-release/index"
+    ],
+    "kubernetes_website_docs_faq_0007": [
+      "docs/reference/access-authn-authz/admission-controllers",
+      "docs/reference/labels-annotations-taints/_index",
+      "docs/concepts/storage/persistent-volumes",
+      "docs/reference/access-authn-authz/extensible-admission-controllers",
+      "docs/reference/access-authn-authz/authentication"
+    ],
+    "kubernetes_website_docs_faq_0008": [
+      "docs/reference/access-authn-authz/extensible-admission-controllers",
+      "docs/reference/using-api/api-concepts",
+      "docs/reference/access-authn-authz/authentication",
+      "docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning",
+      "docs/reference/kubernetes-api/extend-resources/mutating-webhook-configuration-v1"
+    ],
+    "kubernetes_website_docs_faq_0009": [
+      "docs/tasks/administer-cluster/dns-debugging-resolution",
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/tutorials/services/connect-applications-service",
+      "docs/tutorials/stateful-application/cassandra",
+      "docs/reference/networking/virtual-ips"
+    ],
+    "kubernetes_website_docs_faq_0010": [
+      "docs/tasks/administer-cluster/dns-debugging-resolution",
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/tutorials/services/connect-applications-service",
+      "docs/reference/networking/virtual-ips",
+      "docs/concepts/services-networking/service"
+    ],
+    "kubernetes_website_docs_faq_0011": [
+      "docs/tasks/administer-cluster/dns-debugging-resolution",
+      "docs/tasks/administer-cluster/dns-custom-nameservers",
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/reference/using-api/api-concepts",
+      "docs/reference/labels-annotations-taints/_index"
+    ],
+    "kubernetes_website_docs_faq_0012": [
+      "docs/tasks/administer-cluster/dns-debugging-resolution",
+      "docs/reference/labels-annotations-taints/_index",
+      "docs/setup/production-environment/tools/kubeadm/troubleshooting-kubeadm",
+      "docs/reference/access-authn-authz/rbac",
+      "docs/tasks/configure-pod-container/configure-service-account"
+    ],
+    "kubernetes_website_docs_faq_0013": [
+      "docs/tasks/administer-cluster/dns-debugging-resolution",
+      "docs/reference/kubernetes-api/workload-resources/pod-v1",
+      "docs/tutorials/stateful-application/basic-stateful-set",
+      "docs/reference/using-api/api-concepts",
+      "docs/reference/labels-annotations-taints/_index"
+    ],
+    "kubernetes_website_docs_faq_0014": [
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/reference/kubernetes-api/workload-resources/pod-v1",
+      "docs/concepts/workloads/pods/pod-lifecycle",
+      "docs/concepts/workloads/controllers/job",
+      "docs/reference/networking/virtual-ips"
+    ],
+    "kubernetes_website_docs_faq_0015": [
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/reference/labels-annotations-taints/_index",
+      "docs/reference/networking/virtual-ips",
+      "blog/_posts/2025/kubernetes-v1-34-release/index",
+      "blog/_posts/2026/kubernetes-v1-36-release/index"
+    ],
+    "kubernetes_website_docs_faq_0016": [
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/reference/kubernetes-api/workload-resources/pod-v1",
+      "docs/concepts/services-networking/service",
+      "docs/reference/networking/virtual-ips",
+      "docs/concepts/services-networking/dns-pod-service"
+    ],
+    "kubernetes_website_docs_faq_0017": [
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/reference/networking/virtual-ips",
+      "docs/reference/kubernetes-api/workload-resources/pod-v1",
+      "docs/tutorials/stateful-application/basic-stateful-set",
+      "docs/concepts/workloads/controllers/job"
+    ],
+    "kubernetes_website_docs_faq_0018": [
+      "docs/tasks/debug/debug-application/debug-service",
+      "blog/_posts/2016/why-kubernetes-doesnt-use-libnetwork",
+      "docs/tutorials/stateful-application/basic-stateful-set",
+      "docs/reference/kubernetes-api/workload-resources/pod-v1",
+      "blog/_posts/2021/kubernetes-in-kubernetes-and-pxe-bootable-server-farm"
+    ],
+    "kubernetes_website_docs_faq_0019": [
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/reference/kubernetes-api/workload-resources/pod-v1",
+      "docs/concepts/services-networking/service",
+      "docs/reference/networking/virtual-ips",
+      "docs/tutorials/security/seccomp"
+    ],
+    "kubernetes_website_docs_faq_0020": [
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/reference/networking/virtual-ips",
+      "docs/concepts/workloads/pods/pod-lifecycle",
+      "docs/reference/labels-annotations-taints/_index",
+      "docs/concepts/services-networking/service"
+    ],
+    "kubernetes_website_docs_faq_0021": [
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/reference/kubernetes-api/workload-resources/pod-v1",
+      "docs/reference/using-api/api-concepts",
+      "docs/reference/labels-annotations-taints/_index",
+      "docs/concepts/scheduling-eviction/dynamic-resource-allocation"
+    ],
+    "kubernetes_website_docs_faq_0022": [
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/concepts/services-networking/service",
+      "blog/_posts/2019/kubernetes-1-16-release-announcement",
+      "docs/setup/production-environment/tools/kubeadm/troubleshooting-kubeadm",
+      "docs/reference/labels-annotations-taints/_index"
+    ],
+    "kubernetes_website_docs_faq_0023": [
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/reference/networking/virtual-ips",
+      "docs/reference/labels-annotations-taints/_index",
+      "blog/_posts/2018/ipvs-in-cluster-load-balancing",
+      "docs/concepts/services-networking/service"
+    ],
+    "kubernetes_website_docs_faq_0024": [
+      "docs/tasks/debug/debug-application/debug-service",
+      "docs/reference/labels-annotations-taints/_index",
+      "blog/_posts/2026/kubernetes-v1-36-release/index",
+      "docs/concepts/services-networking/service",
+      "docs/reference/networking/virtual-ips"
+    ]
+  },
+  "supported_question_ids": [
+    "kubernetes_website_docs_faq_0001",
+    "kubernetes_website_docs_faq_0002",
+    "kubernetes_website_docs_faq_0003",
+    "kubernetes_website_docs_faq_0004",
+    "kubernetes_website_docs_faq_0005",
+    "kubernetes_website_docs_faq_0006",
+    "kubernetes_website_docs_faq_0007",
+    "kubernetes_website_docs_faq_0008",
+    "kubernetes_website_docs_faq_0009",
+    "kubernetes_website_docs_faq_0010",
+    "kubernetes_website_docs_faq_0011",
+    "kubernetes_website_docs_faq_0012",
+    "kubernetes_website_docs_faq_0013",
+    "kubernetes_website_docs_faq_0014",
+    "kubernetes_website_docs_faq_0015",
+    "kubernetes_website_docs_faq_0016",
+    "kubernetes_website_docs_faq_0017",
+    "kubernetes_website_docs_faq_0018",
+    "kubernetes_website_docs_faq_0019",
+    "kubernetes_website_docs_faq_0020",
+    "kubernetes_website_docs_faq_0021",
+    "kubernetes_website_docs_faq_0022",
+    "kubernetes_website_docs_faq_0023",
+    "kubernetes_website_docs_faq_0024"
+  ]
+}

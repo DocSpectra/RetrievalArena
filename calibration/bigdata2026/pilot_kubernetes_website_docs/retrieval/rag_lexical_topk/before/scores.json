@@ -1,0 +1,31 @@
+{
+  "build_context": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_lexical_topk",
+  "completed_at": "2026-05-27T06:45:06.028351+00:00",
+  "config_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_kubernetes_website_docs_before.yaml",
+  "container_metadata": {
+    "deterministic": true,
+    "max_context_chars_per_doc": 1500,
+    "name": "rag_lexical_topk",
+    "ranker": "bm25",
+    "top_k": 5
+  },
+  "dataset": "kubernetes_website_docs",
+  "diagnostic_overlay": {
+    "diagnostic_trace_available": true,
+    "distance_overlay_available": true,
+    "graph_node_count": 1449,
+    "support_question_count": 24
+  },
+  "git_commit": "0a9db1cc8a03cdbbece5149a8b87e63182cf6cb0",
+  "image": "retrieval-arena/rag-lexical-topk:latest",
+  "match_percent": 0.0,
+  "mean_f1": 0.1523214639950202,
+  "mean_lexical_overlap": 0.10399045973829685,
+  "mean_precision": 0.14096129037135,
+  "mean_recall": 0.5210763367967781,
+  "num_questions": 24,
+  "retrieval_arena_version": "0.1.0",
+  "run_id": "f568db7fd7",
+  "started_at": "2026-05-27T06:44:36.401340+00:00",
+  "test": "rag_lexical_topk"
+}
