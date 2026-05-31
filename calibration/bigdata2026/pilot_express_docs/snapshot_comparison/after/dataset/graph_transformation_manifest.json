@@ -2,7 +2,7 @@
   "corpus_id": "express_docs",
   "created_at": "2026-05-26T10:51:02+00:00",
   "dataset_preparation_manifest_hash": "b928d682fd8da2254a7e5acbeef7778d6c679bf26c43b6ae5ca63f12ea0828ea",
-  "dataset_preparation_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\dataset\\dataset_preparation_manifest.json",
+  "dataset_preparation_manifest_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\dataset\\dataset_preparation_manifest.json",
   "edge_count": 29,
   "edge_file": "graph_edges.csv",
   "edge_file_hash": "4445f9dd2506040c8adfc58cdd37ef7b7c6a3b192b4b5cc21351abb47484f852",

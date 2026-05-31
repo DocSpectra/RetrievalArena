@@ -1,8 +1,8 @@
-experiment_name: cikm_pilot_python312
+experiment_name: docs_pilot_argo_cd_docs
 
 datasets:
-  - name: python312
-    path: ../../DocSpectraCIKM2026/processed/python312
+  - name: argo_cd_docs
+    path: ../processed/argo_cd_docs
 
 tests:
   - name: oracle_perfect
@@ -50,10 +50,10 @@ tests:
     build_context: ../tests/rag_embedding_topk
     network_disabled: true
     volumes:
-      - host_path: ../../DocSpectraCIKM2026/analysis/model_provenance
+      - host_path: ../analysis/model_provenance
         container_path: /model_provenance
         read_only: true
-      - host_path: ../../DocSpectraCIKM2026/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+      - host_path: ../models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
         container_path: /models/minilm
         read_only: true
     config:
@@ -134,34 +134,15 @@ tests:
       max_context_chars_per_doc: 1200
       directed: false
       experiment_id: E007a
-
-  - name: rag_directed_spectral_rerank
-    image: retrieval-arena/rag-directed-spectral-rerank:latest
-    build_context: ../tests/rag_directed_spectral_rerank
-    network_disabled: true
-    config:
-      seed_top_k: 5
-      final_top_k: 5
-      directed_neighbor_budget: 8
-      global_prior_top_k: 10
-      pagerank_weight: 0.18
-      authority_weight: 0.22
-      hub_weight: -0.04
-      forward_link_bonus: 0.08
-      backward_link_bonus: 0.03
-      spectral_iterations: 40
-      pagerank_damping: 0.85
-      max_context_chars_per_doc: 1200
-      experiment_id: E008
   - name: rag_semantic_graph_rerank_e009a
     image: retrieval-arena/rag-semantic-graph-rerank:latest
     build_context: ../tests/rag_semantic_graph_rerank
     network_disabled: true
     volumes:
-      - host_path: ../../DocSpectraCIKM2026/analysis/model_provenance
+      - host_path: ../analysis/model_provenance
         container_path: /model_provenance
         read_only: true
-      - host_path: ../../DocSpectraCIKM2026/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+      - host_path: ../models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
         container_path: /models/minilm
         read_only: true
     config:
@@ -188,10 +169,10 @@ tests:
     build_context: ../tests/rag_semantic_graph_rerank
     network_disabled: true
     volumes:
-      - host_path: ../../DocSpectraCIKM2026/analysis/model_provenance
+      - host_path: ../analysis/model_provenance
         container_path: /model_provenance
         read_only: true
-      - host_path: ../../DocSpectraCIKM2026/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+      - host_path: ../models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
         container_path: /models/minilm
         read_only: true
     config:
@@ -218,10 +199,10 @@ tests:
     build_context: ../tests/rag_semantic_graph_rerank
     network_disabled: true
     volumes:
-      - host_path: ../../DocSpectraCIKM2026/analysis/model_provenance
+      - host_path: ../analysis/model_provenance
         container_path: /model_provenance
         read_only: true
-      - host_path: ../../DocSpectraCIKM2026/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+      - host_path: ../models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
         container_path: /models/minilm
         read_only: true
     config:
@@ -263,5 +244,6 @@ scoring:
   method: lexical_baseline
   match_threshold: 0.5
 
-output_dir: ../../DocSpectraCIKM2026/reports/retrieval_arena
+output_dir: ../reports/retrieval_arena
+
 

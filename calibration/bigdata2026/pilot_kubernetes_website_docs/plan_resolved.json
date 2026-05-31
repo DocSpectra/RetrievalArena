@@ -8,7 +8,7 @@
     "include_results": true,
     "require_safe_to_redistribute": true
   },
-  "calibration_store": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_kubernetes_website_docs",
+  "calibration_store": "calibration\\bigdata2026\\pilot_kubernetes_website_docs",
   "comparisons": [
     {
       "after_run_selector": {
@@ -78,13 +78,13 @@
     }
   ],
   "corpus_id": "kubernetes_website_docs",
-  "output_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_kubernetes_website_docs",
+  "output_root": "reports\\bigdata2026\\pilot_kubernetes_website_docs",
   "pilot_id": "pilot_kubernetes_website_docs_2026_05_01_to_2026_05_26",
-  "plan_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\pilot_kubernetes_website_docs.json",
+  "plan_path": "configs\\bigdata2026\\pilot_kubernetes_website_docs.json",
   "query_set_id": "kubernetes-website-docs-pilot-queries",
   "retrieval": {
-    "after_config": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_kubernetes_website_docs_after.yaml",
-    "before_config": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_kubernetes_website_docs_before.yaml",
+    "after_config": "configs\\bigdata2026\\retrieval_kubernetes_website_docs_after.yaml",
+    "before_config": "configs\\bigdata2026\\retrieval_kubernetes_website_docs_before.yaml",
     "selected_dataset": "kubernetes_website_docs",
     "selected_tests": [
       "rag_lexical_topk",
@@ -105,13 +105,13 @@
   "snapshot_pair": {
     "after": {
       "snapshot_id": "2026-05-26",
-      "source_descriptor": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\corpus_sources\\kubernetes_website_docs_2026_05_26_local.json"
+      "source_descriptor": "configs\\corpus_sources\\kubernetes_website_docs_2026_05_26_local.json"
     },
     "before": {
       "snapshot_id": "2026-05-01",
-      "source_descriptor": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\corpus_sources\\kubernetes_website_docs_2026_05_01_local.json"
+      "source_descriptor": "configs\\corpus_sources\\kubernetes_website_docs_2026_05_01_local.json"
     },
-    "comparison_plan": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\snapshot_comparison_kubernetes_website_docs.json"
+    "comparison_plan": "configs\\bigdata2026\\snapshot_comparison_kubernetes_website_docs.json"
   },
   "stages": [
     "prerequisites",

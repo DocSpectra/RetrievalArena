@@ -2,7 +2,7 @@
   "corpus_id": "express_docs",
   "created_at": "2026-05-26T10:51:02+00:00",
   "dataset_preparation_manifest_hash": "b928d682fd8da2254a7e5acbeef7778d6c679bf26c43b6ae5ca63f12ea0828ea",
-  "dataset_preparation_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\dataset\\dataset_preparation_manifest.json",
+  "dataset_preparation_manifest_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\dataset\\dataset_preparation_manifest.json",
   "is_clean_qa_surface": true,
   "manifest_hash": "859b241fe4fa10b704681b2792685dbd18607b165421a561491b855aa040c34a",
   "manifest_type": "support_construction",

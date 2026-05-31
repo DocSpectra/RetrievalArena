@@ -1,8 +1,8 @@
-experiment_name: cikm_pilot_ansible_docs
+experiment_name: docs_pilot_kubernetes_website_docs
 
 datasets:
-  - name: ansible_docs
-    path: ../../DocSpectraCIKM2026/processed/ansible_docs
+  - name: kubernetes_website_docs
+    path: ../processed/kubernetes_website_docs
 
 tests:
   - name: oracle_perfect
@@ -50,10 +50,10 @@ tests:
     build_context: ../tests/rag_embedding_topk
     network_disabled: true
     volumes:
-      - host_path: ../../DocSpectraCIKM2026/analysis/model_provenance
+      - host_path: ../analysis/model_provenance
         container_path: /model_provenance
         read_only: true
-      - host_path: ../../DocSpectraCIKM2026/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+      - host_path: ../models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
         container_path: /models/minilm
         read_only: true
     config:
@@ -134,16 +134,15 @@ tests:
       max_context_chars_per_doc: 1200
       directed: false
       experiment_id: E007a
-
   - name: rag_semantic_graph_rerank_e009a
     image: retrieval-arena/rag-semantic-graph-rerank:latest
     build_context: ../tests/rag_semantic_graph_rerank
     network_disabled: true
     volumes:
-      - host_path: ../../DocSpectraCIKM2026/analysis/model_provenance
+      - host_path: ../analysis/model_provenance
         container_path: /model_provenance
         read_only: true
-      - host_path: ../../DocSpectraCIKM2026/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+      - host_path: ../models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
         container_path: /models/minilm
         read_only: true
     config:
@@ -170,10 +169,10 @@ tests:
     build_context: ../tests/rag_semantic_graph_rerank
     network_disabled: true
     volumes:
-      - host_path: ../../DocSpectraCIKM2026/analysis/model_provenance
+      - host_path: ../analysis/model_provenance
         container_path: /model_provenance
         read_only: true
-      - host_path: ../../DocSpectraCIKM2026/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+      - host_path: ../models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
         container_path: /models/minilm
         read_only: true
     config:
@@ -200,10 +199,10 @@ tests:
     build_context: ../tests/rag_semantic_graph_rerank
     network_disabled: true
     volumes:
-      - host_path: ../../DocSpectraCIKM2026/analysis/model_provenance
+      - host_path: ../analysis/model_provenance
         container_path: /model_provenance
         read_only: true
-      - host_path: ../../DocSpectraCIKM2026/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
+      - host_path: ../models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf
         container_path: /models/minilm
         read_only: true
     config:
@@ -245,4 +244,7 @@ scoring:
   method: lexical_baseline
   match_threshold: 0.5
 
-output_dir: ../../DocSpectraCIKM2026/reports/retrieval_arena
+output_dir: ../reports/retrieval_arena
+
+
+

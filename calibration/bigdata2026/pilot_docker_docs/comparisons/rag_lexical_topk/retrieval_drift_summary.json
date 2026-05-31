@@ -7,7 +7,7 @@
     "query_set_id": "docker-docs-pilot-queries",
     "retrieval_config_hash": "b589d0a04004208378a9203afbfe2fa9112695460ecb6faea7bbb453de0507a8",
     "retrieval_config_id": "rag_lexical_topk",
-    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__rag_lexical_topk__e5f1715e35",
+    "run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__rag_lexical_topk__e5f1715e35",
     "run_id": "e5f1715e35",
     "support_surface_id": "2026-05-26",
     "test": "rag_lexical_topk"
@@ -74,7 +74,7 @@
     "query_set_id": "docker-docs-pilot-queries",
     "retrieval_config_hash": "253f40bcc5009ef9d37cf94d8c2cb6ae911bf2841e2db3f14746e538b83407bd",
     "retrieval_config_id": "rag_lexical_topk",
-    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__rag_lexical_topk__e5f1715e35",
+    "run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__rag_lexical_topk__e5f1715e35",
     "run_id": "e5f1715e35",
     "support_surface_id": "2026-05-01",
     "test": "rag_lexical_topk"

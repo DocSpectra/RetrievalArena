@@ -2,7 +2,7 @@ experiment_name: E001b__Semantic_Search__NoAgent__LocalNoContextLLM__minidocs
 
 datasets:
   - name: minidocs
-    path: ../../DocSpectraCIKM2026/processed/minidocs
+    path: ../processed/minidocs
 
 tests:
   - name: local_no_context_llm_e001b
@@ -23,4 +23,4 @@ scoring:
   method: lexical_baseline
   match_threshold: 0.5
 
-output_dir: ../../DocSpectraCIKM2026/reports/retrieval_arena
+output_dir: ../reports/retrieval_arena

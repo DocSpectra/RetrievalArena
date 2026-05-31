@@ -7,7 +7,7 @@
     "query_set_id": "kubernetes-website-docs-pilot-queries",
     "retrieval_config_hash": "e2f244b4e07f086f1d8eaf7c865bf684410c41da607210d4d161e26e804be661",
     "retrieval_config_id": "rag_iterative_search",
-    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_iterative_search__84f8ed5227",
+    "run_dir": "results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_iterative_search__84f8ed5227",
     "run_id": "84f8ed5227",
     "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
     "support_surface_id": "2026-05-26",
@@ -21,7 +21,7 @@
     "query_set_id": "kubernetes-website-docs-pilot-queries",
     "retrieval_config_hash": "7f878d965e5c7a3b1221ddb92815657ba90a83e10f8f5bce5b90116c666512ce",
     "retrieval_config_id": "rag_iterative_search",
-    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_iterative_search__84f8ed5227",
+    "run_dir": "results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_iterative_search__84f8ed5227",
     "run_id": "84f8ed5227",
     "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
     "support_surface_id": "2026-05-01",
@@ -107,24 +107,24 @@
   },
   "input_artifacts": {
     "after_replay_manifest": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_iterative_search__84f8ed5227\\retrieval_replay_manifest.json",
+      "path": "results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_iterative_search__84f8ed5227\\retrieval_replay_manifest.json",
       "sha256": "3a9449a10bd5e281addaa1495e3ac92ea8f88eff1577b5e0fc7d642240b734f4",
       "size_bytes": 488667
     },
-    "after_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_iterative_search__84f8ed5227",
+    "after_run_dir": "results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_iterative_search__84f8ed5227",
     "before_replay_manifest": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_iterative_search__84f8ed5227\\retrieval_replay_manifest.json",
+      "path": "results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_iterative_search__84f8ed5227\\retrieval_replay_manifest.json",
       "sha256": "592b1d220ee9b74c3e65c35f9eb9a4a87a1f2be94766fbabc1a05463acc65517",
       "size_bytes": 477261
     },
-    "before_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_iterative_search__84f8ed5227",
+    "before_run_dir": "results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_iterative_search__84f8ed5227",
     "drift_jsonl": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_kubernetes_website_docs\\comparisons\\rag_iterative_search\\retrieval_drift.jsonl",
+      "path": "reports\\bigdata2026\\pilot_kubernetes_website_docs\\comparisons\\rag_iterative_search\\retrieval_drift.jsonl",
       "sha256": "03c109e5ee42d0fcd10696292f951d2c74fe0668c0472ef9cc040f58b65c625a",
       "size_bytes": 52072
     },
     "drift_summary_json": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_kubernetes_website_docs\\comparisons\\rag_iterative_search\\retrieval_drift_summary.json",
+      "path": "reports\\bigdata2026\\pilot_kubernetes_website_docs\\comparisons\\rag_iterative_search\\retrieval_drift_summary.json",
       "sha256": "807e55f37a286bc8399c7f35d4e1942669e36de5d8b783c0f8461a7691038ceb",
       "size_bytes": 5010
     }

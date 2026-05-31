@@ -8,7 +8,7 @@
     "include_results": true,
     "require_safe_to_redistribute": true
   },
-  "calibration_store": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\calibration\\bigdata2026\\pilot_express_docs",
+  "calibration_store": "calibration\\bigdata2026\\pilot_express_docs",
   "comparisons": [
     {
       "after_run_selector": {
@@ -78,13 +78,13 @@
     }
   ],
   "corpus_id": "express_docs",
-  "output_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_express_docs",
+  "output_root": "reports\\bigdata2026\\pilot_express_docs",
   "pilot_id": "pilot_express_docs_2025_09_20_to_2026_03_30",
-  "plan_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\pilot_express_docs.json",
+  "plan_path": "configs\\bigdata2026\\pilot_express_docs.json",
   "query_set_id": "express-docs-pilot-queries",
   "retrieval": {
-    "after_config": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_express_docs_after.yaml",
-    "before_config": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_express_docs_before.yaml",
+    "after_config": "configs\\bigdata2026\\retrieval_express_docs_after.yaml",
+    "before_config": "configs\\bigdata2026\\retrieval_express_docs_before.yaml",
     "selected_dataset": "express_docs",
     "selected_tests": [
       "rag_lexical_topk",
@@ -105,13 +105,13 @@
   "snapshot_pair": {
     "after": {
       "snapshot_id": "2026-03-30",
-      "source_descriptor": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\corpus_sources\\express_docs_2026_03_30.json"
+      "source_descriptor": "configs\\corpus_sources\\express_docs_2026_03_30.json"
     },
     "before": {
       "snapshot_id": "2025-09-20",
-      "source_descriptor": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\corpus_sources\\express_docs_2025_09_20.json"
+      "source_descriptor": "configs\\corpus_sources\\express_docs_2025_09_20.json"
     },
-    "comparison_plan": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\snapshot_comparison_express_docs.json"
+    "comparison_plan": "configs\\bigdata2026\\snapshot_comparison_express_docs.json"
   },
   "stages": [
     "prerequisites",

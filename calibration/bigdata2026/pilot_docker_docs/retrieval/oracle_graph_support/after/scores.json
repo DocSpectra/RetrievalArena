@@ -1,7 +1,7 @@
 {
-  "build_context": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\oracle_graph_support",
+  "build_context": "tests\\oracle_graph_support",
   "completed_at": "2026-05-26T10:16:45.539438+00:00",
-  "config_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_docker_docs_after.yaml",
+  "config_path": "configs\\bigdata2026\\retrieval_docker_docs_after.yaml",
   "container_metadata": {
     "deterministic": true,
     "diagnostic": true,

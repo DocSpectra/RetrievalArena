@@ -12,7 +12,7 @@
   "requested_ref": "76547a84dfd051bf751fa1366e2346451c2c8915",
   "schema_version": "retrieval_arena.corpus_source_descriptor.v1",
   "snapshot_id": "2026-05-26",
-  "source_path": "../../../../../DocSpectraCIKM2026/git/DocSpectraCIKM2026/raw/docker_docs",
+  "source_path": "../../raw/docker_docs",
   "source_type": "git",
   "source_url": "https://github.com/docker/docs"
 }

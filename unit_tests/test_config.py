@@ -13,8 +13,8 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(config.tests[0].build_context.exists())
 
 
-    def test_loads_cikm_configs_with_oracle_graph_support(self):
-        for path in sorted(Path("configs").glob("cikm_pilot_*.yaml")):
+    def test_loads_docs_pilot_configs_with_oracle_graph_support(self):
+        for path in sorted(Path("configs").glob("docs_pilot_*.yaml")):
             config = load_config(path)
             tests = {test.name: test for test in config.tests}
             self.assertIn("oracle_graph_support", tests)
@@ -23,7 +23,7 @@ class ConfigTests(unittest.TestCase):
             self.assertIn("rag_graph_multihop_rerank", tests)
             self.assertEqual(tests["rag_graph_multihop_rerank"].config["experiment_id"], "E006")
             self.assertTrue(tests["rag_graph_multihop_rerank"].build_context.exists())
-            if path.name in {"cikm_pilot_django_docs.yaml", "cikm_pilot_python312.yaml"}:
+            if path.name in {"docs_pilot_django_docs.yaml", "docs_pilot_python312.yaml"}:
                 self.assertIn("rag_directed_spectral_rerank", tests)
                 self.assertEqual(tests["rag_directed_spectral_rerank"].config["experiment_id"], "E008")
                 self.assertTrue(tests["rag_directed_spectral_rerank"].build_context.exists())
@@ -42,7 +42,7 @@ class ConfigTests(unittest.TestCase):
                 self.assertEqual(tests[test_name].config["embedding_backend"], "sentence_transformers_local")
                 self.assertTrue(tests[test_name].network_disabled)
                 self.assertTrue(tests[test_name].build_context.exists())
-            if path.name == "cikm_pilot_django_docs.yaml":
+            if path.name == "docs_pilot_django_docs.yaml":
                 self.assertIn("rag_random_seed_graph_traversal", tests)
                 e010 = tests["rag_random_seed_graph_traversal"]
                 self.assertEqual(e010.config["experiment_id"], "E010")
@@ -57,7 +57,7 @@ class ConfigTests(unittest.TestCase):
                 self.assertTrue(e010.build_context.exists())
 
     def test_loads_minilm_smoke_with_e009(self):
-        config = load_config("configs/cikm_minilm_smoke.yaml")
+        config = load_config("configs/minilm_smoke.yaml")
         tests = {test.name: test for test in config.tests}
 
         self.assertIn("rag_embedding_topk", tests)

@@ -3,10 +3,10 @@
   "before_descriptor": "../corpus_sources/docker_docs_2026_05_01.json",
   "comparison_id": "bigdata2026_docker_docs_2026_05_01_to_2026_05_26",
   "corpus_id": "docker_docs",
-  "answers_path": "../../../../../DocSpectraCIKM2026/git/DocSpectraCIKM2026/processed/docker_docs/answers.jsonl",
+  "answers_path": "../../processed/docker_docs/answers.jsonl",
   "output_dir": "../../reports/bigdata2026/pilot_docker_docs/snapshot_comparison",
   "query_set_id": "docker-docs-pilot-queries",
-  "questions_path": "../../../../../DocSpectraCIKM2026/git/DocSpectraCIKM2026/processed/docker_docs/questions.jsonl",
+  "questions_path": "../../processed/docker_docs/questions.jsonl",
   "graph": {
     "enabled": true,
     "method": "markdown_links"

@@ -1,7 +1,7 @@
 {
-  "build_context": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_iterative_search",
+  "build_context": "tests\\rag_iterative_search",
   "completed_at": "2026-05-27T06:48:25.571946+00:00",
-  "config_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_kubernetes_website_docs_after.yaml",
+  "config_path": "configs\\bigdata2026\\retrieval_kubernetes_website_docs_after.yaml",
   "container_metadata": {
     "deterministic": true,
     "directed": false,

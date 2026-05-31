@@ -7,7 +7,7 @@
     "query_set_id": "docker-docs-pilot-queries",
     "retrieval_config_hash": "b589d0a04004208378a9203afbfe2fa9112695460ecb6faea7bbb453de0507a8",
     "retrieval_config_id": "oracle_graph_support",
-    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__oracle_graph_support__4fb90fc63f",
+    "run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__oracle_graph_support__4fb90fc63f",
     "run_id": "4fb90fc63f",
     "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
     "support_surface_id": "2026-05-26",
@@ -21,7 +21,7 @@
     "query_set_id": "docker-docs-pilot-queries",
     "retrieval_config_hash": "253f40bcc5009ef9d37cf94d8c2cb6ae911bf2841e2db3f14746e538b83407bd",
     "retrieval_config_id": "oracle_graph_support",
-    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__oracle_graph_support__4fb90fc63f",
+    "run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__oracle_graph_support__4fb90fc63f",
     "run_id": "4fb90fc63f",
     "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
     "support_surface_id": "2026-05-01",
@@ -92,29 +92,29 @@
   },
   "input_artifacts": {
     "after_replay_manifest": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__oracle_graph_support__4fb90fc63f\\retrieval_replay_manifest.json",
+      "path": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__oracle_graph_support__4fb90fc63f\\retrieval_replay_manifest.json",
       "sha256": "306d9043e0715cdb13200f3e81c23e79e2081a5c668ea7e04f8ced6750bdd816",
       "size_bytes": 226150
     },
-    "after_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__oracle_graph_support__4fb90fc63f",
+    "after_run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__oracle_graph_support__4fb90fc63f",
     "before_replay_manifest": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__oracle_graph_support__4fb90fc63f\\retrieval_replay_manifest.json",
+      "path": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__oracle_graph_support__4fb90fc63f\\retrieval_replay_manifest.json",
       "sha256": "ddd1a97a51d353d46d6ed9b906aff23130a4d376f6681e2582e3649d68e438d6",
       "size_bytes": 225429
     },
-    "before_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__oracle_graph_support__4fb90fc63f",
+    "before_run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__oracle_graph_support__4fb90fc63f",
     "drift_jsonl": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_docker_docs\\comparisons\\oracle_graph_support\\retrieval_drift.jsonl",
+      "path": "reports\\bigdata2026\\pilot_docker_docs\\comparisons\\oracle_graph_support\\retrieval_drift.jsonl",
       "sha256": "fa744c882dba05db2588e4c721833041c0b9e43b63dd84ebe0e08f9dd42cc620",
       "size_bytes": 333742
     },
     "drift_summary_json": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_docker_docs\\comparisons\\oracle_graph_support\\retrieval_drift_summary.json",
+      "path": "reports\\bigdata2026\\pilot_docker_docs\\comparisons\\oracle_graph_support\\retrieval_drift_summary.json",
       "sha256": "185820dca640e6c28ceafc8f2470e22bc570f0f1730da4a1667c2d4325975b15",
       "size_bytes": 4916
     },
     "snapshot_diff_json": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\snapshot_diff.json",
+      "path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\snapshot_diff.json",
       "sha256": "19e4cac1fd3b21051c908defe2dcb0a420660d92f4db7c92b3593354f8c33315",
       "size_bytes": 148876
     }

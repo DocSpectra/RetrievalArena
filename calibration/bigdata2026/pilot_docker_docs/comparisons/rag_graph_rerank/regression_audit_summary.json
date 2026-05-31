@@ -7,7 +7,7 @@
     "query_set_id": "docker-docs-pilot-queries",
     "retrieval_config_hash": "b589d0a04004208378a9203afbfe2fa9112695460ecb6faea7bbb453de0507a8",
     "retrieval_config_id": "rag_graph_rerank",
-    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__rag_graph_rerank__7a725e977b",
+    "run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__rag_graph_rerank__7a725e977b",
     "run_id": "7a725e977b",
     "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
     "support_surface_id": "2026-05-26",
@@ -21,7 +21,7 @@
     "query_set_id": "docker-docs-pilot-queries",
     "retrieval_config_hash": "253f40bcc5009ef9d37cf94d8c2cb6ae911bf2841e2db3f14746e538b83407bd",
     "retrieval_config_id": "rag_graph_rerank",
-    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__rag_graph_rerank__7a725e977b",
+    "run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__rag_graph_rerank__7a725e977b",
     "run_id": "7a725e977b",
     "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
     "support_surface_id": "2026-05-01",
@@ -92,29 +92,29 @@
   },
   "input_artifacts": {
     "after_replay_manifest": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__rag_graph_rerank__7a725e977b\\retrieval_replay_manifest.json",
+      "path": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__rag_graph_rerank__7a725e977b\\retrieval_replay_manifest.json",
       "sha256": "1d1dd7bb099b371db34de4229980f1a8d3973fae1e067f1ce84acf1b3f6ef084",
       "size_bytes": 226138
     },
-    "after_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__rag_graph_rerank__7a725e977b",
+    "after_run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__rag_graph_rerank__7a725e977b",
     "before_replay_manifest": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__rag_graph_rerank__7a725e977b\\retrieval_replay_manifest.json",
+      "path": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__rag_graph_rerank__7a725e977b\\retrieval_replay_manifest.json",
       "sha256": "5349364028134fe7452ac0cd86a0cc92eb2172115971cf37d0b21089ac047ed1",
       "size_bytes": 225417
     },
-    "before_run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__rag_graph_rerank__7a725e977b",
+    "before_run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__rag_graph_rerank__7a725e977b",
     "drift_jsonl": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_docker_docs\\comparisons\\rag_graph_rerank\\retrieval_drift.jsonl",
+      "path": "reports\\bigdata2026\\pilot_docker_docs\\comparisons\\rag_graph_rerank\\retrieval_drift.jsonl",
       "sha256": "9297f0aa93e5950b95450d3d46cc5a79d01cf8390542a2f7d0f134d82b3cd728",
       "size_bytes": 333166
     },
     "drift_summary_json": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_docker_docs\\comparisons\\rag_graph_rerank\\retrieval_drift_summary.json",
+      "path": "reports\\bigdata2026\\pilot_docker_docs\\comparisons\\rag_graph_rerank\\retrieval_drift_summary.json",
       "sha256": "929880ed8f84d6b6d265e5aaec03e9ae83a4d7afbf7720272c96c1beca9cc0d6",
       "size_bytes": 4892
     },
     "snapshot_diff_json": {
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\snapshot_diff.json",
+      "path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\snapshot_diff.json",
       "sha256": "19e4cac1fd3b21051c908defe2dcb0a420660d92f4db7c92b3593354f8c33315",
       "size_bytes": 148876
     }

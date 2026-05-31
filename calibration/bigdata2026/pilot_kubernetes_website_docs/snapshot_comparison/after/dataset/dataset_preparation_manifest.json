@@ -8,7 +8,7 @@
   "corpus_directory_hash": "ada205fa15e27c88cc4509e4c6c59a8f58e6aa9fd65910dc41e40f1dab030bbf",
   "corpus_id": "kubernetes_website_docs",
   "created_at": "2026-05-27T06:42:47+00:00",
-  "dataset_output_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_kubernetes_website_docs\\snapshot_comparison\\after\\dataset",
+  "dataset_output_path": "reports\\bigdata2026\\pilot_kubernetes_website_docs\\snapshot_comparison\\after\\dataset",
   "document_inventory": [
     {
       "doc_id": "_common-resources/index",
@@ -17021,7 +17021,7 @@
   ],
   "graph_edge_file_hash": null,
   "import_manifest_hash": "c881bae30b830a50b84c1de61d33c4cf2cc3f78eee5edba869cd2d7ee4cfc373",
-  "import_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\raw\\corpus_imports\\kubernetes_website_docs\\2026-05-26\\corpus_import_manifest.json",
+  "import_manifest_path": "raw\\corpus_imports\\kubernetes_website_docs\\2026-05-26\\corpus_import_manifest.json",
   "input_snapshot_identity_hash": "e402de6279f37ac00fa7c4e500f968656578711145c032f1b4da7019ac13d57b",
   "manifest_hash": "b777f999b4048f9befa3643706ec2e22222eef52d81e82a678ae7a9844954646",
   "manifest_type": "dataset_preparation",

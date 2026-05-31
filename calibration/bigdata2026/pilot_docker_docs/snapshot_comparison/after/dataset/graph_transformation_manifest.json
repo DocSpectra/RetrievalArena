@@ -2,7 +2,7 @@
   "corpus_id": "docker_docs",
   "created_at": "2026-05-26T10:14:23+00:00",
   "dataset_preparation_manifest_hash": "a3ef88ab855ef063dd5e667324910460006a800d455f31459ee21fc9d0ccd6f2",
-  "dataset_preparation_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\dataset\\dataset_preparation_manifest.json",
+  "dataset_preparation_manifest_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\dataset\\dataset_preparation_manifest.json",
   "edge_count": 2503,
   "edge_file": "graph_edges.csv",
   "edge_file_hash": "0d42e653038a4fe54b14fd57e98dc2798c08abc1b890a0706e12d423530031d1",

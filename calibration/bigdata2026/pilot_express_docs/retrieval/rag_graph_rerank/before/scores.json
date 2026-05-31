@@ -1,7 +1,7 @@
 {
-  "build_context": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\tests\\rag_graph_rerank",
+  "build_context": "tests\\rag_graph_rerank",
   "completed_at": "2026-05-26T10:51:13.470513+00:00",
-  "config_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\configs\\bigdata2026\\retrieval_express_docs_before.yaml",
+  "config_path": "configs\\bigdata2026\\retrieval_express_docs_before.yaml",
   "container_metadata": {
     "deterministic": true,
     "final_ranker": "bm25",

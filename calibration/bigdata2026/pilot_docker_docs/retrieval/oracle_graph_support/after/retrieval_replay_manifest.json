@@ -9,7 +9,7 @@
     "ref": null,
     "ref_commit": null,
     "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
-    "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
+    "repo_root": ".",
     "tag": null,
     "untracked_files": [
       "configs/bigdata2026/pilot_docker_docs.json",
@@ -34,7 +34,7 @@
     "ref": null,
     "ref_commit": null,
     "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
-    "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
+    "repo_root": ".",
     "tag": null,
     "untracked_files": [
       "configs/bigdata2026/pilot_docker_docs.json",
@@ -5076,7 +5076,7 @@
     "ref": null,
     "ref_commit": null,
     "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
-    "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
+    "repo_root": ".",
     "tag": null,
     "untracked_files": [
       "configs/bigdata2026/pilot_docker_docs.json",
@@ -5100,19 +5100,19 @@
     "corpus": {
       "manifest_hash": "822c736431dc0d63a9167a00d6ee05cb5a62761fbbd5759085e6b2c7081fdb88",
       "manifest_type": "corpus_snapshot",
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
+      "path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
       "snapshot_id": "2026-05-26"
     },
     "graph": {
       "manifest_hash": "b22090594523cf6c354495f50e73352e6a311c9c19a885ac554b923fef571354",
       "manifest_type": "graph_snapshot",
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\snapshot_manifests\\graph_snapshot_manifest.json",
+      "path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\snapshot_manifests\\graph_snapshot_manifest.json",
       "snapshot_id": "2026-05-26"
     },
     "support_surface": {
       "manifest_hash": "795923dd2c7612eea51a267f2c0118e73d6b603fef88e1208dddc521fe6ea6b1",
       "manifest_type": "support_surface",
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\snapshot_manifests\\support_surface_manifest.json",
+      "path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\snapshot_manifests\\support_surface_manifest.json",
       "snapshot_id": "2026-05-26"
     }
   },

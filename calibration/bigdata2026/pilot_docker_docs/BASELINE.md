@@ -17,7 +17,7 @@ graph edges, and 11 changed support questions.
 
 ## Family Matrix
 
-The baseline runs the same six CIKM-derived retrieval families used by the
+The baseline runs the same six shared retrieval families used by the
 Express family-matrix baseline:
 
 - `rag_lexical_topk`

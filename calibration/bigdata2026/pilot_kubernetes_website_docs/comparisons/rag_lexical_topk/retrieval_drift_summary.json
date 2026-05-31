@@ -7,7 +7,7 @@
     "query_set_id": "kubernetes-website-docs-pilot-queries",
     "retrieval_config_hash": "e2f244b4e07f086f1d8eaf7c865bf684410c41da607210d4d161e26e804be661",
     "retrieval_config_id": "rag_lexical_topk",
-    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_lexical_topk__f568db7fd7",
+    "run_dir": "results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_lexical_topk__f568db7fd7",
     "run_id": "f568db7fd7",
     "support_surface_id": "2026-05-26",
     "test": "rag_lexical_topk"
@@ -74,7 +74,7 @@
     "query_set_id": "kubernetes-website-docs-pilot-queries",
     "retrieval_config_hash": "7f878d965e5c7a3b1221ddb92815657ba90a83e10f8f5bce5b90116c666512ce",
     "retrieval_config_id": "rag_lexical_topk",
-    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_lexical_topk__f568db7fd7",
+    "run_dir": "results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_lexical_topk__f568db7fd7",
     "run_id": "f568db7fd7",
     "support_surface_id": "2026-05-01",
     "test": "rag_lexical_topk"

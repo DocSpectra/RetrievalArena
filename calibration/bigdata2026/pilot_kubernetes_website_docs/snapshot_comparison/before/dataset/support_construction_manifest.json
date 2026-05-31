@@ -2,7 +2,7 @@
   "corpus_id": "kubernetes_website_docs",
   "created_at": "2026-05-27T06:42:47+00:00",
   "dataset_preparation_manifest_hash": "4703479c3cb1d023d3a6e5f8c6bfd77c775a7d429d7cabdbbb12d2c4ab13de66",
-  "dataset_preparation_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_kubernetes_website_docs\\snapshot_comparison\\before\\dataset\\dataset_preparation_manifest.json",
+  "dataset_preparation_manifest_path": "reports\\bigdata2026\\pilot_kubernetes_website_docs\\snapshot_comparison\\before\\dataset\\dataset_preparation_manifest.json",
   "is_clean_qa_surface": false,
   "manifest_hash": "d5f4cb4f84083571237678afddcc8506dc20f1b1a7b078c365d6daa2d5a2c1fa",
   "manifest_type": "support_construction",

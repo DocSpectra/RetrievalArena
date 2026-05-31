@@ -9,7 +9,7 @@
     "ref": null,
     "ref_commit": null,
     "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
-    "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
+    "repo_root": ".",
     "tag": null,
     "untracked_files": [
       "configs/bigdata2026/pilot_kubernetes_website_docs.json",
@@ -34,7 +34,7 @@
     "ref": null,
     "ref_commit": null,
     "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
-    "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
+    "repo_root": ".",
     "tag": null,
     "untracked_files": [
       "configs/bigdata2026/pilot_kubernetes_website_docs.json",
@@ -9577,7 +9577,7 @@
     "ref": null,
     "ref_commit": null,
     "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
-    "repo_root": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena",
+    "repo_root": ".",
     "tag": null,
     "untracked_files": [
       "configs/bigdata2026/pilot_kubernetes_website_docs.json",
@@ -9601,19 +9601,19 @@
     "corpus": {
       "manifest_hash": "b6e48d2c4e026fc48446a25547fa9e710d420e8da1cdd37792df4717e711966f",
       "manifest_type": "corpus_snapshot",
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_kubernetes_website_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
+      "path": "reports\\bigdata2026\\pilot_kubernetes_website_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
       "snapshot_id": "2026-05-01"
     },
     "graph": {
       "manifest_hash": "44656dcdeadd41c7437d7ec346247bdda46584def90554784ac94c8d160b136a",
       "manifest_type": "graph_snapshot",
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_kubernetes_website_docs\\snapshot_comparison\\before\\snapshot_manifests\\graph_snapshot_manifest.json",
+      "path": "reports\\bigdata2026\\pilot_kubernetes_website_docs\\snapshot_comparison\\before\\snapshot_manifests\\graph_snapshot_manifest.json",
       "snapshot_id": "2026-05-01"
     },
     "support_surface": {
       "manifest_hash": "520854195e33a5dee4d7a6b5b7db7a076090c7f533c055aaad32425704833af6",
       "manifest_type": "support_surface",
-      "path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_kubernetes_website_docs\\snapshot_comparison\\before\\snapshot_manifests\\support_surface_manifest.json",
+      "path": "reports\\bigdata2026\\pilot_kubernetes_website_docs\\snapshot_comparison\\before\\snapshot_manifests\\support_surface_manifest.json",
       "snapshot_id": "2026-05-01"
     }
   },

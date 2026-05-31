@@ -7,7 +7,7 @@
     "query_set_id": "express-docs-pilot-queries",
     "retrieval_config_hash": "04b843670063367e6bfb9a9039467bba5c1708468d7938e7c7380153229b08dc",
     "retrieval_config_id": "oracle_graph_support",
-    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__oracle_graph_support__fb402f1d83",
+    "run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__oracle_graph_support__fb402f1d83",
     "run_id": "fb402f1d83",
     "support_surface_id": "2026-03-30",
     "test": "oracle_graph_support"
@@ -74,7 +74,7 @@
     "query_set_id": "express-docs-pilot-queries",
     "retrieval_config_hash": "78c0468a22a6d73701478e5d472da022869b16779f3a0d1cedf831d39c8bf158",
     "retrieval_config_id": "oracle_graph_support",
-    "run_dir": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__oracle_graph_support__fb402f1d83",
+    "run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__oracle_graph_support__fb402f1d83",
     "run_id": "fb402f1d83",
     "support_surface_id": "2025-09-20",
     "test": "oracle_graph_support"

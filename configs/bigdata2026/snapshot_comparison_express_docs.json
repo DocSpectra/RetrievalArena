@@ -3,10 +3,10 @@
   "before_descriptor": "../corpus_sources/express_docs_2025_09_20.json",
   "comparison_id": "bigdata2026_express_docs_2025_09_20_to_2026_03_30",
   "corpus_id": "express_docs",
-  "answers_path": "../../../../../DocSpectraCIKM2026/git/DocSpectraCIKM2026/processed/express_docs/answers.jsonl",
+  "answers_path": "../../processed/express_docs/answers.jsonl",
   "output_dir": "../../reports/bigdata2026/pilot_express_docs/snapshot_comparison",
   "query_set_id": "express-docs-pilot-queries",
-  "questions_path": "../../../../../DocSpectraCIKM2026/git/DocSpectraCIKM2026/processed/express_docs/questions.jsonl",
+  "questions_path": "../../processed/express_docs/questions.jsonl",
   "graph": {
     "enabled": true,
     "method": "markdown_links"

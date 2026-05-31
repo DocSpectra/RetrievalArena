@@ -2,7 +2,7 @@
   "corpus_id": "docker_docs",
   "created_at": "2026-05-26T10:14:23+00:00",
   "dataset_preparation_manifest_hash": "a3ef88ab855ef063dd5e667324910460006a800d455f31459ee21fc9d0ccd6f2",
-  "dataset_preparation_manifest_path": "C:\\Users\\rocke\\Documents\\ResearchProjects\\DocSpectraBigData2026\\git\\RetrievalArena\\reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\dataset\\dataset_preparation_manifest.json",
+  "dataset_preparation_manifest_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\dataset\\dataset_preparation_manifest.json",
   "is_clean_qa_surface": true,
   "manifest_hash": "38f223280a896bbe120b70b403f2f473dddbf88c9e3fa22fdde6563ec7adad22",
   "manifest_type": "support_construction",
