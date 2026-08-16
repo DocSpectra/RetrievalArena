@@ -57,6 +57,35 @@ retriever/context budget and be frozen before outcome inspection.
    and diagnostic metrics.
 7. A compatibility rule for v1 answer-scoring artifacts.
 
+## Build, adopt, delegate, or replace
+
+PRE-S019q-32A must test whether RetrievalArena remains the right product
+boundary. The candidates have materially different roles:
+
+| Candidate | Established role | Initial fit assessment |
+| --- | --- | --- |
+| NIST `trec_eval` | Reference implementation for TREC-style qrels and ranked runs | Strong canonical scoring/parity authority; weak orchestration and DocSpectra provenance |
+| `pytrec_eval` | Python binding to `trec_eval` | Standard formulas, but native build and packaging require capsule review |
+| `ir_measures` | Typed common interface over multiple accepted metric providers | Strong leading candidate for delegated standard scoring and provider cross-checks |
+| `ranx` | Fast ranking evaluation, statistical comparison, and fusion | Strong comparison tooling; fusion/optimization is outside the frozen evaluator role |
+| BEIR | Heterogeneous retrieval benchmark and reference-model ecosystem | Useful external benchmark/sensitivity surface, not a replacement for project-specific qrels or workflow evidence |
+| RAGAS | Reference-free/model-assisted RAG component evaluation | Useful optional generation diagnostic; model dependence conflicts with a deterministic primary endpoint |
+| RAGChecker | Fine-grained retrieval/generation diagnosis | Useful secondary scientific diagnostic; does not replace exact ranked-run scoring and governance provenance |
+| RetrievalArena | Before/after documentation evaluation, replay, drift, audit, reporting, and evidence export | Project-specific control/evidence shell; its custom standard-metric arithmetic should be challenged |
+
+The initial architecture hypothesis is **delegate, do not replace**:
+RetrievalArena retains dataset admission, agentic/action traces, before/after
+revision pairing, replay identities, drift/audit, reports, and paper-evidence
+export, while an accepted pinned engine computes standard ranked metrics from
+canonical qrels/run records. A second independent engine should verify a
+small frozen parity corpus. This is only a hypothesis until 32A closes license,
+dependency, offline capsule, semantic, and migration evidence.
+
+Replacement remains viable if another tool can own all required provenance
+without a parallel RA shell. Conversely, retaining RA unchanged requires
+evidence that custom formulas provide a scientific capability unavailable in
+accepted engines. Existing code is not sufficient justification.
+
 ## Implementation map after design acceptance
 
 - `retrieval_arena/schemas.py`: dataset/qrels and ranked-run admission.
@@ -75,6 +104,9 @@ Before implementation, freeze ranked-item identity, relevance scale, support
 semantics, cutoffs, tie and duplicate rules, missing/unjudged behavior,
 aggregation unit, uncertainty inputs, primary endpoint, multiplicity policy,
 and v1 compatibility. No E-EXP1 result may be opened to make these choices.
+Also freeze the evaluator/tool disposition, standard-scoring owner, parity
+oracle, dependency/image pin, and responsibility boundary between generic IR
+evaluation and DocSpectra-specific observability.
 
 ## Sources for the full review
 
@@ -85,6 +117,8 @@ and v1 compatibility. No E-EXP1 result may be opened to make these choices.
 - CIKM 2024, *An Evaluation Framework for Attributed Information Retrieval
   using Large Language Models*, DOI `10.1145/3627673.3679172`.
 - WSDM 2025 proceedings and LLM4Eval workshop record.
+- NIST `trec_eval`; `pytrec_eval` (SIGIR 2018); `ir_measures` (ECIR 2022);
+  `ranx` (ECIR 2022) and its CIKM 2022 fusion extension; BEIR and its SIGIR
+  2024 reproducibility resources; RAGAS (EACL 2024); and RAGChecker.
 - Recent official TREC, WSDM, CIKM, and SDM retrieval/ranking papers selected
   by PRE-S019q-32A's documented inclusion criteria.
-
