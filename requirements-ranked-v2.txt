@@ -1,0 +1,6 @@
+# Exact development/runtime dependency closure for ranked-retrieval v2.
+# Platform wheel hashes are captured by the Capstone capsule lock in 32C.
+ir-measures==0.4.3
+pytrec-eval-terrier==0.5.10
+numpy==2.5.2
+scipy==1.18.0

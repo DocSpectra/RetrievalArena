@@ -57,7 +57,7 @@ unique canonical targets at ranks `1..k`, and `rel_q(i)` registered relevance.
 
 - Primary: `Recall@k(q) = |G_q intersect R_q(k)| / |G_q|`.
 - Secondary: `CompleteSupport@k(q) = 1` iff `G_q subset R_q(k)`, else zero.
-- Secondary: `DCG@k = sum((2^rel_i-1)/log2(i+1))`; nDCG divides by ideal DCG.
+- Secondary: `DCG@k = sum(rel_i/log2(i+1))`; nDCG divides by ideal DCG.
 - Secondary: reciprocal rank is `1/r` for the first positive rank `r <= k`,
   else zero; MRR is its query macro-average.
 
@@ -123,7 +123,7 @@ Fields: `schema_version`, `query_id`, `context_item_budget_k`, `max_rank`,
 
 Fields: `schema_version`, `policy_id`, primary `evidence_recall`, ordered
 secondary metrics `[complete_support, ndcg, reciprocal_rank]`, one cutoff bound
-to `context_item_budget_k`, `gain=exp2`, `discount=log2_rank_plus_one`,
+to `context_item_budget_k`, `gain=identity`, `discount=log2_rank_plus_one`,
 `aggregation=query_macro`, `uncertainty_unit=connected_support_group`, qrels,
 unjudged, tie, and duplicate policies, engine/provider names and versions,
 engine artifact hash, parity oracle/version/corpus hash, optional registered

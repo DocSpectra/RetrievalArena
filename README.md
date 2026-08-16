@@ -55,5 +55,15 @@ python -m retrieval_arena.cli report evidence --bundle calibration\bigdata2026\p
 python -m unittest discover -s unit_tests
 ```
 
+Ranked-retrieval v2 uses strict qrels, run, and policy artifacts and delegates
+standard arithmetic to pinned `ir-measures==0.4.3`:
+
+```powershell
+python -m retrieval_arena.cli score-ranked --dataset <dataset.json> --qrels <qrels.jsonl> --predictions <predictions.jsonl> --policy <policy.json> --out-dir <output>
+```
+
+The primary result is macro evidence Recall@k at the registered model
+context-item budget. See the [accepted specification](docs/ranked_retrieval_metrics_v2_plan.md).
+
 Use `python -m retrieval_arena.cli validate --config <config>` for the
 deterministic output-contract gate on standard RetrievalArena experiments.

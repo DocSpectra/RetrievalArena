@@ -5,6 +5,8 @@ flowchart LR
   transform --> dataset_manifest["Dataset preparation manifest\ninput snapshot identity\ndocument IDs\noutput dataset identity"]
   dataset_manifest --> snapshot["Snapshot manifests\ncorpus\ngraph\nsupport surface"]
   snapshot --> test["Test\nretrieval runs\ncontainer outputs\nscoring"]
+  test --> ranked["Ranked v2 scoring\nstrict qrels and runs\npinned ir_measures provider\nper-query availability"]
+  ranked --> replay
   test --> replay["Replay manifests\nconfig\nsoftware\ninput/output hashes"]
   snapshot --> analyze["Analyze\nsnapshot diff\ngraph/support drift\nretrieval drift"]
   replay --> replay_compare["Replay comparison\nbehavior equality\nprovenance differences\nartifact equality"]

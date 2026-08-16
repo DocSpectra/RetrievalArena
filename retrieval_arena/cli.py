@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -22,6 +23,7 @@ from .commands import (
 from .corpus.comparison import run_corpus_snapshot_comparison
 from .errors import RetrievalArenaError
 from .replay_manifests import manifest_json_text
+from .ranked_scoring import score_ranked_files
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -38,6 +40,12 @@ def build_parser() -> argparse.ArgumentParser:
     compare_git.add_argument("--out-dir", help="Base output directory for planned isolated runs.")
     validate = subparsers.add_parser("validate", help="Run Phase 1 automated validation gate.")
     validate.add_argument("--config", required=True, help="Path to experiment YAML config.")
+    ranked = subparsers.add_parser("score-ranked", help="Score strict ranked-retrieval v2 artifacts.")
+    ranked.add_argument("--dataset", required=True)
+    ranked.add_argument("--qrels", required=True)
+    ranked.add_argument("--predictions", required=True)
+    ranked.add_argument("--policy", required=True)
+    ranked.add_argument("--out-dir", required=True)
     provenance = subparsers.add_parser("provenance", help="Inspect provenance sources.")
     provenance_subparsers = provenance.add_subparsers(dest="provenance_command", required=True)
     git = provenance_subparsers.add_parser("git", help="Print Git provenance for a path.")
@@ -144,6 +152,9 @@ def main(argv: list[str] | None = None) -> int:
                 print(run_experiment(args.config)["summary"])
         elif args.command == "validate":
             print(validate_experiment(args.config)["summary"])
+        elif args.command == "score-ranked":
+            result = score_ranked_files(Path(args.dataset), Path(args.qrels), Path(args.predictions), Path(args.policy), Path(args.out_dir))
+            print(json.dumps(result["aggregate"], sort_keys=True))
         elif args.command == "provenance" and args.provenance_command == "git":
             print(manifest_json_text(git_provenance(Path(args.path), ref=args.ref)["provenance"]), end="")
         elif args.command == "replay" and args.replay_command == "compare":
