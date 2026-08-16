@@ -22,6 +22,99 @@ Generic scoring belongs to accepted IR engines. Retrieval Arena owns dataset
 and run admission, DocSpectra support semantics, before/after pairing, action
 traces, replay identity, availability, audit, reporting, and evidence export.
 
+## Metric guide
+
+In this specification, an **endpoint** is an experimental outcome measure. It
+is not an HTTP endpoint, API service, or network connection. Ranked scoring is
+local and deterministic once the qrels, predictions, policy, and pinned metric
+engine are present.
+
+All four v2 metrics examine the same first `k` unique support targets, but they
+answer different questions:
+
+### Evidence Recall@k
+
+**Question:** How much of the required evidence did retrieval place inside the
+model's usable context?
+
+For each query, it divides the number of required support targets retrieved in
+the first `k` positions by the total number of required support targets. A
+score of `1.0` means all required evidence was available; `0.5` means half was
+available. It gives partial credit and directly matches DocSpectra's main claim
+about improving evidence availability. The reported primary endpoint is the
+macro-average across queries, so each query has equal weight.
+
+### Complete-support@k
+
+**Question:** Did retrieval obtain every required support target?
+
+This project-specific diagnostic is binary per query: `1` only when the first
+`k` items contain the complete required-support set, otherwise `0`. It is more
+strict than Recall@k and is useful when an answer may be unsafe or incomplete
+after omitting even one required source. It does not show whether a failed
+query missed one target or nearly all of them.
+
+### nDCG@k
+
+**Question:** Were relevant support targets placed near the top in a good
+order?
+
+Discounted cumulative gain rewards relevant items more when they appear at
+earlier ranks. Normalization divides by the best possible ordering for that
+query, producing a value between `0` and `1`. nDCG is especially informative
+with graded relevance. E-EXP1 currently uses binary judgments, so nDCG mainly
+adds rank sensitivity rather than richer importance information.
+
+### MRR@k
+
+**Question:** How quickly did retrieval produce its first relevant support
+target?
+
+Reciprocal rank is `1/r`, where `r` is the first relevant rank at or before
+`k`; it is zero when no relevant item appears. Mean reciprocal rank averages
+that value across queries. MRR is intuitive for first-hit tasks, but it ignores
+all relevant evidence after the first hit and therefore cannot measure
+multi-support completeness.
+
+### Legacy lexical F1
+
+**Question:** How much token overlap exists between generated and reference
+answer text?
+
+Lexical F1 is retained for v1 compatibility and answer-overlap diagnostics.
+It does not measure ranked retrieval: an answer can share many words with a
+reference while relying on missing evidence, or use different wording despite
+retrieving the correct evidence. It is not a v2 retrieval endpoint.
+
+### Shared example
+
+Suppose a query requires support targets `{A, B, C}`, the context budget is
+`k=3`, and retrieval returns `[A, X, B]`.
+
+- Evidence Recall@3 is `2/3`, because `A` and `B` were retrieved but `C` was
+  missed.
+- Complete-support@3 is `0`, because the required set is incomplete.
+- nDCG@3 receives credit for `A` at rank 1 and less credit for `B` at rank 3;
+  it is below the ideal score of `1.0`.
+- Reciprocal rank is `1.0`, because the first retrieved item is relevant. This
+  illustrates why MRR alone would hide the missing `C`.
+- Lexical F1 cannot be inferred from the ranking at all; it requires generated
+  and reference answer text.
+
+## Metric comparison
+
+| Metric | Primary question | Partial credit | Rank-sensitive | Multi-support coverage | Main blind spot | Role in E-EXP1 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Evidence Recall@k | How much required evidence is in context? | Yes | No, within top `k` | Yes | Does not distinguish rank 1 from rank `k` | Primary |
+| Complete-support@k | Is every required target in context? | No | No | Yes, strict all-or-nothing | Hides how close an incomplete result was | Secondary |
+| nDCG@k | Is relevant evidence ordered near the top? | Yes | Yes | Yes | Binary labels limit graded usefulness | Secondary |
+| MRR@k | How early is the first relevant target? | Yes | Yes | No, only first hit | Ignores later required evidence | Secondary |
+| Lexical F1 | Does answer wording overlap the reference? | Yes | Not applicable | No | Is not retrieval effectiveness | Legacy diagnostic |
+
+No single metric should be treated as a composite quality score. The primary
+endpoint answers the preregistered evidence-availability question; secondary
+metrics explain completeness and ranking behavior without replacing it.
+
 ## Scientific unit
 
 The endpoint asks whether a documentation revision makes the evidence required

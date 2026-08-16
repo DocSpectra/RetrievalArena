@@ -63,7 +63,9 @@ python -m retrieval_arena.cli score-ranked --dataset <dataset.json> --qrels <qre
 ```
 
 The primary result is macro evidence Recall@k at the registered model
-context-item budget. See the [accepted specification](docs/ranked_retrieval_metrics_v2_plan.md).
+context-item budget. See the specification's
+[plain-language metric guide and comparison](docs/ranked_retrieval_metrics_v2_plan.md#metric-guide)
+before the formal contracts and formulas.
 
 Use `python -m retrieval_arena.cli validate --config <config>` for the
 deterministic output-contract gate on standard RetrievalArena experiments.
