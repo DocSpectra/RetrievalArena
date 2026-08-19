@@ -10,6 +10,23 @@ from .html_report import assemble_report_data
 EVIDENCE_EXPORT_SCHEMA_VERSION = "retrieval_arena.paper_evidence_export.v1"
 
 
+def build_profile_evidence(result: dict[str, Any], replay: dict[str, Any]) -> dict[str, Any]:
+    """Export identity evidence for exactly one isolated result family."""
+    family = result["result_family"]
+    if replay["result_family"] != family:
+        raise ValueError("evaluation result/replay family mismatch")
+    return {
+        "schema_version": f"retrieval_arena.{family}_evidence.v1",
+        "evaluation_profile": result["evaluation_profile"],
+        "result_sha256": result["result_sha256"],
+        "replay_sha256": replay["replay_sha256"],
+        "input_hashes": result["input_hashes"],
+        "metric_family_labels": sorted(result["metric_families"]),
+        "standard_and_project_specific_separated": True,
+        "composite_metric": None,
+    }
+
+
 def export_paper_evidence(bundle_root: Path, out_dir: Path) -> dict[str, Any]:
     bundle_root = bundle_root.resolve()
     out_dir.mkdir(parents=True, exist_ok=True)

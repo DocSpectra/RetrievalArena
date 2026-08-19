@@ -24,6 +24,9 @@ from .corpus.comparison import run_corpus_snapshot_comparison
 from .errors import RetrievalArenaError
 from .replay_manifests import manifest_json_text
 from .ranked_scoring import score_ranked_files
+from .profile_evaluation import evaluate_profile_files
+from .review_packets import build_review_packet, import_judgments
+from .schemas import read_jsonl
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -46,6 +49,18 @@ def build_parser() -> argparse.ArgumentParser:
     ranked.add_argument("--predictions", required=True)
     ranked.add_argument("--policy", required=True)
     ranked.add_argument("--out-dir", required=True)
+    profile = subparsers.add_parser("evaluate-profile", help="Evaluate strict automatic or calibration profile artifacts.")
+    profile.add_argument("--config", required=True, help="Path to strict dual-profile JSON config.")
+    profile.add_argument("--out-dir", required=True, help="Directory for the isolated result family.")
+    review_export = subparsers.add_parser("export-review-packet", help="Export a deterministic blinded review packet.")
+    review_export.add_argument("--candidates", required=True, help="Review candidate JSONL artifact.")
+    review_export.add_argument("--policy", required=True, help="Review policy JSON artifact.")
+    review_export.add_argument("--out", required=True, help="Review packet JSON output path.")
+    judgment_import = subparsers.add_parser("import-judgments", help="Validate and import immutable external judgments.")
+    judgment_import.add_argument("--judgments", required=True, help="Completed judgment JSON artifact.")
+    judgment_import.add_argument("--packet", required=True, help="Frozen review packet JSON artifact.")
+    judgment_import.add_argument("--policy", required=True, help="Frozen review policy JSON artifact.")
+    judgment_import.add_argument("--out", required=True, help="Validated judgment-import JSON output path.")
     provenance = subparsers.add_parser("provenance", help="Inspect provenance sources.")
     provenance_subparsers = provenance.add_subparsers(dest="provenance_command", required=True)
     git = provenance_subparsers.add_parser("git", help="Print Git provenance for a path.")
@@ -155,6 +170,26 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "score-ranked":
             result = score_ranked_files(Path(args.dataset), Path(args.qrels), Path(args.predictions), Path(args.policy), Path(args.out_dir))
             print(json.dumps(result["aggregate"], sort_keys=True))
+        elif args.command == "evaluate-profile":
+            result = evaluate_profile_files(Path(args.config), Path(args.out_dir))
+            print(json.dumps({"evaluation_profile": result["result"]["evaluation_profile"], "result_sha256": result["result"]["result_sha256"]}, sort_keys=True))
+        elif args.command == "export-review-packet":
+            candidates = read_jsonl(Path(args.candidates))
+            policy = json.loads(Path(args.policy).read_text(encoding="utf-8"))
+            packet = build_review_packet(candidates, policy)
+            output = Path(args.out)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(packet, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+            print(json.dumps({"packet_sha256": packet["packet_sha256"], "primary_count": packet["primary_count"]}, sort_keys=True))
+        elif args.command == "import-judgments":
+            judgment = json.loads(Path(args.judgments).read_text(encoding="utf-8"))
+            packet = json.loads(Path(args.packet).read_text(encoding="utf-8"))
+            policy = json.loads(Path(args.policy).read_text(encoding="utf-8"))
+            imported = import_judgments(judgment, packet, policy)
+            output = Path(args.out)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(imported, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+            print(json.dumps({"import_sha256": imported["import_sha256"], "classification": imported["classification"]}, sort_keys=True))
         elif args.command == "provenance" and args.provenance_command == "git":
             print(manifest_json_text(git_provenance(Path(args.path), ref=args.ref)["provenance"]), end="")
         elif args.command == "replay" and args.replay_command == "compare":

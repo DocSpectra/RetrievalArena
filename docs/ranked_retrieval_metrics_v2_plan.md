@@ -1,7 +1,7 @@
 # Ranked-retrieval metrics v2 specification
 
-Status: accepted implemented v2 design; refinement-aware PRE-S019q-33L
-addendum ready for independent review
+Status: accepted implemented ranked-v2 design and implemented dual-profile
+PRE-S019q-33A contracts; independent 33A review pending
 
 Decision dates: 2026-08-15 (v2) and 2026-08-18 (refinement and BERTScore
 diagnostic addenda). Reference status: S01--S27 form the original verified
@@ -565,6 +565,29 @@ V1 artifacts remain readable only through existing legacy paths. They are
 never implicitly upgraded, assigned synthetic qrels, or compared numerically
 with v2. A later explicit converter must have stable item mappings and qrels
 and retain source/conversion hashes.
+
+The PRE-S019q-33A implementation preserves the same boundary. Its explicit
+dual-profile ingress consumes ranked-v2 artifacts and emits distinct
+`automatic_*` or `calibration_*` v1 result/replay families. It does not change
+v1 parsing or ranked-v2 schemas/arithmetic, manufacture qrels, or reinterpret
+either predecessor family. The complete operator and schema contract is
+[Dual-profile ranked evaluation](dual_profile_evaluation.md).
+
+## PRE-S019q-33A implementation
+
+The dual-profile core is corpus-neutral and lives entirely in Retrieval Arena.
+It adds strict profile, requirement, binding, lineage, BERTScore-provider,
+review-packet, judgment-import, result, evidence, audit, report, and replay
+contracts. Exact automatic lineage, RequirementCoverage@k and
+AllRequirements@k, optional offline provider-pinned BERTScore, deterministic
+blinded packet export, immutable judgment import, agreement, and
+calibration-only provider BPref implement the accepted 33L decisions without
+adding another standard endpoint or a composite.
+
+Human assessment remains an external activity. Retrieval Arena only exports
+and imports immutable artifacts. Automatic execution remains terminal when
+calibration is absent. No implementation path assumes a DocSpectra source
+layout, task pack, prompt, held-out root, or pipeline module.
 
 ## 32B acceptance
 

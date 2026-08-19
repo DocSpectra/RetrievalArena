@@ -42,6 +42,8 @@ def validate_ranked_inputs(
     qrels: list[dict[str, Any]],
     predictions: list[dict[str, Any]],
     policy: dict[str, Any],
+    *,
+    allow_zero_relevant: bool = False,
 ) -> tuple[dict[str, dict[str, int]], dict[str, dict[str, Any]]]:
     dataset_keys = {
         "schema_version", "dataset_id", "corpus_id", "query_set_id", "support_surface_id",
@@ -81,7 +83,7 @@ def validate_ranked_inputs(
             raise ValidationError(f"duplicate qrel pair: {qid}/{target}")
         qrels_by_query[qid][target] = relevance
     for qid, values in qrels_by_query.items():
-        if not any(value > 0 for value in values.values()):
+        if not any(value > 0 for value in values.values()) and not allow_zero_relevant:
             raise ValidationError(f"zero_relevant_items:{qid}")
 
     policy_keys = {

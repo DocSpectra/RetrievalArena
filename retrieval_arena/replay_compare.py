@@ -18,6 +18,21 @@ BEHAVIOR_ARTIFACTS = ("predictions.jsonl", "metadata.json", "item_scores.jsonl",
 VOLATILE_MANIFEST_FIELDS = ("created_at", "manifest_hash", "run_started_at", "run_completed_at")
 
 
+def compare_profile_replays(expected: dict[str, Any], actual: dict[str, Any]) -> dict[str, Any]:
+    """Compare only like-for-like versioned evaluation replay families."""
+    identity = (expected.get("schema_version"), expected.get("evaluation_profile"), expected.get("result_family"))
+    if identity != (actual.get("schema_version"), actual.get("evaluation_profile"), actual.get("result_family")):
+        raise ValidationError("profile replay family mismatch")
+    return {
+        "schema_version": "retrieval_arena.profile_replay_comparison.v1",
+        "evaluation_profile": expected["evaluation_profile"],
+        "result_family": expected["result_family"],
+        "matched_exactly": expected == actual,
+        "expected_replay_sha256": expected.get("replay_sha256"),
+        "actual_replay_sha256": actual.get("replay_sha256"),
+    }
+
+
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 

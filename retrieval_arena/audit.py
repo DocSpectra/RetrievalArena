@@ -42,6 +42,27 @@ CAUSE_LABEL_SCHEMA = {
 }
 
 
+def build_profile_audit(result: dict[str, Any], replay: dict[str, Any]) -> dict[str, Any]:
+    """Build a compact audit record without combining evaluation families."""
+    family = result["result_family"]
+    if family not in {"automatic", "calibration"}:
+        raise ValidationError("unsupported evaluation result family for audit")
+    if replay["result_family"] != family or replay["evaluation_profile"] != result["evaluation_profile"]:
+        raise ValidationError("evaluation result/replay profile mismatch")
+    return {
+        "schema_version": f"retrieval_arena.{family}_audit.v1",
+        "evaluation_profile": result["evaluation_profile"],
+        "classification": result["classification"],
+        "profile_isolated": True,
+        "interactive_human_work": False,
+        "runtime_network": False,
+        "composite_metric": None,
+        "result_sha256": result["result_sha256"],
+        "replay_sha256": replay["replay_sha256"],
+        "available_families": sorted(result["metric_families"]),
+    }
+
+
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 

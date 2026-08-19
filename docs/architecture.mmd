@@ -7,6 +7,12 @@ flowchart LR
   snapshot --> test["Test\nretrieval runs\ncontainer outputs\nscoring"]
   test --> ranked["Ranked v2 scoring\nstrict qrels and runs\npinned ir_measures provider\nper-query availability"]
   ranked --> replay
+  ranked --> profile["Dual-profile evaluation\noperational_automatic\nscientific_calibration"]
+  profile --> auto["Automatic result family\nstandard ranked metrics\nproject diagnostics\noffline answer diagnostics"]
+  profile --> packet["Deterministic blinded packet\nexternal human work"]
+  packet --> judgments["Immutable judgment import\nprovider BPref\nanswer and attribution families"]
+  auto --> replay
+  judgments --> replay
   test --> replay["Replay manifests\nconfig\nsoftware\ninput/output hashes"]
   snapshot --> analyze["Analyze\nsnapshot diff\ngraph/support drift\nretrieval drift"]
   replay --> replay_compare["Replay comparison\nbehavior equality\nprovenance differences\nartifact equality"]

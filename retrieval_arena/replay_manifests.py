@@ -228,3 +228,16 @@ def write_experiment_manifest(output_path: Path, **kwargs: Any) -> dict[str, Any
 
 def manifest_json_text(value: dict[str, Any]) -> str:
     return json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+
+def build_profile_replay_manifest(
+    *,
+    profile: str,
+    policy: dict[str, Any],
+    input_hashes: dict[str, str | None],
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    """Dispatch to the versioned automatic/calibration replay family."""
+    from .dual_profile import build_result_replay
+
+    return build_result_replay(profile=profile, policy=policy, input_hashes=input_hashes, result=result)
