@@ -9,6 +9,7 @@ flowchart LR
   ranked --> replay
   ranked --> profile["Dual-profile evaluation\noperational_automatic\nscientific_calibration"]
   profile --> auto["Automatic result family\nstandard ranked metrics\nproject diagnostics\noffline answer diagnostics"]
+  bertscore["Strict BERTScore artifact ingress\nhashed distribution tree\noffline guards\nprovider-bound scores"] --> auto
   profile --> packet["Deterministic blinded packet\nexternal human work"]
   packet --> judgments["Immutable judgment import\nprovider BPref\nanswer and attribution families"]
   auto --> replay
@@ -25,4 +26,5 @@ flowchart LR
   command["Command layer\nCLI and studies"] --> import
   command --> transform
   command --> test
+  command --> bertscore
   command --> analyze

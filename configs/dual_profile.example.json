@@ -1,5 +1,6 @@
 {
   "answer_pairs_path": null,
+  "automatic_qrels_snapshot_id": "before-snapshot-id",
   "automatic_qrels_path": "../fixtures/qrels.v2.jsonl",
   "bertscore_provider_path": null,
   "bertscore_scores_path": null,

@@ -63,6 +63,7 @@ standard arithmetic to pinned `ir-measures==0.4.3`:
 ```powershell
 python -m retrieval_arena.cli score-ranked --dataset <dataset.json> --qrels <qrels.jsonl> --predictions <predictions.jsonl> --policy <policy.json> --out-dir <output>
 python -m retrieval_arena.cli evaluate-profile --config <dual-profile.json> --out-dir <output>
+python -m retrieval_arena.cli score-bertscore --provider <provider.json> --answer-pairs <answers.jsonl> --out <scores.json>
 python -m retrieval_arena.cli export-review-packet --candidates <candidates.jsonl> --policy <review-policy.json> --out <packet.json>
 python -m retrieval_arena.cli import-judgments --judgments <judgments.json> --packet <packet.json> --policy <review-policy.json> --out <import.json>
 ```

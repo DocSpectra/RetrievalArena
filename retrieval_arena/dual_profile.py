@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import importlib.metadata
 import json
 import math
 import os
+import sys
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from .errors import ValidationError
 
@@ -18,6 +20,7 @@ SCHEMA_REQUIREMENTS = "retrieval_arena.evidence_requirements.v1"
 SCHEMA_BINDINGS = "retrieval_arena.requirement_bindings.v1"
 SCHEMA_REQUIREMENT_PREDICTION = "retrieval_arena.requirement_prediction.v1"
 SCHEMA_LINEAGE = "retrieval_arena.support_lineage.v1"
+SCHEMA_DESTINATION_QRELS = "retrieval_arena.destination_qrel_inventory.v1"
 SCHEMA_BERTSCORE_PROVIDER = "retrieval_arena.bertscore_provider.v1"
 SCHEMA_BERTSCORE_SCORES = "retrieval_arena.bertscore_scores.v1"
 SCHEMA_AUTOMATIC_RESULT = "retrieval_arena.automatic_result.v1"
@@ -492,6 +495,59 @@ def transfer_qrels(
     return [transferred[key] for key in sorted(transferred)]
 
 
+def compose_destination_qrels(
+    source_qrels: list[dict[str, Any]],
+    lineage_artifact: dict[str, Any],
+    source_snapshot_id: str,
+    destination_snapshot_id: str,
+    ordered_query_ids: list[str],
+    relevance_scale: str,
+) -> dict[str, Any]:
+    """Compose the destination inventory from admitted positive transfers only.
+
+    Source qrels are never copied directly. A source target appears at the
+    destination only when an admitted exact edge names it as the destination;
+    source negatives and non-transfer lineage classes remain unjudged.
+    """
+    _text(source_snapshot_id, "automatic qrels source snapshot")
+    _text(destination_snapshot_id, "automatic qrels destination snapshot")
+    validate_lineage(lineage_artifact)
+    if lineage_artifact["source_snapshot_id"] != source_snapshot_id:
+        raise ValidationError("automatic qrels source snapshot does not match support lineage")
+    if lineage_artifact["destination_snapshot_id"] != destination_snapshot_id:
+        raise ValidationError("automatic qrels destination snapshot does not match support lineage")
+    if (
+        not isinstance(ordered_query_ids, list)
+        or not ordered_query_ids
+        or ordered_query_ids != list(dict.fromkeys(ordered_query_ids))
+    ):
+        raise ValidationError("destination qrel composition requires ordered unique query IDs")
+    if relevance_scale not in {"binary", "integer_0_3"}:
+        raise ValidationError("destination qrel composition relevance scale is unsupported")
+    admitted_queries = set(ordered_query_ids)
+    for row in source_qrels:
+        if row.get("query_id") not in admitted_queries:
+            raise ValidationError("source qrel query is outside the destination query inventory")
+        if relevance_scale == "binary" and row.get("relevance") not in {0, 1}:
+            raise ValidationError("binary source qrels require relevance 0 or 1")
+    qrels = transfer_qrels(source_qrels, lineage_artifact)
+    inventory = {
+        "schema_version": SCHEMA_DESTINATION_QRELS,
+        "source_snapshot_id": source_snapshot_id,
+        "destination_snapshot_id": destination_snapshot_id,
+        "lineage_policy_id": lineage_artifact["policy_id"],
+        "lineage_sha256": lineage_artifact["lineage_sha256"],
+        "source_qrels_sha256": sha256_json(source_qrels),
+        "composition_policy": "positive_source_judgments_over_admitted_exact_edges_only",
+        "negative_transfer_policy": "forbidden_source_negatives_remain_unjudged",
+        "ordered_query_ids_sha256": sha256_json(ordered_query_ids),
+        "relevance_scale": relevance_scale,
+        "qrels": qrels,
+        "destination_qrels_sha256": sha256_json(qrels),
+    }
+    return inventory
+
+
 def score_requirements(
     requirements_by_query: dict[str, list[dict[str, Any]]],
     bindings: dict[tuple[str, str], dict[str, list[dict[str, Any]]]],
@@ -672,44 +728,82 @@ def run_bertscore_offline(
     registration: dict[str, Any],
     base_dir: Path,
     answer_pairs: list[dict[str, str]],
-    score_callable: Callable[..., tuple[Any, Any, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Run an admitted local BERTScore provider without permitting downloads.
-
-    Tests may inject the exact provider callable; production imports only the
-    registered package after every local artifact is admitted.
-    """
+    """Run only the exact registered local BERTScore distribution tree."""
     validate_bertscore_provider(registration, base_dir)
-    provider_injected = score_callable is not None
-    if score_callable is not None and (
-        getattr(score_callable, "provider_id", None) != registration["provider_id"]
-        or getattr(score_callable, "provider_sha256", None) != registration["provider_sha256"]
-    ):
-        raise ValidationError("unregistered BERTScore provider substitution")
-    if score_callable is None:
-        try:
-            if importlib.metadata.version("bert-score") != registration["package_version"]:
-                raise ValidationError("BERTScore package version mismatch")
-            from bert_score import score as score_callable  # type: ignore[no-redef]
-        except importlib.metadata.PackageNotFoundError as exc:
-            raise ValidationError("BERTScore package unavailable") from exc
-        except ImportError as exc:
-            raise ValidationError("BERTScore provider import unavailable") from exc
+    seen_queries: set[str] = set()
+    for row in answer_pairs:
+        _exact(row, {"query_id", "generated_answer", "reference_answer"}, "BERTScore answer pair")
+        qid = _text(row["query_id"], "BERTScore answer-pair query_id")
+        _text(row["generated_answer"], "BERTScore generated answer")
+        _text(row["reference_answer"], "BERTScore reference answer")
+        if qid in seen_queries:
+            raise ValidationError(f"duplicate BERTScore answer pair:{qid}")
+        seen_queries.add(qid)
+    package_root = Path(registration["package_artifact_path"])
+    if not package_root.is_absolute():
+        package_root = (base_dir / package_root).resolve()
+    if not package_root.is_dir():
+        raise ValidationError("BERTScore executable package artifact must be a registered distribution directory")
+    package_dir = package_root / "bert_score"
+    metadata_dirs = sorted(package_root.glob("*.dist-info"))
+    if not (package_dir / "__init__.py").is_file() or len(metadata_dirs) != 1:
+        raise ValidationError("BERTScore registered distribution tree is incomplete or ambiguous")
+    metadata_path = metadata_dirs[0] / "METADATA"
+    if not metadata_path.is_file():
+        raise ValidationError("BERTScore registered distribution metadata missing")
+    metadata_fields: dict[str, str] = {}
+    for line in metadata_path.read_text(encoding="utf-8").splitlines():
+        if ":" in line:
+            name, value = line.split(":", 1)
+            if name in {"Name", "Version"} and name not in metadata_fields:
+                metadata_fields[name] = value.strip()
+    if metadata_fields != {"Name": registration["package_name"], "Version": registration["package_version"]}:
+        raise ValidationError("BERTScore registered distribution name/version mismatch")
     model_path = Path(registration["model_artifact_path"])
     if not model_path.is_absolute():
         model_path = (base_dir / model_path).resolve()
     tokenizer_path = Path(registration["tokenizer_artifact_path"])
     if not tokenizer_path.is_absolute():
         tokenizer_path = (base_dir / tokenizer_path).resolve()
-    if not provider_injected and tokenizer_path != model_path:
+    if tokenizer_path != model_path:
         raise ValidationError("BERTScore runtime requires the pinned tokenizer to be co-located with the local checkpoint")
     baseline_path = registration["baseline_artifact_path"]
     if baseline_path is not None:
         baseline_path = str((base_dir / baseline_path).resolve()) if not Path(baseline_path).is_absolute() else baseline_path
     previous = {name: os.environ.get(name) for name in ("HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE")}
+    previous_modules = {
+        name: module
+        for name, module in list(sys.modules.items())
+        if name == "bert_score" or name.startswith("bert_score.")
+    }
+    for name in previous_modules:
+        del sys.modules[name]
+    previous_dont_write_bytecode = sys.dont_write_bytecode
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
+    sys.dont_write_bytecode = True
+    sys.path.insert(0, str(package_root))
     try:
+        importlib.invalidate_caches()
+        try:
+            provider_module = importlib.import_module("bert_score")
+        except ImportError as exc:
+            raise ValidationError("BERTScore registered provider import unavailable") from exc
+        loaded_provider_modules = {
+            name: module
+            for name, module in sys.modules.items()
+            if name == "bert_score" or name.startswith("bert_score.")
+        }
+        if not loaded_provider_modules:
+            raise ValidationError("BERTScore registered provider import unavailable")
+        for name, module in loaded_provider_modules.items():
+            module_file = getattr(module, "__file__", None)
+            if not isinstance(module_file, str) or not Path(module_file).resolve().is_relative_to(package_root):
+                raise ValidationError(f"ambient BERTScore provider substitution:{name}")
+        score_callable = getattr(provider_module, "score", None)
+        if not callable(score_callable):
+            raise ValidationError("BERTScore registered provider has no score callable")
         precision, recall, f1 = score_callable(
             [row["generated_answer"] for row in answer_pairs],
             [row["reference_answer"] for row in answer_pairs],
@@ -720,12 +814,35 @@ def run_bertscore_offline(
             baseline_path=baseline_path,
             verbose=False,
         )
+        for name, module in list(sys.modules.items()):
+            if name == "bert_score" or name.startswith("bert_score."):
+                module_file = getattr(module, "__file__", None)
+                if not isinstance(module_file, str) or not Path(module_file).resolve().is_relative_to(package_root):
+                    raise ValidationError(f"ambient BERTScore provider substitution:{name}")
     finally:
+        if sys.path and sys.path[0] == str(package_root):
+            sys.path.pop(0)
+        else:
+            try:
+                sys.path.remove(str(package_root))
+            except ValueError:
+                pass
+        for name in list(sys.modules):
+            if name == "bert_score" or name.startswith("bert_score."):
+                del sys.modules[name]
+        sys.modules.update(previous_modules)
+        sys.dont_write_bytecode = previous_dont_write_bytecode
         for name, value in previous.items():
             if value is None:
                 os.environ.pop(name, None)
             else:
                 os.environ[name] = value
+    try:
+        output_lengths = (len(precision), len(recall), len(f1))
+    except TypeError as exc:
+        raise ValidationError("BERTScore provider outputs must be sized sequences") from exc
+    if output_lengths != (len(answer_pairs), len(answer_pairs), len(answer_pairs)):
+        raise ValidationError("BERTScore provider output count must exactly match answer pairs")
     records = []
     for index, row in enumerate(answer_pairs):
         records.append(
@@ -745,6 +862,8 @@ def run_bertscore_offline(
         "scores_sha256": "0" * 64,
     }
     result["scores_sha256"] = self_hash(result, "scores_sha256")
+    validate_bertscore_provider(registration, base_dir)
+    validate_bertscore_scores(result, registration, sha256_json(answer_pairs))
     return result
 
 

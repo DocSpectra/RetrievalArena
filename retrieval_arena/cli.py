@@ -25,6 +25,7 @@ from .errors import RetrievalArenaError
 from .replay_manifests import manifest_json_text
 from .ranked_scoring import score_ranked_files
 from .profile_evaluation import evaluate_profile_files
+from .dual_profile import run_bertscore_offline
 from .review_packets import build_review_packet, import_judgments
 from .schemas import read_jsonl
 
@@ -52,6 +53,10 @@ def build_parser() -> argparse.ArgumentParser:
     profile = subparsers.add_parser("evaluate-profile", help="Evaluate strict automatic or calibration profile artifacts.")
     profile.add_argument("--config", required=True, help="Path to strict dual-profile JSON config.")
     profile.add_argument("--out-dir", required=True, help="Directory for the isolated result family.")
+    bertscore = subparsers.add_parser("score-bertscore", help="Produce a strict offline BERTScore scores artifact.")
+    bertscore.add_argument("--provider", required=True, help="Registered local BERTScore provider JSON artifact.")
+    bertscore.add_argument("--answer-pairs", required=True, help="Frozen answer-pair JSONL artifact.")
+    bertscore.add_argument("--out", required=True, help="BERTScore scores JSON output path.")
     review_export = subparsers.add_parser("export-review-packet", help="Export a deterministic blinded review packet.")
     review_export.add_argument("--candidates", required=True, help="Review candidate JSONL artifact.")
     review_export.add_argument("--policy", required=True, help="Review policy JSON artifact.")
@@ -173,6 +178,15 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "evaluate-profile":
             result = evaluate_profile_files(Path(args.config), Path(args.out_dir))
             print(json.dumps({"evaluation_profile": result["result"]["evaluation_profile"], "result_sha256": result["result"]["result_sha256"]}, sort_keys=True))
+        elif args.command == "score-bertscore":
+            provider_path = Path(args.provider).resolve()
+            provider = json.loads(provider_path.read_text(encoding="utf-8"))
+            answer_pairs = read_jsonl(Path(args.answer_pairs))
+            scores = run_bertscore_offline(provider, provider_path.parent, answer_pairs)
+            output = Path(args.out)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(scores, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+            print(json.dumps({"provider_id": scores["provider_id"], "provider_sha256": scores["provider_sha256"], "scores_sha256": scores["scores_sha256"]}, sort_keys=True))
         elif args.command == "export-review-packet":
             candidates = read_jsonl(Path(args.candidates))
             policy = json.loads(Path(args.policy).read_text(encoding="utf-8"))

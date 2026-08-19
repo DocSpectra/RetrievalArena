@@ -5,7 +5,7 @@ import hashlib
 import math
 import unittest
 
-from retrieval_arena.dual_profile import self_hash
+from retrieval_arena.dual_profile import self_hash, sha256_json
 from retrieval_arena.errors import ValidationError
 from retrieval_arena.review_packets import (
     build_review_packet,
@@ -149,6 +149,38 @@ class ReviewPacketTests(unittest.TestCase):
         validate_review_packet(packet)
         forbidden = {"condition_labels", "system_labels", "outcome_labels", "ranks", "deltas", "lineage_classes"}
         self.assertFalse(any(set(row) & forbidden for row in packet["assessor_view_records"]))
+        self.assertFalse(any(set(row) & forbidden for row in packet["frame_inventory"]))
+
+    def test_packet_frame_allocation_and_inclusion_probability_closed_world_mutations(self):
+        policy = review_policy(ceiling=6)
+        packet = build_review_packet([candidate(index) for index in range(12)], policy)
+
+        def rehash(value, *, inventory_changed=False):
+            if inventory_changed:
+                value["frame_inventory_sha256"] = sha256_json(value["frame_inventory"])
+                selected = set(value["selected_pair_ids"])
+                value["selected_frame_sha256"] = sha256_json(
+                    [row for row in value["frame_inventory"] if row["pair_id"] in selected]
+                )
+            value["packet_sha256"] = self_hash(value, "packet_sha256")
+            return value
+
+        cases = []
+        bad = copy.deepcopy(packet); bad["frame_count"] = "12"; cases.append((rehash(bad), "frame_count"))
+        bad = copy.deepcopy(packet); bad["frame_count"] = 0; cases.append((rehash(bad), "frame_count"))
+        bad = copy.deepcopy(packet); bad["frame_count"] -= 1; cases.append((rehash(bad), "frame_count"))
+        bad = copy.deepcopy(packet); del bad["inclusion_probabilities"][next(iter(bad["inclusion_probabilities"]))]; cases.append((rehash(bad), "exactly cover"))
+        bad = copy.deepcopy(packet); bad["inclusion_probabilities"][next(iter(bad["inclusion_probabilities"]))] = 0.123; cases.append((rehash(bad), "mismatches its frozen stratum"))
+        bad = copy.deepcopy(packet); bad["inclusion_probabilities"][sha("extra-pair")] = 0.5; cases.append((rehash(bad), "exactly cover"))
+        bad = copy.deepcopy(packet); bad["selected_pair_ids"][0] = sha("outside-frame"); bad["selected_pair_ids"].sort(); cases.append((rehash(bad), "drawn from the frozen frame"))
+        bad = copy.deepcopy(packet); removable = next(item for item in bad["selected_pair_ids"] if item not in bad["duplicate_pair_ids"]); bad["selected_pair_ids"].remove(removable); cases.append((rehash(bad), "primary sample count"))
+        bad = copy.deepcopy(packet); bad["duplicate_pair_ids"].append(bad["selected_pair_ids"][0]); bad["duplicate_pair_ids"].sort(); cases.append((rehash(bad), "duplicate sample count"))
+        bad = copy.deepcopy(packet); bad["maximum_action_count"] += 1; cases.append((rehash(bad), "action arithmetic"))
+        bad = copy.deepcopy(packet); bad["stratum_allocations"][0]["frame_count"] += 1; bad["stratum_allocations"][0]["inclusion_probability"] = bad["stratum_allocations"][0]["sample_count"] / bad["stratum_allocations"][0]["frame_count"]; cases.append((rehash(bad), "stratum frame_count"))
+        bad = copy.deepcopy(packet); bad["frame_inventory"][0]["candidate_class"] = "changed-stratum"; cases.append((rehash(bad, inventory_changed=True), "allocations do not exactly cover"))
+        for mutated, message in cases:
+            with self.subTest(message=message), self.assertRaisesRegex(ValidationError, message):
+                validate_review_packet(mutated)
 
     def test_byte_stable_packet_from_identical_inputs(self):
         rows = [candidate(index) for index in range(30)]
@@ -272,6 +304,32 @@ class ReviewPacketTests(unittest.TestCase):
         packet = build_review_packet([candidate(index) for index in range(2)], policy)
         artifact = completed_judgments(packet, policy, classification="confirmatory")
         with self.assertRaisesRegex(ValidationError, "post-reveal"):
+            import_judgments(artifact, packet, policy)
+
+    def test_label_relevance_equivalence_for_primary_duplicate_and_adjudication(self):
+        policy = review_policy(ceiling=10)
+        packet = build_review_packet([candidate(index) for index in range(10)], policy)
+        artifact = completed_judgments(packet, policy)
+        by_kind = {row["assessment_kind"]: row for row in artifact["records"]}
+        self.assertEqual(set(by_kind), {"primary", "duplicate", "adjudication"})
+        for kind in ("primary", "duplicate", "adjudication"):
+            for label, relevance in (("nonrelevant", 1), ("relevant", 0)):
+                mutated = copy.deepcopy(artifact)
+                row = next(item for item in mutated["records"] if item["assessment_kind"] == kind)
+                row["label"] = label
+                row["relevance"] = relevance
+                row["record_sha256"] = self_hash(row, "record_sha256")
+                mutated["artifact_sha256"] = self_hash(mutated, "artifact_sha256")
+                with self.subTest(kind=kind, label=label), self.assertRaisesRegex(ValidationError, "label/relevance contradiction"):
+                    import_judgments(mutated, packet, policy)
+
+    def test_outcome_revealed_at_import_requires_boolean(self):
+        policy = review_policy(ceiling=2)
+        packet = build_review_packet([candidate(index) for index in range(2)], policy)
+        artifact = completed_judgments(packet, policy)
+        artifact["outcome_revealed_at_import"] = 0
+        artifact["artifact_sha256"] = self_hash(artifact, "artifact_sha256")
+        with self.assertRaisesRegex(ValidationError, "must be boolean"):
             import_judgments(artifact, packet, policy)
 
 

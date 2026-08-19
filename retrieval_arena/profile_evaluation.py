@@ -10,6 +10,7 @@ from .dual_profile import (
     PROFILE_CALIBRATION,
     SCHEMA_AUTOMATIC_RESULT,
     SCHEMA_CALIBRATION_RESULT,
+    compose_destination_qrels,
     score_bpref,
     score_requirements,
     self_hash,
@@ -21,7 +22,6 @@ from .dual_profile import (
     validate_lineage,
     validate_profile_policy,
     validate_requirements,
-    transfer_qrels,
 )
 from .errors import ValidationError
 from .audit import build_profile_audit
@@ -58,6 +58,7 @@ def _resolve(base: Path, value: Any, owner: str, optional: bool = False) -> Path
 def validate_dual_profile_config(config: dict[str, Any], config_path: Path) -> dict[str, Path | None]:
     fields = {
         "schema_version",
+        "automatic_qrels_snapshot_id",
         "profile_policy_path",
         "ranked_dataset_path",
         "automatic_qrels_path",
@@ -78,6 +79,10 @@ def validate_dual_profile_config(config: dict[str, Any], config_path: Path) -> d
         raise ValidationError(f"dual-profile config fields must be exactly {sorted(fields)}")
     if config["schema_version"] != SCHEMA_CONFIG:
         raise ValidationError("unsupported dual-profile config schema")
+    if not isinstance(config["automatic_qrels_snapshot_id"], str) or not config["automatic_qrels_snapshot_id"]:
+        raise ValidationError("automatic_qrels_snapshot_id must be a non-empty string")
+    if config["bertscore_scores_path"] is not None and config["bertscore_provider_path"] is None:
+        raise ValidationError("BERTScore scores artifact requires a registered provider artifact")
     optional = {
         "answer_pairs_path",
         "bertscore_provider_path",
@@ -90,7 +95,7 @@ def validate_dual_profile_config(config: dict[str, Any], config_path: Path) -> d
     paths = {
         name: _resolve(base, value, name, name in optional)
         for name, value in config.items()
-        if name != "schema_version"
+        if name not in {"schema_version", "automatic_qrels_snapshot_id"}
     }
     for name, path in paths.items():
         if path is not None and not path.is_file():
@@ -163,20 +168,26 @@ def _score_ranked_profile(
     }
     ordered = dataset.get("ordered_query_ids", [])
     unavailable_ids = [qid for qid in ordered if qid not in positive_queries]
+
+    def bind_profile_scope(
+        aggregate: dict[str, Any], available_count: int, unavailable_count: int, scope: str
+    ) -> dict[str, Any]:
+        aggregate.pop("aggregate_sha256", None)
+        aggregate.update(
+            {
+                "profile_total_query_count": len(ordered),
+                "profile_available_query_count": available_count,
+                "profile_unavailable_query_count": unavailable_count,
+                "profile_aggregate_scope": scope,
+            }
+        )
+        aggregate["aggregate_sha256"] = sha256_json(aggregate)
+        return aggregate
+
     if not unavailable_ids:
         scores, aggregate = score_ranked(dataset, qrels, predictions, ranked_policy)
-        return scores, aggregate, []
+        return scores, bind_profile_scope(aggregate, len(ordered), 0, "all_queries"), []
     available_ids = [qid for qid in ordered if qid in positive_queries]
-    if not available_ids:
-        raise ValidationError("ranked profile requires at least one query with admitted positive qrels")
-    subset_dataset = dict(dataset)
-    subset_dataset["ordered_query_ids"] = available_ids
-    subset_dataset["support_group_by_query"] = {
-        qid: dataset["support_group_by_query"][qid] for qid in available_ids
-    }
-    subset_qrels = [row for row in qrels if row["query_id"] in positive_queries]
-    subset_predictions = [row for row in predictions if row["query_id"] in positive_queries]
-    scores, aggregate = score_ranked(subset_dataset, subset_qrels, subset_predictions, ranked_policy)
     by_prediction = {row["query_id"]: row for row in predictions}
     unavailable = [
         {
@@ -192,14 +203,38 @@ def _score_ranked_profile(
         }
         for qid in unavailable_ids
     ]
-    aggregate = {
-        **aggregate,
-        "profile_total_query_count": len(ordered),
-        "profile_available_query_count": len(available_ids),
-        "profile_unavailable_query_count": len(unavailable_ids),
-        "profile_aggregate_scope": "available_queries_only",
+    if not available_ids:
+        aggregate = {
+            "schema_version": "retrieval_arena.ranked_aggregate.v2",
+            "dataset_id": dataset["dataset_id"],
+            "policy_id": ranked_policy["policy_id"],
+            "cutoff": ranked_policy["context_item_budget_k"],
+            "query_count": 0,
+            "support_group_count": 0,
+            "macro_evidence_recall": None,
+            "macro_complete_support": None,
+            "macro_ndcg": None,
+            "mrr": None,
+            "available_counts": {name: 0 for name in ("evidence_recall", "complete_support", "ndcg", "reciprocal_rank")},
+            "unavailable_counts": {"ndcg": 0},
+            "unavailable_reasons": ["zero_relevant_items"],
+            "per_query_scores_sha256": sha256_json([]),
+        }
+        aggregate = bind_profile_scope(
+            aggregate, 0, len(unavailable_ids), "unavailable_no_admitted_positive_queries"
+        )
+        return [], aggregate, unavailable
+    subset_dataset = dict(dataset)
+    subset_dataset["ordered_query_ids"] = available_ids
+    subset_dataset["support_group_by_query"] = {
+        qid: dataset["support_group_by_query"][qid] for qid in available_ids
     }
-    return scores, aggregate, unavailable
+    subset_qrels = [row for row in qrels if row["query_id"] in positive_queries]
+    subset_predictions = [row for row in predictions if row["query_id"] in positive_queries]
+    scores, aggregate = score_ranked(subset_dataset, subset_qrels, subset_predictions, ranked_policy)
+    return scores, bind_profile_scope(
+        aggregate, len(available_ids), len(unavailable_ids), "available_queries_only"
+    ), unavailable
 
 
 def _write_json(path: Path, value: dict[str, Any]) -> None:
@@ -258,10 +293,20 @@ def evaluate_profile_files(config_path: Path, output_dir: Path) -> dict[str, Any
         for name, path in paths.items()
     }
     input_hashes["config"] = sha256_file(config_path)
-    transferred_qrels = transfer_qrels(qrels, lineage_artifact)
+    destination_qrel_inventory = compose_destination_qrels(
+        qrels,
+        lineage_artifact,
+        config["automatic_qrels_snapshot_id"],
+        dataset["corpus_snapshot_id"],
+        dataset["ordered_query_ids"],
+        dataset["relevance_scale"],
+    )
+    destination_qrels = destination_qrel_inventory["qrels"]
 
     if profile == PROFILE_AUTOMATIC:
-        ranked_scores, ranked_aggregate, unavailable_ranked = _score_ranked_profile(dataset, qrels, ranked_predictions, ranked_policy)
+        ranked_scores, ranked_aggregate, unavailable_ranked = _score_ranked_profile(
+            dataset, destination_qrels, ranked_predictions, ranked_policy
+        )
         answer_pairs: list[dict[str, Any]] = []
         lexical_rows: list[dict[str, Any]] = []
         if paths["answer_pairs_path"] is not None:
@@ -321,7 +366,9 @@ def evaluate_profile_files(config_path: Path, output_dir: Path) -> dict[str, Any
                         "scores": [{"query_id": qid, **scores[qid]} for qid in sorted(scores)],
                         "declared_blind_spot": "does_not_establish_factuality_support_attribution_or_contradiction_absence",
                     }
-        judged_top_k, unjudged_top_k = _top_k_judgment_counts(qrels, ranked_predictions, policy["context_item_budget_k"])
+        judged_top_k, unjudged_top_k = _top_k_judgment_counts(
+            destination_qrels, ranked_predictions, policy["context_item_budget_k"]
+        )
         result = {
             "schema_version": SCHEMA_AUTOMATIC_RESULT,
             "evaluation_profile": PROFILE_AUTOMATIC,
@@ -344,8 +391,9 @@ def evaluate_profile_files(config_path: Path, output_dir: Path) -> dict[str, Any
                     "requirement_per_query": requirement_rows,
                     "requirement_aggregate": requirement_aggregate,
                     "lineage_counts_by_class": lineage_counts,
-                    "transferred_qrels": transferred_qrels,
-                    "transferred_qrel_count": len(transferred_qrels),
+                    "transferred_qrels": destination_qrels,
+                    "transferred_qrel_count": len(destination_qrels),
+                    "destination_qrel_inventory": destination_qrel_inventory,
                 },
                 "automatic_answer_diagnostics": {
                     "classification": "diagnostic_only_non_composite",

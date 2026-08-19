@@ -584,6 +584,15 @@ blinded packet export, immutable judgment import, agreement, and
 calibration-only provider BPref implement the accepted 33L decisions without
 adding another standard endpoint or a composite.
 
+The independent 33A review corrective makes the destination inventory
+explicit: source qrels are bound to the lineage source snapshot, only admitted
+positive exact edges produce destination qrels, and ranked scoring plus top-k
+judged counts consume only that destination inventory. Stale source targets,
+negative source judgments, and removed, novel, or unresolved classes remain
+unjudged. It also binds executable BERTScore code to the hashed registered
+distribution tree, closes the review-frame allocation/probability inventory,
+and enforces label/relevance equivalence before calibration scoring.
+
 Human assessment remains an external activity. Retrieval Arena only exports
 and imports immutable artifacts. Automatic execution remains terminal when
 calibration is absent. No implementation path assumes a DocSpectra source

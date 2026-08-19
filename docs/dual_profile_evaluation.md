@@ -15,6 +15,7 @@ their values. There is no composite score.
 
 ```powershell
 python -m retrieval_arena.cli evaluate-profile --config <dual-profile.json> --out-dir <output>
+python -m retrieval_arena.cli score-bertscore --provider <provider.json> --answer-pairs <answers.jsonl> --out <scores.json>
 python -m retrieval_arena.cli export-review-packet --candidates <candidates.jsonl> --policy <review-policy.json> --out <packet.json>
 python -m retrieval_arena.cli import-judgments --judgments <judgments.json> --packet <packet.json> --policy <review-policy.json> --out <import.json>
 ```
@@ -27,7 +28,8 @@ browser, invoke a human workflow, use the network, or download a model.
 `retrieval_arena.dual_profile_config.v1` rejects unknown fields and contains:
 
 - `profile_policy_path`;
-- `ranked_dataset_path`, `automatic_qrels_path`,
+- `ranked_dataset_path`, `automatic_qrels_path`, and the non-empty
+  `automatic_qrels_snapshot_id` that binds those source judgments,
   `ranked_predictions_path`, and `ranked_metric_policy_path`, all using the
   accepted ranked-v2 contracts;
 - `requirements_path`, `bindings_path`, `lineage_path`, and
@@ -107,17 +109,25 @@ only as unique, direct, acyclic, non-conflicting
 predicate. Lexical overlap, embeddings, model confidence, treatment authorship,
 and transitive history cannot create relevance.
 
-The transfer operator copies only positive source qrels over those admitted
+The destination-qrel composer requires the declared automatic-qrel source
+snapshot to equal the lineage source and the ranked dataset snapshot to equal
+the lineage destination. It copies only positive source qrels over admitted
 edges, deduplicates equal destination judgments, rejects conflicting grades,
-and records the exact lineage-record hash as judgment provenance. Nontransfer
-classes never produce a qrel.
+and records the exact lineage-record hash as judgment provenance. The original
+source target inventory is never scored directly. Source negatives,
+nontransfer classes, and source targets without an admitted edge remain
+unjudged at the destination; no negative transfer is invented. Standard
+ranked scoring and judged/unjudged top-k counts consume this same canonical
+destination inventory.
 
 When a snapshot leaves one query with no admitted positive target, its
 standard ranked measures are explicitly unavailable with
 `zero_relevant_items`; stable requirements remain in the separate coverage
 denominator. Any macro over the remaining provider-scored queries is labeled
 `available_queries_only` rather than silently treating the missing query as
-zero.
+zero. If no query has an admitted positive destination target, every standard
+query and the standard aggregate are explicitly unavailable; the provider is
+not invoked.
 
 ## Offline BERTScore
 
@@ -132,13 +142,20 @@ zero.
 - `runtime_download: false`;
 - a canonical provider self-hash.
 
-The optional execution adapter admits every local artifact before importing
-the provider, sets `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`, and forbids
-provider substitution. A provider-owned
+The artifact-producing `score-bertscore` ingress requires
+`package_artifact_path` to be the exact hashed local distribution tree that it
+imports. It validates the tree's sole `bert_score` package and `.dist-info`
+name/version, removes any ambient `bert_score` module, loads only from the
+registered tree, verifies every loaded provider module path, disables bytecode
+writes, sets `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`, and revalidates
+all artifact hashes after execution. A wheel/archive may document an external
+provider but is not executable by this ingress. No same-version ambient
+installation, injected callable, runtime installation, or fallback is
+trusted. A provider-owned
 `retrieval_arena.bertscore_scores.v1` artifact must bind the exact provider and
 answer-pair hashes. Missing registered provider material makes only BERTScore
 explicitly unavailable. A hash mismatch or provider substitution fails
-admission.
+admission. Supplying a scores artifact without its provider is rejected.
 
 BERTScore precision, recall, and F1 remain model-bound paraphrase diagnostics.
 They do not create qrels, transfer support, establish factuality, detect every
@@ -158,12 +175,17 @@ The deterministic exporter:
 4. uses simple random sampling without replacement with proportional
    largest-remainder allocation and minimum one per non-empty stratum when the
    ceiling permits;
-5. freezes inclusion probabilities and a fixed, non-outcome-driven stop;
-6. selects `ceil(0.10 * primary_count)` independent duplicate assessments;
-7. randomizes assessor order;
-8. removes condition, system, outcome, rank, delta, and lineage-class labels
+5. freezes the seed and primary ceiling plus a non-assessor frame inventory of
+   pair IDs and sampling strata, verifies its count/hash, and deterministically
+   rederives allocations, selected/duplicate IDs, and inclusion probabilities
+   against that exact inventory;
+6. freezes inclusion probabilities and a fixed, non-outcome-driven stop;
+7. selects `ceil(0.10 * primary_count)` independent duplicate assessments;
+8. randomizes assessor order;
+9. removes condition, system, outcome, rank, delta, and lineage-class labels
    from every assessor record;
-9. self-hashes the frame, selected sample, assessor projection, and packet.
+10. self-hashes the frame, frozen inventory, selected sample, assessor
+    projection, and packet.
 
 The primary ceiling is at most 240. The adopted 10% duplicate rate is a
 project use of the domain-specific S24 precedent, not a universal constant.
@@ -177,6 +199,10 @@ dataset, query set, snapshots, assessor classes/IDs, reveal state, records, and
 self-hash. Unknown fields are rejected, including condition labels. Every
 frozen primary and duplicate assessment must be present. Adjudication records
 bind exactly two assessments. Post-reveal material is always exploratory.
+`outcome_revealed_at_import` must be Boolean. Every primary, duplicate, and
+adjudication record enforces `nonrelevant` exactly when relevance is zero and
+`relevant` exactly when relevance is positive before agreement or BPref input
+is formed.
 
 Import reports raw label-pair counts, exact agreement, and Cohen's kappa.
 Agreement is assessor evidence, not retrieval effectiveness. Answer-bearing

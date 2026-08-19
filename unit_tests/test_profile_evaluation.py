@@ -33,7 +33,7 @@ class ProfileEvaluationTests(unittest.TestCase):
         path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows), encoding="utf-8", newline="\n")
 
     def build_inputs(self, root: Path, *, calibration=False, missing_bertscore=False) -> Path:
-        dataset, qrels, predictions, ranked_policy = ranked_fixture()
+        dataset, qrels, predictions, ranked_policy = ranked_fixture("pooled")
         dataset["corpus_snapshot_id"] = "after"
         requirements = {
             "schema_version": "retrieval_arena.evidence_requirements.v1",
@@ -107,6 +107,7 @@ class ProfileEvaluationTests(unittest.TestCase):
             review_paths = {"review_policy_path": "review_policy.json", "review_packet_path": "review_packet.json", "judgment_artifact_path": "judgments.json"}
         config = {
             "schema_version": "retrieval_arena.dual_profile_config.v1",
+            "automatic_qrels_snapshot_id": "before",
             "profile_policy_path": "profile_policy.json",
             "ranked_dataset_path": "dataset.json",
             "automatic_qrels_path": "qrels.jsonl",
@@ -153,6 +154,83 @@ class ProfileEvaluationTests(unittest.TestCase):
             self.assertEqual(standard["unavailable_queries"][0]["query_id"], "q2")
             self.assertEqual(standard["unavailable_queries"][0]["unavailable_reason"], "zero_relevant_items")
             self.assertEqual(standard["aggregate"]["profile_aggregate_scope"], "available_queries_only")
+
+    def test_destination_qrels_use_only_admitted_relocation_without_stale_source_leakage(self):
+        with tempfile.TemporaryDirectory(dir=".tmp_unit_tests") as root_text:
+            root = Path(root_text)
+            config = self.build_inputs(root)
+            records = [
+                lineage_record("exact_target_relocation", "a", "relocated-a"),
+                lineage_record("support_removed", "b", "removed-b"),
+                lineage_record("identity_unchanged", "x", "x"),
+                lineage_record("novel_support_unjudged", "novel-source", "novel-x"),
+                lineage_record("semantic_rewrite_unresolved", "c", "rewritten-c"),
+            ]
+            for index, row in enumerate(records):
+                row["source_evidence_unit_id"] = f"source-u{index}"
+                row["destination_evidence_unit_id"] = f"destination-u{index}"
+                if index == 4:
+                    row["query_id"] = "q2"
+                    row["evidence_requirement_id"] = "r2"
+                self_hash(row, "record_sha256")
+            lineage = lineage_artifact(records)
+            self.write_json(root / "lineage.json", lineage)
+            policy = json.loads((root / "profile_policy.json").read_text(encoding="utf-8"))
+            policy["lineage_sha256"] = lineage["lineage_sha256"]
+            self_hash(policy, "policy_sha256")
+            self.write_json(root / "profile_policy.json", policy)
+            predictions = [json.loads(line) for line in (root / "predictions.jsonl").read_text(encoding="utf-8").splitlines()]
+            predictions[0]["items"][0]["support_target_id"] = "relocated-a"
+            predictions[0]["items"][0]["source_item_id"] = "chunk-relocated-a"
+            predictions[0]["items"][0]["source_provenance_sha256"] = sha("source-relocated-a")
+            self.write_jsonl(root / "predictions.jsonl", predictions)
+            result = evaluate_profile_files(config, root / "out")["result"]
+            diagnostics = result["metric_families"]["project_specific_diagnostics"]
+            inventory = diagnostics["destination_qrel_inventory"]
+            self.assertEqual(inventory["source_snapshot_id"], "before")
+            self.assertEqual(inventory["destination_snapshot_id"], "after")
+            self.assertEqual([(row["query_id"], row["support_target_id"]) for row in inventory["qrels"]], [("q1", "relocated-a")])
+            self.assertNotIn("a", {row["support_target_id"] for row in inventory["qrels"]})
+            standard = result["metric_families"]["standard_ranked_retrieval"]
+            self.assertEqual(standard["per_query"][0]["evidence_recall"], 1.0)
+            self.assertEqual([row["query_id"] for row in standard["unavailable_queries"]], ["q2"])
+            self.assertEqual(result["inventory"]["judged_top_k_count"], 1)
+            self.assertEqual(result["inventory"]["unjudged_top_k_count"], 3)
+
+    def test_no_admitted_positive_destination_makes_all_standard_metrics_unavailable(self):
+        with tempfile.TemporaryDirectory(dir=".tmp_unit_tests") as root_text:
+            root = Path(root_text)
+            config = self.build_inputs(root)
+            lineage = lineage_artifact([lineage_record("support_removed", "a", "removed-a")])
+            self.write_json(root / "lineage.json", lineage)
+            policy = json.loads((root / "profile_policy.json").read_text(encoding="utf-8"))
+            policy["lineage_sha256"] = lineage["lineage_sha256"]
+            self_hash(policy, "policy_sha256")
+            self.write_json(root / "profile_policy.json", policy)
+            result = evaluate_profile_files(config, root / "out")["result"]
+            standard = result["metric_families"]["standard_ranked_retrieval"]
+            self.assertEqual(standard["per_query"], [])
+            self.assertEqual(len(standard["unavailable_queries"]), 2)
+            self.assertEqual(standard["aggregate"]["profile_aggregate_scope"], "unavailable_no_admitted_positive_queries")
+            self.assertIsNone(standard["aggregate"]["macro_evidence_recall"])
+            self.assertEqual(result["inventory"]["judged_top_k_count"], 0)
+            self.assertEqual(result["inventory"]["unjudged_top_k_count"], 4)
+
+    def test_source_snapshot_binding_and_scores_without_provider_fail_closed(self):
+        with tempfile.TemporaryDirectory(dir=".tmp_unit_tests") as root_text:
+            root = Path(root_text)
+            config_path = self.build_inputs(root)
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            config["automatic_qrels_snapshot_id"] = "wrong-source"
+            self.write_json(config_path, config)
+            with self.assertRaisesRegex(ValidationError, "source snapshot"):
+                evaluate_profile_files(config_path, root / "out")
+            config["automatic_qrels_snapshot_id"] = "before"
+            config["bertscore_scores_path"] = "scores.json"
+            self.write_json(root / "scores.json", {})
+            self.write_json(config_path, config)
+            with self.assertRaisesRegex(ValidationError, "requires a registered provider"):
+                evaluate_profile_files(config_path, root / "out2")
 
     def test_missing_registered_bertscore_model_does_not_fail_automatic_family(self):
         with tempfile.TemporaryDirectory(dir=".tmp_unit_tests") as root_text:

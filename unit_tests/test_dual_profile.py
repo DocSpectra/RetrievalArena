@@ -2,10 +2,16 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
+import sys
 import tempfile
+import types
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 
+from retrieval_arena.cli import main
 from retrieval_arena.dual_profile import (
     PROFILE_AUTOMATIC,
     PROFILE_CALIBRATION,
@@ -13,6 +19,7 @@ from retrieval_arena.dual_profile import (
     score_bpref,
     score_requirements,
     self_hash,
+    sha256_artifact,
     sha256_file,
     sha256_json,
     validate_bertscore_provider,
@@ -33,6 +40,55 @@ def sha(text: str) -> str:
 def hashed(value, field):
     value[field] = self_hash(value, field)
     return value
+
+
+def executable_bertscore_provider(root: Path):
+    package_root = root / "registered-distribution"
+    package_dir = package_root / "bert_score"
+    metadata_dir = package_root / "bert_score-0.3.13.dist-info"
+    package_dir.mkdir(parents=True)
+    metadata_dir.mkdir()
+    (package_dir / "__init__.py").write_text(
+        "import os\n"
+        "def score(candidates, references, **kwargs):\n"
+        "    if os.environ.get('HF_HUB_OFFLINE') != '1' or os.environ.get('TRANSFORMERS_OFFLINE') != '1':\n"
+        "        raise RuntimeError('offline guards missing')\n"
+        "    size = len(candidates)\n"
+        "    return [1.0] * size, [1.0] * size, [1.0] * size\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    (metadata_dir / "METADATA").write_text("Name: bert-score\nVersion: 0.3.13\n", encoding="utf-8", newline="\n")
+    checkpoint = root / "checkpoint"
+    checkpoint.mkdir()
+    (checkpoint / "frozen.bin").write_bytes(b"frozen-model-tokenizer")
+    provider = {
+        "schema_version": "retrieval_arena.bertscore_provider.v1",
+        "provider_id": "strict-local-provider",
+        "package_name": "bert-score",
+        "package_version": "0.3.13",
+        "package_artifact_path": package_root.name,
+        "package_artifact_sha256": sha256_artifact(package_root),
+        "checkpoint_id": "frozen-checkpoint",
+        "checkpoint_revision": "revision-1",
+        "model_artifact_path": checkpoint.name,
+        "model_artifact_sha256": sha256_artifact(checkpoint),
+        "tokenizer_id": "frozen-tokenizer",
+        "tokenizer_revision": "revision-1",
+        "tokenizer_artifact_path": checkpoint.name,
+        "tokenizer_artifact_sha256": sha256_artifact(checkpoint),
+        "baseline_policy": "none",
+        "baseline_artifact_path": None,
+        "baseline_artifact_sha256": None,
+        "rescaling_policy": "none",
+        "language": "en",
+        "device": "cpu",
+        "dtype": "float32",
+        "runtime_download": False,
+        "provider_sha256": "0" * 64,
+    }
+    provider["provider_sha256"] = self_hash(provider, "provider_sha256")
+    return provider, package_root
 
 
 def profile_policy(profile=PROFILE_AUTOMATIC, classification="confirmatory"):
@@ -383,29 +439,43 @@ class DualProfileTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "runtime download"):
             validate_bertscore_provider(provider, Path("."))
 
-    def test_offline_bertscore_runner_sets_download_guards(self):
+    def test_offline_bertscore_operator_binds_registered_code_and_rejects_same_version_substitution(self):
         with tempfile.TemporaryDirectory(dir=".tmp_unit_tests") as root_text:
             root = Path(root_text)
-            (root / "wheel").write_bytes(b"w"); (root / "model").write_bytes(b"m"); (root / "tokenizer").write_bytes(b"t")
-            provider = {
-                "schema_version": "retrieval_arena.bertscore_provider.v1", "provider_id": "p", "package_name": "bert-score", "package_version": "x",
-                "package_artifact_path": "wheel", "package_artifact_sha256": sha256_file(root / "wheel"), "checkpoint_id": "c", "checkpoint_revision": "r", "model_artifact_path": "model",
-                "model_artifact_sha256": sha256_file(root / "model"), "tokenizer_id": "t", "tokenizer_revision": "r", "tokenizer_artifact_path": "tokenizer",
-                "tokenizer_artifact_sha256": sha256_file(root / "tokenizer"), "baseline_policy": "none", "baseline_artifact_path": None,
-                "baseline_artifact_sha256": None, "rescaling_policy": "none", "language": "en", "device": "cpu", "dtype": "float32",
-                "runtime_download": False, "provider_sha256": "0" * 64,
-            }
-            provider["provider_sha256"] = self_hash(provider, "provider_sha256")
-            observed = {}
-            def scorer(candidates, references, **kwargs):
-                import os
-                observed["offline"] = (os.environ["HF_HUB_OFFLINE"], os.environ["TRANSFORMERS_OFFLINE"])
-                return [1.0], [1.0], [1.0]
-            scorer.provider_id = provider["provider_id"]
-            scorer.provider_sha256 = provider["provider_sha256"]
-            result = run_bertscore_offline(provider, root, [{"query_id": "q", "generated_answer": "a", "reference_answer": "a"}], scorer)
-            self.assertEqual(observed["offline"], ("1", "1"))
+            provider, package_root = executable_bertscore_provider(root)
+            pairs = [{"query_id": "q", "generated_answer": "a", "reference_answer": "a"}]
+            ambient = types.ModuleType("bert_score")
+            ambient.__file__ = str(root / "ambient" / "bert_score" / "__init__.py")
+            ambient.score = lambda candidates, references, **kwargs: ([0.25], [0.25], [0.25])
+            previous = sys.modules.get("bert_score")
+            sys.modules["bert_score"] = ambient
+            try:
+                result = run_bertscore_offline(provider, root, pairs)
+            finally:
+                if previous is None:
+                    sys.modules.pop("bert_score", None)
+                else:
+                    sys.modules["bert_score"] = previous
             self.assertEqual(result["records"][0]["f1"], 1.0)
+            self.assertEqual(result["provider_sha256"], provider["provider_sha256"])
+
+            provider_path = root / "provider.json"
+            answers_path = root / "answers.jsonl"
+            output_path = root / "scores.json"
+            provider_path.write_text(json.dumps(provider, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+            answers_path.write_text(json.dumps(pairs[0], sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+            stdout = StringIO()
+            with redirect_stdout(stdout):
+                code = main(["score-bertscore", "--provider", str(provider_path), "--answer-pairs", str(answers_path), "--out", str(output_path)])
+            self.assertEqual(code, 0)
+            operator_artifact = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(operator_artifact["provider_sha256"], provider["provider_sha256"])
+            self.assertIn(provider["provider_sha256"], stdout.getvalue())
+
+            implementation = package_root / "bert_score" / "__init__.py"
+            implementation.write_text(implementation.read_text(encoding="utf-8") + "# same-version substituted code\n", encoding="utf-8", newline="\n")
+            with self.assertRaisesRegex(ValidationError, "artifact hash mismatch:package"):
+                run_bertscore_offline(provider, root, pairs)
 
 
 if __name__ == "__main__":

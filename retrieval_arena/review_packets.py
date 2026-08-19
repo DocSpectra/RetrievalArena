@@ -272,8 +272,20 @@ def build_review_packet(rows: list[dict[str, Any]], policy: dict[str, Any]) -> d
     )
     order_rng = random.Random(policy["seed"] ^ 0xA44E)
     order_rng.shuffle(assessor_rows)
+    frame_inventory = [
+        {
+            "pair_id": row["pair_id"],
+            "snapshot_id": row["snapshot_id"],
+            "candidate_class": row["candidate_class"],
+            "rank_band": row["rank_band"],
+        }
+        for row in frame
+    ]
+    selected_ids = {row["pair_id"] for row in selected}
+    selected_inventory = [row for row in frame_inventory if row["pair_id"] in selected_ids]
     frame_hash = sha256_json(frame)
-    selected_hash = sha256_json(selected)
+    frame_inventory_hash = sha256_json(frame_inventory)
+    selected_hash = sha256_json(selected_inventory)
     assessor_hash = sha256_json(assessor_rows)
     packet = {
         "schema_version": SCHEMA_REVIEW_PACKET,
@@ -283,8 +295,12 @@ def build_review_packet(rows: list[dict[str, Any]], policy: dict[str, Any]) -> d
         "ordered_snapshot_ids": policy["ordered_snapshot_ids"],
         "review_policy_sha256": policy["policy_sha256"],
         "classification": "exploratory" if policy["outcome_revealed"] else "confirmatory",
+        "sampling_seed": policy["seed"],
+        "primary_judgment_ceiling": policy["primary_judgment_ceiling"],
         "frame_count": len(frame),
         "frame_sha256": frame_hash,
+        "frame_inventory": frame_inventory,
+        "frame_inventory_sha256": frame_inventory_hash,
         "candidate_pool_sha256": sha256_json(rows),
         "primary_count": len(selected),
         "duplicate_count": duplicate_count,
@@ -324,8 +340,12 @@ def validate_review_packet(packet: dict[str, Any]) -> dict[str, Any]:
         "ordered_snapshot_ids",
         "review_policy_sha256",
         "classification",
+        "sampling_seed",
+        "primary_judgment_ceiling",
         "frame_count",
         "frame_sha256",
+        "frame_inventory",
+        "frame_inventory_sha256",
         "candidate_pool_sha256",
         "primary_count",
         "duplicate_count",
@@ -346,35 +366,134 @@ def validate_review_packet(packet: dict[str, Any]) -> dict[str, Any]:
         raise ValidationError("unsupported review packet schema")
     if packet["classification"] not in {"confirmatory", "exploratory"}:
         raise ValidationError("review packet classification invalid")
-    for name in ("review_policy_sha256", "frame_sha256", "candidate_pool_sha256", "selected_frame_sha256", "assessor_view_sha256"):
+    for name in ("packet_id", "dataset_id", "query_set_id"):
+        _text(packet[name], name)
+    snapshots = packet["ordered_snapshot_ids"]
+    if not isinstance(snapshots, list) or not snapshots or snapshots != list(dict.fromkeys(snapshots)):
+        raise ValidationError("review packet ordered_snapshot_ids must be non-empty and unique")
+    for snapshot in snapshots:
+        _text(snapshot, "review packet snapshot_id")
+    for name in ("review_policy_sha256", "frame_sha256", "frame_inventory_sha256", "candidate_pool_sha256", "selected_frame_sha256", "assessor_view_sha256"):
         _sha(packet[name], name)
+    frame_count = _integer(packet["frame_count"], "frame_count", 1)
+    inventory = packet["frame_inventory"]
+    if not isinstance(inventory, list) or len(inventory) != frame_count:
+        raise ValidationError("review packet frame_count does not match frozen frame inventory")
+    inventory_by_pair: dict[str, dict[str, Any]] = {}
+    inventory_strata: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    for row in inventory:
+        _exact(row, {"pair_id", "snapshot_id", "candidate_class", "rank_band"}, "review frame inventory")
+        pair_id = _sha(row["pair_id"], "frame pair_id")
+        snapshot = _text(row["snapshot_id"], "frame snapshot_id")
+        candidate_class = _text(row["candidate_class"], "frame candidate_class")
+        rank_band = _text(row["rank_band"], "frame rank_band")
+        if snapshot not in snapshots:
+            raise ValidationError("review frame inventory contains an unregistered snapshot")
+        if pair_id in inventory_by_pair:
+            raise ValidationError("duplicate pair in review frame inventory")
+        inventory_by_pair[pair_id] = row
+        inventory_strata[(snapshot, candidate_class, rank_band)].append(row)
+    if sha256_json(inventory) != packet["frame_inventory_sha256"]:
+        raise ValidationError("review frame inventory hash mismatch")
+    sampling_seed = _integer(packet["sampling_seed"], "sampling_seed")
+    primary_ceiling = _integer(packet["primary_judgment_ceiling"], "primary_judgment_ceiling", 1)
+    if primary_ceiling > 240:
+        raise ValidationError("review packet primary judgment ceiling exceeds 240")
     primary = _integer(packet["primary_count"], "primary_count")
     duplicate = _integer(packet["duplicate_count"], "duplicate_count")
-    if primary > 240 or duplicate != math.ceil(0.10 * primary):
+    maximum_adjudication = _integer(packet["maximum_adjudication_count"], "maximum_adjudication_count")
+    maximum_actions = _integer(packet["maximum_action_count"], "maximum_action_count")
+    governance_maximum = _integer(packet["governance_maximum_action_count_at_ceiling"], "governance_maximum_action_count_at_ceiling")
+    if primary != min(primary_ceiling, frame_count) or duplicate != math.ceil(0.10 * primary):
         raise ValidationError("review packet governance count mismatch")
-    if packet["maximum_adjudication_count"] != duplicate or packet["maximum_action_count"] != primary + 2 * duplicate:
+    if maximum_adjudication != duplicate or maximum_actions != primary + 2 * duplicate:
         raise ValidationError("review packet action arithmetic mismatch")
-    if packet["maximum_action_count"] > 288 or packet["governance_maximum_action_count_at_ceiling"] != 288:
+    if maximum_actions > 288 or governance_maximum != 288:
         raise ValidationError("review packet exceeds the 288-action arithmetic maximum")
-    if set(packet["duplicate_pair_ids"]) - set(packet["selected_pair_ids"]):
+    selected_ids = packet["selected_pair_ids"]
+    duplicate_ids = packet["duplicate_pair_ids"]
+    if not isinstance(selected_ids, list) or not all(isinstance(item, str) for item in selected_ids):
+        raise ValidationError("review packet selected_pair_ids must be a list of hashes")
+    if not isinstance(duplicate_ids, list) or not all(isinstance(item, str) for item in duplicate_ids):
+        raise ValidationError("review packet duplicate_pair_ids must be a list of hashes")
+    for pair_id in selected_ids + duplicate_ids:
+        _sha(pair_id, "sample pair_id")
+    if selected_ids != sorted(selected_ids) or duplicate_ids != sorted(duplicate_ids):
+        raise ValidationError("review packet sample pair IDs must be deterministically ordered")
+    if set(selected_ids) - set(inventory_by_pair):
+        raise ValidationError("primary sample must be drawn from the frozen frame inventory")
+    if set(duplicate_ids) - set(selected_ids):
         raise ValidationError("duplicate sample must be drawn from primary sample")
-    if len(packet["selected_pair_ids"]) != primary or len(set(packet["selected_pair_ids"])) != primary:
+    if len(selected_ids) != primary or len(set(selected_ids)) != primary:
         raise ValidationError("review packet primary sample count mismatch")
-    if len(packet["duplicate_pair_ids"]) != duplicate or len(set(packet["duplicate_pair_ids"])) != duplicate:
+    if len(duplicate_ids) != duplicate or len(set(duplicate_ids)) != duplicate:
         raise ValidationError("review packet duplicate sample count mismatch")
     allocations = packet["stratum_allocations"]
     if not isinstance(allocations, list) or sum(row.get("sample_count", -1) for row in allocations if isinstance(row, dict)) != primary:
         raise ValidationError("review packet stratum allocation count mismatch")
+    allocation_by_stratum: dict[tuple[str, str, str], dict[str, Any]] = {}
     for row in allocations:
         _exact(row, {"snapshot_id", "candidate_class", "rank_band", "frame_count", "sample_count", "inclusion_probability"}, "review stratum allocation")
-        frame_count = _integer(row["frame_count"], "stratum frame_count", 1)
+        key = (
+            _text(row["snapshot_id"], "stratum snapshot_id"),
+            _text(row["candidate_class"], "stratum candidate_class"),
+            _text(row["rank_band"], "stratum rank_band"),
+        )
+        if key in allocation_by_stratum:
+            raise ValidationError("duplicate review stratum allocation")
+        allocation_by_stratum[key] = row
+        stratum_frame_count = _integer(row["frame_count"], "stratum frame_count", 1)
         sample_count = _integer(row["sample_count"], "stratum sample_count")
-        if sample_count > frame_count or row["inclusion_probability"] != sample_count / frame_count:
+        if sample_count > stratum_frame_count or row["inclusion_probability"] != sample_count / stratum_frame_count:
             raise ValidationError("review packet stratum inclusion probability mismatch")
+    if set(allocation_by_stratum) != set(inventory_strata):
+        raise ValidationError("review packet allocations do not exactly cover frozen frame strata")
+    expected_allocations = _largest_remainder_allocations(inventory_strata, primary)
+    selected_counts = Counter(
+        (
+            inventory_by_pair[pair_id]["snapshot_id"],
+            inventory_by_pair[pair_id]["candidate_class"],
+            inventory_by_pair[pair_id]["rank_band"],
+        )
+        for pair_id in selected_ids
+    )
+    for key, frame_rows in inventory_strata.items():
+        allocation = allocation_by_stratum[key]
+        if allocation["frame_count"] != len(frame_rows):
+            raise ValidationError("review packet stratum frame_count mismatch")
+        if allocation["sample_count"] != expected_allocations[key] or selected_counts[key] != allocation["sample_count"]:
+            raise ValidationError("review packet selected sample does not match frozen stratum allocation")
+    expected_selected: list[str] = []
+    for index, key in enumerate(sorted(inventory_strata)):
+        population = sorted((row["pair_id"] for row in inventory_strata[key]))
+        expected_selected.extend(random.Random(sampling_seed + index).sample(population, expected_allocations[key]))
+    if selected_ids != sorted(expected_selected):
+        raise ValidationError("review packet selected sample does not match the frozen seed")
+    expected_duplicates = sorted(
+        random.Random(sampling_seed ^ 0x5A17).sample(selected_ids, duplicate)
+    ) if selected_ids else []
+    if duplicate_ids != expected_duplicates:
+        raise ValidationError("review packet duplicate sample does not match the frozen seed")
+    probabilities = packet["inclusion_probabilities"]
+    if not isinstance(probabilities, dict) or set(probabilities) != set(inventory_by_pair):
+        raise ValidationError("review packet inclusion probabilities must exactly cover frozen frame inventory")
+    for pair_id, probability in probabilities.items():
+        _finite_unit(probability, f"inclusion probability:{pair_id}")
+        row = inventory_by_pair[pair_id]
+        key = (row["snapshot_id"], row["candidate_class"], row["rank_band"])
+        if probability != allocation_by_stratum[key]["inclusion_probability"]:
+            raise ValidationError("review packet pair inclusion probability mismatches its frozen stratum")
+    selected_inventory = [row for row in inventory if row["pair_id"] in set(selected_ids)]
+    if sha256_json(selected_inventory) != packet["selected_frame_sha256"]:
+        raise ValidationError("review packet selected frame hash mismatch")
     assessment_ids: set[str] = set()
+    assessment_pair_kinds: set[tuple[str, str]] = set()
     primary_pairs: set[str] = set()
     duplicate_pairs: set[str] = set()
-    for row in packet["assessor_view_records"]:
+    assessor_records = packet["assessor_view_records"]
+    if not isinstance(assessor_records, list) or len(assessor_records) != primary + duplicate:
+        raise ValidationError("assessor view action count mismatch")
+    for row in assessor_records:
         if set(row) & REDACTED_FIELDS:
             raise ValidationError("condition-label leakage in assessor view")
         _exact(
@@ -394,10 +513,17 @@ def validate_review_packet(packet: dict[str, Any]) -> dict[str, Any]:
         )
         if row["assessment_kind"] not in {"primary", "duplicate"}:
             raise ValidationError("assessor view assessment_kind invalid")
-        if row["assessment_id"] in assessment_ids:
+        assessment_id = _sha(row["assessment_id"], "assessor-view assessment_id")
+        pair_id = _sha(row["pair_id"], "assessor-view pair_id")
+        pair_kind = (pair_id, row["assessment_kind"])
+        if assessment_id in assessment_ids or pair_kind in assessment_pair_kinds:
             raise ValidationError("duplicate assessor-view assessment_id")
-        assessment_ids.add(row["assessment_id"])
-        (primary_pairs if row["assessment_kind"] == "primary" else duplicate_pairs).add(row["pair_id"])
+        expected_assessment_id = sha256_json({"packet_id": packet["packet_id"], "pair_id": pair_id, "kind": row["assessment_kind"]})
+        if assessment_id != expected_assessment_id:
+            raise ValidationError("assessor-view assessment identity mismatch")
+        assessment_ids.add(assessment_id)
+        assessment_pair_kinds.add(pair_kind)
+        (primary_pairs if row["assessment_kind"] == "primary" else duplicate_pairs).add(pair_id)
     if primary_pairs != set(packet["selected_pair_ids"]) or duplicate_pairs != set(packet["duplicate_pair_ids"]):
         raise ValidationError("assessor view does not exactly project the frozen samples")
     if sha256_json(packet["assessor_view_records"]) != packet["assessor_view_sha256"]:
@@ -470,6 +596,8 @@ def import_judgments(artifact: dict[str, Any], packet: dict[str, Any], policy: d
         raise ValidationError("judgment artifact contains unknown assessor")
     if artifact["classification"] not in {"confirmatory", "exploratory"}:
         raise ValidationError("judgment classification invalid")
+    if not isinstance(artifact["outcome_revealed_at_import"], bool):
+        raise ValidationError("outcome_revealed_at_import must be boolean")
     if packet["classification"] == "exploratory" or artifact["outcome_revealed_at_import"]:
         if artifact["classification"] != "exploratory":
             raise ValidationError("post-reveal judgment artifact must be exploratory")
@@ -517,8 +645,14 @@ def import_judgments(artifact: dict[str, Any], packet: dict[str, Any], policy: d
         if row["assessor_id"] not in policy["allowed_assessor_ids"]:
             raise ValidationError("unknown judgment assessor")
         seen_assessors.add(row["assessor_id"])
-        if row["label"] not in {"relevant", "nonrelevant"} or row["relevance"] not in {0, 1, 2, 3}:
+        if (
+            row["label"] not in {"relevant", "nonrelevant"}
+            or isinstance(row["relevance"], bool)
+            or row["relevance"] not in {0, 1, 2, 3}
+        ):
             raise ValidationError("judgment relevance label invalid")
+        if (row["label"] == "nonrelevant") != (row["relevance"] == 0):
+            raise ValidationError("judgment label/relevance contradiction")
         for name in ("answer_bearing_relevance", "semantic_answer_quality", "attribution_correctness", "paraphrase_robustness"):
             if row[name] is not None:
                 _finite_unit(row[name], name)
