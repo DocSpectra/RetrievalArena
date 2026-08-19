@@ -3,8 +3,9 @@
 Status: accepted implemented v2 design; refinement-aware PRE-S019q-33L
 addendum ready for independent review
 
-Decision dates: 2026-08-15 (v2) and 2026-08-18 (refinement addendum).
-Reference status: S01--S27 are publicly `verified` and `zotero_missing`. No
+Decision dates: 2026-08-15 (v2) and 2026-08-18 (refinement and BERTScore
+diagnostic addenda). Reference status: S01--S27 form the original verified
+refinement audit; S28 is the separately verified BERTScore extension. No
 E-EXP1 result, held-out evidence, model, scorer, or experiment was inspected or
 run for either decision.
 
@@ -89,6 +90,26 @@ It does not measure ranked retrieval: an answer can share many words with a
 reference while relying on missing evidence, or use different wording despite
 retrieving the correct evidence. It is not a v2 retrieval endpoint.
 
+### Automatic BERTScore F1 diagnostic
+
+**Question:** How closely does generated answer wording align with a reference
+under contextual token embeddings rather than exact token identity?
+
+BERTScore F1 is accepted as an optional `operational_automatic` answer
+diagnostic (S28). It aligns candidate and reference tokens using a pinned
+contextual-embedding provider, computes semantic precision and recall from
+those alignments, and reports their harmonic mean. It is more sensitive to
+paraphrase than lexical F1, but it is not ranked-retrieval effectiveness,
+factuality, evidence attribution, contradiction detection, or a primary human
+judgment. It never creates qrels, transfers relevance, enters a composite, or
+replaces the human-calibrated semantic-answer family.
+
+Reproducible execution requires the exact package, model/checkpoint revision,
+tokenizer, baseline/rescaling policy, language setting, device/dtype policy,
+and artifact hashes to be admitted and recorded. Runtime network download is
+forbidden. When the registered model artifact is absent, BERTScore is explicitly
+unavailable rather than silently substituted or reported as zero.
+
 ### Shared example
 
 Suppose a query requires support targets `{A, B, C}`, the context budget is
@@ -103,6 +124,9 @@ Suppose a query requires support targets `{A, B, C}`, the context budget is
   illustrates why MRR alone would hide the missing `C`.
 - Lexical F1 cannot be inferred from the ranking at all; it requires generated
   and reference answer text.
+- BERTScore F1 likewise uses generated and reference answer text; it can reward
+  paraphrase, but cannot establish that the answer is supported or factually
+  correct.
 
 ## Metric comparison
 
@@ -113,6 +137,7 @@ Suppose a query requires support targets `{A, B, C}`, the context budget is
 | nDCG@k | Is relevant evidence ordered near the top? | Yes | Yes | Yes | Binary labels limit graded usefulness | Secondary |
 | MRR@k | How early is the first relevant target? | Yes | Yes | No, only first hit | Ignores later required evidence | Secondary |
 | Lexical F1 | Does answer wording overlap the reference? | Yes | Not applicable | No | Is not retrieval effectiveness | Legacy diagnostic |
+| BERTScore F1 | Does answer wording align under contextual embeddings? | Yes | Not applicable | No | Does not prove factuality, support, or contradiction absence | Automatic diagnostic |
 
 No single metric should be treated as a composite quality score. The primary
 endpoint answers the preregistered evidence-availability question; secondary
@@ -317,6 +342,7 @@ protocol evidence only; no TREC RAG 2026 result was available at the cutoff.
 | attribution and answer quality | S17--S21 | claims/sentences, cited sources, nuggets, and generated answers | answer correctness, coverage, citation completeness, and citation support are separate layers | semantic support commonly needs humans or models and is not ranked `@k` relevance |
 | bounded assessment | S22--S25 | pooled or probability-sampled query-item pairs, duplicate assessment, adjudication | fixed budgets, recorded sampling, blinding, agreement, and non-outcome-driven stopping are defensible | adaptive known-system ranking and reusable endpoint estimation are different objectives |
 | current protocol boundary | S27 | 2026 retrieval and RAG tasks over a new corpus | retrieval and generation remain distinct tasks with explicit corpus identity | protocol only; no outcome claim |
+| automatic paraphrase sensitivity | S28 | generated and reference answer tokens aligned by contextual embeddings | BERTScore precision, recall, and F1 provide a deterministic model-bound paraphrase diagnostic | embedding similarity does not establish factuality, provenance, contradiction absence, or retrieval effectiveness |
 
 The complete per-source metadata, judgment assumptions, claims, limitations,
 public-verification state, and Zotero state are retained in the context-owned
@@ -345,6 +371,7 @@ below, not because change was prohibited.
 | mandatory evidence-requirement coverage | `diagnostic_only` | Whether each registered semantic component has at least one physical realization in top `k`; subtopic recall is only an analogy (S09) | frozen requirement IDs and explicit snapshot bindings; zero human cost when bindings/lineage are deterministic | decomposition quality, empty bindings, and many-to-one concealment if evidence-unit bindings are omitted | add exact project-specific coverage and all-requirements diagnostics, separately labeled |
 | evolving-corpus transfer and lineage | `diagnostic_only` | Whether an assessed evidence unit is demonstrably identical across snapshots (S11--S14, S26) | content/provenance identity for automatic transfer; otherwise an external judgment | copy-context contradiction, rewrite, novelty, removal, ambiguity, cycles, and many-to-many promotion | narrow fail-closed integrity policy and class inventories; not a standard effectiveness metric |
 | answer-bearing passage relevance | `calibration_only` | Whether a candidate unit actually answers the query (S15) | imported passage/target human judgments with unit and grade frozen | target aggregation can conceal missing requirements; automatic inference is forbidden | calibration qrels may add answerability, but ranked target identity and requirement diagnostics stay distinct |
+| BERTScore precision/recall/F1 | `diagnostic_only` | Whether generated and reference answer tokens align contextually (S28) | no human judgment at runtime; exact frozen reference answers and a locally available pinned model artifact | model/checkpoint sensitivity, negation and factuality blind spots, reference dependence, and no evidence-grounding guarantee | optional automatic answer diagnostic with full provider provenance; never an endpoint, qrel source, lineage rule, or composite |
 | semantic answer quality | `calibration_only` | Whether the reconstructed answer is correct and complete (S16, S18--S21) | human claim/nugget judgments in the imported artifact | can vary independently of retrieval; paraphrase breaks lexical proxies; model judges are not primary authority | separate calibration result family; legacy lexical answer metrics remain diagnostics |
 | attribution / citation correctness | `calibration_only` | Whether required claims are cited and cited evidence supports them (S17--S21) | claim/sentence-source human judgments and a citation-needed policy | multi-source claims, granularity, paraphrase, and assessor cost | separate calibration family, never folded into retrieval or answer score |
 | paraphrase robustness | `calibration_only` | Whether semantically rewritten support or answers preserve meaning (S17--S21) | blind human semantic judgments for sampled rewrite candidates | lexical disagreement, contextual contradiction, and model-judge dependence | automatic lineage remains unresolved; only imported judgments may resolve sampled cases |
@@ -477,14 +504,16 @@ assessment, while remaining small enough for a single optional deep dive.
 | Recall@k, nDCG@k, MRR@k, and calibration-only BPref arithmetic | standard IR metric semantics |
 | pooling/frame freeze, probability sampling, duplicate assessment, blinding, agreement, adjudication, and fixed stopping | standard judgment methodology |
 | stable requirements, snapshot bindings, exact transfer predicates, unresolved/removed inventories, and no relevance self-promotion | DocSpectra-specific integrity or lineage policy |
-| RequirementCoverage@k, AllRequirements@k, lineage counts, answer/provenance diagnostics, and any post-reveal calibration | exploratory diagnostic convention |
+| RequirementCoverage@k, AllRequirements@k, lineage counts, lexical F1, BERTScore F1, answer/provenance diagnostics, and any post-reveal calibration | exploratory diagnostic convention |
 
 ### Ownership and successor implications
 
 PRE-S019q-33A must implement the two profiles, exact requirement formulas,
 lineage admission and inventories, review-packet sampling/provenance fields,
 judgment import, calibration-only provider BPref availability, and separated
-answer/attribution calibration families. It must not add AP/MAP,
+answer/attribution calibration families. It must also add optional
+provider-pinned BERTScore precision/recall/F1 as an automatic answer diagnostic
+with explicit unavailability and no runtime download. It must not add AP/MAP,
 R-precision, diversity-named metrics, inferred-AP scoring, a composite, an
 interactive assessor, or any model-created primary relevance. This addendum
 changes 33A's exact obligations and therefore must be reflected in its prompt,
@@ -594,3 +623,6 @@ network, or outcome-dependent action.
 - S26: NIST relevance-judgment and TREC methodology guidance:
   https://trec.nist.gov/data/reljudge_eng.html and https://trec.nist.gov/howto.html
 - S27: TREC RAG 2026 protocol: https://trec-rag.github.io/
+- S28: Zhang et al., *BERTScore: Evaluating Text Generation with BERT*
+  (ICLR 2020): https://arxiv.org/abs/1904.09675 and
+  https://openreview.net/forum?id=SkeHuCVFDr
