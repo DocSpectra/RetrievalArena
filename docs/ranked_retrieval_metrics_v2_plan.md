@@ -326,32 +326,42 @@ or a primary precedent for evolving collections, support attribution, or
 bounded assessment. Package documentation and citation counts were not
 scientific authority.
 
-Every one of the 27 retained sources was independently reopened against an
-official proceedings/track page, DOI/publisher record, NIST or institutional
-record, ACL Anthology, or DBLP. Public status is `verified` for S01--S27.
-A live read-only Zotero search checked every item by short DOI/title/author
-queries and found no exact match, so S01--S27 are separately
-`zotero_missing`; unrelated fallback hits were rejected and no item was added
-or changed. No Crossref-backed repository checker was available. The public
-audit corrected the author metadata for S13, the title and author metadata for
-S14, and added the verified DOI `10.1145/1390334.1390437` for S23. S27 is
-protocol evidence only; no TREC RAG 2026 result was available at the cutoff.
+Every one of the 27 retained sources was independently audited against its
+claim-bearing surface. Public status is `verified` for S01--S27. Access status
+is 22 `full_text_read`, three `official_protocol_full_text`, two
+`abstract_only`, zero `metadata_only`, and zero `inaccessible`. S05 and S10
+are the abstract-only records; their claims are narrowed below. S20, S26, and
+S27 are the official-protocol full-text records.
+
+A 2026-08-19 read-only Zotero collection audit found every S01--S27 item in
+`DocSpectra - IR` (`929HWPB4`), so all are separately `zotero_present`. A
+batched child-item audit found no attachments for any of the 27 items. Zotero
+ownership and attachment state do not establish public or full-text access.
+No Zotero item was added or changed. No Crossref-backed repository checker was
+available. The public audit corrected the author metadata for S13, the title
+and author metadata for S14, and added the verified DOI
+`10.1145/1390334.1390437` for S23. S08 full text was read from an
+author-uploaded ResearchGate reproduction and corroborated against DOI and
+Google Research metadata; no stable author/institutional full-text copy was
+verified, so that third-party-host limitation is explicit. S27 is protocol
+evidence only; no TREC RAG 2026 result was available at the cutoff.
 
 | Evidence family | Primary/authoritative records | Evaluation unit and judgment assumption | Supported conclusion | Limitation carried into this design |
 | --- | --- | --- | --- | --- |
-| AP, R-precision, bpref | S01--S05 | ranked documents; complete relevant set for AP/R-precision, judged positives and negatives for bpref | definitions, macro aggregation, pooling and assessor-variation cautions | none binds whole-ranking or query-specific `R` to DocSpectra's fixed model-context `k` |
-| aspect/diversity | S06--S10 | documents by subtopic/intent, with binary or graded intent labels and sometimes intent probabilities | alpha-nDCG, intent-aware measures, ERR, D#, and subtopic recall are standard diversity semantics | alternative user intents are not necessarily mandatory evidence components |
+| AP, R-precision, bpref | S01--S05 | ranked documents; complete relevant set for AP/R-precision, judged positives and negatives for bpref | definitions, macro aggregation, pooling, and abstract-supported assessor-variation/comparative-stability caution from S05 | S05 supplies no adjudication procedure; none binds whole-ranking or query-specific `R` to DocSpectra's fixed model-context `k` |
+| aspect/diversity | S06--S10 | documents by subtopic/intent, with binary or graded intent labels and sometimes intent probabilities | alpha-nDCG, intent-aware measures, ERR, D#, and subtopic recall are standard diversity semantics; S10 supports only intent-probability/per-intent-grade semantics from its abstract | S10 supplies no retained exact cutoff or aggregation claim; alternative user intents are not necessarily mandatory evidence components |
 | evolving collections | S11--S14, S26 | time-indexed collections and collection-bound qrels | corpus version, judgment scope, and renewed maintenance must be explicit | no source validates similarity-only relevance transfer across changed content |
 | answer-bearing support | S15--S16 | passages/targets with answerability or fixed-snapshot provenance judgments | ranked support and downstream answer/provenance evaluation can be separate | passage-to-document max inference can hide missing multi-part evidence |
 | attribution and answer quality | S17--S21 | claims/sentences, cited sources, nuggets, and generated answers | answer correctness, coverage, citation completeness, and citation support are separate layers | semantic support commonly needs humans or models and is not ranked `@k` relevance |
-| bounded assessment | S22--S25 | pooled or probability-sampled query-item pairs, duplicate assessment, adjudication | fixed budgets, recorded sampling, blinding, agreement, and non-outcome-driven stopping are defensible | adaptive known-system ranking and reusable endpoint estimation are different objectives |
+| bounded assessment | S22--S25 | pooled or probability-sampled query-item pairs, duplicate assessment, adjudication | literature supplies comparison-specific stopping/sampling precedents and S24's domain-specific duplicate/adjudication procedure | DocSpectra's ceiling, strata, allocation, minimum-one, and fixed stop are project choices; adaptive known-system ranking and reusable endpoint estimation are different objectives |
 | current protocol boundary | S27 | 2026 retrieval and RAG tasks over a new corpus | retrieval and generation remain distinct tasks with explicit corpus identity | protocol only; no outcome claim |
 | automatic paraphrase sensitivity | S28 | generated and reference answer tokens aligned by contextual embeddings | BERTScore precision, recall, and F1 provide a deterministic model-bound paraphrase diagnostic | embedding similarity does not establish factuality, provenance, contradiction absence, or retrieval effectiveness |
 
-The complete per-source metadata, judgment assumptions, claims, limitations,
-public-verification state, and Zotero state are retained in the context-owned
-PRE-S019q-33L evidence matrix. The table above records only the implications
-owned by Retrieval Arena.
+The complete per-source metadata, access level, full-text surface, inspected
+sections/pages, claim scope, public-verification state, Zotero item key, and
+attachment state are retained in the context-owned PRE-S019q-33L evidence
+matrix. The table above records only the implications owned by Retrieval
+Arena.
 
 ### Registered dispositions
 
@@ -379,7 +389,7 @@ below, not because change was prohibited.
 | semantic answer quality | `calibration_only` | Whether the reconstructed answer is correct and complete (S16, S18--S21) | human claim/nugget judgments in the imported artifact | can vary independently of retrieval; paraphrase breaks lexical proxies; model judges are not primary authority | separate calibration result family; legacy lexical answer metrics remain diagnostics |
 | attribution / citation correctness | `calibration_only` | Whether required claims are cited and cited evidence supports them (S17--S21) | claim/sentence-source human judgments and a citation-needed policy | multi-source claims, granularity, paraphrase, and assessor cost | separate calibration family, never folded into retrieval or answer score |
 | paraphrase robustness | `calibration_only` | Whether semantically rewritten support or answers preserve meaning (S17--S21) | blind human semantic judgments for sampled rewrite candidates | lexical disagreement, contextual contradiction, and model-judge dependence | automatic lineage remains unresolved; only imported judgments may resolve sampled cases |
-| bounded human calibration methodology | `calibration_only` | Robustness of optional labels and outcomes under a fixed assessment design (S04, S05, S22--S25) | one frozen review packet, assessor work, duplicates, and adjudication | leakage, convenience sampling, outcome-aware stopping, and incomplete artifacts | implement export/import and provenance only; automatic execution never waits for calibration |
+| bounded human calibration methodology | `calibration_only` | Pooling/reliability (S04), abstract-supported assessor variation/comparative stability (S05), sampling/stopping precedents (S22--S23), S24 duplicate assessment and blinded adjudication, and model-assisted allocation limits (S25) | one frozen review packet, assessor work, duplicates, and adjudication | leakage, convenience sampling, outcome-aware stopping, and incomplete artifacts | implement export/import and provenance only; automatic execution never waits for calibration |
 
 ### Accepted project-specific requirement formulas
 
@@ -469,7 +479,8 @@ cross-corpus deep dive is:
 - a frozen deduplicated frame built from the union of registered top-`k`
   query-target pairs, registered support bindings, and unresolved/novel
   candidates across all conditions and snapshots;
-- at most 240 primary human judgments total, not per run or corpus;
+- at most 240 primary human judgments total, not per run or corpus; 240 is a
+  DocSpectra governance ceiling, not a literature-derived constant;
 - if the frame exceeds 240, stratified simple random sampling without
   replacement over snapshot, candidate class, and top-`k` rank band, with a
   preregistered seed, proportional largest-remainder allocation, at least one
@@ -477,8 +488,11 @@ cross-corpus deep dive is:
   probabilities;
 - an independently and randomly selected 10% duplicate-assessment sample
   (`ceil(0.10 * primary_count)`) and blind adjudication of every duplicate
-  disagreement, for at most 288 rating/adjudication actions at the 240-item
-  ceiling;
+  disagreement; 10% is a project adoption of S24's domain-specific precedent,
+  not a universal rate;
+- at most 288 rating/adjudication actions at the 240-item ceiling; 288 is the
+  arithmetic bound 240 primary + 24 duplicate + at most 24 adjudications, not
+  a source-reported constant;
 - assessor views randomized and stripped of condition, system, outcome, rank,
   delta, and lineage-class labels; views include only the query/requirement,
   candidate evidence, and registered bounded context needed to judge support;
@@ -486,7 +500,10 @@ cross-corpus deep dive is:
   agreement is assessor evidence, not retrieval effectiveness;
 - a fixed stopping rule: stop when the frozen frame is exhausted or all fixed
   quotas are complete. Labels, system deltas, or preliminary scores cannot
-  expand, shrink, or redirect the sample.
+  expand, shrink, or redirect the sample. The chosen
+  snapshot/candidate-class/rank-band strata, proportional largest-remainder
+  allocation, minimum-one rule, and fixed quota stop are preregistered
+  DocSpectra choices rather than literature constants.
 
 The packet, frame, sample, seed, guidelines, assessor classes, blinding,
 budget, metric declarations, and adjudication policy must be frozen, and the
@@ -496,18 +513,21 @@ or outcome-informed sample is `exploratory`. Missing or incomplete calibration
 is valid absence for `operational_automatic` and invalidates only the requested
 calibration family.
 
-The 240-item ceiling is a bounded design choice, not a universal IR constant.
-It is anchored to the TREC-COVID report of approximately one minute per
-article-topic assessment and the TREC Legal precedent of about 10% duplicate
-assessment, while remaining small enough for a single optional deep dive.
+The 240-item governance ceiling is a bounded DocSpectra design choice anchored
+only by TREC-COVID's approximate one-minute-per-assessment cost context. The
+10% duplicate rate is a project adoption of the TREC Legal precedent, whose
+domain and Topic Authority workflow are not universal. The 288 maximum is
+arithmetic, and the exact sampling/allocation/stopping policy is
+preregistered project governance.
 
 ### Rule-class ownership
 
 | Accepted rule | Classification |
 | --- | --- |
 | Recall@k, nDCG@k, MRR@k, and calibration-only BPref arithmetic | standard IR metric semantics |
-| pooling/frame freeze, probability sampling, duplicate assessment, blinding, agreement, adjudication, and fixed stopping | standard judgment methodology |
+| pooling/frame freeze, probability sampling, duplicate assessment, blinding, agreement, and adjudication | standard judgment methodology |
 | stable requirements, snapshot bindings, exact transfer predicates, unresolved/removed inventories, and no relevance self-promotion | DocSpectra-specific integrity or lineage policy |
+| 240 governance ceiling, project-adopted 10% duplicate rate, strata, largest-remainder allocation, minimum-one rule, fixed quota stop, and 288 arithmetic bound | exploratory diagnostic convention implemented as preregistered project calibration governance |
 | RequirementCoverage@k, AllRequirements@k, lineage counts, lexical F1, BERTScore F1, answer/provenance diagnostics, and any post-reveal calibration | exploratory diagnostic convention |
 
 ### Ownership and successor implications
@@ -588,7 +608,10 @@ network, or outcome-dependent action.
 - S07: Agrawal et al., *Diversifying Search Results*:
   https://doi.org/10.1145/1498759.1498766
 - S08: Chapelle et al., *Expected Reciprocal Rank for Graded Relevance*:
-  https://doi.org/10.1145/1645953.1646033
+  https://doi.org/10.1145/1645953.1646033; institutional metadata:
+  https://research.google/pubs/expected-reciprocal-rank-for-graded-relevance/;
+  inspected full text was an author-uploaded third-party reproduction:
+  https://www.researchgate.net/publication/220269787_Expected_reciprocal_rank_for_graded_relevance
 - S09: Clarke, Craswell, and Soboroff, *Overview of the TREC 2009 Web Track*:
   https://trec.nist.gov/pubs/trec18/papers/WEB09.OVERVIEW.pdf
 - S10: Sakai and Song, *Evaluating Diversified Search Results Using
