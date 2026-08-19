@@ -26,6 +26,7 @@ calibration/bigdata2026/pilot_express_docs/observability_report.html
 ## BigData User Docs
 
 - [Ranked-retrieval metrics v2 plan](docs/ranked_retrieval_metrics_v2_plan.md)
+- [Portable deterministic task-completion evaluation](docs/task_completion_evaluation_plan.md)
 - [Run BigData pilots](docs/bigdata_pilots.md)
 - [Use the HTML observability report](docs/html_observability_report.md)
 - [Export paper evidence](docs/paper_evidence_export.md)

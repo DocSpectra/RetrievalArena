@@ -22,6 +22,10 @@ preregistered number of unique support items admitted to the answer model.
 Secondary endpoints are binary nDCG@k, complete-support@k, and MRR@k. Lexical
 answer F1 remains legacy-only and is not retrieval effectiveness.
 
+Deterministic agent task completion is a separate RA evaluation family defined
+in [Portable deterministic task-completion evaluation](task_completion_evaluation_plan.md).
+It does not alter, extend, or combine with the ranked-v2 metric family.
+
 Generic scoring belongs to accepted IR engines. Retrieval Arena owns dataset
 and run admission, DocSpectra support semantics, before/after pairing, action
 traces, replay identity, availability, audit, reporting, and evidence export.
