@@ -1,9 +1,12 @@
 # Ranked-retrieval metrics v2 specification
 
-Status: accepted design; PRE-S019q-32B implementation authorized
+Status: accepted implemented v2 design; refinement-aware PRE-S019q-33L
+addendum ready for independent review
 
-Decision date: 2026-08-15. Reference status: `zotero_unchecked`. No E-EXP1
-result or held-out evidence was inspected.
+Decision dates: 2026-08-15 (v2) and 2026-08-18 (refinement addendum).
+Reference status: S01--S27 are publicly `verified` and `zotero_missing`. No
+E-EXP1 result, held-out evidence, model, scorer, or experiment was inspected or
+run for either decision.
 
 ## Decision
 
@@ -281,6 +284,215 @@ The targeted CIKM/WSDM/SDM review found relevant attributed retrieval and
 ranking work, but no newer venue paper supersedes official TREC contracts and
 the foundational nDCG definition for standard metric semantics.
 
+## PRE-S019q-33L refinement-aware literature addendum
+
+### Search and verification protocol
+
+The addendum searched primary and authoritative sources through 2026-08-18.
+Queries combined metric, incomplete-judgment, diversity/aspect, dynamic-corpus,
+passage-answerability, attribution, and assessment terms with SIGIR, CIKM,
+WSDM, ECIR, SIAM SDM, TREC/NIST, ACL, and CLEF/LongEval sources. Inclusion
+required a metric or procedure definition, a directly applicable assumption,
+or a primary precedent for evolving collections, support attribution, or
+bounded assessment. Package documentation and citation counts were not
+scientific authority.
+
+Every one of the 27 retained sources was independently reopened against an
+official proceedings/track page, DOI/publisher record, NIST or institutional
+record, ACL Anthology, or DBLP. Public status is `verified` for S01--S27.
+A live read-only Zotero search checked every item by short DOI/title/author
+queries and found no exact match, so S01--S27 are separately
+`zotero_missing`; unrelated fallback hits were rejected and no item was added
+or changed. No Crossref-backed repository checker was available. The public
+audit corrected the author metadata for S13, the title and author metadata for
+S14, and added the verified DOI `10.1145/1390334.1390437` for S23. S27 is
+protocol evidence only; no TREC RAG 2026 result was available at the cutoff.
+
+| Evidence family | Primary/authoritative records | Evaluation unit and judgment assumption | Supported conclusion | Limitation carried into this design |
+| --- | --- | --- | --- | --- |
+| AP, R-precision, bpref | S01--S05 | ranked documents; complete relevant set for AP/R-precision, judged positives and negatives for bpref | definitions, macro aggregation, pooling and assessor-variation cautions | none binds whole-ranking or query-specific `R` to DocSpectra's fixed model-context `k` |
+| aspect/diversity | S06--S10 | documents by subtopic/intent, with binary or graded intent labels and sometimes intent probabilities | alpha-nDCG, intent-aware measures, ERR, D#, and subtopic recall are standard diversity semantics | alternative user intents are not necessarily mandatory evidence components |
+| evolving collections | S11--S14, S26 | time-indexed collections and collection-bound qrels | corpus version, judgment scope, and renewed maintenance must be explicit | no source validates similarity-only relevance transfer across changed content |
+| answer-bearing support | S15--S16 | passages/targets with answerability or fixed-snapshot provenance judgments | ranked support and downstream answer/provenance evaluation can be separate | passage-to-document max inference can hide missing multi-part evidence |
+| attribution and answer quality | S17--S21 | claims/sentences, cited sources, nuggets, and generated answers | answer correctness, coverage, citation completeness, and citation support are separate layers | semantic support commonly needs humans or models and is not ranked `@k` relevance |
+| bounded assessment | S22--S25 | pooled or probability-sampled query-item pairs, duplicate assessment, adjudication | fixed budgets, recorded sampling, blinding, agreement, and non-outcome-driven stopping are defensible | adaptive known-system ranking and reusable endpoint estimation are different objectives |
+| current protocol boundary | S27 | 2026 retrieval and RAG tasks over a new corpus | retrieval and generation remain distinct tasks with explicit corpus identity | protocol only; no outcome claim |
+
+The complete per-source metadata, judgment assumptions, claims, limitations,
+public-verification state, and Zotero state are retained in the context-owned
+PRE-S019q-33L evidence matrix. The table above records only the implications
+owned by Retrieval Arena.
+
+### Registered dispositions
+
+The review treated 32A as the accepted prospective baseline, not an immutable
+answer: a demonstrated refinement-specific question or validity defect could
+have added, demoted, replaced, or reclassified an endpoint without seeing
+outcomes. None of the audited families met that bar. The addendum therefore
+selects the smallest orthogonal family. `adopt_confirmatory` and
+`adopt_secondary` are intentionally unused: the accepted Recall@k primary and
+nDCG@k, complete-support@k, and MRR@k secondary family remains unchanged for
+the evidence-backed overlap, cutoff, judgment-cost, and failure-mode reasons
+below, not because change was prohibited.
+
+| Candidate family | Disposition | Scientific question and authority | Required judgments and cost | Failure modes and overlap | Retrieval Arena consequence |
+| --- | --- | --- | --- | --- | --- |
+| AP / MAP | `reject` | Whole-ranking precision-recall ordering (S01, S03) | complete relevant-set denominator; ordinarily treats unjudged as nonrelevant | not inherently at the registered `k`, sensitive to missing positives, and overlaps Recall@k plus nDCG@k | no AP/MAP endpoint or AP@k variant |
+| R-precision | `reject` | Precision at query-specific relevant count `R` (S01) | known `R` and judgments through rank `R` | cutoff can exceed model context, changes under split/consolidation, and at a common cutoff carries the same relevant-count information as recall/precision | no R-precision endpoint |
+| bpref | `calibration_only` | Judged-positive versus judged-negative ordering under incomplete judgments (S01, S02) | an imported artifact with both positive and negative human judgments; zero automatic-profile cost | unavailable from positive-only support mappings; pool/selection bias and small `R` or `N`; not requirement coverage | optional provider-owned BPref only in `scientific_calibration`, never primary or composite |
+| probability-sampled AP/nDCG estimators | `future_extension` | Design-based estimation and intervals under recorded sampling (S23), distinct from adaptive known-system ranking (S22) | inclusion probabilities, registered estimator/provider, and a probability sample | implementation/provider complexity; a convenience or delta-selected pool is invalid | 33A records sampling provenance but adds no inferred-AP scorer |
+| alpha-nDCG, ERR-IA, intent-aware, and D# measures | `reject` | Diversity across alternative or probabilistic intents (S06--S10) | intent/subtopic labels, optional probabilities/grades, and metric-specific parameters | mandatory evidence requirements are not alternative user intents; adoption by name would misstate semantics | no diversity-named endpoint for requirement coverage |
+| mandatory evidence-requirement coverage | `diagnostic_only` | Whether each registered semantic component has at least one physical realization in top `k`; subtopic recall is only an analogy (S09) | frozen requirement IDs and explicit snapshot bindings; zero human cost when bindings/lineage are deterministic | decomposition quality, empty bindings, and many-to-one concealment if evidence-unit bindings are omitted | add exact project-specific coverage and all-requirements diagnostics, separately labeled |
+| evolving-corpus transfer and lineage | `diagnostic_only` | Whether an assessed evidence unit is demonstrably identical across snapshots (S11--S14, S26) | content/provenance identity for automatic transfer; otherwise an external judgment | copy-context contradiction, rewrite, novelty, removal, ambiguity, cycles, and many-to-many promotion | narrow fail-closed integrity policy and class inventories; not a standard effectiveness metric |
+| answer-bearing passage relevance | `calibration_only` | Whether a candidate unit actually answers the query (S15) | imported passage/target human judgments with unit and grade frozen | target aggregation can conceal missing requirements; automatic inference is forbidden | calibration qrels may add answerability, but ranked target identity and requirement diagnostics stay distinct |
+| semantic answer quality | `calibration_only` | Whether the reconstructed answer is correct and complete (S16, S18--S21) | human claim/nugget judgments in the imported artifact | can vary independently of retrieval; paraphrase breaks lexical proxies; model judges are not primary authority | separate calibration result family; legacy lexical answer metrics remain diagnostics |
+| attribution / citation correctness | `calibration_only` | Whether required claims are cited and cited evidence supports them (S17--S21) | claim/sentence-source human judgments and a citation-needed policy | multi-source claims, granularity, paraphrase, and assessor cost | separate calibration family, never folded into retrieval or answer score |
+| paraphrase robustness | `calibration_only` | Whether semantically rewritten support or answers preserve meaning (S17--S21) | blind human semantic judgments for sampled rewrite candidates | lexical disagreement, contextual contradiction, and model-judge dependence | automatic lineage remains unresolved; only imported judgments may resolve sampled cases |
+| bounded human calibration methodology | `calibration_only` | Robustness of optional labels and outcomes under a fixed assessment design (S04, S05, S22--S25) | one frozen review packet, assessor work, duplicates, and adjudication | leakage, convenience sampling, outcome-aware stopping, and incomplete artifacts | implement export/import and provenance only; automatic execution never waits for calibration |
+
+### Accepted project-specific requirement formulas
+
+For query `q` and snapshot `s`, let `E_q` be the non-empty frozen set of
+mandatory `evidence_requirement_id` values, `B_qs(e)` the possibly empty set of
+physical `support_target_id` values explicitly bound to requirement `e`, and
+`R_qs(k)` the first `k` unique admitted targets. Define:
+
+```text
+RequirementCoverage@k(q,s)
+  = (1 / |E_q|) * sum over e in E_q of 1[B_qs(e) intersect R_qs(k) is non-empty]
+
+AllRequirements@k(q,s)
+  = 1 iff every e in E_q has B_qs(e) intersect R_qs(k) non-empty; else 0
+```
+
+OR applies only among physical realizations of the same requirement. AND
+applies across requirements. An empty treatment binding therefore remains an
+uncovered requirement rather than disappearing from the denominator. A target
+may satisfy multiple requirements only when each requirement has a separate,
+explicit, independently auditable evidence-unit binding inside that target.
+Target relevance to one requirement never promotes relevance to another.
+
+These are exploratory diagnostic conventions, not standard Recall or subtopic
+recall. Per-query values and query-macro summaries are permitted; connected
+support groups remain the uncertainty unit when intervals were preregistered.
+They never join a composite.
+
+### Calibration-only BPref semantics
+
+For a calibrated query with `R > 0` judged relevant and `N > 0` judged
+nonrelevant items, let `N_r` be the count of judged nonrelevant items ranked
+above relevant item `r`. The provider-owned TREC semantics are:
+
+```text
+BPref(q) = (1/R) * sum over judged relevant r
+           [1 - min(R, N_r) / min(R, N)]
+```
+
+Unjudged items are ignored. BPref is unavailable with missing calibrated
+judgments, `R = 0`, or `N = 0`; it is query-macro aggregated only when the
+registered calibration policy declares it. It is not truncated to `k`, does
+not replace Recall@k, and cannot appear in `operational_automatic`. A sampled
+artifact yields artifact-bound descriptive BPref; it does not imply a
+full-frame estimate or confidence interval. Any design-based uncertainty
+analysis requires a prospectively registered estimator and inclusion
+probabilities and remains outside 33A.
+
+### Exact lineage admission procedure
+
+Dynamic-test-collection evidence supports snapshot-bound evaluation and
+explicit collection maintenance, not a universal transfer theorem. Retrieval
+Arena therefore treats the following as a DocSpectra-specific integrity and
+lineage policy:
+
+1. Every transfer binds query, requirement, source/destination snapshots,
+   source/destination targets, normalized evidence, bounded local context,
+   structural owner, repository/document provenance, policy identity, and
+   self-hash.
+2. `identity_unchanged`, `exact_target_relocation`, and
+   `exact_evidence_unit_preserved` transfer only after all registered identity
+   fields and provenance predicates pass. A structural rename is admissible
+   only through explicit repository/document lineage.
+3. A contextual copy transfers only if the registered evidence, local context,
+   and owner lineage remain policy-exact and the destination contains no
+   contradiction. Mere substring equality is insufficient.
+4. Semantic rewrites, paraphrases, novel support, contradictory destinations,
+   removed support, ambiguous mappings, and unsupported many-to-many shapes do
+   not transfer. They enter explicit unresolved, unjudged, removed, or invalid
+   inventories.
+5. Many-to-many history is admissible automatically only after decomposition
+   into unique, acyclic, non-conflicting evidence-unit edges that each satisfy
+   the exact predicate. No transitive, duplicate, lexical, embedding, model,
+   or treatment-authored promotion is permitted.
+
+Standard target metrics remain snapshot-specific. A query with no admitted
+positive target in a snapshot makes standard ranked metrics unavailable; its
+stable mandatory requirements remain visible as uncovered in the separate
+project diagnostic.
+
+### Bounded calibration procedure
+
+Calibration is optional, external, immutable, and artifact-only. A
+registration may declare a smaller design, but the default ceiling for one
+cross-corpus deep dive is:
+
+- a frozen deduplicated frame built from the union of registered top-`k`
+  query-target pairs, registered support bindings, and unresolved/novel
+  candidates across all conditions and snapshots;
+- at most 240 primary human judgments total, not per run or corpus;
+- if the frame exceeds 240, stratified simple random sampling without
+  replacement over snapshot, candidate class, and top-`k` rank band, with a
+  preregistered seed, proportional largest-remainder allocation, at least one
+  item per non-empty stratum when the ceiling permits, and recorded inclusion
+  probabilities;
+- an independently and randomly selected 10% duplicate-assessment sample
+  (`ceil(0.10 * primary_count)`) and blind adjudication of every duplicate
+  disagreement, for at most 288 rating/adjudication actions at the 240-item
+  ceiling;
+- assessor views randomized and stripped of condition, system, outcome, rank,
+  delta, and lineage-class labels; views include only the query/requirement,
+  candidate evidence, and registered bounded context needed to judge support;
+- exact agreement and Cohen's kappa for categorical labels, with raw counts;
+  agreement is assessor evidence, not retrieval effectiveness;
+- a fixed stopping rule: stop when the frozen frame is exhausted or all fixed
+  quotas are complete. Labels, system deltas, or preliminary scores cannot
+  expand, shrink, or redirect the sample.
+
+The packet, frame, sample, seed, guidelines, assessor classes, blinding,
+budget, metric declarations, and adjudication policy must be frozen, and the
+completed judgment artifact imported, before registered outcome reveal for a
+`confirmatory` calibration result. Any post-reveal judgment, procedure change,
+or outcome-informed sample is `exploratory`. Missing or incomplete calibration
+is valid absence for `operational_automatic` and invalidates only the requested
+calibration family.
+
+The 240-item ceiling is a bounded design choice, not a universal IR constant.
+It is anchored to the TREC-COVID report of approximately one minute per
+article-topic assessment and the TREC Legal precedent of about 10% duplicate
+assessment, while remaining small enough for a single optional deep dive.
+
+### Rule-class ownership
+
+| Accepted rule | Classification |
+| --- | --- |
+| Recall@k, nDCG@k, MRR@k, and calibration-only BPref arithmetic | standard IR metric semantics |
+| pooling/frame freeze, probability sampling, duplicate assessment, blinding, agreement, adjudication, and fixed stopping | standard judgment methodology |
+| stable requirements, snapshot bindings, exact transfer predicates, unresolved/removed inventories, and no relevance self-promotion | DocSpectra-specific integrity or lineage policy |
+| RequirementCoverage@k, AllRequirements@k, lineage counts, answer/provenance diagnostics, and any post-reveal calibration | exploratory diagnostic convention |
+
+### Ownership and successor implications
+
+PRE-S019q-33A must implement the two profiles, exact requirement formulas,
+lineage admission and inventories, review-packet sampling/provenance fields,
+judgment import, calibration-only provider BPref availability, and separated
+answer/attribution calibration families. It must not add AP/MAP,
+R-precision, diversity-named metrics, inferred-AP scoring, a composite, an
+interactive assessor, or any model-created primary relevance. This addendum
+changes 33A's exact obligations and therefore must be reflected in its prompt,
+but does not start implementation.
+
+No additional standard confirmatory or secondary endpoint is accepted. The
+32A primary/secondary family and fixed context-budget binding remain frozen.
+
 ## Rejected alternatives
 
 - Retain RA unchanged: v1 lacks qrels, ranked identity, edge semantics, and an
@@ -325,3 +537,60 @@ network, or outcome-dependent action.
 - https://doi.org/10.1145/3626772.3657862
 - https://doi.org/10.18653/v1/2024.eacl-demo.16
 - https://github.com/amazon-science/RAGChecker
+
+### Refinement-addendum sources
+
+- S01: NIST, *Common Evaluation Measures*:
+  https://trec.nist.gov/pubs/trec15/appendices/CE.MEASURES06.pdf
+- S02: Buckley and Voorhees, *Retrieval Evaluation with Incomplete
+  Information*: https://doi.org/10.1145/1008992.1009000
+- S03: Voorhees, *Overview of TREC 2003*:
+  https://trec.nist.gov/pubs/trec12/papers/OVERVIEW.12.pdf
+- S04: Zobel, *How Reliable Are the Results of Large-Scale Information
+  Retrieval Experiments?*: https://doi.org/10.1145/290941.291014
+- S05: Voorhees, *Variations in Relevance Judgments and the Measurement of
+  Retrieval Effectiveness*: https://doi.org/10.1016/S0306-4573(00)00010-8
+- S06: Clarke et al., *Novelty and Diversity in Information Retrieval
+  Evaluation*: https://doi.org/10.1145/1390334.1390446
+- S07: Agrawal et al., *Diversifying Search Results*:
+  https://doi.org/10.1145/1498759.1498766
+- S08: Chapelle et al., *Expected Reciprocal Rank for Graded Relevance*:
+  https://doi.org/10.1145/1645953.1646033
+- S09: Clarke, Craswell, and Soboroff, *Overview of the TREC 2009 Web Track*:
+  https://trec.nist.gov/pubs/trec18/papers/WEB09.OVERVIEW.pdf
+- S10: Sakai and Song, *Evaluating Diversified Search Results Using
+  Per-Intent Graded Relevance*: https://doi.org/10.1145/2009916.2010055
+- S11: Soboroff, *Dynamic Test Collections: Measuring Search Effectiveness on
+  the Live Web*: https://doi.org/10.1145/1148170.1148220
+- S12: Galuščáková et al., *LongEval-Retrieval: French-English Dynamic Test
+  Collection for Continuous Web Search Evaluation*:
+  https://doi.org/10.1145/3539618.3591921
+- S13: Roberts et al., *TREC-COVID: Rationale and Structure of an Information
+  Retrieval Shared Task for COVID-19*: https://doi.org/10.1093/jamia/ocaa091
+- S14: Roberts et al., *Searching for Scientific Evidence in a Pandemic: An
+  Overview of TREC-COVID*: https://doi.org/10.1016/j.jbi.2021.103865
+- S15: Craswell et al., *Overview of the TREC 2022 Deep Learning Track*:
+  https://trec.nist.gov/pubs/trec31/papers/Overview_deep.pdf
+- S16: Petroni et al., *KILT: a Benchmark for Knowledge Intensive Language
+  Tasks*: https://doi.org/10.18653/v1/2021.naacl-main.200
+- S17: Rashkin et al., *Measuring Attribution in Natural Language Generation
+  Models*: https://doi.org/10.1162/coli_a_00486
+- S18: Gao et al., *Enabling Large Language Models to Generate Text with
+  Citations*: https://doi.org/10.18653/v1/2023.emnlp-main.398
+- S19: Djeddal et al., *An Evaluation Framework for Attributed Information
+  Retrieval using Large Language Models*: https://doi.org/10.1145/3627673.3679172
+- S20: TREC 2024 RAG evaluation procedure:
+  https://trec-rag.github.io/annoucements/evaluation/
+- S21: Upadhyay et al., *Overview of the TREC 2025 Retrieval Augmented
+  Generation Track*: https://trec.nist.gov/pubs/trec34/papers/Overview_rag.pdf
+- S22: Carterette, Allan, and Sitaraman, *Minimal Test Collections for
+  Retrieval Evaluation*: https://doi.org/10.1145/1148170.1148219
+- S23: Yilmaz, Kanoulas, and Aslam, *A Simple and Efficient Sampling Method for
+  Estimating AP and NDCG*: https://doi.org/10.1145/1390334.1390437
+- S24: Cormack et al., *Overview of the TREC 2010 Legal Track*:
+  https://trec.nist.gov/pubs/trec19/papers/LEGAL10.OVERVIEW.pdf
+- S25: Takehi et al., *LLM-Assisted Relevance Assessments: When Should We Ask
+  LLMs for Help?*: https://doi.org/10.1145/3726302.3729916
+- S26: NIST relevance-judgment and TREC methodology guidance:
+  https://trec.nist.gov/data/reljudge_eng.html and https://trec.nist.gov/howto.html
+- S27: TREC RAG 2026 protocol: https://trec-rag.github.io/
