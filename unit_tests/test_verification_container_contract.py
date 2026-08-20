@@ -58,6 +58,7 @@ class VerificationContainerContractTests(unittest.TestCase):
         self.assertIn('\"evaluate-profile\":', runner)
         self.assertIn("argv[1] not in COMMANDS", runner)
         self.assertNotIn("subprocess", runner)
+        self.assertIn("sys.path.insert(0, str(OPERATOR_ROOT))", runner)
 
     def test_operator_module_is_present_in_the_immutable_build_context(self):
         dockerignore = self.text(".dockerignore")

@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 SOURCE_ROOT = Path("/workspace/source")
+OPERATOR_ROOT = Path(__file__).resolve().parent
 COMMANDS = {
     "focused": (
         "unit_tests.test_dual_profile",
@@ -39,6 +40,7 @@ def main(argv: list[str]) -> int:
     os.chdir(SOURCE_ROOT)
     sys.path.insert(0, str(SOURCE_ROOT))
     if argv[1] == "evaluate-profile":
+        sys.path.insert(0, str(OPERATOR_ROOT))
         from evaluate_profile import main as evaluate_profile_main
         return evaluate_profile_main()
     scratch = SOURCE_ROOT / ".tmp_unit_tests"
