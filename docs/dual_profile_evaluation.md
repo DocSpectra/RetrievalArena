@@ -23,6 +23,28 @@ python -m retrieval_arena.cli import-judgments --judgments <judgments.json> --pa
 All commands are noninteractive. They do not read stdin, open an editor or
 browser, invoke a human workflow, use the network, or download a model.
 
+## Registered Docker operator
+
+For portable cross-repository qualification, `run-verification.ps1` and
+`run-verification.sh` register `evaluate-profile` as a distinct container
+command. It takes an admitted input root, a fresh marker-owned output root,
+and a self-hashed immutable image receipt. Both adapters validate the receipt
+and OCI labels for source commit/tree, dependency lock, and `linux/amd64`
+before creating a non-root container with a read-only root, no network,
+dropped capabilities, no-new-privileges, and read-only source/input mounts.
+
+The input root contains `operator-request.json` with schema
+`retrieval_arena.profile_evaluation_request.v1`. Its closed inventory must
+exactly hash all regular files other than the request, and `config_path` is a
+POSIX-relative path within that root. Symlinks, traversal, writable input,
+missing/extra files, and non-fresh output roots fail closed. The output root
+must initially contain only `.retrieval-arena-output-owner` whose contents are
+`retrieval_arena.output_root.v1`; the operator emits ordinary profile outputs
+and a self-hashed `operator_receipt.v1.json`. The receipt binds command,
+admitted inventory, output inventory, image/source/lock/platform identity,
+exit classification, and timestamps. It is operational provenance, never a
+substitute for the result/replay/audit artifacts.
+
 ## Configuration
 
 `retrieval_arena.dual_profile_config.v1` rejects unknown fields and contains:

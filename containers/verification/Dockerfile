@@ -30,6 +30,7 @@ RUN python -m pip install \
       -r /opt/retrieval-arena/requirements.lock
 
 COPY containers/verification/verify.py /opt/retrieval-arena/verify.py
+COPY containers/verification/evaluate_profile.py /opt/retrieval-arena/evaluate_profile.py
 RUN test -x /usr/bin/git \
     && mkdir -p /workspace/source \
     && chown 65532:65532 /workspace/source
@@ -37,4 +38,3 @@ RUN test -x /usr/bin/git \
 USER 65532:65532
 WORKDIR /workspace/source
 ENTRYPOINT ["python", "-I", "-B", "-X", "utf8", "/opt/retrieval-arena/verify.py"]
-

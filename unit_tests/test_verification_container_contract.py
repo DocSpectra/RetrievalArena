@@ -33,6 +33,12 @@ class VerificationContainerContractTests(unittest.TestCase):
                 "--cap-drop",
                 "readonly",
                 "PYTHONHASHSEED=0",
+                "verification-receipt-self-hash-invalid",
+                "verification-image-label-mismatch",
+                "verification-mounted-source-identity-mismatch",
+                "--memory",
+                "--cpus",
+                "TMPDIR=/tmp",
             ):
                 self.assertIn(required, adapter)
             self.assertIn("sha256:", adapter)
@@ -49,8 +55,41 @@ class VerificationContainerContractTests(unittest.TestCase):
         runner = self.text("containers/verification/verify.py")
         self.assertIn('\"focused\":', runner)
         self.assertIn('\"all\":', runner)
+        self.assertIn('\"evaluate-profile\":', runner)
         self.assertIn("argv[1] not in COMMANDS", runner)
         self.assertNotIn("subprocess", runner)
+
+    def test_registered_profile_operator_is_mount_bound_and_self_hashing(self):
+        operator = self.text("containers/verification/evaluate_profile.py")
+        dockerfile = self.text("containers/verification/Dockerfile")
+        for required in (
+            "retrieval_arena.profile_evaluation_request.v1",
+            "retrieval_arena.profile_evaluation_operator_receipt.v1",
+            "operator-symlink-rejected",
+            "operator-input-inventory-mismatch",
+            "operator-output-root-not-fresh",
+            "receipt_sha256",
+            '"completed"',
+            "container_ephemeral_tmpfs",
+            "/workspace/input",
+            "/workspace/output",
+        ):
+            self.assertIn(required, operator)
+        self.assertIn("evaluate_profile.py", dockerfile)
+
+    def test_build_receipts_are_self_hashed_v2(self):
+        for relative in ("scripts/build-verification.ps1", "scripts/build-verification.sh"):
+            build = self.text(relative)
+            self.assertIn("retrieval_arena.verification_image_receipt.v2", build)
+            self.assertIn("receipt_sha256", build)
+
+    def test_build_and_run_refuse_untracked_or_dirty_source(self):
+        for relative in (
+            "scripts/build-verification.ps1", "scripts/build-verification.sh",
+            "scripts/run-verification.ps1", "scripts/run-verification.sh",
+        ):
+            self.assertIn("status --porcelain", self.text(relative))
+            self.assertIn("verification-source-not-clean", self.text(relative))
 
 
 if __name__ == "__main__":

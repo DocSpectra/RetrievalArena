@@ -13,8 +13,10 @@ COMMANDS = {
         "unit_tests.test_review_packets",
         "unit_tests.test_profile_evaluation",
         "unit_tests.test_verification_container_contract",
+        "unit_tests.test_profile_operator_admission",
     ),
     "all": None,
+    "evaluate-profile": (),
 }
 
 
@@ -34,18 +36,20 @@ def main(argv: list[str]) -> int:
     if not SOURCE_ROOT.is_dir():
         print("source-root-missing", file=sys.stderr)
         return 2
+    os.chdir(SOURCE_ROOT)
+    sys.path.insert(0, str(SOURCE_ROOT))
+    if argv[1] == "evaluate-profile":
+        from evaluate_profile import main as evaluate_profile_main
+        return evaluate_profile_main()
     scratch = SOURCE_ROOT / ".tmp_unit_tests"
     html_scratch = SOURCE_ROOT / "unit_tests" / "_tmp_html_report"
     if not scratch.is_dir() or not html_scratch.is_dir():
         print("declared-test-scratch-missing", file=sys.stderr)
         return 2
 
-    os.chdir(SOURCE_ROOT)
-    sys.path.insert(0, str(SOURCE_ROOT))
     result = unittest.TextTestRunner(verbosity=2).run(_suite(argv[1]))
     return 0 if result.wasSuccessful() else 1
 
 
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv))
-

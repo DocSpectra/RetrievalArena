@@ -73,6 +73,28 @@ read-only container root, and only declared tmpfs test scratch writable. The
 CPU image targets `linux/amd64`; later Spark or NVIDIA profiles should derive
 from this verification contract without changing the baseline test semantics.
 
+The same registered operator family also exposes the cross-repository
+dual-profile ingress. `input-root` is an immutable bundle containing an
+`operator-request.json` and its exactly hashed files; `output-root` is a fresh
+directory containing only `.retrieval-arena-output-owner` with the literal
+`retrieval_arena.output_root.v1` marker. The command validates the self-hashed
+image receipt and Docker labels before execution, mounts source/input
+read-only, disables networking, and writes only result artifacts plus a
+self-hashed terminal receipt to the output root:
+
+```powershell
+.\scripts\run-verification.ps1 evaluate-profile <input-root> <output-root> <image-receipt>
+```
+
+POSIX hosts use `scripts/run-verification.sh evaluate-profile <input-root>
+<output-root> <image-receipt>`. The request schema is
+`retrieval_arena.profile_evaluation_request.v1`; it has closed fields
+`schema_version`, `command`, `config_path`, `input_inventory`, and
+`input_inventory_sha256`. The inventory excludes the request itself and must
+exactly enumerate every other regular input file. The terminal
+`operator_receipt.v1.json` is operational evidence, not evaluator result
+truth.
+
 Ranked-retrieval v2 uses strict qrels, run, and policy artifacts and delegates
 standard arithmetic to pinned `ir-measures==0.4.3`:
 

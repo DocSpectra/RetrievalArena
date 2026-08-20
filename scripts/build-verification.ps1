@@ -7,6 +7,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+$porcelain = (& git -C $repo status --porcelain)
+if ($LASTEXITCODE -ne 0 -or $porcelain) { throw 'verification-source-not-clean' }
+$null = & git -C $repo diff --quiet
+if ($LASTEXITCODE -ne 0) { throw 'verification-source-worktree-dirty' }
+$null = & git -C $repo diff --cached --quiet
+if ($LASTEXITCODE -ne 0) { throw 'verification-source-index-dirty' }
 $lock = Join-Path $repo 'containers\verification\requirements.lock'
 $dockerfile = Join-Path $repo 'containers\verification\Dockerfile'
 $commit = (& git -C $repo rev-parse HEAD).Trim()
@@ -29,12 +35,10 @@ $receiptPath = if ([IO.Path]::IsPathRooted($Receipt)) {
 }
 $receiptParent = Split-Path -Parent $receiptPath
 New-Item -ItemType Directory -Force -Path $receiptParent | Out-Null
-[ordered]@{
-    schema_version = 'retrieval_arena.verification_image_receipt.v1'
-    image = [ordered]@{ reference = $imageId; tag = $Tag }
-    platform = $Platform
-    source_commit = $commit
-    source_tree = $tree
-    dependency_lock_sha256 = $lockHash
-} | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 -LiteralPath $receiptPath
+$zero = '0' * 64
+$text = "{`"dependency_lock_sha256`":`"$lockHash`",`"image`":{`"reference`":`"$imageId`",`"tag`":`"$Tag`"},`"platform`":`"$Platform`",`"receipt_sha256`":`"$zero`",`"schema_version`":`"retrieval_arena.verification_image_receipt.v2`",`"source_commit`":`"$commit`",`"source_tree`":`"$tree`"}`n"
+$encoding = [Text.UTF8Encoding]::new($false)
+[IO.File]::WriteAllText($receiptPath, $text, $encoding)
+$receiptHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $receiptPath).Hash.ToLowerInvariant()
+[IO.File]::WriteAllText($receiptPath, $text.Replace($zero, $receiptHash), $encoding)
 Write-Output $receiptPath
