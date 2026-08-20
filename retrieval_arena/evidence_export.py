@@ -15,7 +15,7 @@ def build_profile_evidence(result: dict[str, Any], replay: dict[str, Any]) -> di
     family = result["result_family"]
     if replay["result_family"] != family:
         raise ValueError("evaluation result/replay family mismatch")
-    return {
+    evidence = {
         "schema_version": f"retrieval_arena.{family}_evidence.v1",
         "evaluation_profile": result["evaluation_profile"],
         "result_sha256": result["result_sha256"],
@@ -25,6 +25,11 @@ def build_profile_evidence(result: dict[str, Any], replay: dict[str, Any]) -> di
         "standard_and_project_specific_separated": True,
         "composite_metric": None,
     }
+    if family == "automatic":
+        evidence["source_qrels_scope"] = result["source_qrels_scope"]
+        evidence["effective_qrels_scope"] = result["qrels_scope"]
+        evidence["qrel_audit_hashes"] = result["qrel_audit_hashes"]
+    return evidence
 
 
 def export_paper_evidence(bundle_root: Path, out_dir: Path) -> dict[str, Any]:

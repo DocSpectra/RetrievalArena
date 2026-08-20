@@ -22,6 +22,7 @@ from .dual_profile import (
     validate_lineage,
     validate_profile_policy,
     validate_requirements,
+    validate_destination_qrel_inventory,
 )
 from .errors import ValidationError
 from .audit import build_profile_audit
@@ -141,18 +142,6 @@ def _rankings(predictions: list[dict[str, Any]]) -> dict[str, list[str]]:
             raise ValidationError("ranked prediction shape invalid for profile evaluation")
         result[qid] = [item["support_target_id"] for item in items]
     return result
-
-
-def _top_k_judgment_counts(
-    qrels: list[dict[str, Any]], predictions: list[dict[str, Any]], cutoff: int
-) -> tuple[int, int]:
-    judged = {(row["query_id"], row["support_target_id"]) for row in qrels}
-    pairs = [
-        (row["query_id"], item["support_target_id"])
-        for row in predictions
-        for item in row["items"][:cutoff]
-    ]
-    return sum(pair in judged for pair in pairs), sum(pair not in judged for pair in pairs)
 
 
 def _score_ranked_profile(
@@ -300,12 +289,42 @@ def evaluate_profile_files(config_path: Path, output_dir: Path) -> dict[str, Any
         dataset["corpus_snapshot_id"],
         dataset["ordered_query_ids"],
         dataset["relevance_scale"],
+        source_qrels_scope=dataset["qrels_scope"],
+        ranked_predictions=ranked_predictions,
+        cutoff=policy["context_item_budget_k"],
+        ranked_dataset_sha256=input_hashes["ranked_dataset_path"],  # type: ignore[arg-type]
+        ranked_policy_sha256=input_hashes["ranked_metric_policy_path"],  # type: ignore[arg-type]
+    )
+    validate_destination_qrel_inventory(
+        destination_qrel_inventory,
+        qrels,
+        lineage_artifact,
+        config["automatic_qrels_snapshot_id"],
+        dataset["corpus_snapshot_id"],
+        dataset["ordered_query_ids"],
+        dataset["relevance_scale"],
+        source_qrels_scope=dataset["qrels_scope"],
+        ranked_predictions=ranked_predictions,
+        cutoff=policy["context_item_budget_k"],
+        ranked_dataset_sha256=input_hashes["ranked_dataset_path"],  # type: ignore[arg-type]
+        ranked_policy_sha256=input_hashes["ranked_metric_policy_path"],  # type: ignore[arg-type]
     )
     destination_qrels = destination_qrel_inventory["qrels"]
 
     if profile == PROFILE_AUTOMATIC:
+        effective_dataset = dict(dataset)
+        effective_dataset["qrels_scope"] = destination_qrel_inventory[
+            "effective_qrels_scope"
+        ]
+        effective_policy = dict(ranked_policy)
+        effective_policy["qrels_scope"] = destination_qrel_inventory[
+            "effective_qrels_scope"
+        ]
+        effective_policy["policy_sha256"] = self_hash(
+            effective_policy, "policy_sha256"
+        )
         ranked_scores, ranked_aggregate, unavailable_ranked = _score_ranked_profile(
-            dataset, destination_qrels, ranked_predictions, ranked_policy
+            effective_dataset, destination_qrels, ranked_predictions, effective_policy
         )
         answer_pairs: list[dict[str, Any]] = []
         lexical_rows: list[dict[str, Any]] = []
@@ -366,9 +385,22 @@ def evaluate_profile_files(config_path: Path, output_dir: Path) -> dict[str, Any
                         "scores": [{"query_id": qid, **scores[qid]} for qid in sorted(scores)],
                         "declared_blind_spot": "does_not_establish_factuality_support_attribution_or_contradiction_absence",
                     }
-        judged_top_k, unjudged_top_k = _top_k_judgment_counts(
-            destination_qrels, ranked_predictions, policy["context_item_budget_k"]
-        )
+        judged_top_k = destination_qrel_inventory["judged_top_k_count"]
+        unjudged_top_k = destination_qrel_inventory["unjudged_top_k_count"]
+        qrel_audit_hashes = {
+            "destination_qrel_inventory_sha256": destination_qrel_inventory[
+                "inventory_sha256"
+            ],
+            "source_qrel_dispositions_sha256": destination_qrel_inventory[
+                "source_qrel_dispositions_sha256"
+            ],
+            "destination_top_k_judgments_sha256": destination_qrel_inventory[
+                "destination_top_k_judgments_sha256"
+            ],
+            "effective_scoring_view_sha256": destination_qrel_inventory[
+                "effective_scoring_view"
+            ]["view_sha256"],
+        }
         result = {
             "schema_version": SCHEMA_AUTOMATIC_RESULT,
             "evaluation_profile": PROFILE_AUTOMATIC,
@@ -378,7 +410,9 @@ def evaluate_profile_files(config_path: Path, output_dir: Path) -> dict[str, Any
             "corpus_snapshot_id": dataset["corpus_snapshot_id"],
             "policy_id": policy["policy_id"],
             "judgment_source": "automatic_qrels_and_exact_lineage",
-            "qrels_scope": dataset["qrels_scope"],
+            "source_qrels_scope": dataset["qrels_scope"],
+            "qrels_scope": destination_qrel_inventory["effective_qrels_scope"],
+            "qrel_audit_hashes": qrel_audit_hashes,
             "metric_families": {
                 "standard_ranked_retrieval": {
                     "classification": "standard_ir_metrics_provider_owned",

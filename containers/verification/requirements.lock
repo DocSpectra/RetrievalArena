@@ -1,0 +1,8 @@
+# Linux/amd64 CPython 3.12 binary closure selected from the official PyPI
+# release metadata on 2026-08-20. Builds reject source distributions and any
+# artifact whose SHA-256 is not listed here.
+ir-measures==0.4.3 --hash=sha256:3d8b3b5283e4a77df85f9f6c8a1c2c99a7421b78fa014ef97f2ddab3037d3dcf
+numpy==2.5.2 --hash=sha256:3cdec01fa790a186d430433fdd4d4ffb70eed6f0eeb4bf05c8dbe2dce0a9bcb8
+pytrec-eval-terrier==0.5.10 --hash=sha256:689ee541d72c27d14ae15cd1f11d2cb86cf9bdc880f5e8af9c5dbbdd47663d4d
+scipy==1.18.0 --hash=sha256:1f55797419e16e7f30cf88ffb3113ce0467f00cfe3f70d5c281730b21769bfc2
+

@@ -37,9 +37,9 @@ class SnapshotManifestTests(unittest.TestCase):
         dataset = root / "dataset"
         corpus = dataset / "corpus"
         corpus.mkdir(parents=True)
-        (corpus / "install.md").write_text("# Install\n\nUse pip.\n", encoding="utf-8")
+        (corpus / "install.md").write_bytes(b"# Install\n\nUse pip.\n")
         (corpus / "guide").mkdir()
-        (corpus / "guide" / "config.md").write_text("# Config\n\nSet cache_size.\n", encoding="utf-8")
+        (corpus / "guide" / "config.md").write_bytes(b"# Config\n\nSet cache_size.\n")
         (dataset / "questions.jsonl").write_text(
             '{"question_id":"q1","question":"How install?"}\n'
             '{"question_id":"q2","question":"How configure?"}\n',
@@ -87,7 +87,7 @@ class SnapshotManifestTests(unittest.TestCase):
             self.assertEqual(first["file_count"], 2)
             self.assertEqual([item["path"] for item in first["file_inventory"]], ["guide/config.md", "install.md"])
             self.assertEqual([item["doc_id"] for item in first["file_inventory"]], ["guide/config", "install"])
-            self.assertEqual(first["corpus_size_bytes"], 52)
+            self.assertEqual(first["corpus_size_bytes"], 46)
             self.assertEqual(first["source_name"], "Toy Docs")
 
             manifest_path = tmp / "corpus_snapshot_manifest.json"

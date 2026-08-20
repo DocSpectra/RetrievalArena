@@ -117,8 +117,26 @@ and records the exact lineage-record hash as judgment provenance. The original
 source target inventory is never scored directly. Source negatives,
 nontransfer classes, and source targets without an admitted edge remain
 unjudged at the destination; no negative transfer is invented. Standard
-ranked scoring and judged/unjudged top-k counts consume this same canonical
-destination inventory.
+ranked scoring consumes this same canonical destination inventory.
+
+The complete or pooled scope on the frozen source artifacts is preserved as an
+input identity. If any admitted destination top-k prediction is absent from the
+composed destination qrels, the evaluator derives an in-memory `pooled`
+dataset/policy scoring view. It retains `complete` only when the source is
+complete and every destination top-k pair is judged. The derived view has its
+own hash and never mutates the source files, policy identity, or recorded input
+hashes.
+
+`retrieval_arena.destination_qrel_inventory.v2` carries two canonical hashed
+ledgers. The source-qrel disposition ledger gives every source qrel exactly one
+reason-bearing transferred or non-transferred disposition and binds its source
+judgment plus every governing lineage record. The destination top-k ledger
+partitions every ranked pair into judged or unjudged, binds transferred
+judgment provenance, and records closed reasons for source nonpositive,
+semantic-rewrite, removed, novel, or no-exact-lineage cases. Conservation
+checks require exact source coverage, exact correspondence between transferred
+dispositions and destination qrels, and exact top-k judged/unjudged
+partitioning before any result is written.
 
 When a snapshot leaves one query with no admitted positive target, its
 standard ranked measures are explicitly unavailable with
@@ -233,7 +251,10 @@ Calibration writes the parallel `calibration_*` family. Result and replay
 schemas, hashes, family names, classification, judgment source, qrels scope,
 lineage inventory, judged/unjudged counts, provider identities,
 available/unavailable states, and every input hash remain explicit. Identical
-inputs produce byte-identical artifacts.
+inputs produce byte-identical artifacts. Automatic result, audit, evidence,
+report, and replay artifacts bind the destination-inventory, source-disposition,
+destination-top-k, and effective-scoring-view hashes; the full ledgers remain
+evaluator-only inside the automatic result.
 
 ## Security and scope
 

@@ -49,7 +49,7 @@ def build_profile_audit(result: dict[str, Any], replay: dict[str, Any]) -> dict[
         raise ValidationError("unsupported evaluation result family for audit")
     if replay["result_family"] != family or replay["evaluation_profile"] != result["evaluation_profile"]:
         raise ValidationError("evaluation result/replay profile mismatch")
-    return {
+    audit = {
         "schema_version": f"retrieval_arena.{family}_audit.v1",
         "evaluation_profile": result["evaluation_profile"],
         "classification": result["classification"],
@@ -61,6 +61,11 @@ def build_profile_audit(result: dict[str, Any], replay: dict[str, Any]) -> dict[
         "replay_sha256": replay["replay_sha256"],
         "available_families": sorted(result["metric_families"]),
     }
+    if family == "automatic":
+        audit["source_qrels_scope"] = result["source_qrels_scope"]
+        audit["effective_qrels_scope"] = result["qrels_scope"]
+        audit["qrel_audit_hashes"] = result["qrel_audit_hashes"]
+    return audit
 
 
 def utc_now_iso() -> str:

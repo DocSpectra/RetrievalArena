@@ -11,6 +11,7 @@ from pathlib import Path
 
 from retrieval_arena.errors import ValidationError
 from retrieval_arena.cli import main
+from retrieval_arena.dual_profile import validate_destination_qrel_inventory
 from retrieval_arena.profile_evaluation import evaluate_profile_files
 from retrieval_arena.replay_compare import compare_profile_replays
 from retrieval_arena.review_packets import build_review_packet
@@ -32,8 +33,15 @@ class ProfileEvaluationTests(unittest.TestCase):
     def write_jsonl(self, path: Path, rows) -> None:
         path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows), encoding="utf-8", newline="\n")
 
-    def build_inputs(self, root: Path, *, calibration=False, missing_bertscore=False) -> Path:
-        dataset, qrels, predictions, ranked_policy = ranked_fixture("pooled")
+    def build_inputs(
+        self,
+        root: Path,
+        *,
+        calibration=False,
+        missing_bertscore=False,
+        source_qrels_scope="pooled",
+    ) -> Path:
+        dataset, qrels, predictions, ranked_policy = ranked_fixture(source_qrels_scope)
         dataset["corpus_snapshot_id"] = "after"
         requirements = {
             "schema_version": "retrieval_arena.evidence_requirements.v1",
@@ -196,6 +204,137 @@ class ProfileEvaluationTests(unittest.TestCase):
             self.assertEqual([row["query_id"] for row in standard["unavailable_queries"]], ["q2"])
             self.assertEqual(result["inventory"]["judged_top_k_count"], 1)
             self.assertEqual(result["inventory"]["unjudged_top_k_count"], 3)
+
+    def test_complete_source_derives_pooled_destination_with_disposition_audit(self):
+        with tempfile.TemporaryDirectory(dir=".tmp_unit_tests") as root_text:
+            root = Path(root_text)
+            config = self.build_inputs(root, source_qrels_scope="complete")
+            records = [
+                lineage_record("exact_target_relocation", "a", "relocated-a"),
+                lineage_record("support_removed", "b", "removed-b"),
+                lineage_record("identity_unchanged", "x", "x"),
+                lineage_record("semantic_rewrite_unresolved", "c", "rewritten-c"),
+                lineage_record("novel_support_unjudged", "novel-source", "novel-y"),
+            ]
+            for index, row in enumerate(records):
+                row["source_evidence_unit_id"] = f"source-u{index}"
+                row["destination_evidence_unit_id"] = f"destination-u{index}"
+                if index >= 3:
+                    row["query_id"] = "q2"
+                    row["evidence_requirement_id"] = "r2"
+                self_hash(row, "record_sha256")
+            lineage = lineage_artifact(records)
+            self.write_json(root / "lineage.json", lineage)
+            policy = json.loads((root / "profile_policy.json").read_text(encoding="utf-8"))
+            policy["lineage_sha256"] = lineage["lineage_sha256"]
+            self_hash(policy, "policy_sha256")
+            self.write_json(root / "profile_policy.json", policy)
+            predictions = [
+                json.loads(line)
+                for line in (root / "predictions.jsonl").read_text(encoding="utf-8").splitlines()
+            ]
+            for item, target in zip(
+                [*predictions[0]["items"], *predictions[1]["items"]],
+                ["relocated-a", "x", "rewritten-c", "novel-y"],
+            ):
+                item["support_target_id"] = target
+                item["source_item_id"] = f"chunk-{target}"
+                item["source_provenance_sha256"] = sha(f"source-{target}")
+            self.write_jsonl(root / "predictions.jsonl", predictions)
+
+            evaluated = evaluate_profile_files(config, root / "out")
+            result = evaluated["result"]
+            diagnostics = result["metric_families"]["project_specific_diagnostics"]
+            inventory = diagnostics["destination_qrel_inventory"]
+            self.assertEqual(result["source_qrels_scope"], "complete")
+            self.assertEqual(result["qrels_scope"], "pooled")
+            self.assertEqual(inventory["schema_version"], "retrieval_arena.destination_qrel_inventory.v2")
+            self.assertEqual(inventory["inventory_sha256"], self_hash(copy.deepcopy(inventory), "inventory_sha256")["inventory_sha256"])
+            self.assertEqual(
+                {(row["query_id"], row["source_support_target_id"]) for row in inventory["source_qrel_dispositions"]},
+                {("q1", "a"), ("q1", "b"), ("q1", "x"), ("q2", "c"), ("q2", "y")},
+            )
+            source_reasons = {row["reason"] for row in inventory["source_qrel_dispositions"]}
+            self.assertTrue(
+                {"exact_positive_transfer", "source_nonpositive_judgment", "semantic_rewrite_unresolved", "support_removed"}
+                <= source_reasons
+            )
+            top_reasons = {row["reason"] for row in inventory["destination_top_k_judgments"]}
+            self.assertEqual(
+                top_reasons,
+                {"exact_positive_transfer", "source_nonpositive_judgment", "semantic_rewrite_unresolved", "novel_support_unjudged"},
+            )
+            self.assertEqual(inventory["judged_top_k_count"], 1)
+            self.assertEqual(inventory["unjudged_top_k_count"], 3)
+            self.assertEqual(result["qrel_audit_hashes"]["source_qrel_dispositions_sha256"], inventory["source_qrel_dispositions_sha256"])
+            audit = json.loads((root / "out" / "automatic_audit.v1.json").read_text(encoding="utf-8"))
+            evidence = json.loads((root / "out" / "automatic_evidence.v1.json").read_text(encoding="utf-8"))
+            report = (root / "out" / "automatic_report.v1.md").read_text(encoding="utf-8")
+            self.assertEqual(audit["qrel_audit_hashes"], result["qrel_audit_hashes"])
+            self.assertEqual(evidence["qrel_audit_hashes"], result["qrel_audit_hashes"])
+            for value in result["qrel_audit_hashes"].values():
+                self.assertIn(value, report)
+
+            mutated = copy.deepcopy(inventory)
+            mutated["source_qrel_dispositions"][0]["reason"] = "silently_dropped"
+            qrels = [
+                json.loads(line)
+                for line in (root / "qrels.jsonl").read_text(encoding="utf-8").splitlines()
+            ]
+            dataset = json.loads((root / "dataset.json").read_text(encoding="utf-8"))
+            with self.assertRaisesRegex(ValidationError, "exact recomposition mismatch"):
+                validate_destination_qrel_inventory(
+                    mutated,
+                    qrels,
+                    lineage,
+                    "before",
+                    "after",
+                    dataset["ordered_query_ids"],
+                    dataset["relevance_scale"],
+                    source_qrels_scope=dataset["qrels_scope"],
+                    ranked_predictions=predictions,
+                    cutoff=2,
+                    ranked_dataset_sha256=hashlib.sha256((root / "dataset.json").read_bytes()).hexdigest(),
+                    ranked_policy_sha256=hashlib.sha256((root / "ranked_policy.json").read_bytes()).hexdigest(),
+                )
+
+    def test_fully_judged_destination_retains_complete_scope(self):
+        with tempfile.TemporaryDirectory(dir=".tmp_unit_tests") as root_text:
+            root = Path(root_text)
+            config = self.build_inputs(root, source_qrels_scope="complete")
+            records = []
+            for index, (qid, rid, target) in enumerate(
+                (("q1", "r1", "a"), ("q1", "r1", "b"), ("q2", "r2", "c"))
+            ):
+                row = lineage_record("identity_unchanged", target, target)
+                row["query_id"] = qid
+                row["evidence_requirement_id"] = rid
+                row["source_evidence_unit_id"] = f"source-complete-{index}"
+                row["destination_evidence_unit_id"] = f"destination-complete-{index}"
+                self_hash(row, "record_sha256")
+                records.append(row)
+            lineage = lineage_artifact(records)
+            self.write_json(root / "lineage.json", lineage)
+            policy = json.loads((root / "profile_policy.json").read_text(encoding="utf-8"))
+            policy["lineage_sha256"] = lineage["lineage_sha256"]
+            self_hash(policy, "policy_sha256")
+            self.write_json(root / "profile_policy.json", policy)
+            predictions = [
+                json.loads(line)
+                for line in (root / "predictions.jsonl").read_text(encoding="utf-8").splitlines()
+            ]
+            predictions[0]["items"] = predictions[0]["items"][:2]
+            predictions[0]["items"][1]["support_target_id"] = "b"
+            predictions[0]["items"][1]["source_item_id"] = "chunk-b"
+            predictions[0]["items"][1]["source_provenance_sha256"] = sha("source-b")
+            predictions[1]["items"] = predictions[1]["items"][:1]
+            predictions[1]["max_rank"] = 1
+            predictions[1]["retrieval_exhausted"] = True
+            self.write_jsonl(root / "predictions.jsonl", predictions)
+            result = evaluate_profile_files(config, root / "out")["result"]
+            self.assertEqual(result["source_qrels_scope"], "complete")
+            self.assertEqual(result["qrels_scope"], "complete")
+            self.assertEqual(result["inventory"]["unjudged_top_k_count"], 0)
 
     def test_no_admitted_positive_destination_makes_all_standard_metrics_unavailable(self):
         with tempfile.TemporaryDirectory(dir=".tmp_unit_tests") as root_text:

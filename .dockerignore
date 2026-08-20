@@ -1,0 +1,9 @@
+*
+!containers/
+containers/*
+!containers/verification/
+containers/verification/*
+!containers/verification/Dockerfile
+!containers/verification/requirements.lock
+!containers/verification/verify.py
+

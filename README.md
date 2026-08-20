@@ -57,6 +57,22 @@ python -m retrieval_arena.cli report evidence --bundle calibration\bigdata2026\p
 python -m unittest discover -s unit_tests
 ```
 
+Canonical qualification runs use the repository-owned Linux verification
+image, not host Python. Build once, then run either registered tier:
+
+```powershell
+.\scripts\build-verification.ps1
+.\scripts\run-verification.ps1 focused
+.\scripts\run-verification.ps1 all
+```
+
+Linux and macOS hosts use the equivalent `scripts/build-verification.sh` and
+`scripts/run-verification.sh` adapters. Both adapters run the same immutable
+image with the repository mounted read-only, runtime networking disabled, a
+read-only container root, and only declared tmpfs test scratch writable. The
+CPU image targets `linux/amd64`; later Spark or NVIDIA profiles should derive
+from this verification contract without changing the baseline test semantics.
+
 Ranked-retrieval v2 uses strict qrels, run, and policy artifacts and delegates
 standard arithmetic to pinned `ir-measures==0.4.3`:
 

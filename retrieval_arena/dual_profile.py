@@ -20,7 +20,7 @@ SCHEMA_REQUIREMENTS = "retrieval_arena.evidence_requirements.v1"
 SCHEMA_BINDINGS = "retrieval_arena.requirement_bindings.v1"
 SCHEMA_REQUIREMENT_PREDICTION = "retrieval_arena.requirement_prediction.v1"
 SCHEMA_LINEAGE = "retrieval_arena.support_lineage.v1"
-SCHEMA_DESTINATION_QRELS = "retrieval_arena.destination_qrel_inventory.v1"
+SCHEMA_DESTINATION_QRELS = "retrieval_arena.destination_qrel_inventory.v2"
 SCHEMA_BERTSCORE_PROVIDER = "retrieval_arena.bertscore_provider.v1"
 SCHEMA_BERTSCORE_SCORES = "retrieval_arena.bertscore_scores.v1"
 SCHEMA_AUTOMATIC_RESULT = "retrieval_arena.automatic_result.v1"
@@ -502,6 +502,12 @@ def compose_destination_qrels(
     destination_snapshot_id: str,
     ordered_query_ids: list[str],
     relevance_scale: str,
+    *,
+    source_qrels_scope: str,
+    ranked_predictions: list[dict[str, Any]],
+    cutoff: int,
+    ranked_dataset_sha256: str,
+    ranked_policy_sha256: str,
 ) -> dict[str, Any]:
     """Compose the destination inventory from admitted positive transfers only.
 
@@ -524,6 +530,12 @@ def compose_destination_qrels(
         raise ValidationError("destination qrel composition requires ordered unique query IDs")
     if relevance_scale not in {"binary", "integer_0_3"}:
         raise ValidationError("destination qrel composition relevance scale is unsupported")
+    if source_qrels_scope not in {"complete", "pooled"}:
+        raise ValidationError("source qrels scope must be complete or pooled")
+    if isinstance(cutoff, bool) or not isinstance(cutoff, int) or cutoff < 1:
+        raise ValidationError("destination qrel composition cutoff is invalid")
+    _sha(ranked_dataset_sha256, "ranked_dataset_sha256")
+    _sha(ranked_policy_sha256, "ranked_policy_sha256")
     admitted_queries = set(ordered_query_ids)
     for row in source_qrels:
         if row.get("query_id") not in admitted_queries:
@@ -531,6 +543,235 @@ def compose_destination_qrels(
         if relevance_scale == "binary" and row.get("relevance") not in {0, 1}:
             raise ValidationError("binary source qrels require relevance 0 or 1")
     qrels = transfer_qrels(source_qrels, lineage_artifact)
+    lineage_by_source: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    lineage_by_destination: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for row in lineage_artifact["records"]:
+        lineage_by_source.setdefault(
+            (row["query_id"], row["source_support_target_id"]), []
+        ).append(row)
+        lineage_by_destination.setdefault(
+            (row["query_id"], row["destination_support_target_id"]), []
+        ).append(row)
+
+    def lineage_references(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return sorted(
+            [
+                {
+                    "destination_support_target_id": row["destination_support_target_id"],
+                    "record_sha256": row["record_sha256"],
+                    "transfer_class": row["transfer_class"],
+                }
+                for row in rows
+            ],
+            key=lambda row: (
+                row["destination_support_target_id"],
+                row["transfer_class"],
+                row["record_sha256"],
+            ),
+        )
+
+    source_dispositions: list[dict[str, Any]] = []
+    for row in sorted(source_qrels, key=lambda item: (item["query_id"], item["support_target_id"])):
+        key = (row["query_id"], row["support_target_id"])
+        lineage_rows = lineage_by_source.get(key, [])
+        exact_rows = [item for item in lineage_rows if item["transfer_class"] in TRANSFER_CLASSES]
+        if row["relevance"] <= 0:
+            disposition = "not_transferred"
+            reason = "source_nonpositive_judgment"
+            destinations: list[str] = []
+        elif exact_rows:
+            disposition = "transferred"
+            reason = "exact_positive_transfer"
+            destinations = sorted({item["destination_support_target_id"] for item in exact_rows})
+        else:
+            disposition = "not_transferred"
+            classes = {item["transfer_class"] for item in lineage_rows}
+            if classes == {"semantic_rewrite_unresolved"}:
+                reason = "semantic_rewrite_unresolved"
+            elif classes == {"support_removed"}:
+                reason = "support_removed"
+            elif classes == {"novel_support_unjudged"}:
+                reason = "novel_support_unjudged"
+            else:
+                reason = "no_admitted_exact_lineage_edge"
+            destinations = []
+        disposition_row = {
+            "query_id": row["query_id"],
+            "source_support_target_id": row["support_target_id"],
+            "source_judgment_id": row["judgment_id"],
+            "source_judgment_provenance_sha256": row["judgment_provenance_sha256"],
+            "source_relevance": row["relevance"],
+            "disposition": disposition,
+            "reason": reason,
+            "lineage_records": lineage_references(lineage_rows),
+            "destination_support_target_ids": destinations,
+            "disposition_sha256": "0" * 64,
+        }
+        disposition_row["disposition_sha256"] = self_hash(
+            disposition_row, "disposition_sha256"
+        )
+        source_dispositions.append(disposition_row)
+
+    qrels_by_destination = {
+        (row["query_id"], row["support_target_id"]): row for row in qrels
+    }
+    disposition_by_source = {
+        (row["query_id"], row["source_support_target_id"]): row
+        for row in source_dispositions
+    }
+    predictions_by_query: dict[str, dict[str, Any]] = {}
+    for prediction in ranked_predictions:
+        qid = prediction.get("query_id")
+        if qid not in admitted_queries or qid in predictions_by_query:
+            raise ValidationError("destination qrel audit prediction query invalid")
+        predictions_by_query[qid] = prediction
+    if list(predictions_by_query) != ordered_query_ids:
+        raise ValidationError("destination qrel audit predictions must follow ordered query IDs")
+
+    top_k_judgments: list[dict[str, Any]] = []
+    for qid in ordered_query_ids:
+        items = predictions_by_query[qid].get("items")
+        if not isinstance(items, list):
+            raise ValidationError("destination qrel audit prediction items invalid")
+        for expected_rank, item in enumerate(items[:cutoff], 1):
+            if not isinstance(item, dict) or item.get("rank") != expected_rank:
+                raise ValidationError("destination qrel audit prediction rank invalid")
+            target = _text(item.get("support_target_id"), "destination top-k target")
+            key = (qid, target)
+            judgment = qrels_by_destination.get(key)
+            lineage_rows = lineage_by_destination.get(key, [])
+            source_disposition_hashes = sorted(
+                {
+                    disposition_by_source[(qid, lineage["source_support_target_id"])][
+                        "disposition_sha256"
+                    ]
+                    for lineage in lineage_rows
+                    if (qid, lineage["source_support_target_id"]) in disposition_by_source
+                }
+            )
+            if judgment is not None:
+                status = "judged"
+                reason = "exact_positive_transfer"
+                relevance: int | None = judgment["relevance"]
+                judgment_id: str | None = judgment["judgment_id"]
+                provenance: str | None = judgment["judgment_provenance_sha256"]
+            else:
+                status = "unjudged"
+                relevance = None
+                judgment_id = None
+                provenance = None
+                classes = {lineage["transfer_class"] for lineage in lineage_rows}
+                if "semantic_rewrite_unresolved" in classes:
+                    reason = "semantic_rewrite_unresolved"
+                elif "novel_support_unjudged" in classes:
+                    reason = "novel_support_unjudged"
+                elif "support_removed" in classes:
+                    reason = "support_removed"
+                elif classes.intersection(TRANSFER_CLASSES) and any(
+                    disposition_by_source[(qid, lineage["source_support_target_id"])][
+                        "reason"
+                    ]
+                    == "source_nonpositive_judgment"
+                    for lineage in lineage_rows
+                    if (qid, lineage["source_support_target_id"]) in disposition_by_source
+                ):
+                    reason = "source_nonpositive_judgment"
+                else:
+                    reason = "no_admitted_exact_lineage_edge"
+            top_k_row = {
+                "query_id": qid,
+                "destination_support_target_id": target,
+                "rank": expected_rank,
+                "judgment_status": status,
+                "reason": reason,
+                "relevance": relevance,
+                "judgment_id": judgment_id,
+                "judgment_provenance_sha256": provenance,
+                "lineage_records": lineage_references(lineage_rows),
+                "source_qrel_disposition_sha256s": source_disposition_hashes,
+                "pair_sha256": "0" * 64,
+            }
+            top_k_row["pair_sha256"] = self_hash(top_k_row, "pair_sha256")
+            top_k_judgments.append(top_k_row)
+
+    judged_count = sum(row["judgment_status"] == "judged" for row in top_k_judgments)
+    unjudged_count = len(top_k_judgments) - judged_count
+    effective_qrels_scope = (
+        "pooled" if source_qrels_scope == "pooled" or unjudged_count else "complete"
+    )
+    effective_scoring_view = {
+        "source_ranked_dataset_sha256": ranked_dataset_sha256,
+        "source_ranked_policy_sha256": ranked_policy_sha256,
+        "source_qrels_scope": source_qrels_scope,
+        "effective_qrels_scope": effective_qrels_scope,
+        "context_item_budget_k": cutoff,
+        "derivation_reason": (
+            "destination_top_k_contains_unjudged_targets"
+            if unjudged_count
+            else "destination_top_k_fully_judged"
+        ),
+        "view_sha256": "0" * 64,
+    }
+    effective_scoring_view["view_sha256"] = self_hash(
+        effective_scoring_view, "view_sha256"
+    )
+
+    source_pairs = {
+        (row["query_id"], row["support_target_id"]) for row in source_qrels
+    }
+    disposition_pairs = {
+        (row["query_id"], row["source_support_target_id"])
+        for row in source_dispositions
+    }
+    if source_pairs != disposition_pairs or len(source_pairs) != len(source_dispositions):
+        raise ValidationError("source qrel disposition conservation failed")
+    transferred_rows = [
+        (row["query_id"], destination)
+        for row in source_dispositions
+        if row["disposition"] == "transferred"
+        for destination in row["destination_support_target_ids"]
+    ]
+    transferred_pairs = set(transferred_rows)
+    destination_qrel_pairs = {
+        (row["query_id"], row["support_target_id"]) for row in qrels
+    }
+    if len(transferred_rows) != len(transferred_pairs):
+        raise ValidationError("destination qrel has multiple source dispositions")
+    if transferred_pairs != destination_qrel_pairs:
+        raise ValidationError("transferred source disposition conservation failed")
+    if any(
+        row["destination_support_target_ids"]
+        for row in source_dispositions
+        if row["disposition"] != "transferred"
+    ):
+        raise ValidationError("non-transfer source disposition created a destination qrel")
+    expected_top_k_pairs = [
+        (qid, item["support_target_id"], rank)
+        for qid in ordered_query_ids
+        for rank, item in enumerate(predictions_by_query[qid]["items"][:cutoff], 1)
+    ]
+    observed_top_k_pairs = [
+        (row["query_id"], row["destination_support_target_id"], row["rank"])
+        for row in top_k_judgments
+    ]
+    if observed_top_k_pairs != expected_top_k_pairs or len(set(observed_top_k_pairs)) != len(
+        observed_top_k_pairs
+    ):
+        raise ValidationError("destination top-k judgment conservation failed")
+    judged_pairs = {
+        (row["query_id"], row["destination_support_target_id"])
+        for row in top_k_judgments
+        if row["judgment_status"] == "judged"
+    }
+    expected_judged_pairs = {
+        (qid, target)
+        for qid, target, _ in expected_top_k_pairs
+        if (qid, target) in destination_qrel_pairs
+    }
+    if judged_pairs != expected_judged_pairs:
+        raise ValidationError("destination top-k judged partition failed")
+    if judged_count + unjudged_count != len(top_k_judgments):
+        raise ValidationError("destination top-k judgment count conservation failed")
     inventory = {
         "schema_version": SCHEMA_DESTINATION_QRELS,
         "source_snapshot_id": source_snapshot_id,
@@ -542,10 +783,55 @@ def compose_destination_qrels(
         "negative_transfer_policy": "forbidden_source_negatives_remain_unjudged",
         "ordered_query_ids_sha256": sha256_json(ordered_query_ids),
         "relevance_scale": relevance_scale,
+        "source_qrels_scope": source_qrels_scope,
+        "effective_qrels_scope": effective_qrels_scope,
         "qrels": qrels,
         "destination_qrels_sha256": sha256_json(qrels),
+        "source_qrel_dispositions": source_dispositions,
+        "source_qrel_dispositions_sha256": sha256_json(source_dispositions),
+        "destination_top_k_judgments": top_k_judgments,
+        "destination_top_k_judgments_sha256": sha256_json(top_k_judgments),
+        "judged_top_k_count": judged_count,
+        "unjudged_top_k_count": unjudged_count,
+        "effective_scoring_view": effective_scoring_view,
+        "inventory_sha256": "0" * 64,
     }
+    inventory["inventory_sha256"] = self_hash(inventory, "inventory_sha256")
     return inventory
+
+
+def validate_destination_qrel_inventory(
+    artifact: dict[str, Any],
+    source_qrels: list[dict[str, Any]],
+    lineage_artifact: dict[str, Any],
+    source_snapshot_id: str,
+    destination_snapshot_id: str,
+    ordered_query_ids: list[str],
+    relevance_scale: str,
+    *,
+    source_qrels_scope: str,
+    ranked_predictions: list[dict[str, Any]],
+    cutoff: int,
+    ranked_dataset_sha256: str,
+    ranked_policy_sha256: str,
+) -> dict[str, Any]:
+    """Recompose and require exact closed-world destination-qrel audit evidence."""
+    expected = compose_destination_qrels(
+        source_qrels,
+        lineage_artifact,
+        source_snapshot_id,
+        destination_snapshot_id,
+        ordered_query_ids,
+        relevance_scale,
+        source_qrels_scope=source_qrels_scope,
+        ranked_predictions=ranked_predictions,
+        cutoff=cutoff,
+        ranked_dataset_sha256=ranked_dataset_sha256,
+        ranked_policy_sha256=ranked_policy_sha256,
+    )
+    if artifact != expected:
+        raise ValidationError("destination qrel inventory exact recomposition mismatch")
+    return artifact
 
 
 def score_requirements(

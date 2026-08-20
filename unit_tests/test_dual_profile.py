@@ -15,6 +15,7 @@ from retrieval_arena.cli import main
 from retrieval_arena.dual_profile import (
     PROFILE_AUTOMATIC,
     PROFILE_CALIBRATION,
+    compose_destination_qrels,
     run_bertscore_offline,
     score_bpref,
     score_requirements,
@@ -301,6 +302,46 @@ class DualProfileTests(unittest.TestCase):
         transferred = transfer_qrels(qrels, lineage_artifact(records))
         self.assertEqual([row["support_target_id"] for row in transferred], ["a", "c", "e"])
         self.assertTrue(all(row["judgment_id"].startswith("exact-lineage:") for row in transferred))
+
+    def test_destination_qrel_requires_one_source_disposition(self):
+        first = lineage_record("exact_target_relocation", "a", "c")
+        second = lineage_record("exact_target_relocation", "b", "c")
+        for index, row in enumerate((first, second), 1):
+            row["source_evidence_unit_id"] = f"source-u{index}"
+            row["destination_evidence_unit_id"] = f"destination-u{index}"
+            row["mapping_shape"] = "many_to_many_decomposed"
+            row["decomposed_exact_edge"] = True
+            row["record_sha256"] = self_hash(row, "record_sha256")
+        qrels = [
+            {
+                "query_id": "q1",
+                "support_target_id": target,
+                "relevance": 1,
+                "judgment_id": f"j-{target}",
+                "judgment_provenance_sha256": sha(f"j-{target}"),
+            }
+            for target in ("a", "b")
+        ]
+        predictions = [
+            {
+                "query_id": "q1",
+                "items": [{"rank": 1, "support_target_id": "c"}],
+            }
+        ]
+        with self.assertRaisesRegex(ValidationError, "multiple source dispositions"):
+            compose_destination_qrels(
+                qrels,
+                lineage_artifact([first, second]),
+                "before",
+                "after",
+                ["q1"],
+                "binary",
+                source_qrels_scope="complete",
+                ranked_predictions=predictions,
+                cutoff=1,
+                ranked_dataset_sha256=sha("dataset"),
+                ranked_policy_sha256=sha("policy"),
+            )
 
     def test_ambiguous_contradictory_context_and_semantic_rewrite_reject_transfer(self):
         for mutation, message in (
