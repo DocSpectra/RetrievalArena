@@ -6,4 +6,4 @@ containers/verification/*
 !containers/verification/Dockerfile
 !containers/verification/requirements.lock
 !containers/verification/verify.py
-
+!containers/verification/evaluate_profile.py

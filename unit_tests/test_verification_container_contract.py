@@ -59,6 +59,13 @@ class VerificationContainerContractTests(unittest.TestCase):
         self.assertIn("argv[1] not in COMMANDS", runner)
         self.assertNotIn("subprocess", runner)
 
+    def test_operator_module_is_present_in_the_immutable_build_context(self):
+        dockerignore = self.text(".dockerignore")
+        dockerfile = self.text("containers/verification/Dockerfile")
+        operator = "containers/verification/evaluate_profile.py"
+        self.assertIn(f"!{operator}", dockerignore)
+        self.assertIn(f"COPY {operator} /opt/retrieval-arena/evaluate_profile.py", dockerfile)
+
     def test_registered_profile_operator_is_mount_bound_and_self_hashing(self):
         operator = self.text("containers/verification/evaluate_profile.py")
         dockerfile = self.text("containers/verification/Dockerfile")
