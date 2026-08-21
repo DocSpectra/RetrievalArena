@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import copy
 import unittest
 from pathlib import Path
 
@@ -12,6 +13,8 @@ from retrieval_arena.verification_witness import (
     build_focused_witness,
     collect_focused_witness,
 )
+from retrieval_arena.review_packets import build_review_packet, import_judgments
+from retrieval_arena.errors import ValidationError
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,6 +27,16 @@ VERIFY_SPEC.loader.exec_module(VERIFY)
 
 
 class FocusedVerificationWitnessTests(unittest.TestCase):
+    def test_base_judgment_fixture_is_valid_before_targeted_hash_mutation(self):
+        from retrieval_arena import verification_witness as witness
+        policy = witness._policy()
+        packet = build_review_packet([witness._candidate(index) for index in range(3)], policy)
+        artifact = witness._judgments(packet, policy)
+        import_judgments(artifact, packet, policy)
+        corrupted = copy.deepcopy(artifact); corrupted["artifact_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValidationError, "judgment artifact self-hash mismatch"):
+            import_judgments(corrupted, packet, policy)
+
     def test_focused_case_inventory_is_ordered_unique_and_contains_registered_cases(self):
         suite = VERIFY._suite("focused")
         case_ids = VERIFY._case_ids(suite)

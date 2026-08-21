@@ -91,7 +91,16 @@ def _judgments(packet: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]
         label = "relevant" if index % 2 == 0 else "nonrelevant"
         row = {"assessment_id": assessment["assessment_id"], "pair_id": assessment["pair_id"], "assessment_kind": assessment["assessment_kind"], "assessor_id": "a1" if assessment["assessment_kind"] == "primary" else "a2", "label": label, "relevance": int(label == "relevant"), "answer_bearing_relevance": float(label == "relevant"), "semantic_answer_quality": .75, "attribution_correctness": .5, "paraphrase_robustness": .8, "adjudicates_assessment_ids": [], "record_sha256": "0" * 64}
         row["record_sha256"] = self_hash(row, "record_sha256"); rows.append(row)
-    value = {"schema_version": "retrieval_arena.judgment_artifact.v1", "artifact_id": "focused-witness", "packet_id": packet["packet_id"], "packet_sha256": packet["packet_sha256"], "candidate_pool_sha256": packet["candidate_pool_sha256"], "review_policy_sha256": policy["policy_sha256"], "dataset_id": packet["dataset_id"], "query_set_id": packet["query_set_id"], "ordered_snapshot_ids": packet["ordered_snapshot_ids"], "classification": packet["classification"], "assessor_classes": policy["assessor_classes"], "assessor_ids": ["a1", "a2"], "outcome_revealed_at_import": False, "records": rows, "artifact_sha256": "0" * 64}
+    by_pair: dict[str, dict[str, dict[str, Any]]] = {}
+    for row in rows:
+        by_pair.setdefault(row["pair_id"], {})[row["assessment_kind"]] = row
+    for pair_id in packet["duplicate_pair_ids"]:
+        primary, duplicate = by_pair[pair_id]["primary"], by_pair[pair_id]["duplicate"]
+        if primary["label"] != duplicate["label"]:
+            row = {"assessment_id": _sha_text("focused-adjudication:" + pair_id), "pair_id": pair_id, "assessment_kind": "adjudication", "assessor_id": "adjudicator", "label": primary["label"], "relevance": primary["relevance"], "answer_bearing_relevance": primary["answer_bearing_relevance"], "semantic_answer_quality": primary["semantic_answer_quality"], "attribution_correctness": primary["attribution_correctness"], "paraphrase_robustness": primary["paraphrase_robustness"], "adjudicates_assessment_ids": sorted([primary["assessment_id"], duplicate["assessment_id"]]), "record_sha256": "0" * 64}
+            row["record_sha256"] = self_hash(row, "record_sha256"); rows.append(row)
+    assessor_ids = ["a1", "a2"] + (["adjudicator"] if any(row["assessment_kind"] == "adjudication" for row in rows) else [])
+    value = {"schema_version": "retrieval_arena.judgment_artifact.v1", "artifact_id": "focused-witness", "packet_id": packet["packet_id"], "packet_sha256": packet["packet_sha256"], "candidate_pool_sha256": packet["candidate_pool_sha256"], "review_policy_sha256": policy["policy_sha256"], "dataset_id": packet["dataset_id"], "query_set_id": packet["query_set_id"], "ordered_snapshot_ids": packet["ordered_snapshot_ids"], "classification": packet["classification"], "assessor_classes": policy["assessor_classes"], "assessor_ids": assessor_ids, "outcome_revealed_at_import": False, "records": rows, "artifact_sha256": "0" * 64}
     value["artifact_sha256"] = self_hash(value, "artifact_sha256"); return value
 
 
