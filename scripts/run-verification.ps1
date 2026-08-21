@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('focused','all','evaluate-profile')][string]$Command,
+    [Parameter(Mandatory = $true)][ValidateSet('focused','all','evaluate-profile','review-packet')][string]$Command,
     [string]$InputRoot,
     [string]$OutputRoot,
     [string]$Receipt = '.tmp/verification-image.json'
@@ -35,16 +35,16 @@ if ($head -ne $value.source_commit -or $tree -ne $value.source_tree) { throw 've
 $labels = (& docker image inspect --format '{{json .Config.Labels}}' $image | ConvertFrom-Json)
 if ($LASTEXITCODE -ne 0 -or $labels.'org.opencontainers.image.revision' -ne $value.source_commit -or $labels.'io.retrieval-arena.source.tree' -ne $value.source_tree -or $labels.'io.retrieval-arena.verification.dependency-lock-sha256' -ne $value.dependency_lock_sha256 -or $labels.'io.retrieval-arena.verification.platform' -ne $value.platform) { throw 'verification-image-label-mismatch' }
 
-if ($Command -eq 'evaluate-profile') {
-    if ([string]::IsNullOrWhiteSpace($InputRoot) -or [string]::IsNullOrWhiteSpace($OutputRoot)) { throw 'evaluate-profile-input-output-required' }
+if ($Command -in @('evaluate-profile','review-packet')) {
+    if ([string]::IsNullOrWhiteSpace($InputRoot) -or [string]::IsNullOrWhiteSpace($OutputRoot)) { throw 'verification-operator-input-output-required' }
     $inputPath = (Resolve-Path -LiteralPath $InputRoot).Path
     $outputPath = (Resolve-Path -LiteralPath $OutputRoot).Path
     $roots = @($repo,$inputPath,$outputPath)
     $normalizedRoots = $roots | ForEach-Object { $_.TrimEnd([char[]]@('\','/')).ToLowerInvariant() }
     $nestedRoots = $false
     foreach ($left in $normalizedRoots) { foreach ($right in $normalizedRoots) { if ($left -ne $right -and $right.StartsWith($left + '\')) { $nestedRoots = $true } } }
-    if (($roots | Select-Object -Unique).Count -ne 3 -or $nestedRoots -or -not (Test-Path -LiteralPath (Join-Path $inputPath 'operator-request.json') -PathType Leaf)) { throw 'evaluate-profile-root-admission-invalid' }
-    if ((Get-ChildItem -Force -LiteralPath $outputPath | Select-Object -ExpandProperty Name) -ne '.retrieval-arena-output-owner') { throw 'evaluate-profile-output-not-fresh' }
+    if (($roots | Select-Object -Unique).Count -ne 3 -or $nestedRoots -or -not (Test-Path -LiteralPath (Join-Path $inputPath 'operator-request.json') -PathType Leaf)) { throw 'verification-operator-root-admission-invalid' }
+    if ((Get-ChildItem -Force -LiteralPath $outputPath | Select-Object -ExpandProperty Name) -ne '.retrieval-arena-output-owner') { throw 'verification-operator-output-not-fresh' }
     $arguments = @(
         'run','--rm','--platform',[string]$value.platform,'--network','none','--read-only',
         '--security-opt','no-new-privileges','--cap-drop','ALL','--pids-limit','512','--memory','2g','--cpus','2',
@@ -63,7 +63,7 @@ if ($Command -eq 'evaluate-profile') {
 
 $arguments = @(
     'run','--rm','--platform',[string]$value.platform,'--network','none','--read-only',
-    '--security-opt','no-new-privileges','--cap-drop','ALL','--pids-limit','512',
+    '--security-opt','no-new-privileges','--cap-drop','ALL','--pids-limit','512','--memory','2g','--cpus','2',
     '--mount',"type=bind,src=$repo,dst=/workspace/source,readonly",
     '--tmpfs','/workspace/source/.tmp_unit_tests:rw,nosuid,nodev,size=512m,uid=65532,gid=65532',
     '--tmpfs','/workspace/source/unit_tests/_tmp_html_report:rw,nosuid,nodev,size=256m,uid=65532,gid=65532',
@@ -72,6 +72,8 @@ $arguments = @(
     '--env','PATH=/usr/local/bin:/usr/bin:/bin','--env','PYTHONDONTWRITEBYTECODE=1',
     '--env','PYTHONHASHSEED=0','--env','PYTHONIOENCODING=utf-8',
     '--env','TMPDIR=/workspace/source/.tmp_unit_tests','--env','TZ=UTC',
+    '--env',"RA_SOURCE_COMMIT=$($value.source_commit)",'--env',"RA_SOURCE_TREE=$($value.source_tree)",
+    '--env',"RA_DEPENDENCY_LOCK_SHA256=$($value.dependency_lock_sha256)",'--env',"RA_IMAGE_REFERENCE=$image",
     $image,$Command
 )
 & docker @arguments

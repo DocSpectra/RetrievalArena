@@ -15,9 +15,12 @@ COMMANDS = {
         "unit_tests.test_profile_evaluation",
         "unit_tests.test_verification_container_contract",
         "unit_tests.test_profile_operator_admission",
+        "unit_tests.test_verification_witness",
+        "unit_tests.test_review_packet_operator",
     ),
     "all": None,
     "evaluate-profile": (),
+    "review-packet": (),
 }
 
 
@@ -27,6 +30,19 @@ def _suite(command: str) -> unittest.TestSuite:
     if names is None:
         return loader.discover(str(SOURCE_ROOT / "unit_tests"), pattern="test_*.py")
     return loader.loadTestsFromNames(names)
+
+
+def _case_ids(suite: unittest.TestSuite) -> list[str]:
+    """Return leaf IDs from the exact suite instance supplied to the runner."""
+    result: list[str] = []
+    for item in suite:
+        if isinstance(item, unittest.TestSuite):
+            result.extend(_case_ids(item))
+        else:
+            result.append(item.id())
+    if len(result) != len(set(result)):
+        raise RuntimeError("focused-suite-case-id-duplicate")
+    return result
 
 
 def main(argv: list[str]) -> int:
@@ -43,13 +59,29 @@ def main(argv: list[str]) -> int:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from evaluate_profile import main as evaluate_profile_main
         return evaluate_profile_main()
+    if argv[1] == "review-packet":
+        sys.path.insert(0, str(OPERATOR_ROOT))
+        from review_packet import main as review_packet_main
+        return review_packet_main()
     scratch = SOURCE_ROOT / ".tmp_unit_tests"
     html_scratch = SOURCE_ROOT / "unit_tests" / "_tmp_html_report"
     if not scratch.is_dir() or not html_scratch.is_dir():
         print("declared-test-scratch-missing", file=sys.stderr)
         return 2
 
-    result = unittest.TextTestRunner(verbosity=2).run(_suite(argv[1]))
+    suite = _suite(argv[1])
+    case_ids = _case_ids(suite) if argv[1] == "focused" else []
+    result = unittest.TextTestRunner(verbosity=2).run(suite)
+    if argv[1] == "focused" and result.wasSuccessful():
+        # Keep the ordinary unittest exit contract while emitting one canonical
+        # machine-readable witness on stdout.  The runner writes its prose to
+        # stderr, so consumers never need to parse it.
+        from retrieval_arena.verification_witness import canonical, witness_from_environment
+
+        print(canonical(witness_from_environment(
+            focused_tests_run=result.testsRun,
+            focused_test_case_ids=case_ids,
+        )).decode("utf-8"))
     return 0 if result.wasSuccessful() else 1
 
 

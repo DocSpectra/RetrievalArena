@@ -86,6 +86,43 @@ self-hashed terminal receipt to the output root:
 .\scripts\run-verification.ps1 evaluate-profile <input-root> <output-root> <image-receipt>
 ```
 
+The same immutable entrypoint exposes a generic review-packet boundary:
+
+```powershell
+.\scripts\run-verification.ps1 review-packet <input-root> <output-root> <image-receipt>
+```
+
+Its `operator-request.json` is closed-world
+`retrieval_arena.review_packet_operator_request.v1` with exactly
+`schema_version`, `command` (`review-packet`), `candidates_path`,
+`policy_path`, `judgment_artifact_path` (nullable), `input_inventory`, and
+`input_inventory_sha256`. `candidates_path` is UTF-8 JSONL whose records use
+the existing `retrieval_arena.review_candidate.v1` schema with exactly
+`schema_version`, `query_id`, `support_target_id`, `snapshot_id`,
+`candidate_class`, `rank_band`, `query_text`, `requirement_texts`,
+`candidate_evidence`, `bounded_context`, `condition_label`, `system_label`,
+`outcome_label`, `rank`, `delta`, `lineage_class`, and
+`candidate_provenance_sha256`; `policy_path` is a strict
+`retrieval_arena.review_policy.v1` document. The input inventory lists
+every input other than the request. A fresh owned output receives
+`review_packet.v1.json` and, when a judgment artifact is supplied,
+`judgment_import.v1.json`, plus the self-hashed terminal
+`retrieval_arena.review_packet_operator_receipt.v1`. The receipt binds the
+request, input and output inventories, RA commit/tree/image/lock identity,
+isolation, and disposition. Export and optional import are staged together:
+an import failure leaves no packet/import artifact (only its terminal receipt).
+Project-specific candidate fixtures and expected packet bytes remain owned by
+the calling project. `review_packet.v1.json` is canonical compact UTF-8 JSON
+plus one trailing LF, so the caller must compare its raw bytes directly to the
+tracked fixture rather than compare parsed objects.
+
+On a green `focused` invocation the final stdout line is the canonical,
+self-hashed `retrieval_arena.focused_verification_witness.v1`. It binds the
+mounted commit/tree/image/lock identity, `focused_suite_success`, and the
+exact `focused_tests_run` count. It separates RA runtime observations from
+Capstone-owned negative-case observations; consumers must not parse unittest
+prose as verification evidence.
+
 POSIX hosts use `scripts/run-verification.sh evaluate-profile <input-root>
 <output-root> <image-receipt>`. The request schema is
 `retrieval_arena.profile_evaluation_request.v1`; it has closed fields

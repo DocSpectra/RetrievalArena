@@ -2,13 +2,13 @@
 set -eu
 
 if [ "$#" -lt 1 ]; then
-  echo 'usage: run-verification.sh <focused|all> [receipt] | evaluate-profile <input-root> <output-root> [receipt]' >&2
+  echo 'usage: run-verification.sh <focused|all> [receipt] | <evaluate-profile|review-packet> <input-root> <output-root> [receipt]' >&2
   exit 2
 fi
 command_name=$1
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-if [ "$command_name" = evaluate-profile ]; then
-  [ "$#" -ge 3 ] && [ "$#" -le 4 ] || { echo evaluate-profile-input-output-required >&2; exit 2; }
+if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]; then
+  [ "$#" -ge 3 ] && [ "$#" -le 4 ] || { echo verification-operator-input-output-required >&2; exit 2; }
   input_root=$2; output_root=$3; receipt=${4:-$repo/.tmp/verification-image.json}
 else
   [ "$#" -le 2 ] || { echo verification-command-invalid >&2; exit 2; }
@@ -43,14 +43,14 @@ label_lock=$(docker image inspect --format '{{ index .Config.Labels "io.retrieva
 label_platform=$(docker image inspect --format '{{ index .Config.Labels "io.retrieval-arena.verification.platform" }}' "$image")
 [ "$label_commit" = "$commit" ] && [ "$label_tree" = "$tree" ] && [ "$label_lock" = "$receipt_lock" ] && [ "$label_platform" = "$platform" ] || { echo verification-image-label-mismatch >&2; exit 2; }
 
-if [ "$command_name" = evaluate-profile ]; then
+if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]; then
   input_root=$(CDPATH= cd -- "$input_root" && pwd)
   output_root=$(CDPATH= cd -- "$output_root" && pwd)
-  [ "$input_root" != "$output_root" ] && [ "$input_root" != "$repo" ] && [ "$output_root" != "$repo" ] && [ -f "$input_root/operator-request.json" ] || { echo evaluate-profile-root-admission-invalid >&2; exit 2; }
-  case "$input_root/" in "$repo/"*|"$output_root/"*) echo evaluate-profile-root-admission-invalid >&2; exit 2 ;; esac
-  case "$output_root/" in "$repo/"*|"$input_root/"*) echo evaluate-profile-root-admission-invalid >&2; exit 2 ;; esac
-  case "$repo/" in "$input_root/"*|"$output_root/"*) echo evaluate-profile-root-admission-invalid >&2; exit 2 ;; esac
-  [ "$(find "$output_root" -mindepth 1 -maxdepth 1 -exec basename {} \; | sort)" = .retrieval-arena-output-owner ] || { echo evaluate-profile-output-not-fresh >&2; exit 2; }
+  [ "$input_root" != "$output_root" ] && [ "$input_root" != "$repo" ] && [ "$output_root" != "$repo" ] && [ -f "$input_root/operator-request.json" ] || { echo verification-operator-root-admission-invalid >&2; exit 2; }
+  case "$input_root/" in "$repo/"*|"$output_root/"*) echo verification-operator-root-admission-invalid >&2; exit 2 ;; esac
+  case "$output_root/" in "$repo/"*|"$input_root/"*) echo verification-operator-root-admission-invalid >&2; exit 2 ;; esac
+  case "$repo/" in "$input_root/"*|"$output_root/"*) echo verification-operator-root-admission-invalid >&2; exit 2 ;; esac
+  [ "$(find "$output_root" -mindepth 1 -maxdepth 1 -exec basename {} \; | sort)" = .retrieval-arena-output-owner ] || { echo verification-operator-output-not-fresh >&2; exit 2; }
   exec docker run --rm --platform "$platform" --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 \
     --mount "type=bind,src=$repo,dst=/workspace/source,readonly" --mount "type=bind,src=$input_root,dst=/workspace/input,readonly" --mount "type=bind,src=$output_root,dst=/workspace/output" \
     --tmpfs /tmp:rw,noexec,nosuid,nodev,size=256m,uid=65532,gid=65532 \
@@ -60,6 +60,7 @@ fi
 
 exec docker run --rm --platform "$platform" --network none --read-only \
   --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 \
+  --memory 2g --cpus 2 \
   --mount "type=bind,src=$repo,dst=/workspace/source,readonly" \
   --tmpfs /workspace/source/.tmp_unit_tests:rw,nosuid,nodev,size=512m,uid=65532,gid=65532 \
   --tmpfs /workspace/source/unit_tests/_tmp_html_report:rw,nosuid,nodev,size=256m,uid=65532,gid=65532 \
@@ -68,4 +69,6 @@ exec docker run --rm --platform "$platform" --network none --read-only \
   --env PATH=/usr/local/bin:/usr/bin:/bin --env PYTHONDONTWRITEBYTECODE=1 \
   --env PYTHONHASHSEED=0 --env PYTHONIOENCODING=utf-8 \
   --env TMPDIR=/workspace/source/.tmp_unit_tests --env TZ=UTC \
+  --env "RA_SOURCE_COMMIT=$commit" --env "RA_SOURCE_TREE=$tree" \
+  --env "RA_DEPENDENCY_LOCK_SHA256=$receipt_lock" --env "RA_IMAGE_REFERENCE=$image" \
   "$image" "$command_name"

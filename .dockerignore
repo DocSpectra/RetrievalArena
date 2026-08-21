@@ -7,3 +7,4 @@ containers/verification/*
 !containers/verification/requirements.lock
 !containers/verification/verify.py
 !containers/verification/evaluate_profile.py
+!containers/verification/review_packet.py

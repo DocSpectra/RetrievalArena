@@ -44,6 +44,13 @@ class VerificationContainerContractTests(unittest.TestCase):
             self.assertIn("sha256:", adapter)
             self.assertIn("linux/amd64", adapter)
 
+    def test_focused_adapter_branch_has_operator_resource_bounds(self):
+        powershell = self.text("scripts/run-verification.ps1")
+        shell = self.text("scripts/run-verification.sh")
+        # These occur in the focused/all branch after its isolated source mount.
+        self.assertGreaterEqual(powershell.count("'--pids-limit','512','--memory','2g','--cpus','2'"), 2)
+        self.assertGreaterEqual(shell.count("--memory 2g --cpus 2"), 2)
+
     def test_posix_adapters_cover_linux_and_macos_hash_tools_and_pretty_receipts(self):
         build = self.text("scripts/build-verification.sh")
         run = self.text("scripts/run-verification.sh")
@@ -56,9 +63,11 @@ class VerificationContainerContractTests(unittest.TestCase):
         self.assertIn('\"focused\":', runner)
         self.assertIn('\"all\":', runner)
         self.assertIn('\"evaluate-profile\":', runner)
+        self.assertIn('\"review-packet\":', runner)
         self.assertIn("argv[1] not in COMMANDS", runner)
         self.assertNotIn("subprocess", runner)
         self.assertIn("sys.path.insert(0, str(OPERATOR_ROOT))", runner)
+        self.assertIn("focused_verification_witness", self.text("retrieval_arena/verification_witness.py"))
 
     def test_operator_module_is_present_in_the_immutable_build_context(self):
         dockerignore = self.text(".dockerignore")
@@ -66,6 +75,23 @@ class VerificationContainerContractTests(unittest.TestCase):
         operator = "containers/verification/evaluate_profile.py"
         self.assertIn(f"!{operator}", dockerignore)
         self.assertIn(f"COPY {operator} /opt/retrieval-arena/evaluate_profile.py", dockerfile)
+        review_operator = "containers/verification/review_packet.py"
+        self.assertIn(f"!{review_operator}", dockerignore)
+        self.assertIn(f"COPY {review_operator} /opt/retrieval-arena/review_packet.py", dockerfile)
+
+    def test_review_packet_operator_is_atomic_and_receipted(self):
+        operator = self.text("containers/verification/review_packet.py")
+        for required in (
+            "retrieval_arena.review_packet_operator_request.v1",
+            "retrieval_arena.review_packet_operator_receipt.v1",
+            "review-packet-input-inventory-mismatch",
+            "review-packet-output-not-fresh",
+            "receipt_sha256",
+            "output_inventory_sha256",
+            "partial_outputs_published",
+            "STAGING",
+        ):
+            self.assertIn(required, operator)
 
     def test_registered_profile_operator_is_mount_bound_and_self_hashing(self):
         operator = self.text("containers/verification/evaluate_profile.py")
