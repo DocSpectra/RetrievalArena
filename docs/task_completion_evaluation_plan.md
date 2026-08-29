@@ -1,6 +1,7 @@
 # Portable deterministic task-completion evaluation
 
-Status: planned; implementation requires the PRE-S019q-34 sprint series
+Status: PRE-S019q-34A contract and pure-scoring layer implemented; provider
+execution, CLI, reporting, and external task packs remain planned
 
 Decision date: 2026-08-19
 
@@ -23,6 +24,21 @@ be lent to a related interim experiment and later brought back with operational
 feedback. No RA core module may import DocSpectraCapstone or assume a particular
 documentation corpus, agent, service manager, container runtime, or experiment
 layout.
+
+## PRE-S019q-34A as-built boundary
+
+`retrieval_arena/task_completion.py` implements the corpus-neutral contract
+and scoring layer. It admits self-hashed closed-world records for task packs,
+provider references, task definitions, trials, normalized events, oracle
+results, efficiency observations, scores, paired comparisons, and replay.
+Duplicate JSON object fields are rejected before decoding can erase them.
+
+The scorer consumes only admitted records. It does not import a corpus project,
+execute an adapter, load a plugin, run a service, invoke a model, access the
+network, or infer evidence from agent text. Provider execution, normalization,
+receipt production, command-line ingress, and reports remain the next layer,
+PRE-S019q-34B. The exact schemas and library calls are documented in
+[`task_completion_contracts.md`](task_completion_contracts.md).
 
 ## Evaluation families
 
@@ -282,7 +298,7 @@ and pipeline modules do not enter RA core.
 
 1. complete the PRE-S019q-33 dual-profile BERTScore and human-artifact core;
 2. add strict task-pack, event, oracle, score, comparison, and replay schemas
-   plus a pure scorer;
+   plus a pure scorer — implemented by PRE-S019q-34A;
 3. add provider admission, execution adapter, event normalization, CLI, report,
    and byte-stable replay using synthetic task packs;
 4. extract candidate DocSpectra tasks without opening evaluation outcomes;

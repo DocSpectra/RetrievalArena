@@ -28,6 +28,7 @@ calibration/bigdata2026/pilot_express_docs/observability_report.html
 - [Ranked-retrieval metrics v2 plan](docs/ranked_retrieval_metrics_v2_plan.md)
 - [Dual-profile ranked evaluation](docs/dual_profile_evaluation.md)
 - [Portable deterministic task-completion evaluation](docs/task_completion_evaluation_plan.md)
+- [Task-completion contracts and pure scoring](docs/task_completion_contracts.md)
 - [Run BigData pilots](docs/bigdata_pilots.md)
 - [Use the HTML observability report](docs/html_observability_report.md)
 - [Export paper evidence](docs/paper_evidence_export.md)
@@ -155,6 +156,16 @@ explicitly project-specific diagnostics. Provider-pinned offline BERTScore is
 an optional answer diagnostic; calibration-only BPref and human answer or
 attribution judgments never enter an automatic result or a composite. See the
 [operator contract](docs/dual_profile_evaluation.md).
+
+Portable task completion is a fourth, separate result family. The 34A library
+surface admits closed-world task packs, task definitions, trial identities,
+normalized events, oracle results, efficiency evidence, scores, paired
+comparisons, and replay manifests. `score_task` is pure: it consumes admitted
+records and never launches an agent, provider, service, model, or plugin.
+Correctness and critical safety precede efficiency, and failed or invalid
+trials retain their resource evidence without being allowed to outrank safe
+successes. See the [34A contract](docs/task_completion_contracts.md). Provider
+execution, CLI, and reporting remain owned by PRE-S019q-34B.
 
 Use `python -m retrieval_arena.cli validate --config <config>` for the
 deterministic output-contract gate on standard RetrievalArena experiments.

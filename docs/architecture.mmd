@@ -14,6 +14,12 @@ flowchart LR
   packet --> judgments["Immutable judgment import\nprovider BPref\nanswer and attribution families"]
   auto --> replay
   judgments --> replay
+  task_pack["Portable task pack\nclosed schemas\nprovider and capability identities"] --> task_records["Observed task records\ntrial identity\nevents\noracle and efficiency evidence"]
+  task_records --> task_score["Pure task scoring\ncorrectness and safety first\nno composite"]
+  task_score --> task_pair["Paired task comparison\nimprovement or regression\nefficiency only after safe success"]
+  task_score --> task_replay["Task replay manifest\ncanonical record hashes\nseparate result family"]
+  task_pair --> task_replay
+  task_replay --> replay
   test --> replay["Replay manifests\nconfig\nsoftware\ninput/output hashes"]
   snapshot --> analyze["Analyze\nsnapshot diff\ngraph/support drift\nretrieval drift"]
   replay --> replay_compare["Replay comparison\nbehavior equality\nprovenance differences\nartifact equality"]
