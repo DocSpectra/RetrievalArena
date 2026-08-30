@@ -39,10 +39,12 @@ network, or infer evidence from agent text. PRE-S019q-34B adds the separately
 bounded `retrieval_arena/task_execution.py` synthetic execution layer:
 RA-derived source-artifact admission, runtime capability/root enforcement,
 harness-owned success and failure receipts, finally-owned cleanup,
-normalization, deterministic oracle invocation, terminal-failure publication,
-CLI, and oracle-only replay. It deliberately has no ambient caller callable,
-provider import primitive, live network, real service, model, or corpus
-dependency. The exact schemas and calls are in
+operation-specific result validation inside the receipt boundary, observed
+phase-journal lifecycle, normalization, deterministic oracle invocation,
+terminal-failure publication, CLI, and source-bundle-bound oracle-only replay.
+It deliberately has no ambient caller callable, provider import primitive,
+live network, real service, model, or corpus dependency. The exact schemas and
+calls are in
 [`task_completion_contracts.md`](task_completion_contracts.md) and
 [`task_execution_contracts.md`](task_execution_contracts.md).
 

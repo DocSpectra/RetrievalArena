@@ -3,7 +3,8 @@
 Providers are exact admitted source artifacts. They return plain observations;
 this module alone creates authoritative receipts, normalized events, oracle
 records, scores, replay manifests, terminal failures, and publications. Runtime
-capabilities are audit-enforced and provider imports are unavailable.
+capabilities are audit-enforced, operation schemas close inside the receipt
+boundary, lifecycle is observation-derived, and provider imports are unavailable.
 """
 from __future__ import annotations
 
@@ -72,6 +73,11 @@ SYNTHETIC_SCENARIOS = {
     "cleanup_failure",
     "provider_exception",
     "cleanup_provider_exception",
+    "agent_malformed_object",
+    "environment_malformed_object",
+    "cleanup_malformed_object",
+    "normalizer_malformed_object",
+    "oracle_malformed_object",
 }
 NATIVE_VARIANTS = {"command_a", "command_b"}
 SYNTHETIC_ENTRYPOINTS = {
@@ -615,6 +621,117 @@ def validate_native_receipt(
     return receipt
 
 
+def _validate_observation_descriptor(value: Any, owner: str) -> dict[str, Any]:
+    descriptor = _exact(
+        value,
+        {
+            "event_class",
+            "target",
+            "normalized_arguments",
+            "observation",
+            "source",
+            "parent",
+            "correlation",
+            "exit_status",
+        },
+        owner,
+    )
+    if descriptor["event_class"] not in EVENT_CLASS_INVENTORY:
+        raise ValidationError(f"{owner} event_class is unsupported")
+    _text(descriptor["target"], f"{owner} target")
+    if not isinstance(descriptor["normalized_arguments"], dict):
+        raise ValidationError(f"{owner} normalized_arguments must be an object")
+    if not isinstance(descriptor["observation"], dict):
+        raise ValidationError(f"{owner} observation must be an object")
+    if not isinstance(descriptor["source"], str) or descriptor["source"] not in {
+        "agent", "environment", "cleanup"
+    }:
+        raise ValidationError(f"{owner} source is unsupported")
+    if descriptor["parent"] is not None:
+        _integer(descriptor["parent"], f"{owner} parent", 1)
+    _text(descriptor["correlation"], f"{owner} correlation")
+    _integer(descriptor["exit_status"], f"{owner} exit_status")
+    canonical_json(descriptor["normalized_arguments"])
+    canonical_json(descriptor["observation"])
+    return descriptor
+
+
+def _validate_provider_observation(
+    provider: dict[str, Any],
+    operation_id: str,
+    request_payload: dict[str, Any],
+    observation: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate the operation result before a provider receipt may pass."""
+    kind = provider["provider_kind"]
+    owner = f"{kind} {operation_id} observation"
+    if kind == "agent_adapter" and operation_id == "propose_actions":
+        _exact(observation, {"actions", "agent_success_claim"}, owner)
+        actions = observation["actions"]
+        if not isinstance(actions, list) or not actions:
+            raise ValidationError("agent observation actions must be a non-empty list")
+        identifiers: list[str] = []
+        for index, action in enumerate(actions):
+            row = _exact(
+                action,
+                {"action_id", "semantic_action", "target", "native_command"},
+                f"agent action {index}",
+            )
+            for field in ("action_id", "semantic_action", "target", "native_command"):
+                _text(row[field], f"agent action {field}")
+            identifiers.append(row["action_id"])
+        if len(identifiers) != len(set(identifiers)):
+            raise ValidationError("agent action identifiers must be unique")
+        _text(observation["agent_success_claim"], "agent success claim")
+        return observation
+    if kind == "environment_adapter" and operation_id == "execute_fixture":
+        _exact(observation, {"native_command", "oracle_state", "observations"}, owner)
+        _text(observation["native_command"], "environment native_command")
+        state = observation["oracle_state"]
+        if not isinstance(state, dict) or not state:
+            raise ValidationError("environment oracle_state must be a non-empty object")
+        rows = observation["observations"]
+        if not isinstance(rows, list) or not rows:
+            raise ValidationError("environment observations must be a non-empty list")
+        for index, row in enumerate(rows):
+            _validate_observation_descriptor(row, f"environment observation {index}")
+        return observation
+    if kind == "environment_adapter" and operation_id == "cleanup_fixture":
+        _exact(observation, {"observations", "cleanup_passed"}, owner)
+        if not isinstance(observation["cleanup_passed"], bool):
+            raise ValidationError("cleanup_passed must be boolean")
+        rows = observation["observations"]
+        if not isinstance(rows, list):
+            raise ValidationError("cleanup observations must be a list")
+        for index, row in enumerate(rows):
+            _validate_observation_descriptor(row, f"cleanup observation {index}")
+        return observation
+    if kind == "event_normalizer" and operation_id == "normalize_observations":
+        _exact(observation, {"normalized_events"}, owner)
+        rows = observation["normalized_events"]
+        if not isinstance(rows, list) or not rows:
+            raise ValidationError("normalized_events must be a non-empty list")
+        for index, row in enumerate(rows):
+            _validate_observation_descriptor(row, f"normalized event {index}")
+        return observation
+    if kind == "oracle_provider" and operation_id == "evaluate_assertions":
+        _exact(observation, {"verdicts"}, owner)
+        verdicts = observation["verdicts"]
+        assertion_ids = request_payload.get("assertion_ids")
+        if not isinstance(verdicts, dict) or not isinstance(assertion_ids, list):
+            raise ValidationError("oracle observation requires a verdict map and assertion inventory")
+        if set(verdicts) != set(assertion_ids):
+            raise ValidationError("oracle provider verdict inventory mismatch")
+        if any(
+            not isinstance(value, str)
+            or value not in {"pass", "fail", "unavailable", "invalid"}
+            for value in verdicts.values()
+        ):
+            raise ValidationError("oracle provider returned an unsupported verdict")
+        return observation
+    raise ValidationError("provider operation has no registered observation contract")
+
+
 def _invoke_provider(
     *,
     sequence: int,
@@ -680,7 +797,9 @@ def _invoke_provider(
         canonical_json(candidate)
         if _contains_secret_key(candidate):
             raise ValidationError("provider observation contains a forbidden secret-like field")
-        observation = candidate
+        observation = _validate_provider_observation(
+            provider, operation_id, isolated_payload, candidate
+        )
     except Exception as exc:
         reason = (
             "provider_capability_violation"
@@ -1220,26 +1339,28 @@ def _status_and_reasons(score: dict[str, Any]) -> tuple[str, list[str]]:
 
 def _lifecycle(
     *,
-    failed_phase: str | None,
-    replay_completed: bool,
-    cleanup_passed: bool,
+    completed_phases: set[str],
+    failed_phases: set[str],
+    replay_pending: bool = False,
 ) -> list[dict[str, str]]:
+    if not completed_phases <= set(EXECUTION_PHASES):
+        raise ValidationError("completed lifecycle phase is unsupported")
+    if not failed_phases <= set(EXECUTION_PHASES):
+        raise ValidationError("failed lifecycle phase is unsupported")
+    if completed_phases & failed_phases:
+        raise ValidationError("lifecycle phase cannot be both completed and failed")
     rows: list[dict[str, str]] = []
-    reached_failure = False
     for phase in EXECUTION_PHASES:
         if phase == "publish":
             disposition = "pending_externalization"
-        elif phase == "cleanup":
-            disposition = "completed" if cleanup_passed else "failed"
-        elif phase == "replay" and failed_phase is None:
-            disposition = "completed" if replay_completed else "pending"
-        elif reached_failure:
-            disposition = "not_reached"
-        elif phase == failed_phase:
+        elif phase in failed_phases:
             disposition = "failed"
-            reached_failure = True
-        else:
+        elif phase in completed_phases:
             disposition = "completed"
+        elif phase == "replay" and replay_pending:
+            disposition = "pending"
+        else:
+            disposition = "not_reached"
         rows.append({"phase": phase, "disposition": disposition})
     return rows
 
@@ -1295,6 +1416,27 @@ def _failure_reasons_from_receipts(
     return sorted(set(reasons))
 
 
+def _failure_lifecycle(
+    receipts: list[dict[str, Any]], failed_phase: str
+) -> list[dict[str, str]]:
+    completed = {"admit", "initialize"}
+    if failed_phase != "execute":
+        completed.add("execute")
+    cleanup_receipt = next(
+        row for row in receipts if row["operation_id"] == "cleanup_fixture"
+    )
+    failed = {failed_phase}
+    if _cleanup_passed(cleanup_receipt):
+        completed.add("cleanup")
+    else:
+        failed.add("cleanup")
+    if failed_phase in {"finalize", "replay"}:
+        completed.add("observe")
+    if failed_phase == "replay":
+        completed.update({"finalize", "score"})
+    return _lifecycle(completed_phases=completed, failed_phases=failed)
+
+
 def _build_terminal_failure(
     *,
     pack: dict[str, Any],
@@ -1322,11 +1464,7 @@ def _build_terminal_failure(
         "native_receipts": receipts,
         "efficiency": efficiency,
         "failed_phase": failed_phase,
-        "lifecycle": _lifecycle(
-            failed_phase=failed_phase,
-            replay_completed=False,
-            cleanup_passed=cleanup_ok,
-        ),
+        "lifecycle": _failure_lifecycle(receipts, failed_phase),
         "cleanup": {
             "attempted": True,
             "passed": cleanup_ok,
@@ -1384,9 +1522,7 @@ def validate_execution_failure(value: dict[str, Any]) -> dict[str, Any]:
         raise ValidationError("task execution failure cleanup receipt is missing")
     if cleanup["passed"] != _cleanup_passed(cleanup_receipt):
         raise ValidationError("task execution failure cleanup disposition mismatch")
-    expected_lifecycle = _lifecycle(
-        failed_phase=value["failed_phase"], replay_completed=False, cleanup_passed=cleanup["passed"]
-    )
+    expected_lifecycle = _failure_lifecycle(receipts, value["failed_phase"])
     if value["lifecycle"] != expected_lifecycle:
         raise ValidationError("task execution failure lifecycle mismatch")
     _sorted_unique_text(value["reason_codes"], "task execution failure reason_codes", allow_empty=False)
@@ -1539,7 +1675,12 @@ def execute_task(
         "replay": replay,
         "replay_receipt": None,
         "lifecycle": _lifecycle(
-            failed_phase=None, replay_completed=False, cleanup_passed=score["cleanup_passed"]
+            completed_phases={
+                "admit", "initialize", "execute", "observe", "finalize", "score"
+            }
+            | ({"cleanup"} if score["cleanup_passed"] else set()),
+            failed_phases=set() if score["cleanup_passed"] else {"cleanup"},
+            replay_pending=True,
         ),
         "status": status,
         "reason_codes": reasons,
@@ -1557,11 +1698,55 @@ def execute_task(
         )
     bundle["replay_receipt"] = verification["receipt"]
     bundle["lifecycle"] = _lifecycle(
-        failed_phase=None, replay_completed=True, cleanup_passed=score["cleanup_passed"]
+        completed_phases={
+            "admit", "initialize", "execute", "observe", "finalize", "score", "replay"
+        }
+        | ({"cleanup"} if score["cleanup_passed"] else set()),
+        failed_phases=set() if score["cleanup_passed"] else {"cleanup"},
     )
     bundle["bundle_sha256"] = self_hash(bundle, "bundle_sha256")
     validate_execution_bundle(bundle)
     return bundle
+
+
+def _validate_replay_receipt_against_bundle(
+    replay_receipt: dict[str, Any], bundle: dict[str, Any]
+) -> None:
+    environment_receipts = [
+        row
+        for row in bundle["native_receipts"]
+        if row["provider_kind"] == "environment_adapter"
+        and row["operation_id"] == "execute_fixture"
+    ]
+    oracle_receipts = [
+        row
+        for row in bundle["native_receipts"]
+        if row["provider_kind"] == "oracle_provider"
+        and row["operation_id"] == "evaluate_assertions"
+    ]
+    if len(environment_receipts) != 1 or len(oracle_receipts) != 1:
+        raise ValidationError("completed execution requires one environment and oracle receipt")
+    state = _environment_state(
+        environment_receipts[0]["observation_payload"], bundle["events"]
+    )
+    expected_request = _oracle_payload(bundle["task"], bundle["events"], state)
+    if canonical_json(replay_receipt["request_payload"]) != canonical_json(expected_request):
+        raise ValidationError("replay receipt request payload mismatch")
+    expected_observation = oracle_receipts[0]["observation_payload"]
+    if canonical_json(replay_receipt["observation_payload"]) != canonical_json(
+        expected_observation
+    ):
+        raise ValidationError("replay receipt observation payload mismatch")
+    expected_results = _build_oracle_results(
+        bundle["task"],
+        bundle["pack"],
+        bundle["trial"],
+        bundle["events"],
+        bundle["native_receipts"],
+        replay_receipt["observation_payload"],
+    )
+    if canonical_json(expected_results) != canonical_json(bundle["oracle_results"]):
+        raise ValidationError("replay receipt oracle results mismatch")
 
 
 def _validate_execution_bundle(
@@ -1627,6 +1812,8 @@ def _validate_execution_bundle(
     if not {row["native_receipt_sha256"] for row in bundle["events"]} <= receipt_hashes:
         raise ValidationError("task event references an unknown native receipt")
     validate_oracle_results(bundle["oracle_results"], task, pack, trial)
+    if replay_completed:
+        _validate_replay_receipt_against_bundle(replay_receipt, bundle)
     validate_efficiency(bundle["efficiency"], trial)
     expected_score = score_task(
         pack, task, trial, bundle["oracle_results"], bundle["efficiency"]
@@ -1644,9 +1831,13 @@ def _validate_execution_bundle(
     if canonical_json(bundle["replay"]) != canonical_json(expected_replay):
         raise ValidationError("task execution replay differs from retained evidence")
     expected_lifecycle = _lifecycle(
-        failed_phase=None,
-        replay_completed=replay_completed,
-        cleanup_passed=bundle["score"]["cleanup_passed"],
+        completed_phases={
+            "admit", "initialize", "execute", "observe", "finalize", "score"
+        }
+        | ({"replay"} if replay_completed else set())
+        | ({"cleanup"} if bundle["score"]["cleanup_passed"] else set()),
+        failed_phases=set() if bundle["score"]["cleanup_passed"] else {"cleanup"},
+        replay_pending=not replay_completed,
     )
     if bundle["lifecycle"] != expected_lifecycle:
         raise ValidationError("task execution lifecycle is incomplete or out of order")
@@ -1739,7 +1930,11 @@ def _replay_task_execution(
         "verification_sha256": "0" * 64,
     }
     value["verification_sha256"] = self_hash(value, "verification_sha256")
-    return {"status": "passed", "verification": validate_replay_verification(value), "receipt": replay_receipt}
+    return {
+        "status": "passed",
+        "verification": validate_replay_verification(value, bundle),
+        "receipt": replay_receipt,
+    }
 
 
 def replay_task_execution(
@@ -1758,7 +1953,9 @@ def replay_task_execution(
     return result["verification"]
 
 
-def validate_replay_verification(value: dict[str, Any]) -> dict[str, Any]:
+def validate_replay_verification(
+    value: dict[str, Any], bundle: dict[str, Any]
+) -> dict[str, Any]:
     fields = {
         "schema_version",
         "result_family",
@@ -1775,6 +1972,8 @@ def validate_replay_verification(value: dict[str, Any]) -> dict[str, Any]:
         "verification_sha256",
     }
     _exact(value, fields, "task replay verification")
+    replay_completed = isinstance(bundle.get("replay_receipt"), dict)
+    _validate_execution_bundle(bundle, replay_completed=replay_completed)
     if value["schema_version"] != SCHEMA_REPLAY_VERIFICATION or value["result_family"] != RESULT_FAMILY:
         raise ValidationError("unsupported task replay verification family")
     for field in (
@@ -1805,6 +2004,19 @@ def validate_replay_verification(value: dict[str, Any]) -> dict[str, Any]:
     if receipt.get("observation_sha256") != _sha_json(receipt.get("observation_payload")):
         raise ValidationError("task replay verification observation hash mismatch")
     _check_hash(receipt, "receipt_sha256", "task replay verification receipt")
+    if value["bundle_sha256"] != bundle["bundle_sha256"]:
+        raise ValidationError("task replay verification bundle mismatch")
+    oracle_provider = next(
+        row for row in bundle["registry"]["providers"]
+        if row["provider_kind"] == "oracle_provider"
+    )
+    if value["oracle_provider_manifest_sha256"] != oracle_provider["provider_manifest_sha256"]:
+        raise ValidationError("task replay verification oracle manifest mismatch")
+    if value["task_score_sha256"] != bundle["score"]["score_sha256"]:
+        raise ValidationError("task replay verification score mismatch")
+    if value["task_replay_sha256"] != bundle["replay"]["replay_sha256"]:
+        raise ValidationError("task replay verification replay mismatch")
+    _validate_replay_receipt_against_bundle(receipt, bundle)
     if (
         value["provider_invocations"] != 1
         or value["environment_invocations"] != 0

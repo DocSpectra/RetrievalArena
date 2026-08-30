@@ -31,6 +31,8 @@ def _observation(
 
 def restart_agent(payload):
     parameters = payload["provider_parameters"]
+    if parameters["scenario"] == "agent_malformed_object":
+        return {}
     if parameters["scenario"] == "provider_exception":
         raise ValueError("synthetic-agent-provider-exception")
     native_command = {
@@ -62,6 +64,8 @@ def restart_environment(payload):
     operation = payload["operation"]
     cleanup_passed = scenario != "cleanup_failure"
     if operation == "cleanup_fixture":
+        if scenario == "cleanup_malformed_object":
+            return {}
         if scenario == "cleanup_provider_exception":
             raise ValueError("synthetic-cleanup-provider-exception")
         return {
@@ -80,6 +84,8 @@ def restart_environment(payload):
         }
     if operation != "execute_fixture":
         raise ValueError("unsupported synthetic environment operation")
+    if scenario == "environment_malformed_object":
+        return {}
 
     actions = payload["agent_observation"]["actions"]
     native_command = actions[0]["native_command"]
@@ -180,6 +186,7 @@ def restart_environment(payload):
     return {
         "native_command": native_command,
         "oracle_state": {
+            "scenario": scenario,
             "initial_generation": "generation-1",
             "final_generation": final_generation,
             "fixture_marker": marker,
@@ -194,6 +201,8 @@ def restart_environment(payload):
 
 
 def restart_normalizer(payload):
+    if payload["environment_observation"]["oracle_state"]["scenario"] == "normalizer_malformed_object":
+        return {}
     observations = [
         *payload["environment_observation"]["observations"],
         *payload["cleanup_observation"]["observations"],
@@ -221,6 +230,8 @@ def _by_class(events, event_class):
 
 
 def restart_oracle(payload):
+    if payload["environment_state"]["scenario"] == "oracle_malformed_object":
+        return {}
     events = payload["events"]
     state = payload["environment_state"]
     service = _by_class(events, "service_lifecycle")

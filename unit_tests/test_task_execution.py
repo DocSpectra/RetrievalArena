@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import copy
+import hashlib
 import io
 import json
 import tempfile
@@ -20,6 +21,7 @@ from retrieval_arena.task_execution import (
     EVENT_CLASS_INVENTORY,
     EXECUTION_PHASES,
     ProviderImplementation,
+    _validate_provider_observation,
     build_execution_plan,
     build_synthetic_restart_fixture,
     builtin_synthetic_implementations,
@@ -259,6 +261,131 @@ class TaskExecutionTests(unittest.TestCase):
         self.assertEqual(failure["lifecycle"][-1]["disposition"], "failed")
         self.assertIn("cleanup_failed", failure["reason_codes"])
 
+    def test_operation_schema_matrix_terminalizes_every_malformed_object(self):
+        matrix = {
+            "agent_malformed_object": ("agent_adapter", "execute"),
+            "environment_malformed_object": ("environment_adapter", "execute"),
+            "cleanup_malformed_object": ("environment_adapter", "cleanup"),
+            "normalizer_malformed_object": ("event_normalizer", "observe"),
+            "oracle_malformed_object": ("oracle_provider", "finalize"),
+        }
+        for scenario, (provider_kind, phase) in matrix.items():
+            with self.subTest(scenario=scenario):
+                _, failure = execute_fixture(scenario=scenario)
+                failed = [
+                    row for row in failure["native_receipts"]
+                    if row["status"] == "failed"
+                ]
+                self.assertEqual(len(failed), 1)
+                self.assertEqual(failed[0]["provider_kind"], provider_kind)
+                self.assertEqual(
+                    failed[0]["failure"]["reason_code"], "provider_contract_failure"
+                )
+                self.assertEqual(failure["failed_phase"], phase)
+
+    def test_operation_contract_matrix_rejects_missing_extra_and_wrong_types(self):
+        _, bundle = execute_fixture()
+        providers = {
+            row["provider_kind"]: row for row in bundle["registry"]["providers"]
+        }
+        wrong_type_fields = {
+            "propose_actions": "actions",
+            "execute_fixture": "native_command",
+            "cleanup_fixture": "cleanup_passed",
+            "normalize_observations": "normalized_events",
+            "evaluate_assertions": "verdicts",
+        }
+        wrong_values = {
+            "actions": {},
+            "native_command": 1,
+            "cleanup_passed": "yes",
+            "normalized_events": {},
+            "verdicts": [],
+        }
+        for receipt in bundle["native_receipts"]:
+            provider = providers[receipt["provider_kind"]]
+            operation = receipt["operation_id"]
+            valid = receipt["observation_payload"]
+            _validate_provider_observation(
+                provider, operation, receipt["request_payload"], valid
+            )
+            variants = {}
+            missing = copy.deepcopy(valid)
+            missing.pop(sorted(missing)[0])
+            variants["missing"] = missing
+            extra = copy.deepcopy(valid)
+            extra["undeclared"] = True
+            variants["extra"] = extra
+            wrong = copy.deepcopy(valid)
+            field = wrong_type_fields[operation]
+            wrong[field] = wrong_values[field]
+            variants["wrong_type"] = wrong
+            for shape, changed in variants.items():
+                with self.subTest(operation=operation, shape=shape):
+                    with self.assertRaises(ValidationError):
+                        _validate_provider_observation(
+                            provider,
+                            operation,
+                            receipt["request_payload"],
+                            changed,
+                        )
+
+    def test_cleanup_failure_lifecycle_marks_downstream_phases_not_reached(self):
+        _, failure = execute_fixture(scenario="cleanup_malformed_object")
+        dispositions = {
+            row["phase"]: row["disposition"] for row in failure["lifecycle"]
+        }
+        self.assertEqual(dispositions["admit"], "completed")
+        self.assertEqual(dispositions["initialize"], "completed")
+        self.assertEqual(dispositions["execute"], "completed")
+        self.assertEqual(dispositions["cleanup"], "failed")
+        self.assertEqual(dispositions["publish"], "pending_externalization")
+        for phase in ("observe", "finalize", "score", "replay"):
+            self.assertEqual(dispositions[phase], "not_reached")
+
+    def test_failure_lifecycle_matrix_uses_only_observed_phase_transitions(self):
+        scenarios = []
+        _, agent_failure = failure_fixture("exception")
+        scenarios.append(
+            (agent_failure, {"admit", "initialize", "cleanup"}, {"execute"})
+        )
+        for entrypoint, completed, failed in (
+            (
+                "retrieval_arena.synthetic.restart_normalizer",
+                {"admit", "initialize", "execute", "cleanup"},
+                {"observe"},
+            ),
+            (
+                "retrieval_arena.synthetic.restart_oracle",
+                {"admit", "initialize", "execute", "cleanup", "observe"},
+                {"finalize"},
+            ),
+        ):
+            implementations = builtin_synthetic_implementations()
+            implementations[entrypoint] = ProviderImplementation(ADVERSARIAL_DOWNSTREAM)
+            fixture = build_synthetic_restart_fixture(implementations=implementations)
+            failure = execute_task(**fixture, implementations=implementations)
+            scenarios.append((failure, completed, failed))
+        _, cleanup_failure = execute_fixture(scenario="cleanup_provider_exception")
+        scenarios.append(
+            (cleanup_failure, {"admit", "initialize", "execute"}, {"cleanup"})
+        )
+        for failure, completed, failed in scenarios:
+            dispositions = {
+                row["phase"]: row["disposition"] for row in failure["lifecycle"]
+            }
+            self.assertEqual(
+                {phase for phase, status in dispositions.items() if status == "completed"},
+                completed,
+            )
+            self.assertEqual(
+                {phase for phase, status in dispositions.items() if status == "failed"},
+                failed,
+            )
+            for phase in {"observe", "finalize", "score", "replay"} - completed - failed:
+                self.assertEqual(dispositions[phase], "not_reached")
+            self.assertEqual(dispositions["publish"], "pending_externalization")
+
     def test_terminal_failure_rejects_cleanup_lifecycle_or_evidence_rewrite(self):
         _, failure = failure_fixture("exception")
         changed = copy.deepcopy(failure)
@@ -309,7 +436,7 @@ class TaskExecutionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "score differs from retained evidence"):
             validate_execution_bundle(score_mutation)
 
-    def test_rehashed_oracle_mutation_is_rejected_by_deterministic_replay(self):
+    def test_rehashed_oracle_mutation_is_rejected_before_replay(self):
         _, bundle = execute_fixture()
         changed = copy.deepcopy(bundle)
         result = next(
@@ -337,9 +464,8 @@ class TaskExecutionTests(unittest.TestCase):
         changed["status"] = "failed"
         changed["reason_codes"] = ["critical_safety_violation", "required_oracle_failed"]
         changed["bundle_sha256"] = self_hash(changed, "bundle_sha256")
-        validate_execution_bundle(changed)
-        with self.assertRaisesRegex(ValidationError, "deterministic replay"):
-            replay_task_execution(changed, builtin_synthetic_implementations())
+        with self.assertRaisesRegex(ValidationError, "replay receipt oracle results mismatch"):
+            validate_execution_bundle(changed)
 
     def test_replay_is_byte_stable_and_invokes_only_the_oracle(self):
         _, bundle = execute_fixture()
@@ -363,13 +489,51 @@ class TaskExecutionTests(unittest.TestCase):
         changed["oracle_replay_receipt_sha256"] = changed["oracle_replay_receipt"]["receipt_sha256"]
         changed["verification_sha256"] = self_hash(changed, "verification_sha256")
         with self.assertRaisesRegex(ValidationError, "not a passed oracle invocation"):
-            validate_replay_verification(changed)
+            validate_replay_verification(changed, bundle)
+
+    def test_rehashed_replay_payload_mutation_is_bound_to_retained_evidence(self):
+        _, bundle = execute_fixture()
+        for payload_name, hash_name in (
+            ("request_payload", "request_sha256"),
+            ("observation_payload", "observation_sha256"),
+        ):
+            with self.subTest(record="bundle", payload=payload_name):
+                changed = copy.deepcopy(bundle)
+                receipt = changed["replay_receipt"]
+                receipt[payload_name]["mutation"] = True
+                receipt[hash_name] = hashlib.sha256(
+                    canonical_json(receipt[payload_name])
+                ).hexdigest()
+                receipt["receipt_sha256"] = self_hash(receipt, "receipt_sha256")
+                changed["bundle_sha256"] = self_hash(changed, "bundle_sha256")
+                with self.assertRaisesRegex(ValidationError, "replay receipt .* mismatch"):
+                    validate_execution_bundle(changed)
+
+        verification = replay_task_execution(bundle, builtin_synthetic_implementations())
+        for payload_name, hash_name in (
+            ("request_payload", "request_sha256"),
+            ("observation_payload", "observation_sha256"),
+        ):
+            with self.subTest(record="verification", payload=payload_name):
+                changed = copy.deepcopy(verification)
+                receipt = changed["oracle_replay_receipt"]
+                receipt[payload_name]["mutation"] = True
+                receipt[hash_name] = hashlib.sha256(
+                    canonical_json(receipt[payload_name])
+                ).hexdigest()
+                receipt["receipt_sha256"] = self_hash(receipt, "receipt_sha256")
+                changed["oracle_replay_receipt_sha256"] = receipt["receipt_sha256"]
+                changed["verification_sha256"] = self_hash(
+                    changed, "verification_sha256"
+                )
+                with self.assertRaisesRegex(ValidationError, "replay receipt .* mismatch"):
+                    validate_replay_verification(changed, bundle)
 
         changed = copy.deepcopy(verification)
         changed["oracle_provider_manifest_sha256"] = "0" * 64
         changed["verification_sha256"] = self_hash(changed, "verification_sha256")
         with self.assertRaisesRegex(ValidationError, "not a passed oracle invocation"):
-            validate_replay_verification(changed)
+            validate_replay_verification(changed, bundle)
 
     def test_publication_is_compact_content_addressed_and_secret_free(self):
         _, bundle = execute_fixture()

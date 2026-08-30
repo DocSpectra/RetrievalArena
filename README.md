@@ -170,9 +170,12 @@ The corrected 34B execution layer derives provider identity from exact admitted
 source bytes, executes registered entrypoints under capability and writable-root
 enforcement, and creates harness-owned passed or failed native receipts. A
 `finally`-owned cleanup attempt and standalone terminal-failure record preserve
-failure resources; replay invokes only the oracle and has its own receipt. The
-layer has no live model, runtime network, real service, ambient caller callable,
-or corpus dependency. Use `python -m
+failure resources. Passed receipts require exact operation-result schemas;
+lifecycle dispositions come from observed phase states; and replay request and
+observation payloads are reconstructed against their source bundle. Replay
+invokes only the oracle and has its own receipt. The layer has no live model,
+runtime network, real service, ambient caller callable, or corpus dependency.
+Use `python -m
 retrieval_arena.cli task --help` for pack validation, non-consuming planning,
 synthetic execution, scoring, comparison, reporting, and replay. See the
 [execution contract](docs/task_execution_contracts.md).

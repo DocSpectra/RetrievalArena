@@ -1,6 +1,7 @@
 # Portable task execution, receipts, and replay
 
-Status: PRE-S019q-34B corrective implementation; pending independent acceptance
+Status: PRE-S019q-34B second corrective implementation; pending independent
+acceptance
 
 ## Boundary
 
@@ -35,6 +36,14 @@ capability violation remains visible in a failed receipt even though the
 attempted capability was undeclared. A passed receipt may contain only a subset
 of the provider's admitted capabilities.
 
+A passed receipt also requires the exact registered operation-result contract.
+The agent, environment-execution, environment-cleanup, normalizer, and oracle
+operations each have a closed top-level schema plus typed nested inventory.
+Missing fields, extra fields, wrong field types, incomplete oracle verdict
+inventories, and invalid event descriptors fail inside `_invoke_provider`.
+Operation validation therefore occurs before receipt status is chosen; a
+JSON-object shape alone is never sufficient for a passed receipt.
+
 The built-in qualification provider lives in
 `retrieval_arena/synthetic_task_providers.py`. It has no imports and performs
 no filesystem, process, socket, model, real-service, or dynamic-loading work.
@@ -43,8 +52,12 @@ no filesystem, process, socket, model, real-service, or dynamic-loading work.
 
 `build_execution_plan` is non-consuming and write-free. Execution owns admit,
 initialize, execute, observe, finalize, score, publish, replay, and cleanup.
-Lifecycle dispositions are constructed from terminal observations; replay and
-cleanup are not marked complete in advance.
+Lifecycle dispositions are a projection of an explicit set of completed and
+failed phase observations, not an inference from the failed phase's position in
+that display order. A cleanup-provider failure after execution therefore marks
+cleanup failed and observe, finalize, score, and replay `not_reached`. Cleanup
+that completed before a later normalizer or oracle failure remains completed.
+Replay is pending until its admitted oracle receipt exists.
 
 Each provider call creates a terminal native receipt whether it passes, raises,
 returns malformed data, emits a forbidden secret-like field, or attempts an
@@ -93,10 +106,17 @@ or scoring input.
 
 Bundle validation reconstructs the plan, validates every native and replay
 receipt, recomputes the pure score from oracle and efficiency evidence, and
-rebuilds the pure replay manifest. Replay re-admits current provider source
-bytes, invokes only the oracle from a fresh restricted namespace, records that
-invocation, and requires canonical equality for oracle observation, oracle
-results, score, and replay. It reports zero environment invocations and zero
+rebuilds the pure replay manifest. It also reconstructs the exact replay
+request from retained task/events/environment state and requires the replay
+observation to equal the retained original oracle observation and results.
+Rehashing a changed replay payload cannot make it admissible.
+
+Replay re-admits current provider source bytes, invokes only the oracle from a
+fresh restricted namespace, records that invocation, and requires canonical
+equality for oracle observation, oracle results, score, and replay. Replay
+verification is validated with its source bundle, so its bundle, provider,
+score, replay, request, and observation claims are evidence-bound rather than
+standalone assertions. It reports zero environment invocations and zero
 service executions.
 
 ## CLI and publication
@@ -126,8 +146,10 @@ failure, cleanup-provider failure, and provider failures in agent, environment,
 normalizer, and oracle phases. Adversarial exact artifacts prove that
 filesystem, process, and network attempts fail with receipts; declared
 filesystem capability remains confined to pack roots; source substitution and
-path drift reject; and rehashed receipt, lifecycle, cleanup, oracle, and score
-mutations fail closed.
+path drift reject; every provider operation terminalizes a malformed object;
+missing, extra, and wrong-type operation fields reject; failure lifecycle
+dispositions match observed reachability; and rehashed receipt, lifecycle,
+cleanup, oracle, score, and replay request/observation mutations fail closed.
 
 34B does not authorize a live LLM, external network, real service, Docker,
 DocSpectra task pack, held-out artifact, E-EXP1, or scientific interpretation.
