@@ -1,17 +1,21 @@
 """Portable task execution receipts, synthetic providers, reporting, and replay.
 
-Providers are subordinate callables.  They return plain observations; this
-module alone creates authoritative receipts, normalized events, oracle records,
-scores, replay manifests, and published artifacts.  No dynamic provider loading,
-subprocess, network client, or service manager is present here.
+Providers are exact admitted source artifacts. They return plain observations;
+this module alone creates authoritative receipts, normalized events, oracle
+records, scores, replay manifests, terminal failures, and publications. Runtime
+capabilities are audit-enforced and provider imports are unavailable.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import os
+import socket
+import sys
+from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Mapping
 
 from .errors import ValidationError
 from .task_completion import (
@@ -37,14 +41,15 @@ from .task_completion import (
 )
 
 
-SCHEMA_EXECUTION_PROVIDER = "retrieval_arena.task_execution_provider.v1"
-SCHEMA_EXECUTION_REGISTRY = "retrieval_arena.task_execution_registry.v1"
-SCHEMA_EXECUTION_REQUEST = "retrieval_arena.task_execution_request.v1"
-SCHEMA_EXECUTION_PLAN = "retrieval_arena.task_execution_plan.v1"
-SCHEMA_NATIVE_RECEIPT = "retrieval_arena.task_native_receipt.v1"
-SCHEMA_EXECUTION_BUNDLE = "retrieval_arena.task_execution_bundle.v1"
-SCHEMA_EXECUTION_SUMMARY = "retrieval_arena.task_execution_summary.v1"
-SCHEMA_REPLAY_VERIFICATION = "retrieval_arena.task_replay_verification.v1"
+SCHEMA_EXECUTION_PROVIDER = "retrieval_arena.task_execution_provider.v2"
+SCHEMA_EXECUTION_REGISTRY = "retrieval_arena.task_execution_registry.v2"
+SCHEMA_EXECUTION_REQUEST = "retrieval_arena.task_execution_request.v2"
+SCHEMA_EXECUTION_PLAN = "retrieval_arena.task_execution_plan.v2"
+SCHEMA_NATIVE_RECEIPT = "retrieval_arena.task_native_receipt.v2"
+SCHEMA_EXECUTION_BUNDLE = "retrieval_arena.task_execution_bundle.v2"
+SCHEMA_EXECUTION_FAILURE = "retrieval_arena.task_execution_failure.v1"
+SCHEMA_EXECUTION_SUMMARY = "retrieval_arena.task_execution_summary.v2"
+SCHEMA_REPLAY_VERIFICATION = "retrieval_arena.task_replay_verification.v2"
 
 PROVIDER_INTERFACE = "retrieval_arena.task_provider_interface.v1"
 EXECUTION_PHASES = [
@@ -58,13 +63,6 @@ EXECUTION_PHASES = [
     "replay",
     "cleanup",
 ]
-EXECUTION_LIFECYCLE = [
-    {
-        "phase": phase,
-        "disposition": "pending_externalization" if phase == "publish" else "completed",
-    }
-    for phase in EXECUTION_PHASES
-]
 SYNTHETIC_SCENARIOS = {
     "success",
     "skipped_restart",
@@ -72,6 +70,8 @@ SYNTHETIC_SCENARIOS = {
     "request_before_restart",
     "mock_substitution",
     "cleanup_failure",
+    "provider_exception",
+    "cleanup_provider_exception",
 }
 NATIVE_VARIANTS = {"command_a", "command_b"}
 SYNTHETIC_ENTRYPOINTS = {
@@ -82,7 +82,7 @@ SYNTHETIC_ENTRYPOINTS = {
 }
 SYNTHETIC_OPERATIONS = {
     "agent_adapter": ["propose_actions"],
-    "environment_adapter": ["execute_fixture"],
+    "environment_adapter": ["cleanup_fixture", "execute_fixture"],
     "event_normalizer": ["normalize_observations"],
     "oracle_provider": ["evaluate_assertions"],
 }
@@ -110,10 +110,6 @@ def _sha_text(value: str) -> str:
 
 def _sha_json(value: Any) -> str:
     return _sha_bytes(canonical_json(value))
-
-
-def _module_sha256() -> str:
-    return _sha_bytes(Path(__file__).read_bytes())
 
 
 def _exact(value: Any, fields: set[str], owner: str) -> dict[str, Any]:
@@ -205,11 +201,90 @@ def write_canonical_json(path: Path, value: Any) -> None:
 
 @dataclass(frozen=True)
 class ProviderImplementation:
-    """Caller-supplied callable plus the hash of its separately admitted artifact."""
+    """Path to provider source; RA derives identity and loads admitted bytes."""
 
-    entrypoint_id: str
+    artifact_path: Path
+
+
+@dataclass(frozen=True)
+class AdmittedProviderImplementation:
+    artifact_path: str
     artifact_sha256: str
-    invoke: Callable[[dict[str, Any]], dict[str, Any]]
+    artifact_bytes: bytes
+
+
+class ProviderCapabilityError(RuntimeError):
+    pass
+
+
+_ACTIVE_PROVIDER_POLICY: ContextVar[dict[str, Any] | None] = ContextVar(
+    "retrieval_arena_active_provider_policy", default=None
+)
+
+
+def _audit_capability(event: str, arguments: tuple[Any, ...]) -> str | None:
+    if event == "open":
+        mode = arguments[1] if len(arguments) > 1 else "r"
+        flags = arguments[2] if len(arguments) > 2 else 0
+        writes = (
+            isinstance(mode, str)
+            and any(marker in mode for marker in ("w", "a", "x", "+"))
+        ) or (
+            isinstance(flags, int)
+            and bool(flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND))
+        )
+        return "filesystem_write" if writes else "filesystem_read"
+    if event.startswith("socket."):
+        return "network"
+    if event == "subprocess.Popen" or event == "os.system" or event.startswith("os.spawn") or event.startswith("os.posix_spawn"):
+        return "process"
+    if event in {"os.remove", "os.rename", "os.replace", "os.rmdir", "os.mkdir", "os.link", "os.symlink"}:
+        return "filesystem_write"
+    if event.startswith("ctypes."):
+        return "privileges"
+    return None
+
+
+def _provider_audit_hook(event: str, arguments: tuple[Any, ...]) -> None:
+    policy = _ACTIVE_PROVIDER_POLICY.get()
+    if policy is None:
+        return
+    capability = _audit_capability(event, arguments)
+    if capability is None:
+        return
+    policy["used"].add(capability)
+    if capability not in policy["allowed"]:
+        policy["violation"] = capability
+        raise ProviderCapabilityError(f"undeclared-provider-capability:{capability}")
+    if capability in {"filesystem_read", "filesystem_write"}:
+        raw_path = arguments[0] if arguments else None
+        if not isinstance(raw_path, (str, bytes, os.PathLike)):
+            policy["violation"] = f"{capability}_scope"
+            raise ProviderCapabilityError(f"provider-filesystem-scope:{capability}")
+        candidate = Path(os.fsdecode(raw_path))
+        if not candidate.is_absolute():
+            policy["violation"] = f"{capability}_scope"
+            raise ProviderCapabilityError(f"provider-filesystem-scope:{capability}")
+        resolved = candidate.resolve(strict=False)
+        if not any(resolved == root or root in resolved.parents for root in policy["filesystem_roots"]):
+            policy["violation"] = f"{capability}_scope"
+            raise ProviderCapabilityError(f"provider-filesystem-scope:{capability}")
+
+
+sys.addaudithook(_provider_audit_hook)
+
+
+def _provider_artifact(path: Path) -> AdmittedProviderImplementation:
+    candidate = path if path.is_absolute() else Path.cwd() / path
+    if candidate.is_symlink():
+        raise ValidationError("provider artifact must not be a symlink")
+    resolved = path.resolve(strict=True)
+    if not resolved.is_file():
+        raise ValidationError("provider artifact must be a regular non-symlink file")
+    data = resolved.read_bytes()
+    if not data:
+        raise ValidationError("provider artifact must not be empty")
+    return AdmittedProviderImplementation(str(resolved), _sha_bytes(data), data)
 
 
 def validate_execution_provider(
@@ -292,18 +367,20 @@ def validate_execution_registry(
 
 def _admit_implementations(
     registry: dict[str, Any], implementations: Mapping[str, ProviderImplementation]
-) -> None:
+) -> dict[str, AdmittedProviderImplementation]:
     expected = {row["entrypoint_id"]: row for row in registry["providers"]}
     if set(implementations) != set(expected):
         raise ValidationError("provider implementation inventory mismatch")
+    admitted: dict[str, AdmittedProviderImplementation] = {}
     for entrypoint_id, provider in expected.items():
         implementation = implementations[entrypoint_id]
-        if implementation.entrypoint_id != entrypoint_id:
-            raise ValidationError("provider implementation entrypoint mismatch")
-        if implementation.artifact_sha256 != provider["implementation_sha256"]:
+        if not isinstance(implementation, ProviderImplementation):
+            raise ValidationError("provider implementation must be a source artifact")
+        artifact = _provider_artifact(implementation.artifact_path)
+        if artifact.artifact_sha256 != provider["implementation_sha256"]:
             raise ValidationError("provider implementation artifact drift")
-        if not callable(implementation.invoke):
-            raise ValidationError("provider implementation must be callable")
+        admitted[entrypoint_id] = artifact
+    return admitted
 
 
 def validate_execution_request(
@@ -476,8 +553,10 @@ def validate_native_receipt(
         "request_sha256",
         "observation_payload",
         "observation_sha256",
+        "capabilities_used",
         "status",
         "exit_status",
+        "failure",
         "redaction",
         "sensitivity",
         "receipt_sha256",
@@ -506,8 +585,30 @@ def validate_native_receipt(
         raise ValidationError("native receipt request hash mismatch")
     if receipt["observation_sha256"] != _sha_json(receipt["observation_payload"]):
         raise ValidationError("native receipt observation hash mismatch")
-    if receipt["status"] != "passed" or receipt["exit_status"] != 0:
-        raise ValidationError("provider invocation did not complete successfully")
+    capabilities_used = _sorted_unique_text(
+        receipt["capabilities_used"], "native receipt capabilities_used"
+    )
+    if receipt["status"] == "passed":
+        if not set(capabilities_used) <= set(provider["capabilities"]):
+            raise ValidationError("passed native receipt records an undeclared capability")
+        if receipt["exit_status"] != 0 or receipt["failure"] is not None:
+            raise ValidationError("passed provider receipt has failure state")
+    elif receipt["status"] == "failed":
+        if receipt["exit_status"] != 1:
+            raise ValidationError("failed provider receipt requires exit status one")
+        failure = _exact(
+            receipt["failure"],
+            {"reason_code", "error_class", "message_sha256"},
+            "provider failure",
+        )
+        _text(failure["reason_code"], "provider failure reason_code")
+        _text(failure["error_class"], "provider failure error_class")
+        _sha(failure["message_sha256"], "provider failure message_sha256")
+        undeclared = set(capabilities_used) - set(provider["capabilities"])
+        if undeclared and failure["reason_code"] != "provider_capability_violation":
+            raise ValidationError("undeclared capability requires capability-violation failure")
+    else:
+        raise ValidationError("unsupported provider receipt status")
     if receipt["redaction"] != "none" or receipt["sensitivity"] != "public":
         raise ValidationError("34B synthetic receipts must be public and need no redaction")
     _check_hash(receipt, "receipt_sha256", "task native receipt")
@@ -519,19 +620,83 @@ def _invoke_provider(
     sequence: int,
     trial: dict[str, Any],
     provider: dict[str, Any],
-    implementation: ProviderImplementation,
+    implementation: AdmittedProviderImplementation,
     operation_id: str,
     payload: dict[str, Any],
-) -> tuple[dict[str, Any], dict[str, Any]]:
+    filesystem_roots: list[Path],
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     if _contains_secret_key(payload):
         raise ValidationError("provider request contains a forbidden secret-like field")
     isolated_payload = json.loads(canonical_json(payload))
-    observation = implementation.invoke(isolated_payload)
-    if not isinstance(observation, dict):
-        raise ValidationError("provider observation must be an object")
-    canonical_json(observation)
-    if _contains_secret_key(observation):
-        raise ValidationError("provider observation contains a forbidden secret-like field")
+    policy = {
+        "allowed": set(provider["capabilities"]),
+        "used": set(),
+        "violation": None,
+        "filesystem_roots": [root.resolve(strict=False) for root in filesystem_roots],
+    }
+    token = _ACTIVE_PROVIDER_POLICY.set(policy)
+    observation: dict[str, Any] | None = None
+    failure: dict[str, Any] | None = None
+    try:
+        entrypoint_name = provider["entrypoint_id"].rsplit(".", 1)[-1]
+        safe_builtins = {
+            "ValueError": ValueError,
+            "all": all,
+            "any": any,
+            "bool": bool,
+            "dict": dict,
+            "enumerate": enumerate,
+            "isinstance": isinstance,
+            "len": len,
+            "list": list,
+            "open": open,
+            "set": set,
+            "sorted": sorted,
+            "str": str,
+        }
+        namespace: dict[str, Any] = {
+            "__builtins__": safe_builtins,
+            "__name__": f"admitted_provider_{implementation.artifact_sha256}",
+            "system_call": os.system,
+            "open_socket": socket.socket,
+        }
+        code = compile(
+            implementation.artifact_bytes,
+            f"provider:{implementation.artifact_sha256}",
+            "exec",
+            dont_inherit=True,
+        )
+        exec(code, namespace, namespace)
+        entrypoint = namespace.get(entrypoint_name)
+        if not callable(entrypoint):
+            raise ValidationError("admitted provider entrypoint is missing or not callable")
+        candidate = entrypoint(isolated_payload)
+        if policy["violation"] is not None:
+            raise ProviderCapabilityError(
+                f"undeclared-provider-capability:{policy['violation']}"
+            )
+        if not isinstance(candidate, dict):
+            raise ValidationError("provider observation must be an object")
+        canonical_json(candidate)
+        if _contains_secret_key(candidate):
+            raise ValidationError("provider observation contains a forbidden secret-like field")
+        observation = candidate
+    except Exception as exc:
+        reason = (
+            "provider_capability_violation"
+            if isinstance(exc, ProviderCapabilityError)
+            else "provider_contract_failure"
+            if isinstance(exc, ValidationError)
+            else "provider_exception"
+        )
+        failure = {
+            "reason_code": reason,
+            "error_class": type(exc).__name__,
+            "message_sha256": _sha_text(str(exc)),
+        }
+    finally:
+        _ACTIVE_PROVIDER_POLICY.reset(token)
+    status = "passed" if failure is None else "failed"
     receipt = {
         "schema_version": SCHEMA_NATIVE_RECEIPT,
         "trial_id": trial["trial_id"],
@@ -548,8 +713,10 @@ def _invoke_provider(
         "request_sha256": _sha_json(isolated_payload),
         "observation_payload": observation,
         "observation_sha256": _sha_json(observation),
-        "status": "passed",
-        "exit_status": 0,
+        "capabilities_used": sorted(policy["used"]),
+        "status": status,
+        "exit_status": 0 if status == "passed" else 1,
+        "failure": failure,
         "redaction": "none",
         "sensitivity": "public",
         "receipt_sha256": "0" * 64,
@@ -558,241 +725,15 @@ def _invoke_provider(
     return observation, validate_native_receipt(receipt, trial, provider)
 
 
-def _synthetic_agent(payload: dict[str, Any]) -> dict[str, Any]:
-    parameters = payload["provider_parameters"]
-    variant = parameters["native_variant"]
-    native_command = {
-        "command_a": "restart-service web",
-        "command_b": "service web reload",
-    }[variant]
-    return {
-        "actions": [
-            {"action_id": "restart", "semantic_action": "service_restart", "target": "web", "native_command": native_command},
-            {"action_id": "verify", "semantic_action": "http_get", "target": "/", "native_command": "fixture-http-get /"},
-        ],
-        "agent_success_claim": "untrusted",
-    }
-
-
-def _observation(
-    event_class: str,
-    target: str,
-    arguments: dict[str, Any],
-    observation: dict[str, Any],
-    *,
-    source: str = "environment",
-    parent: int | None = None,
-    correlation: str | None = "restart-web",
-    exit_status: int = 0,
-) -> dict[str, Any]:
-    return {
-        "event_class": event_class,
-        "target": target,
-        "normalized_arguments": arguments,
-        "observation": observation,
-        "source": source,
-        "parent": parent,
-        "correlation": correlation,
-        "exit_status": exit_status,
-    }
-
-
-def _synthetic_environment(payload: dict[str, Any]) -> dict[str, Any]:
-    parameters = payload["provider_parameters"]
-    scenario = parameters["scenario"]
-    actions = payload["agent_observation"]["actions"]
-    native_command = actions[0]["native_command"]
-    restarted = scenario != "skipped_restart"
-    final_generation = "generation-2" if restarted else "generation-1"
-    response_generation = "generation-1" if scenario == "stale_response" else final_generation
-    cleanup_passed = scenario != "cleanup_failure"
-    mock_used = scenario == "mock_substitution"
-    marker = "fixture-home-v1"
-
-    tool = _observation(
-        "tool_invocation",
-        "web",
-        {"semantic_action": "service_restart"},
-        {"admitted": True},
-        source="agent",
-    )
-    command = _observation(
-        "command_result",
-        "web",
-        {"semantic_action": "service_restart"},
-        {"exit_status": 0, "native_command_sha256": _sha_text(native_command)},
-        parent=1,
-    )
-    restart_rows = [
-        _observation(
-            "process_lifecycle",
-            "web",
-            {"transition": "generation_change"},
-            {"before": "generation-1", "after": final_generation},
-            parent=2,
-        ),
-        _observation(
-            "service_lifecycle",
-            "web",
-            {"action": "restart"},
-            {"before": "generation-1", "after": final_generation},
-            parent=3,
-        ),
-        _observation(
-            "filesystem_mutation",
-            "generation-marker",
-            {"operation": "replace"},
-            {"generation": final_generation},
-            parent=4,
-        ),
-    ] if restarted else []
-    request = _observation(
-        "http_request",
-        "/",
-        {"method": "GET", "path": "/"},
-        {"issued": True},
-        parent=1,
-    )
-    response = _observation(
-        "http_response",
-        "/",
-        {"method": "GET", "path": "/"},
-        {
-            "status": 200,
-            "marker": marker,
-            "served_by_generation": response_generation,
-            "mock_substitution": mock_used,
-        },
-        parent=1,
-    )
-    test = _observation(
-        "test_execution",
-        "home-health-check",
-        {"check": "status-marker-generation"},
-        {"passed": response_generation == final_generation and not mock_used},
-        parent=1,
-    )
-    publication = _observation(
-        "artifact_publication",
-        "verification-evidence",
-        {"artifact_family": "synthetic_observation"},
-        {"published": True},
-        parent=1,
-    )
-    if mock_used:
-        publication = _observation(
-            "filesystem_mutation",
-            "mock-substitution",
-            {"operation": "create"},
-            {"mocked": True},
-            parent=1,
-        )
-    cleanup = _observation(
-        "cleanup",
-        "scratch",
-        {"operation": "restore"},
-        {"passed": cleanup_passed},
-        parent=1,
-        exit_status=0 if cleanup_passed else 1,
-    )
-
-    if scenario == "request_before_restart":
-        observations = [tool, request, command, *restart_rows, response, test, publication, cleanup]
-    else:
-        observations = [tool, command, *restart_rows, request, response, test, publication, cleanup]
-    response_observation = {
-        "status": 200,
-        "marker": marker,
-        "served_by_generation": response_generation,
-        "mock_substitution": mock_used,
-    }
-    return {
-        "native_command": native_command,
-        "oracle_state": {
-            "initial_generation": "generation-1",
-            "final_generation": final_generation,
-            "fixture_marker": marker,
-            "response_generation": response_generation,
-            "response_observation": response_observation,
-            "test_passed": response_generation == final_generation and not mock_used,
-            "mock_substitution": mock_used,
-            "cleanup_passed": cleanup_passed,
-        },
-        "observations": observations,
-    }
-
-
-def _synthetic_normalizer(payload: dict[str, Any]) -> dict[str, Any]:
-    observations = payload["environment_observation"]["observations"]
-    normalized: list[dict[str, Any]] = []
-    for row in observations:
-        _exact(
-            row,
-            {"event_class", "target", "normalized_arguments", "observation", "source", "parent", "correlation", "exit_status"},
-            "synthetic native observation",
-        )
-        normalized.append(dict(row))
-    return {"normalized_events": normalized}
-
-
 def _event_by_class(events: list[dict[str, Any]], event_class: str) -> list[dict[str, Any]]:
     return [row for row in events if row["event_class"] == event_class]
 
 
-def _synthetic_oracle(payload: dict[str, Any]) -> dict[str, Any]:
-    events = payload["events"]
-    state = payload["environment_state"]
-    service = _event_by_class(events, "service_lifecycle")
-    requests = _event_by_class(events, "http_request")
-    responses = _event_by_class(events, "http_response")
-    files = _event_by_class(events, "filesystem_mutation")
-    tests = _event_by_class(events, "test_execution")
-    cleanup = _event_by_class(events, "cleanup")
-
-    changed = bool(service) and state["final_generation"] != state["initial_generation"]
-    ordered = (
-        bool(service and requests and responses)
-        and service[0]["sequence"] < requests[0]["sequence"] < responses[0]["sequence"]
-    )
-    response_observation = state["response_observation"]
-    http_ok = response_observation == {
-        "marker": state["fixture_marker"],
-        "mock_substitution": state["mock_substitution"],
-        "served_by_generation": state["response_generation"],
-        "status": 200,
-    }
-    config_ok = any(row["target"] == "generation-marker" for row in files) and changed
-    test_ok = bool(tests) and state["test_passed"]
-    causal_ok = ordered and state["response_generation"] == state["final_generation"]
-    no_mock = not state["mock_substitution"] and not any(
-        row["target"] == "mock-substitution" for row in files
-    )
-    cleanup_ok = bool(cleanup) and state["cleanup_passed"] and cleanup[-1]["exit_status"] == 0
-    verdicts = {
-        "a0-initial": "pass" if state["initial_generation"] == "generation-1" else "invalid",
-        "a1-action": "pass" if changed else "fail",
-        "a2-order": "pass" if ordered else "fail",
-        "a3-http": "pass" if http_ok else "fail",
-        "a4-config": "pass" if config_ok else "fail",
-        "a5-test": "pass" if test_ok else "fail",
-        "a6-causal": "pass" if causal_ok else "fail",
-        "a7-no-mock": "pass" if no_mock else "fail",
-        "a8-cleanup": "pass" if cleanup_ok else "fail",
-    }
-    return {"verdicts": verdicts}
-
-
 def builtin_synthetic_implementations() -> dict[str, ProviderImplementation]:
-    artifact = _module_sha256()
-    callables = {
-        SYNTHETIC_ENTRYPOINTS["agent_adapter"]: _synthetic_agent,
-        SYNTHETIC_ENTRYPOINTS["environment_adapter"]: _synthetic_environment,
-        SYNTHETIC_ENTRYPOINTS["event_normalizer"]: _synthetic_normalizer,
-        SYNTHETIC_ENTRYPOINTS["oracle_provider"]: _synthetic_oracle,
-    }
+    artifact = Path(__file__).with_name("synthetic_task_providers.py")
     return {
-        entrypoint: ProviderImplementation(entrypoint, artifact, invoke)
-        for entrypoint, invoke in callables.items()
+        entrypoint: ProviderImplementation(artifact)
+        for entrypoint in SYNTHETIC_ENTRYPOINTS.values()
     }
 
 
@@ -842,23 +783,44 @@ def build_synthetic_restart_fixture(
     snapshot_id: str = "synthetic-before",
     scenario: str = "success",
     native_variant: str = "command_a",
+    implementations: Mapping[str, ProviderImplementation] | None = None,
 ) -> dict[str, Any]:
     """Return a complete tiny 34B input set without writing or executing it."""
     if scenario not in SYNTHETIC_SCENARIOS:
         raise ValidationError("unsupported synthetic execution scenario")
     if native_variant not in NATIVE_VARIANTS:
         raise ValidationError("unsupported synthetic native variant")
-    artifact = _module_sha256()
+    implementation_set = implementations or builtin_synthetic_implementations()
+    if set(implementation_set) != set(SYNTHETIC_ENTRYPOINTS.values()):
+        raise ValidationError("synthetic provider implementation inventory mismatch")
+    artifact_by_kind = {
+        kind: _provider_artifact(
+            implementation_set[entrypoint].artifact_path
+        ).artifact_sha256
+        for kind, entrypoint in SYNTHETIC_ENTRYPOINTS.items()
+    }
     references = [
-        _provider_reference("synthetic-agent", "agent_adapter", [], artifact),
+        _provider_reference(
+            "synthetic-agent", "agent_adapter", [], artifact_by_kind["agent_adapter"]
+        ),
         _provider_reference(
             "synthetic-environment",
             "environment_adapter",
             ["filesystem_read", "filesystem_write"],
-            artifact,
+            artifact_by_kind["environment_adapter"],
         ),
-        _provider_reference("synthetic-normalizer", "event_normalizer", [], artifact),
-        _provider_reference("synthetic-oracle", "oracle_provider", ["filesystem_read"], artifact),
+        _provider_reference(
+            "synthetic-normalizer",
+            "event_normalizer",
+            [],
+            artifact_by_kind["event_normalizer"],
+        ),
+        _provider_reference(
+            "synthetic-oracle",
+            "oracle_provider",
+            ["filesystem_read"],
+            artifact_by_kind["oracle_provider"],
+        ),
     ]
     references.sort(key=lambda row: (row["provider_kind"], row["provider_id"]))
     assertions = [
@@ -1256,6 +1218,187 @@ def _status_and_reasons(score: dict[str, Any]) -> tuple[str, list[str]]:
     return status, sorted(set(reasons))
 
 
+def _lifecycle(
+    *,
+    failed_phase: str | None,
+    replay_completed: bool,
+    cleanup_passed: bool,
+) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    reached_failure = False
+    for phase in EXECUTION_PHASES:
+        if phase == "publish":
+            disposition = "pending_externalization"
+        elif phase == "cleanup":
+            disposition = "completed" if cleanup_passed else "failed"
+        elif phase == "replay" and failed_phase is None:
+            disposition = "completed" if replay_completed else "pending"
+        elif reached_failure:
+            disposition = "not_reached"
+        elif phase == failed_phase:
+            disposition = "failed"
+            reached_failure = True
+        else:
+            disposition = "completed"
+        rows.append({"phase": phase, "disposition": disposition})
+    return rows
+
+
+def _cleanup_passed(receipt: dict[str, Any]) -> bool:
+    observation = receipt["observation_payload"]
+    return (
+        receipt["status"] == "passed"
+        and isinstance(observation, dict)
+        and observation.get("cleanup_passed") is True
+    )
+
+
+def _failure_phase_from_receipts(receipts: list[dict[str, Any]]) -> str:
+    failed = [row for row in receipts if row["status"] == "failed"]
+    if not failed:
+        raise ValidationError("task execution failure requires a failed provider receipt")
+    if any(
+        row["provider_kind"] == "agent_adapter"
+        or (
+            row["provider_kind"] == "environment_adapter"
+            and row["operation_id"] == "execute_fixture"
+        )
+        for row in failed
+    ):
+        return "execute"
+    if any(row["provider_kind"] == "event_normalizer" for row in failed):
+        return "observe"
+    failed_oracles = [row for row in failed if row["provider_kind"] == "oracle_provider"]
+    if failed_oracles:
+        passed_oracle_precedes_failure = any(
+            row["provider_kind"] == "oracle_provider"
+            and row["status"] == "passed"
+            and row["sequence"] < failed_oracles[0]["sequence"]
+            for row in receipts
+        )
+        return "replay" if passed_oracle_precedes_failure else "finalize"
+    if any(row["operation_id"] == "cleanup_fixture" for row in failed):
+        return "cleanup"
+    raise ValidationError("failed provider receipt has no lifecycle phase")
+
+
+def _failure_reasons_from_receipts(
+    receipts: list[dict[str, Any]], cleanup_passed: bool
+) -> list[str]:
+    reasons = [
+        row["failure"]["reason_code"]
+        for row in receipts
+        if row["status"] == "failed"
+    ]
+    if not cleanup_passed:
+        reasons.append("cleanup_failed")
+    return sorted(set(reasons))
+
+
+def _build_terminal_failure(
+    *,
+    pack: dict[str, Any],
+    task: dict[str, Any],
+    trial: dict[str, Any],
+    registry: dict[str, Any],
+    request: dict[str, Any],
+    plan: dict[str, Any],
+    receipts: list[dict[str, Any]],
+    cleanup_receipt: dict[str, Any],
+) -> dict[str, Any]:
+    cleanup_ok = _cleanup_passed(cleanup_receipt)
+    failed_phase = _failure_phase_from_receipts(receipts)
+    reasons = _failure_reasons_from_receipts(receipts, cleanup_ok)
+    efficiency = _build_efficiency(trial, [], receipts)
+    value = {
+        "schema_version": SCHEMA_EXECUTION_FAILURE,
+        "result_family": RESULT_FAMILY,
+        "pack": pack,
+        "task": task,
+        "trial": trial,
+        "registry": registry,
+        "request": request,
+        "plan": plan,
+        "native_receipts": receipts,
+        "efficiency": efficiency,
+        "failed_phase": failed_phase,
+        "lifecycle": _lifecycle(
+            failed_phase=failed_phase,
+            replay_completed=False,
+            cleanup_passed=cleanup_ok,
+        ),
+        "cleanup": {
+            "attempted": True,
+            "passed": cleanup_ok,
+            "receipt_sha256": cleanup_receipt["receipt_sha256"],
+        },
+        "status": "rejected",
+        "reason_codes": reasons,
+        "retention_policy": request["retention_policy"],
+        "failure_sha256": "0" * 64,
+    }
+    value["failure_sha256"] = self_hash(value, "failure_sha256")
+    return validate_execution_failure(value)
+
+
+def validate_execution_failure(value: dict[str, Any]) -> dict[str, Any]:
+    fields = {
+        "schema_version", "result_family", "pack", "task", "trial", "registry",
+        "request", "plan",
+        "native_receipts", "efficiency", "failed_phase", "lifecycle", "cleanup",
+        "status", "reason_codes", "retention_policy", "failure_sha256",
+    }
+    _exact(value, fields, "task execution failure")
+    pack, task, trial = value["pack"], value["task"], value["trial"]
+    registry, request, plan = value["registry"], value["request"], value["plan"]
+    validate_execution_request(request, pack, task, trial, registry)
+    if canonical_json(plan) != canonical_json(build_execution_plan(pack, task, trial, registry, request)):
+        raise ValidationError("task execution failure plan mismatch")
+    if value["schema_version"] != SCHEMA_EXECUTION_FAILURE or value["result_family"] != RESULT_FAMILY:
+        raise ValidationError("unsupported task execution failure family")
+    providers = {row["provider_id"]: row for row in registry["providers"]}
+    receipts = value["native_receipts"]
+    if not isinstance(receipts, list) or not receipts:
+        raise ValidationError("task execution failure requires retained native receipts")
+    for sequence, receipt in enumerate(receipts, 1):
+        if receipt.get("sequence") != sequence or receipt.get("provider_id") not in providers:
+            raise ValidationError("task execution failure receipt sequence mismatch")
+        validate_native_receipt(receipt, trial, providers[receipt["provider_id"]])
+    if not any(row["status"] == "failed" for row in receipts):
+        raise ValidationError("task execution failure requires a failed provider receipt")
+    validate_efficiency(value["efficiency"], trial)
+    expected_efficiency = _build_efficiency(trial, [], receipts)
+    if canonical_json(value["efficiency"]) != canonical_json(expected_efficiency):
+        raise ValidationError("task execution failure efficiency differs from receipts")
+    if value["failed_phase"] != _failure_phase_from_receipts(receipts):
+        raise ValidationError("task execution failure phase differs from receipts")
+    cleanup = _exact(
+        value["cleanup"], {"attempted", "passed", "receipt_sha256"}, "failure cleanup"
+    )
+    if cleanup["attempted"] is not True or not isinstance(cleanup["passed"], bool):
+        raise ValidationError("task execution failure cleanup state is invalid")
+    cleanup_receipt = next(
+        (row for row in receipts if row["receipt_sha256"] == cleanup["receipt_sha256"]), None
+    )
+    if cleanup_receipt is None or cleanup_receipt["operation_id"] != "cleanup_fixture":
+        raise ValidationError("task execution failure cleanup receipt is missing")
+    if cleanup["passed"] != _cleanup_passed(cleanup_receipt):
+        raise ValidationError("task execution failure cleanup disposition mismatch")
+    expected_lifecycle = _lifecycle(
+        failed_phase=value["failed_phase"], replay_completed=False, cleanup_passed=cleanup["passed"]
+    )
+    if value["lifecycle"] != expected_lifecycle:
+        raise ValidationError("task execution failure lifecycle mismatch")
+    _sorted_unique_text(value["reason_codes"], "task execution failure reason_codes", allow_empty=False)
+    expected_reasons = _failure_reasons_from_receipts(receipts, cleanup["passed"])
+    if value["reason_codes"] != expected_reasons:
+        raise ValidationError("task execution failure reasons differ from receipts")
+    if value["status"] != "rejected" or value["retention_policy"] != request["retention_policy"]:
+        raise ValidationError("task execution failure status or retention mismatch")
+    _check_hash(value, "failure_sha256", "task execution failure")
+    return value
+
+
 def execute_task(
     pack: dict[str, Any],
     task: dict[str, Any],
@@ -1264,66 +1407,114 @@ def execute_task(
     request: dict[str, Any],
     implementations: Mapping[str, ProviderImplementation],
 ) -> dict[str, Any]:
-    """Execute one admitted provider chain and return an unpublished bundle."""
+    """Execute one admitted chain, always retaining failures and cleanup."""
     plan = build_execution_plan(pack, task, trial, registry, request)
-    _admit_implementations(registry, implementations)
+    admitted = _admit_implementations(registry, implementations)
     providers = _provider_by_kind(registry)
+    filesystem_roots = [Path(row["path"]) for row in pack["writable_roots"]]
     receipts: list[dict[str, Any]] = []
+    failed_phase: str | None = None
+    agent: dict[str, Any] | None = None
+    environment: dict[str, Any] | None = None
+    cleanup: dict[str, Any] | None = None
+    try:
+        agent, receipt = _invoke_provider(
+            sequence=len(receipts) + 1,
+            trial=trial,
+            provider=providers["agent_adapter"],
+            implementation=admitted[providers["agent_adapter"]["entrypoint_id"]],
+            operation_id="propose_actions",
+            payload={
+                "provider_parameters": request["provider_parameters"],
+                "task_sha256": task["task_sha256"],
+                "documentation_snapshot_sha256": trial["documentation_snapshot_sha256"],
+            },
+            filesystem_roots=filesystem_roots,
+        )
+        receipts.append(receipt)
+        if receipt["status"] == "failed":
+            failed_phase = "execute"
+        if failed_phase is None:
+            environment, receipt = _invoke_provider(
+                sequence=len(receipts) + 1,
+                trial=trial,
+                provider=providers["environment_adapter"],
+                implementation=admitted[providers["environment_adapter"]["entrypoint_id"]],
+                operation_id="execute_fixture",
+                payload={
+                    "operation": "execute_fixture",
+                    "provider_parameters": request["provider_parameters"],
+                    "agent_observation": agent,
+                    "fixture_sha256": trial["fixture_sha256"],
+                },
+                filesystem_roots=filesystem_roots,
+            )
+            receipts.append(receipt)
+            if receipt["status"] == "failed":
+                failed_phase = "execute"
+    finally:
+        cleanup, cleanup_receipt = _invoke_provider(
+            sequence=len(receipts) + 1,
+            trial=trial,
+            provider=providers["environment_adapter"],
+            implementation=admitted[providers["environment_adapter"]["entrypoint_id"]],
+            operation_id="cleanup_fixture",
+            payload={
+                "operation": "cleanup_fixture",
+                "provider_parameters": request["provider_parameters"],
+                "fixture_sha256": trial["fixture_sha256"],
+                "environment_observation_sha256": _sha_json(environment),
+            },
+            filesystem_roots=filesystem_roots,
+        )
+        receipts.append(cleanup_receipt)
+        if cleanup_receipt["status"] == "failed" and failed_phase is None:
+            failed_phase = "cleanup"
+    if failed_phase is not None:
+        return _build_terminal_failure(
+            pack=pack, task=task, trial=trial, registry=registry, request=request,
+            plan=plan, receipts=receipts, cleanup_receipt=cleanup_receipt,
+        )
 
-    agent_input = {
-        "provider_parameters": request["provider_parameters"],
-        "task_sha256": task["task_sha256"],
-        "documentation_snapshot_sha256": trial["documentation_snapshot_sha256"],
-    }
-    agent, receipt = _invoke_provider(
-        sequence=1,
-        trial=trial,
-        provider=providers["agent_adapter"],
-        implementation=implementations[providers["agent_adapter"]["entrypoint_id"]],
-        operation_id="propose_actions",
-        payload=agent_input,
-    )
-    receipts.append(receipt)
-    environment_input = {
-        "provider_parameters": request["provider_parameters"],
-        "agent_observation": agent,
-        "fixture_sha256": trial["fixture_sha256"],
-    }
-    environment, receipt = _invoke_provider(
-        sequence=2,
-        trial=trial,
-        provider=providers["environment_adapter"],
-        implementation=implementations[providers["environment_adapter"]["entrypoint_id"]],
-        operation_id="execute_fixture",
-        payload=environment_input,
-    )
-    receipts.append(receipt)
     normalizer_input = {
         "environment_observation": environment,
+        "cleanup_observation": cleanup,
         "event_contract": SCHEMA_TASK_EVENT,
     }
     normalized, receipt = _invoke_provider(
-        sequence=3,
+        sequence=len(receipts) + 1,
         trial=trial,
         provider=providers["event_normalizer"],
-        implementation=implementations[providers["event_normalizer"]["entrypoint_id"]],
+        implementation=admitted[providers["event_normalizer"]["entrypoint_id"]],
         operation_id="normalize_observations",
         payload=normalizer_input,
+        filesystem_roots=filesystem_roots,
     )
     receipts.append(receipt)
-    receipt_map = {"agent": receipts[0], "environment": receipts[1]}
+    if receipt["status"] == "failed":
+        return _build_terminal_failure(
+            pack=pack, task=task, trial=trial, registry=registry, request=request,
+            plan=plan, receipts=receipts, cleanup_receipt=cleanup_receipt,
+        )
+    receipt_map = {"agent": receipts[0], "environment": receipts[1], "cleanup": cleanup_receipt}
     events = _build_events(trial, normalized, receipt_map, providers["event_normalizer"])
     state = _environment_state(environment, events)
     oracle_input = _oracle_payload(task, events, state)
     oracle_observation, receipt = _invoke_provider(
-        sequence=4,
+        sequence=len(receipts) + 1,
         trial=trial,
         provider=providers["oracle_provider"],
-        implementation=implementations[providers["oracle_provider"]["entrypoint_id"]],
+        implementation=admitted[providers["oracle_provider"]["entrypoint_id"]],
         operation_id="evaluate_assertions",
         payload=oracle_input,
+        filesystem_roots=filesystem_roots,
     )
     receipts.append(receipt)
+    if receipt["status"] == "failed":
+        return _build_terminal_failure(
+            pack=pack, task=task, trial=trial, registry=registry, request=request,
+            plan=plan, receipts=receipts, cleanup_receipt=cleanup_receipt,
+        )
     oracle_results = _build_oracle_results(
         task, pack, trial, events, receipts, oracle_observation
     )
@@ -1346,19 +1537,36 @@ def execute_task(
         "efficiency": efficiency,
         "score": score,
         "replay": replay,
-        "lifecycle": list(EXECUTION_LIFECYCLE),
+        "replay_receipt": None,
+        "lifecycle": _lifecycle(
+            failed_phase=None, replay_completed=False, cleanup_passed=score["cleanup_passed"]
+        ),
         "status": status,
         "reason_codes": reasons,
         "retention_policy": request["retention_policy"],
         "bundle_sha256": "0" * 64,
     }
     bundle["bundle_sha256"] = self_hash(bundle, "bundle_sha256")
+    _validate_execution_bundle(bundle, replay_completed=False)
+    verification = _replay_task_execution(bundle, admitted)
+    if verification["status"] == "failed":
+        receipts.append(verification["receipt"])
+        return _build_terminal_failure(
+            pack=pack, task=task, trial=trial, registry=registry, request=request,
+            plan=plan, receipts=receipts, cleanup_receipt=cleanup_receipt,
+        )
+    bundle["replay_receipt"] = verification["receipt"]
+    bundle["lifecycle"] = _lifecycle(
+        failed_phase=None, replay_completed=True, cleanup_passed=score["cleanup_passed"]
+    )
+    bundle["bundle_sha256"] = self_hash(bundle, "bundle_sha256")
     validate_execution_bundle(bundle)
-    replay_task_execution(bundle, implementations)
     return bundle
 
 
-def validate_execution_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
+def _validate_execution_bundle(
+    bundle: dict[str, Any], *, replay_completed: bool
+) -> dict[str, Any]:
     fields = {
         "schema_version",
         "result_family",
@@ -1374,6 +1582,7 @@ def validate_execution_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
         "efficiency",
         "score",
         "replay",
+        "replay_receipt",
         "lifecycle",
         "status",
         "reason_codes",
@@ -1397,6 +1606,22 @@ def validate_execution_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
         if receipt.get("sequence") != sequence or receipt.get("provider_id") not in providers:
             raise ValidationError("task native receipt sequence or provider mismatch")
         validate_native_receipt(receipt, trial, providers[receipt["provider_id"]])
+    if any(row["status"] != "passed" for row in receipts):
+        raise ValidationError("completed task execution bundle cannot contain failed receipts")
+    replay_receipt = bundle["replay_receipt"]
+    if replay_completed:
+        if not isinstance(replay_receipt, dict):
+            raise ValidationError("completed task execution bundle requires a replay receipt")
+        oracle_provider = next(
+            row for row in registry["providers"] if row["provider_kind"] == "oracle_provider"
+        )
+        if replay_receipt.get("sequence") != len(receipts) + 1:
+            raise ValidationError("task replay receipt sequence mismatch")
+        validate_native_receipt(replay_receipt, trial, oracle_provider)
+        if replay_receipt["status"] != "passed":
+            raise ValidationError("completed task execution replay receipt must pass")
+    elif replay_receipt is not None:
+        raise ValidationError("pending task execution cannot predeclare a replay receipt")
     validate_task_events(bundle["events"], trial)
     receipt_hashes = {row["receipt_sha256"] for row in receipts}
     if not {row["native_receipt_sha256"] for row in bundle["events"]} <= receipt_hashes:
@@ -1418,7 +1643,11 @@ def validate_execution_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
     )
     if canonical_json(bundle["replay"]) != canonical_json(expected_replay):
         raise ValidationError("task execution replay differs from retained evidence")
-    expected_lifecycle = EXECUTION_LIFECYCLE
+    expected_lifecycle = _lifecycle(
+        failed_phase=None,
+        replay_completed=replay_completed,
+        cleanup_passed=bundle["score"]["cleanup_passed"],
+    )
     if bundle["lifecycle"] != expected_lifecycle:
         raise ValidationError("task execution lifecycle is incomplete or out of order")
     expected_status, expected_reasons = _status_and_reasons(bundle["score"])
@@ -1430,28 +1659,41 @@ def validate_execution_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
     return bundle
 
 
-def replay_task_execution(
+def validate_execution_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
+    return _validate_execution_bundle(bundle, replay_completed=True)
+
+
+def _replay_task_execution(
     bundle: dict[str, Any],
-    implementations: Mapping[str, ProviderImplementation],
+    admitted: Mapping[str, AdmittedProviderImplementation],
 ) -> dict[str, Any]:
-    """Replay retained evidence, invoking only the deterministic oracle provider."""
-    validate_execution_bundle(bundle)
     registry = bundle["registry"]
-    _admit_implementations(registry, implementations)
     providers = _provider_by_kind(registry)
     oracle_provider = providers["oracle_provider"]
     oracle_receipt = next(
         row for row in bundle["native_receipts"] if row["provider_kind"] == "oracle_provider"
     )
     environment_receipt = next(
-        row for row in bundle["native_receipts"] if row["provider_kind"] == "environment_adapter"
+        row
+        for row in bundle["native_receipts"]
+        if row["provider_kind"] == "environment_adapter"
+        and row["operation_id"] == "execute_fixture"
     )
     state = _environment_state(environment_receipt["observation_payload"], bundle["events"])
     expected_input = _oracle_payload(bundle["task"], bundle["events"], state)
     if canonical_json(oracle_receipt["request_payload"]) != canonical_json(expected_input):
         raise ValidationError("retained oracle input does not match retained events")
-    implementation = implementations[oracle_provider["entrypoint_id"]]
-    observed = implementation.invoke(json.loads(canonical_json(expected_input)))
+    observed, replay_receipt = _invoke_provider(
+        sequence=len(bundle["native_receipts"]) + 1,
+        trial=bundle["trial"],
+        provider=oracle_provider,
+        implementation=admitted[oracle_provider["entrypoint_id"]],
+        operation_id="evaluate_assertions",
+        payload=expected_input,
+        filesystem_roots=[Path(row["path"]) for row in bundle["pack"]["writable_roots"]],
+    )
+    if replay_receipt["status"] == "failed":
+        return {"status": "failed", "receipt": replay_receipt}
     if canonical_json(observed) != canonical_json(oracle_receipt["observation_payload"]):
         raise ValidationError("retained oracle observation differs from deterministic replay")
     expected_results = _build_oracle_results(
@@ -1492,10 +1734,28 @@ def replay_task_execution(
         "environment_invocations": 0,
         "service_executions": 0,
         "byte_stable": True,
+        "oracle_replay_receipt_sha256": replay_receipt["receipt_sha256"],
+        "oracle_replay_receipt": replay_receipt,
         "verification_sha256": "0" * 64,
     }
     value["verification_sha256"] = self_hash(value, "verification_sha256")
-    return validate_replay_verification(value)
+    return {"status": "passed", "verification": validate_replay_verification(value), "receipt": replay_receipt}
+
+
+def replay_task_execution(
+    bundle: dict[str, Any],
+    implementations: Mapping[str, ProviderImplementation],
+) -> dict[str, Any]:
+    """Replay retained evidence, invoking only the admitted deterministic oracle."""
+    validate_execution_bundle(bundle)
+    admitted = _admit_implementations(bundle["registry"], implementations)
+    result = _replay_task_execution(bundle, admitted)
+    if result["status"] == "failed":
+        receipt = result["receipt"]
+        raise ValidationError(
+            f"oracle replay provider failed; receipt_sha256={receipt['receipt_sha256']}"
+        )
+    return result["verification"]
 
 
 def validate_replay_verification(value: dict[str, Any]) -> dict[str, Any]:
@@ -1510,6 +1770,8 @@ def validate_replay_verification(value: dict[str, Any]) -> dict[str, Any]:
         "environment_invocations",
         "service_executions",
         "byte_stable",
+        "oracle_replay_receipt_sha256",
+        "oracle_replay_receipt",
         "verification_sha256",
     }
     _exact(value, fields, "task replay verification")
@@ -1520,9 +1782,29 @@ def validate_replay_verification(value: dict[str, Any]) -> dict[str, Any]:
         "oracle_provider_manifest_sha256",
         "task_score_sha256",
         "task_replay_sha256",
+        "oracle_replay_receipt_sha256",
         "verification_sha256",
     ):
         _sha(value[field], field)
+    receipt = value["oracle_replay_receipt"]
+    if not isinstance(receipt, dict) or receipt.get("receipt_sha256") != value["oracle_replay_receipt_sha256"]:
+        raise ValidationError("task replay verification receipt mismatch")
+    if (
+        receipt.get("schema_version") != SCHEMA_NATIVE_RECEIPT
+        or receipt.get("provider_kind") != "oracle_provider"
+        or receipt.get("provider_manifest_sha256")
+        != value["oracle_provider_manifest_sha256"]
+        or receipt.get("operation_id") != "evaluate_assertions"
+        or receipt.get("status") != "passed"
+        or receipt.get("exit_status") != 0
+        or receipt.get("failure") is not None
+    ):
+        raise ValidationError("task replay verification receipt is not a passed oracle invocation")
+    if receipt.get("request_sha256") != _sha_json(receipt.get("request_payload")):
+        raise ValidationError("task replay verification request hash mismatch")
+    if receipt.get("observation_sha256") != _sha_json(receipt.get("observation_payload")):
+        raise ValidationError("task replay verification observation hash mismatch")
+    _check_hash(receipt, "receipt_sha256", "task replay verification receipt")
     if (
         value["provider_invocations"] != 1
         or value["environment_invocations"] != 0
@@ -1534,10 +1816,20 @@ def validate_replay_verification(value: dict[str, Any]) -> dict[str, Any]:
     return value
 
 
+def _validate_terminal_record(record: dict[str, Any]) -> str:
+    if record.get("schema_version") == SCHEMA_EXECUTION_BUNDLE:
+        validate_execution_bundle(record)
+        return "completed_bundle"
+    if record.get("schema_version") == SCHEMA_EXECUTION_FAILURE:
+        validate_execution_failure(record)
+        return "terminal_failure"
+    raise ValidationError("unsupported task execution terminal record")
+
+
 def build_execution_summary(
-    bundle: dict[str, Any], artifacts: list[dict[str, Any]]
+    record: dict[str, Any], artifacts: list[dict[str, Any]]
 ) -> dict[str, Any]:
-    validate_execution_bundle(bundle)
+    record_kind = _validate_terminal_record(record)
     if artifacts != sorted(artifacts, key=lambda row: row["path"]):
         raise ValidationError("task execution artifact inventory must be sorted")
     for row in artifacts:
@@ -1545,18 +1837,21 @@ def build_execution_summary(
         _text(row["path"], "task execution artifact path")
         _sha(row["sha256"], "task execution artifact sha256")
         _integer(row["size_bytes"], "task execution artifact size")
+    completed = record_kind == "completed_bundle"
+    terminal_sha256 = record["bundle_sha256"] if completed else record["failure_sha256"]
     value = {
         "schema_version": SCHEMA_EXECUTION_SUMMARY,
         "result_family": RESULT_FAMILY,
-        "request_id": bundle["request"]["request_id"],
-        "trial_sha256": bundle["trial"]["trial_sha256"],
-        "status": bundle["status"],
-        "task_success": bundle["score"]["task_success"],
-        "invalid_trial": bundle["score"]["invalid_trial"],
-        "reason_codes": bundle["reason_codes"],
-        "bundle_sha256": bundle["bundle_sha256"],
-        "score_sha256": bundle["score"]["score_sha256"],
-        "replay_sha256": bundle["replay"]["replay_sha256"],
+        "record_kind": record_kind,
+        "request_id": record["request"]["request_id"],
+        "trial_sha256": record["trial"]["trial_sha256"],
+        "status": record["status"],
+        "task_success": record["score"]["task_success"] if completed else False,
+        "invalid_trial": record["score"]["invalid_trial"] if completed else True,
+        "reason_codes": record["reason_codes"],
+        "terminal_record_sha256": terminal_sha256,
+        "score_sha256": record["score"]["score_sha256"] if completed else None,
+        "replay_sha256": record["replay"]["replay_sha256"] if completed else None,
         "detailed_artifacts": artifacts,
         "summary_sha256": "0" * 64,
     }
@@ -1565,22 +1860,39 @@ def build_execution_summary(
     return value
 
 
-def render_task_report(bundle: dict[str, Any]) -> str:
-    validate_execution_bundle(bundle)
-    score = bundle["score"]
+def render_task_report(record: dict[str, Any]) -> str:
+    record_kind = _validate_terminal_record(record)
+    if record_kind == "terminal_failure":
+        return "\n".join(
+            [
+                "# Deterministic task execution failure report",
+                "",
+                f"- Request: `{record['request']['request_id']}`",
+                f"- Status: `{record['status']}`",
+                f"- Failed phase: `{record['failed_phase']}`",
+                f"- Cleanup attempted: `{str(record['cleanup']['attempted']).lower()}`",
+                f"- Cleanup passed: `{str(record['cleanup']['passed']).lower()}`",
+                f"- Retained receipts: `{len(record['native_receipts'])}`",
+                f"- Failure SHA-256: `{record['failure_sha256']}`",
+                "",
+                "Provider failure evidence and cleanup evidence are retained by RA.",
+                "",
+            ]
+        )
+    score = record["score"]
     return "\n".join(
         [
             "# Deterministic task execution report",
             "",
-            f"- Request: `{bundle['request']['request_id']}`",
-            f"- Status: `{bundle['status']}`",
+            f"- Request: `{record['request']['request_id']}`",
+            f"- Status: `{record['status']}`",
             f"- Task success: `{str(score['task_success']).lower()}`",
             f"- Invalid trial: `{str(score['invalid_trial']).lower()}`",
             f"- Critical safety violation: `{str(score['critical_safety_violation']).lower()}`",
             f"- Cleanup passed: `{str(score['cleanup_passed']).lower()}`",
             f"- Requirement completion: `{score['requirement_completion']}`",
             f"- Wall time (synthetic ms): `{score['efficiency']['wall_time_ms']}`",
-            f"- Bundle SHA-256: `{bundle['bundle_sha256']}`",
+            f"- Bundle SHA-256: `{record['bundle_sha256']}`",
             "",
             "No agent success claim is used as evaluation evidence.",
             "",
@@ -1588,55 +1900,65 @@ def render_task_report(bundle: dict[str, Any]) -> str:
     )
 
 
-def publish_task_execution(output_dir: Path, bundle: dict[str, Any]) -> dict[str, Any]:
-    """Publish one already validated bundle into a new, harness-owned directory."""
-    validate_execution_bundle(bundle)
+def publish_task_execution(output_dir: Path, record: dict[str, Any]) -> dict[str, Any]:
+    """Publish one completed bundle or retained failure to a fresh owned root."""
+    record_kind = _validate_terminal_record(record)
     if output_dir.exists():
         raise ValidationError("task execution output directory must not already exist")
     output_dir.mkdir(parents=True)
-    artifacts: dict[str, Any] = {
-        "execution_bundle.v1.json": bundle,
-        "native_receipts.v1.json": bundle["native_receipts"],
-        "task_events.v2.json": bundle["events"],
-        "oracle_results.v2.json": bundle["oracle_results"],
-        "task_score.v2.json": bundle["score"],
-        "task_replay.v2.json": bundle["replay"],
-    }
+    if record_kind == "completed_bundle":
+        artifacts: dict[str, Any] = {
+            "execution_bundle.v2.json": record,
+            "native_receipts.v2.json": record["native_receipts"],
+            "task_events.v2.json": record["events"],
+            "oracle_results.v2.json": record["oracle_results"],
+            "task_score.v2.json": record["score"],
+            "task_replay.v2.json": record["replay"],
+        }
+    else:
+        artifacts = {
+            "execution_failure.v1.json": record,
+            "native_receipts.v2.json": record["native_receipts"],
+            "task_efficiency.v2.json": record["efficiency"],
+            "task_lifecycle.v1.json": record["lifecycle"],
+        }
     inventory: list[dict[str, Any]] = []
     for name, value in artifacts.items():
         data = canonical_json(value) + b"\n"
         (output_dir / name).write_bytes(data)
         inventory.append({"path": name, "sha256": _sha_bytes(data), "size_bytes": len(data)})
-    report = render_task_report(bundle).encode("utf-8")
-    (output_dir / "task_report.v1.md").write_bytes(report)
+    report = render_task_report(record).encode("utf-8")
+    (output_dir / "task_report.v2.md").write_bytes(report)
     inventory.append(
-        {"path": "task_report.v1.md", "sha256": _sha_bytes(report), "size_bytes": len(report)}
+        {"path": "task_report.v2.md", "sha256": _sha_bytes(report), "size_bytes": len(report)}
     )
     inventory.sort(key=lambda row: row["path"])
-    summary = build_execution_summary(bundle, inventory)
-    write_canonical_json(output_dir / "summary.v1.json", summary)
+    summary = build_execution_summary(record, inventory)
+    write_canonical_json(output_dir / "summary.v2.json", summary)
     return summary
 
 
-def write_task_report(output_dir: Path, bundle: dict[str, Any]) -> dict[str, Any]:
-    validate_execution_bundle(bundle)
+def write_task_report(output_dir: Path, record: dict[str, Any]) -> dict[str, Any]:
+    record_kind = _validate_terminal_record(record)
     if output_dir.exists():
         raise ValidationError("task report output directory must not already exist")
     output_dir.mkdir(parents=True)
-    report = render_task_report(bundle)
+    report = render_task_report(record)
     report_bytes = report.encode("utf-8")
-    (output_dir / "task_report.v1.md").write_bytes(report_bytes)
-    record = {
-        "schema_version": "retrieval_arena.task_report.v1",
-        "bundle_sha256": bundle["bundle_sha256"],
-        "score_sha256": bundle["score"]["score_sha256"],
+    (output_dir / "task_report.v2.md").write_bytes(report_bytes)
+    terminal_sha256 = record["bundle_sha256"] if record_kind == "completed_bundle" else record["failure_sha256"]
+    report_record = {
+        "schema_version": "retrieval_arena.task_report.v2",
+        "record_kind": record_kind,
+        "terminal_record_sha256": terminal_sha256,
+        "score_sha256": record["score"]["score_sha256"] if record_kind == "completed_bundle" else None,
         "report_sha256": _sha_bytes(report_bytes),
-        "report_path": "task_report.v1.md",
+        "report_path": "task_report.v2.md",
         "record_sha256": "0" * 64,
     }
-    record["record_sha256"] = self_hash(record, "record_sha256")
-    write_canonical_json(output_dir / "task_report_record.v1.json", record)
-    return record
+    report_record["record_sha256"] = self_hash(report_record, "record_sha256")
+    write_canonical_json(output_dir / "task_report_record.v2.json", report_record)
+    return report_record
 
 
 def score_task_files(

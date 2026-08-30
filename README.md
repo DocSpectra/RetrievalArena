@@ -166,12 +166,13 @@ Correctness and critical safety precede efficiency, and failed or invalid
 trials retain their resource evidence without being allowed to outrank safe
 successes. See the [pure scoring contract](docs/task_completion_contracts.md).
 
-The 34B execution layer adds content-addressed provider admission,
-harness-owned native receipts and normalized events, deterministic oracle
-invocation, reports, and oracle-only replay around a hermetic synthetic restart
-fixture. Its providers are subordinate callables; they cannot publish verdicts
-or receipts. The layer has no live model, runtime network, real service,
-dynamic provider loader, or corpus dependency. Use `python -m
+The corrected 34B execution layer derives provider identity from exact admitted
+source bytes, executes registered entrypoints under capability and writable-root
+enforcement, and creates harness-owned passed or failed native receipts. A
+`finally`-owned cleanup attempt and standalone terminal-failure record preserve
+failure resources; replay invokes only the oracle and has its own receipt. The
+layer has no live model, runtime network, real service, ambient caller callable,
+or corpus dependency. Use `python -m
 retrieval_arena.cli task --help` for pack validation, non-consuming planning,
 synthetic execution, scoring, comparison, reporting, and replay. See the
 [execution contract](docs/task_execution_contracts.md).

@@ -38,7 +38,6 @@ from .task_execution import (
     read_json_value,
     replay_task_execution,
     score_task_files,
-    validate_execution_bundle,
     validate_execution_request,
     write_canonical_json,
     write_task_report,
@@ -100,8 +99,10 @@ def build_parser() -> argparse.ArgumentParser:
     task_compare.add_argument("--pair-id", required=True)
     for argument in ("before-trial", "before-score", "after-trial", "after-score", "out"):
         task_compare.add_argument(f"--{argument}", required=True)
-    task_report = task_subparsers.add_parser("report", help="Render a retained task execution bundle.")
-    task_report.add_argument("--bundle", required=True)
+    task_report = task_subparsers.add_parser(
+        "report", help="Render a retained completed or failed task execution record."
+    )
+    task_report.add_argument("--bundle", required=True, help="Completed bundle or terminal-failure JSON record.")
     task_report.add_argument("--out-dir", required=True)
     task_replay = task_subparsers.add_parser("replay", help="Replay retained evidence without executing the environment.")
     task_replay.add_argument("--bundle", required=True)
@@ -290,10 +291,9 @@ def main(argv: list[str] | None = None) -> int:
             write_canonical_json(Path(args.out), comparison)
             print(json.dumps({"comparison_sha256": comparison["comparison_sha256"], "classification": comparison["classification"]}, sort_keys=True))
         elif args.command == "task" and args.task_command == "report":
-            bundle = read_json_value(Path(args.bundle))
-            validate_execution_bundle(bundle)
-            report = write_task_report(Path(args.out_dir), bundle)
-            print(json.dumps({"bundle_sha256": report["bundle_sha256"], "record_sha256": report["record_sha256"]}, sort_keys=True))
+            terminal_record = read_json_value(Path(args.bundle))
+            report = write_task_report(Path(args.out_dir), terminal_record)
+            print(json.dumps({"terminal_record_sha256": report["terminal_record_sha256"], "record_sha256": report["record_sha256"]}, sort_keys=True))
         elif args.command == "task" and args.task_command == "replay":
             bundle = read_json_value(Path(args.bundle))
             verification = replay_task_execution(bundle, builtin_synthetic_implementations())

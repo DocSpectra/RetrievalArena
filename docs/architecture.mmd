@@ -14,8 +14,10 @@ flowchart LR
   packet --> judgments["Immutable judgment import\nprovider BPref\nanswer and attribution families"]
   auto --> replay
   judgments --> replay
-  task_pack["Portable task pack\nclosed schemas\nprovider and capability identities"] --> task_exec["RA-owned task execution\nadmitted subordinate providers\nnative receipts and normalization"]
+  task_pack["Portable task pack\nclosed schemas\nprovider and capability identities"] --> task_exec["RA-owned task execution\nexact source-byte admission\ncapability/root enforcement"]
   task_exec --> task_records["Observed task records\ntrial identity\nevents\noracle and efficiency evidence"]
+  task_exec --> task_failure["Terminal execution failure\nfailed receipt and resources\nfinally-owned cleanup"]
+  task_failure --> replay
   task_records --> task_score["Pure task scoring\ncorrectness and safety first\nno composite"]
   task_score --> task_pair["Paired task comparison\nimprovement or regression\nefficiency only after safe success"]
   task_score --> task_replay["Task replay manifest\ncanonical record hashes\nseparate result family"]

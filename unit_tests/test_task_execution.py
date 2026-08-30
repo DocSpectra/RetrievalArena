@@ -28,13 +28,18 @@ from retrieval_arena.task_execution import (
     replay_task_execution,
     semantic_event_projection,
     validate_execution_bundle,
+    validate_execution_failure,
     validate_execution_request,
+    validate_replay_verification,
     write_canonical_json,
 )
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRATCH = ROOT / ".tmp_unit_tests"
+ADVERSARIAL_PROVIDER = ROOT / "unit_tests" / "fixtures" / "adversarial_task_provider.py"
+ADVERSARIAL_ENVIRONMENT = ROOT / "unit_tests" / "fixtures" / "adversarial_environment_provider.py"
+ADVERSARIAL_DOWNSTREAM = ROOT / "unit_tests" / "fixtures" / "adversarial_downstream_provider.py"
 
 
 def execute_fixture(*, scenario: str = "success", native_variant: str = "command_a") -> tuple[dict, dict]:
@@ -45,6 +50,19 @@ def execute_fixture(*, scenario: str = "success", native_variant: str = "command
     )
     bundle = execute_task(**fixture, implementations=builtin_synthetic_implementations())
     return fixture, bundle
+
+
+def failure_fixture(probe: str) -> tuple[dict, dict]:
+    implementations = builtin_synthetic_implementations()
+    implementations["retrieval_arena.synthetic.restart_agent"] = ProviderImplementation(
+        ADVERSARIAL_PROVIDER
+    )
+    fixture = build_synthetic_restart_fixture(implementations=implementations)
+    fixture["request"]["provider_parameters"]["probe"] = probe
+    fixture["request"]["request_sha256"] = self_hash(
+        fixture["request"], "request_sha256"
+    )
+    return fixture, execute_task(**fixture, implementations=implementations)
 
 
 class TaskExecutionTests(unittest.TestCase):
@@ -69,7 +87,11 @@ class TaskExecutionTests(unittest.TestCase):
             {row["event_class"] for row in bundle["events"]},
             set(EVENT_CLASS_INVENTORY),
         )
-        self.assertEqual(len(bundle["native_receipts"]), 4)
+        self.assertEqual(len(bundle["native_receipts"]), 5)
+        self.assertTrue(all(row["status"] == "passed" for row in bundle["native_receipts"]))
+        self.assertEqual(bundle["native_receipts"][2]["operation_id"], "cleanup_fixture")
+        self.assertEqual(bundle["replay_receipt"]["status"], "passed")
+        self.assertEqual(bundle["lifecycle"][7]["disposition"], "completed")
         self.assertEqual(len(bundle["oracle_results"]), 9)
         self.assertEqual(
             bundle["replay"]["task_score_sha256"], bundle["score"]["score_sha256"]
@@ -105,7 +127,7 @@ class TaskExecutionTests(unittest.TestCase):
                 self.assertEqual(bundle["status"], "failed")
                 self.assertFalse(bundle["score"]["task_success"])
                 self.assertTrue(reasons <= set(bundle["reason_codes"]))
-                self.assertEqual(len(bundle["native_receipts"]), 4)
+                self.assertEqual(len(bundle["native_receipts"]), 5)
                 self.assertTrue(bundle["efficiency"]["measured_resources"])
                 self.assertEqual(
                     bundle["retention_policy"]["failed_run_resources"], "retain"
@@ -135,13 +157,136 @@ class TaskExecutionTests(unittest.TestCase):
             validate_execution_request(**changed)
 
         implementations = builtin_synthetic_implementations()
-        key = next(iter(implementations))
-        original = implementations[key]
-        implementations[key] = ProviderImplementation(
-            original.entrypoint_id, "0" * 64, original.invoke
+        implementations["retrieval_arena.synthetic.restart_agent"] = ProviderImplementation(
+            ADVERSARIAL_PROVIDER
         )
         with self.assertRaisesRegex(ValidationError, "artifact drift"):
             execute_task(**fixture, implementations=implementations)
+
+    def test_provider_identity_is_derived_from_exact_source_bytes(self):
+        implementations = builtin_synthetic_implementations()
+        fixture = build_synthetic_restart_fixture(implementations=implementations)
+        agent = next(
+            row for row in fixture["registry"]["providers"]
+            if row["provider_kind"] == "agent_adapter"
+        )
+        import hashlib
+        expected = hashlib.sha256(
+            implementations[agent["entrypoint_id"]].artifact_path.read_bytes()
+        ).hexdigest()
+        self.assertEqual(agent["implementation_sha256"], expected)
+        self.assertEqual(set(ProviderImplementation.__dataclass_fields__), {"artifact_path"})
+
+    def test_undeclared_filesystem_process_and_network_are_terminally_receipted(self):
+        expected_capability = {
+            "filesystem": "filesystem_read",
+            "process": "process",
+            "network": "network",
+        }
+        for probe, capability in expected_capability.items():
+            with self.subTest(probe=probe):
+                fixture, failure = failure_fixture(probe)
+                self.assertEqual(failure["status"], "rejected")
+                self.assertEqual(failure["failed_phase"], "execute")
+                self.assertIn("provider_capability_violation", failure["reason_codes"])
+                self.assertEqual(failure["native_receipts"][0]["status"], "failed")
+                self.assertEqual(
+                    failure["native_receipts"][0]["capabilities_used"], [capability]
+                )
+                cleanup = failure["native_receipts"][-1]
+                self.assertEqual(cleanup["operation_id"], "cleanup_fixture")
+                self.assertEqual(cleanup["status"], "passed")
+                self.assertTrue(failure["cleanup"]["passed"])
+                self.assertEqual(failure["lifecycle"][2]["disposition"], "failed")
+                self.assertEqual(failure["lifecycle"][-1]["disposition"], "completed")
+                self.assertEqual(
+                    failure["efficiency"]["source_receipt_sha256s"],
+                    sorted(row["receipt_sha256"] for row in failure["native_receipts"]),
+                )
+                self.assertEqual(failure["retention_policy"], fixture["request"]["retention_policy"])
+
+    def test_provider_exception_and_malformed_output_retain_failure_and_cleanup(self):
+        for probe, error_class in (("exception", "ValueError"), ("malformed", "ValidationError")):
+            with self.subTest(probe=probe):
+                _, failure = failure_fixture(probe)
+                failed = failure["native_receipts"][0]
+                self.assertEqual(failed["status"], "failed")
+                self.assertEqual(failed["failure"]["error_class"], error_class)
+                self.assertEqual(failure["native_receipts"][-1]["operation_id"], "cleanup_fixture")
+                self.assertTrue(failure["cleanup"]["attempted"])
+
+    def test_declared_filesystem_capability_is_confined_to_pack_roots(self):
+        implementations = builtin_synthetic_implementations()
+        implementations[
+            "retrieval_arena.synthetic.restart_environment"
+        ] = ProviderImplementation(ADVERSARIAL_ENVIRONMENT)
+        fixture = build_synthetic_restart_fixture(implementations=implementations)
+        failure = execute_task(**fixture, implementations=implementations)
+        failed = next(row for row in failure["native_receipts"] if row["status"] == "failed")
+        self.assertEqual(failed["provider_kind"], "environment_adapter")
+        self.assertEqual(failed["capabilities_used"], ["filesystem_read"])
+        self.assertEqual(failed["failure"]["reason_code"], "provider_capability_violation")
+        self.assertTrue(failure["cleanup"]["passed"])
+
+    def test_normalizer_and_oracle_failures_retain_prior_cleanup(self):
+        for entrypoint, phase in (
+            ("retrieval_arena.synthetic.restart_normalizer", "observe"),
+            ("retrieval_arena.synthetic.restart_oracle", "finalize"),
+        ):
+            with self.subTest(phase=phase):
+                implementations = builtin_synthetic_implementations()
+                implementations[entrypoint] = ProviderImplementation(ADVERSARIAL_DOWNSTREAM)
+                fixture = build_synthetic_restart_fixture(implementations=implementations)
+                failure = execute_task(**fixture, implementations=implementations)
+                self.assertEqual(failure["failed_phase"], phase)
+                self.assertTrue(failure["cleanup"]["passed"])
+                cleanup_index = next(
+                    index for index, row in enumerate(failure["native_receipts"])
+                    if row["operation_id"] == "cleanup_fixture"
+                )
+                failed_index = next(
+                    index for index, row in enumerate(failure["native_receipts"])
+                    if row["status"] == "failed"
+                )
+                self.assertLess(cleanup_index, failed_index)
+
+    def test_cleanup_provider_failure_is_terminal_and_not_predeclared_complete(self):
+        fixture = build_synthetic_restart_fixture(scenario="cleanup_provider_exception")
+        failure = execute_task(**fixture, implementations=builtin_synthetic_implementations())
+        self.assertEqual(failure["failed_phase"], "cleanup")
+        self.assertFalse(failure["cleanup"]["passed"])
+        self.assertEqual(failure["native_receipts"][-1]["status"], "failed")
+        self.assertEqual(failure["lifecycle"][-1]["disposition"], "failed")
+        self.assertIn("cleanup_failed", failure["reason_codes"])
+
+    def test_terminal_failure_rejects_cleanup_lifecycle_or_evidence_rewrite(self):
+        _, failure = failure_fixture("exception")
+        changed = copy.deepcopy(failure)
+        changed["lifecycle"][-1]["disposition"] = "failed"
+        changed["failure_sha256"] = self_hash(changed, "failure_sha256")
+        with self.assertRaisesRegex(ValidationError, "lifecycle mismatch"):
+            validate_execution_failure(changed)
+
+        changed = copy.deepcopy(failure)
+        changed["cleanup"]["receipt_sha256"] = "0" * 64
+        changed["failure_sha256"] = self_hash(changed, "failure_sha256")
+        with self.assertRaisesRegex(ValidationError, "cleanup receipt is missing"):
+            validate_execution_failure(changed)
+
+        changed = copy.deepcopy(failure)
+        changed["reason_codes"] = ["invented-reason"]
+        changed["failure_sha256"] = self_hash(changed, "failure_sha256")
+        with self.assertRaisesRegex(ValidationError, "reasons differ from receipts"):
+            validate_execution_failure(changed)
+
+        changed = copy.deepcopy(failure)
+        changed["efficiency"]["measured_resources"][0]["value"] += 1
+        changed["efficiency"]["efficiency_sha256"] = self_hash(
+            changed["efficiency"], "efficiency_sha256"
+        )
+        changed["failure_sha256"] = self_hash(changed, "failure_sha256")
+        with self.assertRaisesRegex(ValidationError, "efficiency differs from receipts"):
+            validate_execution_failure(changed)
 
     def test_receipt_and_score_mutations_are_rejected_even_when_rehashed(self):
         _, bundle = execute_fixture()
@@ -198,28 +343,33 @@ class TaskExecutionTests(unittest.TestCase):
 
     def test_replay_is_byte_stable_and_invokes_only_the_oracle(self):
         _, bundle = execute_fixture()
-        counters: dict[str, int] = {}
         implementations = builtin_synthetic_implementations()
-        wrapped: dict[str, ProviderImplementation] = {}
-        for entrypoint, implementation in implementations.items():
-            def invoke(payload: dict, *, key: str = entrypoint, target=implementation.invoke) -> dict:
-                counters[key] = counters.get(key, 0) + 1
-                return target(payload)
-
-            wrapped[entrypoint] = ProviderImplementation(
-                entrypoint, implementation.artifact_sha256, invoke
-            )
-        first = replay_task_execution(bundle, wrapped)
-        second = replay_task_execution(bundle, wrapped)
-        oracle_entrypoint = next(
-            row["entrypoint_id"]
-            for row in bundle["registry"]["providers"]
-            if row["provider_kind"] == "oracle_provider"
-        )
-        self.assertEqual(counters, {oracle_entrypoint: 2})
+        first = replay_task_execution(bundle, implementations)
+        second = replay_task_execution(bundle, implementations)
         self.assertEqual(canonical_json(first), canonical_json(second))
+        self.assertEqual(first["oracle_replay_receipt"]["provider_kind"], "oracle_provider")
+        self.assertEqual(first["oracle_replay_receipt"]["status"], "passed")
         self.assertEqual(first["environment_invocations"], 0)
         self.assertEqual(first["service_executions"], 0)
+
+    def test_rehashed_replay_receipt_cannot_claim_a_failed_or_non_oracle_call(self):
+        _, bundle = execute_fixture()
+        verification = replay_task_execution(bundle, builtin_synthetic_implementations())
+        changed = copy.deepcopy(verification)
+        changed["oracle_replay_receipt"]["provider_kind"] = "environment_adapter"
+        changed["oracle_replay_receipt"]["receipt_sha256"] = self_hash(
+            changed["oracle_replay_receipt"], "receipt_sha256"
+        )
+        changed["oracle_replay_receipt_sha256"] = changed["oracle_replay_receipt"]["receipt_sha256"]
+        changed["verification_sha256"] = self_hash(changed, "verification_sha256")
+        with self.assertRaisesRegex(ValidationError, "not a passed oracle invocation"):
+            validate_replay_verification(changed)
+
+        changed = copy.deepcopy(verification)
+        changed["oracle_provider_manifest_sha256"] = "0" * 64
+        changed["verification_sha256"] = self_hash(changed, "verification_sha256")
+        with self.assertRaisesRegex(ValidationError, "not a passed oracle invocation"):
+            validate_replay_verification(changed)
 
     def test_publication_is_compact_content_addressed_and_secret_free(self):
         _, bundle = execute_fixture()
@@ -227,7 +377,7 @@ class TaskExecutionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=SCRATCH) as root_text:
             output = Path(root_text) / "published"
             summary = publish_task_execution(output, bundle)
-            self.assertEqual(summary["bundle_sha256"], bundle["bundle_sha256"])
+            self.assertEqual(summary["terminal_record_sha256"], bundle["bundle_sha256"])
             self.assertEqual(len(summary["detailed_artifacts"]), 7)
             self.assertNotIn("request_payload", json.dumps(summary))
             self.assertNotIn("secret", json.dumps(summary).lower())
@@ -235,6 +385,54 @@ class TaskExecutionTests(unittest.TestCase):
                 data = (output / row["path"]).read_bytes()
                 import hashlib
                 self.assertEqual(hashlib.sha256(data).hexdigest(), row["sha256"])
+
+    def test_terminal_provider_failure_is_self_contained_and_publishable(self):
+        _, failure = failure_fixture("exception")
+        SCRATCH.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=SCRATCH) as root_text:
+            output = Path(root_text) / "failure"
+            summary = publish_task_execution(output, failure)
+            self.assertEqual(summary["record_kind"], "terminal_failure")
+            self.assertEqual(summary["terminal_record_sha256"], failure["failure_sha256"])
+            self.assertTrue((output / "execution_failure.v1.json").is_file())
+            self.assertTrue((output / "native_receipts.v2.json").is_file())
+            retained = json.loads((output / "execution_failure.v1.json").read_text(encoding="utf-8"))
+            self.assertEqual(retained["failure_sha256"], failure["failure_sha256"])
+
+    def test_cli_publishes_provider_failure_instead_of_losing_it(self):
+        fixture = build_synthetic_restart_fixture(scenario="provider_exception")
+        SCRATCH.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=SCRATCH) as root_text:
+            root = Path(root_text)
+            paths = {}
+            for name, value in fixture.items():
+                paths[name] = root / f"{name}.json"
+                write_canonical_json(paths[name], value)
+            command = [
+                "task", "execute-synthetic",
+                *sum(
+                    ([f"--{name}", str(paths[name])] for name in ("pack", "task", "trial", "registry", "request")),
+                    [],
+                ),
+                "--out-dir", str(root / "failure-output"),
+            ]
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(cli.main(command), 0)
+            published = root / "failure-output"
+            self.assertTrue((published / "summary.v2.json").is_file())
+            failure_path = published / "execution_failure.v1.json"
+            self.assertTrue(failure_path.is_file())
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(
+                    cli.main(
+                        [
+                            "task", "report", "--bundle", str(failure_path),
+                            "--out-dir", str(root / "failure-report"),
+                        ]
+                    ),
+                    0,
+                )
+            self.assertTrue((root / "failure-report" / "task_report_record.v2.json").is_file())
 
     def test_cli_supports_validate_plan_execute_score_compare_report_and_replay(self):
         before = build_synthetic_restart_fixture(snapshot_id="before")
@@ -275,16 +473,20 @@ class TaskExecutionTests(unittest.TestCase):
             for command in commands:
                 with self.subTest(command=command[:2]), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                     self.assertEqual(cli.main(command), 0)
-            self.assertTrue((root / "execution" / "summary.v1.json").is_file())
+            self.assertTrue((root / "execution" / "summary.v2.json").is_file())
             self.assertTrue((root / "score.json").is_file())
             self.assertTrue((root / "comparison.json").is_file())
-            self.assertTrue((root / "report" / "task_report_record.v1.json").is_file())
+            self.assertTrue((root / "report" / "task_report_record.v2.json").is_file())
             self.assertTrue((root / "replay.json").is_file())
 
     def test_execution_core_has_no_dynamic_loading_network_or_subprocess_surface(self):
         source = (ROOT / "retrieval_arena" / "task_execution.py").read_text(encoding="utf-8")
-        for forbidden in ("import importlib", "import subprocess", "import socket", "import requests", "docspectra"):
+        provider = (ROOT / "retrieval_arena" / "synthetic_task_providers.py").read_text(encoding="utf-8")
+        for forbidden in ("import importlib", "import subprocess", "import requests", "docspectra"):
             self.assertNotIn(forbidden, source.lower())
+        self.assertNotIn("import ", provider.lower())
+        self.assertIn('"open_socket": socket.socket', source)
+        self.assertIn('"system_call": os.system', source)
 
 
 if __name__ == "__main__":

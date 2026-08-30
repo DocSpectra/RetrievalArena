@@ -37,10 +37,12 @@ The scorer consumes only admitted records. It does not import a corpus project,
 execute an adapter, load a plugin, run a service, invoke a model, access the
 network, or infer evidence from agent text. PRE-S019q-34B adds the separately
 bounded `retrieval_arena/task_execution.py` synthetic execution layer:
-content-addressed provider admission, harness-owned receipts and normalization,
-deterministic oracle invocation, CLI, report publication, and oracle-only
-replay. It deliberately has no provider loader, subprocess, network client,
-real service, model, or corpus dependency. The exact schemas and calls are in
+RA-derived source-artifact admission, runtime capability/root enforcement,
+harness-owned success and failure receipts, finally-owned cleanup,
+normalization, deterministic oracle invocation, terminal-failure publication,
+CLI, and oracle-only replay. It deliberately has no ambient caller callable,
+provider import primitive, live network, real service, model, or corpus
+dependency. The exact schemas and calls are in
 [`task_completion_contracts.md`](task_completion_contracts.md) and
 [`task_execution_contracts.md`](task_execution_contracts.md).
 
