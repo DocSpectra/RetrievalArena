@@ -13,12 +13,12 @@ SCHEMA_TASK_PACK = "retrieval_arena.task_pack.v1"
 SCHEMA_TASK_DEFINITION = "retrieval_arena.task_definition.v1"
 SCHEMA_PROVIDER_REFERENCE = "retrieval_arena.provider_reference.v1"
 SCHEMA_TRIAL_IDENTITY = "retrieval_arena.task_trial_identity.v1"
-SCHEMA_TASK_EVENT = "retrieval_arena.task_event.v1"
-SCHEMA_ORACLE_RESULT = "retrieval_arena.task_oracle_result.v1"
-SCHEMA_EFFICIENCY = "retrieval_arena.task_efficiency.v1"
-SCHEMA_TASK_SCORE = "retrieval_arena.task_score.v1"
-SCHEMA_PAIRED_COMPARISON = "retrieval_arena.task_paired_comparison.v1"
-SCHEMA_TASK_REPLAY = "retrieval_arena.task_replay.v1"
+SCHEMA_TASK_EVENT = "retrieval_arena.task_event.v2"
+SCHEMA_ORACLE_RESULT = "retrieval_arena.task_oracle_result.v2"
+SCHEMA_EFFICIENCY = "retrieval_arena.task_efficiency.v2"
+SCHEMA_TASK_SCORE = "retrieval_arena.task_score.v2"
+SCHEMA_PAIRED_COMPARISON = "retrieval_arena.task_paired_comparison.v2"
+SCHEMA_TASK_REPLAY = "retrieval_arena.task_replay.v2"
 
 RESULT_FAMILY = "deterministic_task_completion"
 
@@ -713,6 +713,7 @@ def validate_task_events(
     fields = {
         "schema_version",
         "trial_id",
+        "trial_sha256",
         "task_id",
         "attempt",
         "sequence",
@@ -746,7 +747,13 @@ def validate_task_events(
         _exact(event, fields, "task event")
         if event["schema_version"] != SCHEMA_TASK_EVENT:
             raise ValidationError("unsupported task event schema")
-        if event["trial_id"] != trial["trial_id"] or event["task_id"] != trial["task_id"]:
+        _text(event["trial_id"], "task event trial_id")
+        _sha(event["trial_sha256"], "task event trial_sha256")
+        if (
+            event["trial_id"] != trial["trial_id"]
+            or event["trial_sha256"] != trial["trial_sha256"]
+            or event["task_id"] != trial["task_id"]
+        ):
             raise ValidationError("task event trial or task identity mismatch")
         _integer(event["attempt"], "event attempt", 1)
         if event["sequence"] != expected_sequence:
@@ -798,6 +805,7 @@ def validate_oracle_results(
     fields = {
         "schema_version",
         "trial_id",
+        "trial_sha256",
         "task_id",
         "assertion_id",
         "oracle_class",
@@ -824,6 +832,9 @@ def validate_oracle_results(
         _text(result["trial_id"], "oracle trial_id")
         if trial is not None and result["trial_id"] != trial["trial_id"]:
             raise ValidationError("oracle result trial_id mismatch")
+        _sha(result["trial_sha256"], "oracle trial_sha256")
+        if trial is not None and result["trial_sha256"] != trial["trial_sha256"]:
+            raise ValidationError("oracle result trial_sha256 mismatch")
         if result["task_id"] != task["task_id"]:
             raise ValidationError("oracle result task_id mismatch")
         assertion_id = _text(result["assertion_id"], "oracle assertion_id")
@@ -877,6 +888,7 @@ def validate_efficiency(
     fields = {
         "schema_version",
         "trial_id",
+        "trial_sha256",
         "wall_time_ms",
         "active_time_ms",
         "time_to_first_valid_action_ms",
@@ -902,6 +914,9 @@ def validate_efficiency(
     if trial is not None and efficiency["trial_id"] != trial["trial_id"]:
         raise ValidationError("task efficiency trial_id mismatch")
     _text(efficiency["trial_id"], "task efficiency trial_id")
+    _sha(efficiency["trial_sha256"], "task efficiency trial_sha256")
+    if trial is not None and efficiency["trial_sha256"] != trial["trial_sha256"]:
+        raise ValidationError("task efficiency trial_sha256 mismatch")
     for field in (
         "wall_time_ms",
         "active_time_ms",
@@ -1209,7 +1224,10 @@ def compare_task_scores(
             raise ValidationError(f"{label} score does not bind its task")
         if score["scoring_policy_sha256"] != trial["scoring_policy_sha256"]:
             raise ValidationError(f"{label} score does not bind its scoring policy")
-        if score["efficiency"]["trial_id"] != trial["trial_id"]:
+        if (
+            score["efficiency"]["trial_id"] != trial["trial_id"]
+            or score["efficiency"]["trial_sha256"] != trial["trial_sha256"]
+        ):
             raise ValidationError(f"{label} score efficiency does not bind its trial")
     before_invariant = {field: before_trial[field] for field in PAIR_INVARIANT_FIELDS}
     after_invariant = {field: after_trial[field] for field in PAIR_INVARIANT_FIELDS}
@@ -1342,10 +1360,22 @@ def build_task_replay(
         raise ValidationError("task score identity mismatch during replay construction")
     if score["scoring_policy_sha256"] != trial["scoring_policy_sha256"]:
         raise ValidationError("task score policy mismatch during replay construction")
-    if score["efficiency"]["trial_id"] != trial["trial_id"]:
+    if (
+        score["efficiency"]["trial_id"] != trial["trial_id"]
+        or score["efficiency"]["trial_sha256"] != trial["trial_sha256"]
+    ):
         raise ValidationError("task score efficiency mismatch during replay construction")
     if score["oracle_result_sha256s"] != [result["result_sha256"] for result in oracle_results]:
         raise ValidationError("task score oracle inventory mismatch during replay construction")
+    recomputed_score = score_task(
+        pack,
+        task,
+        trial,
+        oracle_results,
+        score["efficiency"],
+    )
+    if canonical_json(score) != canonical_json(recomputed_score):
+        raise ValidationError("task score differs from deterministic evidence recomputation")
     replay = {
         "schema_version": SCHEMA_TASK_REPLAY,
         "result_family": RESULT_FAMILY,

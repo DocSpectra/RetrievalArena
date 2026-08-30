@@ -245,6 +245,7 @@ def efficiency(trial: dict, *, wall_time: int = 1000) -> dict:
         {
             "schema_version": SCHEMA_EFFICIENCY,
             "trial_id": trial["trial_id"],
+            "trial_sha256": trial["trial_sha256"],
             "wall_time_ms": wall_time,
             "active_time_ms": active_time,
             "time_to_first_valid_action_ms": first_action_time,
@@ -295,6 +296,7 @@ def oracle_results(
         row = {
             "schema_version": SCHEMA_ORACLE_RESULT,
             "trial_id": trial["trial_id"],
+            "trial_sha256": trial["trial_sha256"],
             "task_id": task["task_id"],
             "assertion_id": assertion_row["assertion_id"],
             "oracle_class": assertion_row["assertion_class"],
@@ -321,6 +323,7 @@ def events(trial: dict) -> list[dict]:
         row = {
             "schema_version": SCHEMA_TASK_EVENT,
             "trial_id": trial["trial_id"],
+            "trial_sha256": trial["trial_sha256"],
             "task_id": trial["task_id"],
             "attempt": 1,
             "sequence": sequence,
@@ -479,6 +482,30 @@ class TaskCompletionTests(unittest.TestCase):
         bad_results[0]["result_sha256"] = self_hash(bad_results[0], "result_sha256")
         with self.assertRaisesRegex(ValidationError, "trial_id mismatch"):
             score_task(self.pack, self.task, self.trial, bad_results, efficiency(self.trial))
+
+    def test_evidence_binds_exact_trial_hash_when_display_ids_are_reused(self):
+        before_trial = trial_identity(self.pack, self.task, "before", trial_id="replicate-0")
+        after_trial = trial_identity(self.pack, self.task, "after", trial_id="replicate-0")
+        self.assertNotEqual(before_trial["trial_sha256"], after_trial["trial_sha256"])
+
+        with self.assertRaisesRegex(ValidationError, "trial or task identity mismatch"):
+            validate_task_events(events(before_trial), after_trial)
+        with self.assertRaisesRegex(ValidationError, "trial_sha256 mismatch"):
+            score_task(
+                self.pack,
+                self.task,
+                after_trial,
+                oracle_results(self.task, self.pack, before_trial),
+                efficiency(after_trial),
+            )
+        with self.assertRaisesRegex(ValidationError, "trial_sha256 mismatch"):
+            score_task(
+                self.pack,
+                self.task,
+                after_trial,
+                oracle_results(self.task, self.pack, after_trial),
+                efficiency(before_trial),
+            )
 
     def test_full_success_reports_separate_components(self):
         score = self.score()
@@ -682,6 +709,10 @@ class TaskCompletionTests(unittest.TestCase):
         after_trial["prompt_sha256"] = sha("drifted-prompt")
         after_trial["trial_sha256"] = self_hash(after_trial, "trial_sha256")
         after["trial_sha256"] = after_trial["trial_sha256"]
+        after["efficiency"]["trial_sha256"] = after_trial["trial_sha256"]
+        after["efficiency"]["efficiency_sha256"] = self_hash(
+            after["efficiency"], "efficiency_sha256"
+        )
         after["score_sha256"] = self_hash(after, "score_sha256")
         with self.assertRaisesRegex(ValidationError, "outside the documentation snapshot"):
             compare_task_scores("pair-1", before_trial, before, after_trial, after)
@@ -721,6 +752,38 @@ class TaskCompletionTests(unittest.TestCase):
         bad["task_score_sha256"] = sha("mutated")
         with self.assertRaisesRegex(ValidationError, "self-hash mismatch"):
             validate_task_replay(bad)
+
+    def test_replay_recomputes_safety_invalidity_and_completion_from_evidence(self):
+        cases = (
+            (
+                {"a3-terminal": "fail", "a5-critical": "fail"},
+                {"critical_safety_violation": False, "violation_inventory": []},
+            ),
+            ({"a3-terminal": "invalid"}, {"invalid_trial": False, "invalid_reason_codes": []}),
+            ({"a3-terminal": "fail"}, {"terminal_state_completion": 0.5}),
+        )
+        for overrides, mutations in cases:
+            with self.subTest(overrides=overrides, mutations=mutations):
+                results = oracle_results(self.task, self.pack, self.trial, overrides)
+                forged = score_task(
+                    self.pack,
+                    self.task,
+                    self.trial,
+                    results,
+                    efficiency(self.trial),
+                )
+                forged.update(mutations)
+                forged["score_sha256"] = self_hash(forged, "score_sha256")
+                validate_task_score(forged)
+                with self.assertRaisesRegex(ValidationError, "deterministic evidence recomputation"):
+                    build_task_replay(
+                        self.pack,
+                        self.task,
+                        self.trial,
+                        events(self.trial),
+                        results,
+                        forged,
+                    )
 
     def test_result_family_cannot_mix_with_ranked_or_answer_scores(self):
         score = self.score()

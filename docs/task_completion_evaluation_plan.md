@@ -121,9 +121,10 @@ The evaluated object is the complete observed trial, not the agent's final
 message. RA accepts evidence only from admitted harness receipts. Agent claims
 such as "I restarted the server" or "the page works" are untrusted text.
 
-`retrieval_arena.task_event.v1` records include:
+`retrieval_arena.task_event.v2` records include:
 
-- trial, task, attempt, and monotonic sequence identity;
+- exact `trial_sha256`, display `trial_id`, task, attempt, and monotonic
+  sequence identity;
 - harness-observed timestamps;
 - event class, target, normalized arguments, and adapter identity;
 - input/output artifact hashes;
@@ -152,10 +153,11 @@ LLM whether the task succeeded. Oracle classes include:
 - prohibited-event and critical-safety checks;
 - cleanup and state-restoration checks.
 
-Every oracle result identifies its provider, version, parameters, input hashes,
-expected predicate, observed value, verdict, and canonical record hash. A
-missing required receipt is a failure or explicit invalid trial according to
-the preregistered policy; it is never inferred from agent prose.
+Every oracle result identifies the exact trial hash, its provider, version,
+parameters, input hashes, expected predicate, observed value, verdict, and
+canonical record hash. A missing required receipt is a failure or explicit
+invalid trial according to the preregistered policy; it is never inferred from
+agent prose.
 
 ### Example: restart and verify a web service
 

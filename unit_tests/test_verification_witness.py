@@ -47,6 +47,7 @@ class FocusedVerificationWitnessTests(unittest.TestCase):
             "unit_tests.test_review_packets.ReviewPacketTests.test_wrong_packet_pool_policy_snapshot_and_schema_reject",
             "unit_tests.test_profile_operator_admission.ProfileOperatorAdmissionTests.test_unowned_output_never_receives_a_receipt",
             "unit_tests.test_review_packet_operator.ReviewPacketOperatorTests.test_invalid_import_rolls_back_packet_and_writes_terminal_receipt",
+            "unit_tests.test_task_completion.TaskCompletionTests.test_replay_recomputes_safety_invalidity_and_completion_from_evidence",
         ):
             self.assertIn(expected, case_ids)
 

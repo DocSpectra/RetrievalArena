@@ -24,12 +24,18 @@ semantics.
 | `retrieval_arena.task_definition.v1` | Goal, fixture, allowed roots/capabilities, assertions, policies | `task_sha256` |
 | `retrieval_arena.task_pack.v1` | Closed pack inventory, providers, fixtures, budgets, replication and cleanup | `pack_sha256` |
 | `retrieval_arena.task_trial_identity.v1` | Frozen trial identity; only the documentation snapshot may vary within a pair | `trial_sha256` |
-| `retrieval_arena.task_event.v1` | Harness-observed normalized event with native-receipt provenance | `event_sha256` |
-| `retrieval_arena.task_oracle_result.v1` | Provider-bound result for exactly one declared assertion | `result_sha256` |
-| `retrieval_arena.task_efficiency.v1` | Time, tokens, context, tool, retry, cost, and measured-resource evidence | `efficiency_sha256` |
-| `retrieval_arena.task_score.v1` | Separate correctness, partial completion, safety, cleanup, invalidity, and efficiency | `score_sha256` |
-| `retrieval_arena.task_paired_comparison.v1` | Four-cell before/after outcome plus conditional efficiency deltas | `comparison_sha256` |
-| `retrieval_arena.task_replay.v1` | Ordered content identities needed to replay one retained score | `replay_sha256` |
+| `retrieval_arena.task_event.v2` | Harness-observed normalized event with exact-trial and native-receipt provenance | `event_sha256` |
+| `retrieval_arena.task_oracle_result.v2` | Exact-trial-bound provider result for exactly one declared assertion | `result_sha256` |
+| `retrieval_arena.task_efficiency.v2` | Exact-trial-bound time, tokens, context, tool, retry, cost, and measured-resource evidence | `efficiency_sha256` |
+| `retrieval_arena.task_score.v2` | Separate correctness, partial completion, safety, cleanup, invalidity, and efficiency | `score_sha256` |
+| `retrieval_arena.task_paired_comparison.v2` | Four-cell before/after outcome plus conditional efficiency deltas | `comparison_sha256` |
+| `retrieval_arena.task_replay.v2` | Ordered content identities needed to replay one retained score | `replay_sha256` |
+
+The six v2 records correct the unaccepted 34A v1 draft: events, oracle results,
+and efficiency evidence now carry `trial_sha256` as the authoritative trial
+foreign key, and the dependent score, comparison, and replay families advance
+with that binding. `trial_id` remains a display/operational label and is not
+sufficient evidence identity.
 
 All records are closed-world. Unknown or missing fields fail admission. Use
 `load_contract_json` when decoding JSON so duplicate object fields fail before
@@ -70,7 +76,7 @@ the task configuration cannot carry executable provider code.
 
 Call `score_task(pack, task, trial, oracle_results, efficiency)`. The function
 validates the selected task against its pack binding and returns a self-hashed
-`task_score.v1` record.
+`task_score.v2` record.
 
 `task_success` is true only when:
 
@@ -114,10 +120,13 @@ A fast failure therefore cannot outrank a slower success.
 ## Replay
 
 `build_task_replay` binds the exact pack, task, trial, ordered event hashes,
-ordered oracle-result hashes, efficiency record, and score. Repeated
-construction from identical admitted inputs produces byte-identical canonical
-JSON. Any identity or ordering mutation breaks the replay self-hash or the
-upstream binding check.
+ordered oracle-result hashes, efficiency record, and score. It reruns the pure
+scorer over the retained oracle and efficiency records and requires canonical
+byte equality with the supplied score before constructing the replay manifest.
+Repeated construction from identical admitted inputs produces byte-identical
+canonical JSON. Any identity, ordering, safety, invalidity, violation, cleanup,
+or completion mutation fails upstream evidence recomputation or the replay
+self-hash.
 
 ## 34A non-goals
 
