@@ -18,6 +18,7 @@ COMMANDS = {
         "unit_tests.test_verification_witness",
         "unit_tests.test_review_packet_operator",
         "unit_tests.test_task_completion",
+        "unit_tests.test_task_execution",
     ),
     "all": None,
     "evaluate-profile": (),

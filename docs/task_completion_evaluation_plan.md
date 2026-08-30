@@ -1,7 +1,7 @@
 # Portable deterministic task-completion evaluation
 
-Status: PRE-S019q-34A contract and pure-scoring layer implemented; provider
-execution, CLI, reporting, and external task packs remain planned
+Status: PRE-S019q-34A pure-scoring and PRE-S019q-34B synthetic execution layers
+implemented; external corpus task packs remain separately governed
 
 Decision date: 2026-08-19
 
@@ -25,7 +25,7 @@ feedback. No RA core module may import DocSpectraCapstone or assume a particular
 documentation corpus, agent, service manager, container runtime, or experiment
 layout.
 
-## PRE-S019q-34A as-built boundary
+## PRE-S019q-34A and 34B as-built boundary
 
 `retrieval_arena/task_completion.py` implements the corpus-neutral contract
 and scoring layer. It admits self-hashed closed-world records for task packs,
@@ -35,10 +35,14 @@ Duplicate JSON object fields are rejected before decoding can erase them.
 
 The scorer consumes only admitted records. It does not import a corpus project,
 execute an adapter, load a plugin, run a service, invoke a model, access the
-network, or infer evidence from agent text. Provider execution, normalization,
-receipt production, command-line ingress, and reports remain the next layer,
-PRE-S019q-34B. The exact schemas and library calls are documented in
-[`task_completion_contracts.md`](task_completion_contracts.md).
+network, or infer evidence from agent text. PRE-S019q-34B adds the separately
+bounded `retrieval_arena/task_execution.py` synthetic execution layer:
+content-addressed provider admission, harness-owned receipts and normalization,
+deterministic oracle invocation, CLI, report publication, and oracle-only
+replay. It deliberately has no provider loader, subprocess, network client,
+real service, model, or corpus dependency. The exact schemas and calls are in
+[`task_completion_contracts.md`](task_completion_contracts.md) and
+[`task_execution_contracts.md`](task_execution_contracts.md).
 
 ## Evaluation families
 
@@ -302,7 +306,8 @@ and pipeline modules do not enter RA core.
 2. add strict task-pack, event, oracle, score, comparison, and replay schemas
    plus a pure scorer — implemented by PRE-S019q-34A;
 3. add provider admission, execution adapter, event normalization, CLI, report,
-   and byte-stable replay using synthetic task packs;
+   and byte-stable replay using synthetic task packs — implemented by
+   PRE-S019q-34B;
 4. extract candidate DocSpectra tasks without opening evaluation outcomes;
 5. implement a separately owned DocSpectra task pack and adapters;
 6. independently verify portability with at least one RA-native synthetic pack

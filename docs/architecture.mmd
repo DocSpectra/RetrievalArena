@@ -14,10 +14,13 @@ flowchart LR
   packet --> judgments["Immutable judgment import\nprovider BPref\nanswer and attribution families"]
   auto --> replay
   judgments --> replay
-  task_pack["Portable task pack\nclosed schemas\nprovider and capability identities"] --> task_records["Observed task records\ntrial identity\nevents\noracle and efficiency evidence"]
+  task_pack["Portable task pack\nclosed schemas\nprovider and capability identities"] --> task_exec["RA-owned task execution\nadmitted subordinate providers\nnative receipts and normalization"]
+  task_exec --> task_records["Observed task records\ntrial identity\nevents\noracle and efficiency evidence"]
   task_records --> task_score["Pure task scoring\ncorrectness and safety first\nno composite"]
   task_score --> task_pair["Paired task comparison\nimprovement or regression\nefficiency only after safe success"]
   task_score --> task_replay["Task replay manifest\ncanonical record hashes\nseparate result family"]
+  task_records --> oracle_replay["Deterministic oracle replay\nretained evidence only\nno environment execution"]
+  oracle_replay --> task_replay
   task_pair --> task_replay
   task_replay --> replay
   test --> replay["Replay manifests\nconfig\nsoftware\ninput/output hashes"]
@@ -34,3 +37,4 @@ flowchart LR
   command --> test
   command --> bertscore
   command --> analyze
+  command --> task_exec

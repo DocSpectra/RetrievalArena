@@ -1,6 +1,6 @@
 # Task-completion contracts and pure scoring
 
-Status: PRE-S019q-34A implementation contract
+Status: PRE-S019q-34A pure-scoring contract; used by PRE-S019q-34B execution
 
 ## Boundary
 
@@ -12,9 +12,10 @@ calibration; every output uses the explicit
 
 The implementation is `retrieval_arena.task_completion`. It has no provider
 loader, subprocess owner, network client, service manager, corpus import, or
-DocSpectra dependency. PRE-S019q-34B will add provider admission, execution
-receipts, CLI, reporting, and replay commands without changing the 34A scoring
-semantics.
+DocSpectra dependency. PRE-S019q-34B adds provider admission, execution
+receipts, CLI, reporting, and replay verification in the separate
+`retrieval_arena.task_execution` module without changing these scoring
+semantics. See [`task_execution_contracts.md`](task_execution_contracts.md).
 
 ## Versioned records
 
@@ -128,9 +129,11 @@ canonical JSON. Any identity, ordering, safety, invalidity, violation, cleanup,
 or completion mutation fails upstream evidence recomputation or the replay
 self-hash.
 
-## 34A non-goals
+## Pure-layer non-goals
 
-This layer does not provide an execution adapter, event collector, oracle
-runner, CLI command, report renderer, task pack for a specific corpus, or
-scientific experiment. It does not authorize E-EXP1, held-out reveal, model
-execution, or human annotation. Those boundaries remain separately governed.
+This pure layer does not itself provide an execution adapter, event collector,
+oracle runner, CLI command, report renderer, task pack for a specific corpus,
+or scientific experiment. The separate 34B layer supplies only hermetic
+synthetic execution qualification. Neither layer authorizes E-EXP1, held-out
+reveal, model execution, or human annotation. Those boundaries remain
+separately governed.

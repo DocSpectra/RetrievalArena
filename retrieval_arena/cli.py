@@ -28,6 +28,21 @@ from .profile_evaluation import evaluate_profile_files
 from .dual_profile import run_bertscore_offline
 from .review_packets import build_review_packet, import_judgments
 from .schemas import read_jsonl
+from .task_completion import validate_task_pack
+from .task_execution import (
+    build_execution_plan,
+    builtin_synthetic_implementations,
+    compare_task_files,
+    execute_task,
+    publish_task_execution,
+    read_json_value,
+    replay_task_execution,
+    score_task_files,
+    validate_execution_bundle,
+    validate_execution_request,
+    write_canonical_json,
+    write_task_report,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -66,6 +81,31 @@ def build_parser() -> argparse.ArgumentParser:
     judgment_import.add_argument("--packet", required=True, help="Frozen review packet JSON artifact.")
     judgment_import.add_argument("--policy", required=True, help="Frozen review policy JSON artifact.")
     judgment_import.add_argument("--out", required=True, help="Validated judgment-import JSON output path.")
+    task = subparsers.add_parser("task", help="Validate, execute, score, report, and replay deterministic tasks.")
+    task_subparsers = task.add_subparsers(dest="task_command", required=True)
+    task_validate = task_subparsers.add_parser("validate-pack", help="Validate a task pack and its task definitions without writes.")
+    task_validate.add_argument("--pack", required=True)
+    task_validate.add_argument("--task", required=True, action="append", help="Task definition JSON; repeat for every bound task.")
+    task_plan = task_subparsers.add_parser("plan", help="Inspect a non-consuming task execution plan.")
+    for argument in ("pack", "task", "trial", "registry", "request"):
+        task_plan.add_argument(f"--{argument}", required=True)
+    task_execute = task_subparsers.add_parser("execute-synthetic", help="Run the admitted hermetic synthetic provider chain.")
+    for argument in ("pack", "task", "trial", "registry", "request"):
+        task_execute.add_argument(f"--{argument}", required=True)
+    task_execute.add_argument("--out-dir", required=True)
+    task_score = task_subparsers.add_parser("score", help="Score retained task oracle and efficiency evidence.")
+    for argument in ("pack", "task", "trial", "oracles", "efficiency", "out"):
+        task_score.add_argument(f"--{argument}", required=True)
+    task_compare = task_subparsers.add_parser("compare", help="Compare two retained task scores.")
+    task_compare.add_argument("--pair-id", required=True)
+    for argument in ("before-trial", "before-score", "after-trial", "after-score", "out"):
+        task_compare.add_argument(f"--{argument}", required=True)
+    task_report = task_subparsers.add_parser("report", help="Render a retained task execution bundle.")
+    task_report.add_argument("--bundle", required=True)
+    task_report.add_argument("--out-dir", required=True)
+    task_replay = task_subparsers.add_parser("replay", help="Replay retained evidence without executing the environment.")
+    task_replay.add_argument("--bundle", required=True)
+    task_replay.add_argument("--out", required=True)
     provenance = subparsers.add_parser("provenance", help="Inspect provenance sources.")
     provenance_subparsers = provenance.add_subparsers(dest="provenance_command", required=True)
     git = provenance_subparsers.add_parser("git", help="Print Git provenance for a path.")
@@ -204,6 +244,61 @@ def main(argv: list[str] | None = None) -> int:
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_text(json.dumps(imported, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
             print(json.dumps({"import_sha256": imported["import_sha256"], "classification": imported["classification"]}, sort_keys=True))
+        elif args.command == "task" and args.task_command == "validate-pack":
+            pack = read_json_value(Path(args.pack))
+            tasks = [read_json_value(Path(path)) for path in args.task]
+            validate_task_pack(pack, tasks)
+            print(json.dumps({"pack_id": pack["pack_id"], "pack_sha256": pack["pack_sha256"], "task_count": len(tasks), "writes": 0}, sort_keys=True))
+        elif args.command == "task" and args.task_command in {"plan", "execute-synthetic"}:
+            pack = read_json_value(Path(args.pack))
+            task_definition = read_json_value(Path(args.task))
+            trial = read_json_value(Path(args.trial))
+            registry = read_json_value(Path(args.registry))
+            request = read_json_value(Path(args.request))
+            validate_execution_request(request, pack, task_definition, trial, registry)
+            if args.task_command == "plan":
+                print(json.dumps(build_execution_plan(pack, task_definition, trial, registry, request), sort_keys=True))
+            else:
+                bundle = execute_task(
+                    pack,
+                    task_definition,
+                    trial,
+                    registry,
+                    request,
+                    builtin_synthetic_implementations(),
+                )
+                summary = publish_task_execution(Path(args.out_dir), bundle)
+                print(json.dumps(summary, sort_keys=True))
+        elif args.command == "task" and args.task_command == "score":
+            score = score_task_files(
+                Path(args.pack),
+                Path(args.task),
+                Path(args.trial),
+                Path(args.oracles),
+                Path(args.efficiency),
+            )
+            write_canonical_json(Path(args.out), score)
+            print(json.dumps({"score_sha256": score["score_sha256"], "task_success": score["task_success"]}, sort_keys=True))
+        elif args.command == "task" and args.task_command == "compare":
+            comparison = compare_task_files(
+                args.pair_id,
+                Path(args.before_trial),
+                Path(args.before_score),
+                Path(args.after_trial),
+                Path(args.after_score),
+            )
+            write_canonical_json(Path(args.out), comparison)
+            print(json.dumps({"comparison_sha256": comparison["comparison_sha256"], "classification": comparison["classification"]}, sort_keys=True))
+        elif args.command == "task" and args.task_command == "report":
+            bundle = read_json_value(Path(args.bundle))
+            validate_execution_bundle(bundle)
+            report = write_task_report(Path(args.out_dir), bundle)
+            print(json.dumps({"bundle_sha256": report["bundle_sha256"], "record_sha256": report["record_sha256"]}, sort_keys=True))
+        elif args.command == "task" and args.task_command == "replay":
+            bundle = read_json_value(Path(args.bundle))
+            verification = replay_task_execution(bundle, builtin_synthetic_implementations())
+            write_canonical_json(Path(args.out), verification)
+            print(json.dumps({"bundle_sha256": verification["bundle_sha256"], "verification_sha256": verification["verification_sha256"]}, sort_keys=True))
         elif args.command == "provenance" and args.provenance_command == "git":
             print(manifest_json_text(git_provenance(Path(args.path), ref=args.ref)["provenance"]), end="")
         elif args.command == "replay" and args.replay_command == "compare":
