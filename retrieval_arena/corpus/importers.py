@@ -16,7 +16,10 @@ IMPORT_SCHEMA_VERSION = "retrieval_arena.corpus_import_manifest.v1"
 IMPORT_PARSER_VERSION = "retrieval_arena.corpus_import.copy-v1"
 
 
-def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str | None = None, overwrite: bool = True) -> dict[str, Any]:
+def import_corpus_source(descriptor: CorpusSourceDescriptor, *, created_at: str | None = None, overwrite: bool = True, acquisition_capability: str = "disabled") -> dict[str, Any]:
+    if descriptor.source_type == "git" and descriptor.source_path is None:
+        from .acquisition import acquire_remote
+        return acquire_remote(descriptor, capability=acquisition_capability, created_at=created_at).import_result()
     snapshot_workspace = descriptor.destination_workspace / descriptor.corpus_id / descriptor.snapshot_id
     source_workspace = snapshot_workspace / "source"
     documents_workspace = snapshot_workspace / "documents"
@@ -173,7 +176,7 @@ def _materialize_source(descriptor: CorpusSourceDescriptor, source_workspace: Pa
 def _materialize_git_source(descriptor: CorpusSourceDescriptor, source_workspace: Path) -> dict[str, Any]:
     source = descriptor.source_path or Path(str(descriptor.source_url))
     if descriptor.source_path is None:
-        raise RetrievalArenaError("Remote Git clone support is scaffolded; provide source_path for offline imports.")
+        raise RetrievalArenaError("Remote acquisition requires the explicit corpus acquire boundary.")
     if not descriptor.source_path.is_dir():
         raise ValidationError(f"Git source path must be a directory: {descriptor.source_path}")
     ref = descriptor.requested_ref or "HEAD"

@@ -19,6 +19,8 @@ COMMANDS = {
         "unit_tests.test_review_packet_operator",
         "unit_tests.test_task_completion",
         "unit_tests.test_task_execution",
+        "unit_tests.test_remote_acquisition",
+        "unit_tests.test_corpus_import",
     ),
     "all": None,
     "evaluate-profile": (),
@@ -56,6 +58,7 @@ def main(argv: list[str]) -> int:
         print("source-root-missing", file=sys.stderr)
         return 2
     os.chdir(SOURCE_ROOT)
+    os.environ["RA_NETWORK_DISABLED"] = "1"
     sys.path.insert(0, str(SOURCE_ROOT))
     if argv[1] == "evaluate-profile":
         sys.path.insert(0, str(OPERATOR_ROOT))

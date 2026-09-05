@@ -154,6 +154,9 @@ def build_parser() -> argparse.ArgumentParser:
     evidence_report.add_argument("--out-dir", required=True, help="Directory for exported CSV and Markdown evidence artifacts.")
     corpus = subparsers.add_parser("corpus", help="Import and compare corpus snapshots.")
     corpus_subparsers = corpus.add_subparsers(dest="corpus_command", required=True)
+    acquire = corpus_subparsers.add_parser("acquire", help="Acquire an immutable remote Git snapshot and receipt.")
+    acquire.add_argument("--descriptor", required=True)
+    acquire.add_argument("--transport", choices=("local-only", "host-network"), default="local-only")
     corpus_compare = corpus_subparsers.add_parser("compare-snapshots", help="Run a corpus source comparison plan.")
     corpus_compare.add_argument("--plan", required=True, help="Path to corpus snapshot comparison plan JSON.")
     snapshot = subparsers.add_parser("snapshot", help="Generate snapshot observability artifacts.")
@@ -349,6 +352,18 @@ def main(argv: list[str] | None = None) -> int:
                 Path(args.out_dir),
             )
             print(result["summary"])
+        elif args.command == "corpus" and args.corpus_command == "acquire":
+            from .corpus.sources import descriptor_from_dict
+            from .corpus.importers import import_corpus_source
+            from .errors import ValidationError
+            path = Path(args.descriptor)
+            try:
+                descriptor = descriptor_from_dict(json.loads(path.read_bytes()), base_path=path.resolve().parent)
+            except (OSError, ValueError):
+                raise ValidationError("acquisition-descriptor-invalid") from None
+            result = import_corpus_source(descriptor, acquisition_capability=args.transport)
+            print(json.dumps({"status": "success", "receipt": str(result["receipt_path"]),
+                "receipt_hash": result["receipt"]["manifest_hash"], "reused": result["reused"]}, sort_keys=True))
         elif args.command == "corpus" and args.corpus_command == "compare-snapshots":
             result = run_corpus_snapshot_comparison(Path(args.plan))
             print(result["summary"])

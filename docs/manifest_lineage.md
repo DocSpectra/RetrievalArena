@@ -12,7 +12,12 @@ available, import timestamp, selected files, ignored files, import
 configuration hash, parser version, content hash, and
 `snapshot_identity_hash`.
 
-Remote Git clone support is still deliberately scaffolded. Real-corpus pilots
+Remote Git acquisition uses the explicit `corpus acquire` command and a
+self-hashed `retrieval_arena.remote_git_acquisition.v1` receipt. Remote imports
+publish `retrieval_arena.corpus_import_manifest.v2`, binding that receipt and
+the consumed exact checkout. See [remote acquisition](remote_acquisition.md)
+for ref, transport, publication, reuse, and identity rules. Ordinary import and
+comparison commands cannot acquire remote inputs implicitly. Real-corpus pilots
 use local Git source paths plus explicit refs, or non-Git local snapshot
 directories that record the official source URL, requested upstream revision,
 resolved local revision identity, local source hash, and descriptor hash. This

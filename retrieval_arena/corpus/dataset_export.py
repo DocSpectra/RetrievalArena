@@ -33,6 +33,14 @@ def prepare_dataset(
     created_at: str | None = None,
 ) -> dict[str, Any]:
     import_manifest = read_manifest(import_manifest_path)
+    if import_manifest.get("schema_version") == "retrieval_arena.corpus_import_manifest.v2":
+        from .acquisition import verify_acquisition
+        from .sources import descriptor_from_dict
+        descriptor = descriptor_from_dict({**import_manifest["source_descriptor"],
+            "destination_workspace": str(import_manifest_path.parent)})
+        verify_acquisition(import_manifest_path.parent, descriptor,
+            expected_commit=import_manifest["source_provenance"]["resolved_commit"],
+            expected_receipt_hash=import_manifest["acquisition_receipt_hash"])
     documents_path = Path(str(import_manifest["documents_path"]))
     if output_path.exists():
         shutil.rmtree(output_path)

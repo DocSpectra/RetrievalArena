@@ -57,6 +57,9 @@ def _scratch_root() -> Path:
 # Capstone-owned lifecycle cases are intentionally external, rather than
 # falsely described as an RA observation.
 NEGATIVE_CASES: tuple[dict[str, str | None], ...] = (
+    {"case_id": "acquisition_disabled", "test_id": "unit_tests.test_remote_acquisition.RemoteAcquisitionTests.test_disabled_evaluator_import_and_network_capability_rejected", "expected_class": "ValidationError", "expected_reason_code": "acquisition-capability-disabled", "owner": "retrieval_arena"},
+    {"case_id": "acquisition_credential_url", "test_id": "unit_tests.test_remote_acquisition.RemoteAcquisitionTests.test_credentials_query_and_unsafe_urls_never_reach_git", "expected_class": "ValidationError", "expected_reason_code": "acquisition-url-credentials-or-suffix-rejected", "owner": "retrieval_arena"},
+    {"case_id": "acquisition_invalid_ref", "test_id": "unit_tests.test_remote_acquisition.RemoteAcquisitionTests.test_invalid_missing_empty_and_unreachable_refs_fail_closed", "expected_class": "ValidationError", "expected_reason_code": "acquisition-ref-invalid", "owner": "retrieval_arena"},
     {"case_id": "wrong_packet", "test_id": "unit_tests.test_review_packets.ReviewPacketTests.test_wrong_packet_pool_policy_snapshot_and_schema_reject", "expected_class": "ValidationError", "expected_reason_code": "review-packet-hash-mismatch", "owner": "retrieval_arena"},
     {"case_id": "wrong_pool", "test_id": "unit_tests.test_review_packets.ReviewPacketTests.test_wrong_packet_pool_policy_snapshot_and_schema_reject", "expected_class": "ValidationError", "expected_reason_code": "candidate-pool-hash-mismatch", "owner": "retrieval_arena"},
     {"case_id": "wrong_policy", "test_id": "unit_tests.test_review_packets.ReviewPacketTests.test_wrong_packet_pool_policy_snapshot_and_schema_reject", "expected_class": "ValidationError", "expected_reason_code": "review-policy-hash-mismatch", "owner": "retrieval_arena"},
@@ -187,6 +190,15 @@ def _collect_focused_witness() -> dict[str, Any]:
     """Execute every RA-owned public mutation exactly once."""
     policy = _policy(); packet = build_review_packet([_candidate(i) for i in range(3)], policy); artifact = _judgments(packet, policy)
     cases: list[tuple[str, str, str, Callable[[], Any]]] = []
+    from .corpus.acquisition import acquire_remote, canonical_url, ref_kind
+    from .corpus.sources import CorpusSourceDescriptor
+    cases += [
+        ("acquisition_disabled", "acquisition-capability-disabled", "acquisition-capability-disabled",
+         lambda: acquire_remote(CorpusSourceDescriptor("witness", "snapshot", "git", ROOT))),
+        ("acquisition_credential_url", "acquisition-url-credentials-or-suffix-rejected", "acquisition-url-credentials-or-suffix-rejected",
+         lambda: canonical_url("https://user:synthetic@example.invalid/repo")),
+        ("acquisition_invalid_ref", "acquisition-ref-invalid", "acquisition-ref-invalid", lambda: ref_kind("--invalid")),
+    ]
     for case_id, field, reason in (("wrong_packet", "packet_sha256", "review-packet-hash-mismatch"), ("wrong_pool", "candidate_pool_sha256", "candidate-pool-hash-mismatch"), ("wrong_policy", "review_policy_sha256", "review-policy-hash-mismatch"), ("wrong_snapshot", "ordered_snapshot_ids", "snapshot-binding-mismatch")):
         def action(field: str = field) -> Any:
             bad = copy.deepcopy(artifact); bad[field] = ["wrong"] if field == "ordered_snapshot_ids" else _sha_text("wrong"); bad["artifact_sha256"] = self_hash(bad, "artifact_sha256"); return import_judgments(bad, packet, policy)
@@ -230,7 +242,7 @@ def build_focused_witness(*, source_commit: str, source_tree: str, image_referen
     if not all(isinstance(value, str) and value for value in (source_commit, source_tree, image_reference, dependency_lock_sha256)): raise ValueError("focused-witness-identity-missing")
     if isinstance(focused_tests_run, bool) or not isinstance(focused_tests_run, int) or focused_tests_run < 1: raise ValueError("focused-witness-test-count-invalid")
     if (not isinstance(focused_test_case_ids, list) or len(focused_test_case_ids) != focused_tests_run or len(focused_test_case_ids) != len(set(focused_test_case_ids)) or not all(isinstance(case_id, str) and case_id.startswith("unit_tests.") for case_id in focused_test_case_ids)): raise ValueError("focused-witness-case-inventory-invalid")
-    value = {"schema_version": SCHEMA, "identity": {"source_commit": source_commit, "source_tree": source_tree, "image_reference": image_reference, "dependency_lock_sha256": dependency_lock_sha256}, "focused_test_modules": ["unit_tests.test_dual_profile", "unit_tests.test_review_packets", "unit_tests.test_profile_evaluation", "unit_tests.test_verification_container_contract", "unit_tests.test_profile_operator_admission", "unit_tests.test_verification_witness", "unit_tests.test_review_packet_operator", "unit_tests.test_task_completion", "unit_tests.test_task_execution"], "focused_suite_success": True, "focused_tests_run": focused_tests_run, "focused_test_case_ids": focused_test_case_ids, "expected_negative_cases": list(NEGATIVE_CASES), **runtime, "witness_sha256": "0" * 64}
+    value = {"schema_version": SCHEMA, "identity": {"source_commit": source_commit, "source_tree": source_tree, "image_reference": image_reference, "dependency_lock_sha256": dependency_lock_sha256}, "focused_test_modules": ["unit_tests.test_dual_profile", "unit_tests.test_review_packets", "unit_tests.test_profile_evaluation", "unit_tests.test_verification_container_contract", "unit_tests.test_profile_operator_admission", "unit_tests.test_verification_witness", "unit_tests.test_review_packet_operator", "unit_tests.test_task_completion", "unit_tests.test_task_execution", "unit_tests.test_remote_acquisition", "unit_tests.test_corpus_import"], "focused_suite_success": True, "focused_tests_run": focused_tests_run, "focused_test_case_ids": focused_test_case_ids, "expected_negative_cases": list(NEGATIVE_CASES), **runtime, "witness_sha256": "0" * 64}
     value["witness_sha256"] = sha256({key: item for key, item in value.items() if key != "witness_sha256"}); return value
 
 

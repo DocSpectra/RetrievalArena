@@ -34,6 +34,7 @@ calibration/bigdata2026/pilot_express_docs/observability_report.html
 - [Export paper evidence](docs/paper_evidence_export.md)
 - [Refresh an existing baseline](docs/incremental_baseline_refresh.md)
 - [Inspect manifest lineage](docs/manifest_lineage.md)
+- [Acquire immutable remote Git sources](docs/remote_acquisition.md)
 - [Architecture diagram](docs/architecture.mmd)
 
 ## Selected Calibration Bundles

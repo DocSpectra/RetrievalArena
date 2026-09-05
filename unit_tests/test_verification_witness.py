@@ -49,6 +49,8 @@ class FocusedVerificationWitnessTests(unittest.TestCase):
             "unit_tests.test_review_packet_operator.ReviewPacketOperatorTests.test_invalid_import_rolls_back_packet_and_writes_terminal_receipt",
             "unit_tests.test_task_completion.TaskCompletionTests.test_replay_recomputes_safety_invalidity_and_completion_from_evidence",
             "unit_tests.test_task_execution.TaskExecutionTests.test_replay_is_byte_stable_and_invokes_only_the_oracle",
+            "unit_tests.test_remote_acquisition.RemoteAcquisitionTests.test_cli_help_and_controlled_acquisition",
+            "unit_tests.test_remote_acquisition.RemoteAcquisitionTests.test_prepublication_copy_mutation_cannot_publish_success",
         ):
             self.assertIn(expected, case_ids)
 

@@ -46,7 +46,7 @@ def descriptor_from_dict(raw: dict[str, Any], *, base_path: Path | None = None) 
     docs_root = raw.get("docs_root")
     if docs_root is not None and not isinstance(docs_root, str):
         raise ValidationError("docs_root must be a string when present.")
-    return CorpusSourceDescriptor(
+    descriptor = CorpusSourceDescriptor(
         corpus_id=corpus_id,
         snapshot_id=snapshot_id,
         source_type=source_type,
@@ -58,6 +58,18 @@ def descriptor_from_dict(raw: dict[str, Any], *, base_path: Path | None = None) 
         exclude=_string_tuple(raw.get("exclude", [])),
         destination_workspace=destination_workspace,
     )
+    if source_type == "git" and source_path is None:
+        if set(raw) - {"corpus_id", "snapshot_id", "source_type", "source_url", "source_path",
+                       "requested_ref", "ref", "docs_root", "include", "exclude", "destination_workspace"}:
+            raise ValidationError("acquisition-descriptor-fields-invalid")
+        if "ref" in raw and "requested_ref" in raw and raw["ref"] != raw["requested_ref"]:
+            raise ValidationError("acquisition-descriptor-ref-conflict")
+        from .acquisition import descriptor_payload
+        # Validate the supplied scope before historical local normalization.
+        from dataclasses import replace
+        descriptor = replace(descriptor, docs_root=docs_root)
+        descriptor_payload(descriptor)
+    return descriptor
 
 
 def _required_str(raw: dict[str, Any], key: str) -> str:
