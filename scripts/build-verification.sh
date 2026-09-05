@@ -4,6 +4,7 @@ set -eu
 tag=${1:-retrieval-arena/verification:local}
 receipt=${2:-.tmp/verification-image.json}
 platform=${3:-linux/amd64}
+provisioned_image=${4:-}
 [ "$platform" = linux/amd64 ] || { echo verification-platform-unregistered >&2; exit 2; }
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 test -z "$(git -C "$repo" status --porcelain)" || { echo verification-source-not-clean >&2; exit 2; }
@@ -20,7 +21,16 @@ else
   exit 2
 fi
 
-docker build --platform "$platform" --pull=false \
+set --
+if [ -n "$provisioned_image" ]; then
+  printf '%s\n' "$provisioned_image" | grep -Eq '^sha256:[0-9a-f]{64}$' || { echo verification-provisioned-image-mutable >&2; exit 2; }
+  actual=$(docker image inspect --format '{{.Id}} {{.Os}}/{{.Architecture}} {{index .Config.Labels "io.retrieval-arena.verification.dependency-lock-sha256"}}' "$provisioned_image")
+  [ "$actual" = "$provisioned_image linux/amd64 $lock_hash" ] || { echo verification-provisioned-image-mismatch >&2; exit 2; }
+  local_tag="retrieval-arena/provisioned:${provisioned_image#sha256:}"
+  docker tag "$provisioned_image" "$local_tag"
+  set -- --build-arg "BASE_IMAGE=$local_tag" --build-arg PROVISIONED=true
+fi
+docker build --network=none --platform "$platform" --pull=false "$@" \
   --file "$repo/containers/verification/Dockerfile" --tag "$tag" \
   --build-arg "SOURCE_COMMIT=$commit" --build-arg "SOURCE_TREE=$tree" \
   --build-arg "DEPENDENCY_LOCK_SHA256=$lock_hash" --build-arg "TARGET_OCI_PLATFORM=$platform" "$repo"

@@ -133,6 +133,14 @@ capability, credential-URL and invalid-ref rejection, alongside the exact test
 case inventory. Use the existing build/run verification scripts and immutable
 image receipt. Neither tests nor evaluator profiles need external network.
 
+Build networking is disabled. When dependencies are already provisioned in a
+local RA verification image, pass its exact image ID as `-ProvisionedImage
+sha256:...` to `scripts/build-verification.ps1` (fourth positional argument to
+the POSIX script). The adapter verifies Linux/amd64 and the dependency-lock
+label before assigning a content-named local build tag. The Dockerfile probes
+installed versions and imports without installing packages. A cold build
+without a cached dependency layer fails offline; it does not authorize downloads.
+
 ## SDM mechanical reuse attribution
 
 Command-local `core.longpaths=true` and Windows readonly cleanup mechanics

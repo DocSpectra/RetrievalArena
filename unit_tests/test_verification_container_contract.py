@@ -8,6 +8,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class VerificationContainerContractTests(unittest.TestCase):
+    def test_build_network_is_disabled_and_provisioned_identity_is_checked(self):
+        for relative in ("scripts/build-verification.ps1", "scripts/build-verification.sh"):
+            text = self.text(relative)
+            for token in ("--network=none", "verification-provisioned-image-mutable",
+                          "verification-provisioned-image-mismatch", "PROVISIONED=true"):
+                self.assertIn(token, text)
+        self.assertIn("m.version(n)==v", self.text("containers/verification/Dockerfile"))
+
     def text(self, relative: str) -> str:
         return (ROOT / relative).read_text(encoding="utf-8")
 

@@ -2,7 +2,8 @@
 param(
     [string]$Tag = 'retrieval-arena/verification:local',
     [string]$Receipt = '.tmp/verification-image.json',
-    [ValidateSet('linux/amd64')][string]$Platform = 'linux/amd64'
+    [ValidateSet('linux/amd64')][string]$Platform = 'linux/amd64',
+    [string]$ProvisionedImage
 )
 
 $ErrorActionPreference = 'Stop'
@@ -21,7 +22,17 @@ $tree = (& git -C $repo write-tree).Trim()
 if ($LASTEXITCODE -ne 0 -or $tree -notmatch '^[0-9a-f]{40}$') { throw 'source-tree-unresolved' }
 $lockHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $lock).Hash.ToLowerInvariant()
 
-& docker build --platform $Platform --pull=false --file $dockerfile --tag $Tag `
+$provisionedArguments = @()
+if ($ProvisionedImage) {
+    if ($ProvisionedImage -notmatch '^sha256:[0-9a-f]{64}$') { throw 'verification-provisioned-image-mutable' }
+    $existing = & docker image inspect $ProvisionedImage | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0 -or $existing.Id -ne $ProvisionedImage -or $existing.Os -ne 'linux' -or $existing.Architecture -ne 'amd64' -or $existing.Config.Labels.'io.retrieval-arena.verification.dependency-lock-sha256' -ne $lockHash) { throw 'verification-provisioned-image-mismatch' }
+    $localTag = 'retrieval-arena/provisioned:' + $ProvisionedImage.Substring(7)
+    & docker tag $ProvisionedImage $localTag
+    if ($LASTEXITCODE -ne 0) { throw 'verification-provisioned-tag-failed' }
+    $provisionedArguments = @('--build-arg', "BASE_IMAGE=$localTag", '--build-arg', 'PROVISIONED=true')
+}
+& docker build --network=none --platform $Platform --pull=false --file $dockerfile --tag $Tag @provisionedArguments `
     --build-arg "SOURCE_COMMIT=$commit" --build-arg "SOURCE_TREE=$tree" `
     --build-arg "DEPENDENCY_LOCK_SHA256=$lockHash" --build-arg "TARGET_OCI_PLATFORM=$Platform" $repo
 if ($LASTEXITCODE -ne 0) { throw 'verification-image-build-failed' }
