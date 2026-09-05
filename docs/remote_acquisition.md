@@ -62,7 +62,8 @@ sparse checkout, partial clone, alternates or active checkout modification.
 HTTPS URLs allow an ASCII hostname and conservative path characters. Embedded
 user information, queries, fragments, non-default ports, redirects, SSH,
 remote helpers and traversal are rejected. File URLs must have no authority
-and an existing canonical absolute path without percent encoding. Version 1
+and a canonical absolute path without percent encoding. Transport requires the
+remote to exist; offline receipt verification does not. Version 1
 admits no authentication mechanism: it disables Git credential helpers,
 interactive prompts, inherited Git configuration and environment overrides.
 Future authenticated transport needs an explicit runtime policy extension.

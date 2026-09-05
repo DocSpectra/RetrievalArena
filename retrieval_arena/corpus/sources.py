@@ -67,7 +67,9 @@ def descriptor_from_dict(raw: dict[str, Any], *, base_path: Path | None = None) 
         from .acquisition import descriptor_payload
         # Validate the supplied scope before historical local normalization.
         from dataclasses import replace
-        descriptor = replace(descriptor, docs_root=docs_root)
+        destination = Path(raw["destination_workspace"])
+        descriptor = replace(descriptor, docs_root=docs_root,
+            destination_workspace=(destination if destination.is_absolute() else base / destination).absolute())
         descriptor_payload(descriptor)
     return descriptor
 

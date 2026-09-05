@@ -54,7 +54,8 @@ def canonical_url(value: str | None) -> str:
             path = Path(unquote(url.path))
             if os.name == "nt" and re.match(r"/[A-Za-z]:/", url.path):
                 path = Path(url.path[1:])
-            return path.resolve(strict=True).as_uri()
+            # Offline receipt admission must not require the remote to exist.
+            return path.resolve().as_uri()
         if url.scheme != "https" or not url.hostname or url.port not in (None, 443):
             fail("url-invalid")
         if not re.fullmatch(r"[A-Za-z0-9.-]+", url.hostname) or not re.fullmatch(r"/[A-Za-z0-9_./~-]+", url.path):
@@ -355,7 +356,7 @@ def _verify(root: Path, d: dict[str, Any], commit: str, expected_hash: str | Non
         fail("artifact-binding-mismatch")
     git = GitRuntime(_git_executable())
     observed = _observe(git, root / "source", commit, d)
-    if any(identity[key] != val for key, val in observed.items()):
+    if canonical_json_bytes({key: identity[key] for key in observed}) != canonical_json_bytes(observed):
         fail("materialization-mismatch")
     if identity["content_hash"] != sha256_json({"files": observed["inventory"]}):
         fail("inventory-mismatch")

@@ -125,9 +125,64 @@ class RemoteAcquisitionTests(unittest.TestCase):
     def test_checkout_is_independent_after_remote_removed(self):
         d = replace(self.d, requested_ref=self.commit)
         result = self.acquire(d)
-        # Keep URL resolvable for descriptor validation, remove all remote objects.
-        shutil.rmtree(self.remote / "objects")
+        shutil.rmtree(self.remote)
         self.verify(result, d)
+
+    def test_missing_documentation_root_and_non_tree_scope_rejected(self):
+        for docs_root in ("missing", "outside.md"):
+            with self.assertRaises(ValidationError):
+                self.acquire(replace(self.d, docs_root=docs_root))
+        self.assert_no_success()
+
+    def test_exact_ancestor_commit_fetch_has_complete_history(self):
+        (self.repo / "docs/readme.md").write_text("second\n")
+        self.git(self.repo, "commit", "-am", "second")
+        self.git(self.repo, "push", str(self.remote), "refs/heads/fixture-main")
+        d = replace(self.d, requested_ref=self.commit)
+        self.verify(self.acquire(d), d)
+
+    def test_symlink_tree_entry_rejected(self):
+        (self.repo / "docs/link.md").symlink_to("readme.md")
+        self.git(self.repo, "add", "docs/link.md")
+        self.git(self.repo, "commit", "-m", "symlink")
+        self.git(self.repo, "push", str(self.remote), "refs/heads/fixture-main")
+        with self.assertRaises(ValidationError):
+            self.acquire()
+        self.assert_no_success()
+
+    def test_submodule_tree_entry_rejected(self):
+        self.git(self.repo, "update-index", "--add", "--cacheinfo", "160000," + self.commit + ",submodule")
+        self.git(self.repo, "commit", "-m", "gitlink")
+        self.git(self.repo, "push", str(self.remote), "refs/heads/fixture-main")
+        with self.assertRaises(ValidationError):
+            self.acquire()
+        self.assert_no_success()
+
+    def test_inventory_numeric_type_mutation_rejected_even_when_rehashed(self):
+        result = self.acquire()
+        self.rewrite_receipt(result, lambda r: r["identity"]["inventory"][0].update({"size_bytes": 6.0}))
+        a._write(result.root / "inventory.json", a._read(result.root / a.RECEIPT)["identity"]["inventory"])
+        with self.assertRaises(ValidationError):
+            a.verify_acquisition(result.root, self.d, expected_commit=self.commit)
+
+    def test_raw_descriptor_cannot_hide_symlink_destination(self):
+        target = self.root / "target"
+        target.mkdir()
+        link = self.root / "link"
+        link.symlink_to(target, target_is_directory=True)
+        d = descriptor_from_dict({**a.descriptor_payload(self.d), "destination_workspace": str(link)})
+        with self.assertRaisesRegex(ValidationError, "root-link-rejected"):
+            self.acquire(d)
+
+    def test_dataset_preparation_revalidates_acquired_bytes(self):
+        from retrieval_arena.corpus.dataset_export import prepare_dataset
+        result = self.acquire()
+        prepared = prepare_dataset(result.root / a.MANIFEST, self.root / "prepared")
+        self.assertTrue(prepared["manifest_path"].is_file())
+        (result.root / "documents/readme.md").write_text("mutation")
+        with self.assertRaises(ValidationError):
+            prepare_dataset(result.root / a.MANIFEST, self.root / "rejected")
+        self.assertFalse((self.root / "rejected").exists())
 
     def test_longpaths_is_command_and_repository_local(self):
         result = self.acquire()
