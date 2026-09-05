@@ -26,7 +26,8 @@ from ..snapshots import corpus_doc_id, utc_now_iso
 from .sources import CorpusSourceDescriptor
 
 SCHEMA = "retrieval_arena.remote_git_acquisition.v1"
-POLICY = "exact-git-anonymous-v1"
+LEGACY_POLICY = "exact-git-anonymous-v1"
+POLICY = "exact-git-anonymous-inert-links-v2"
 IMPORT_SCHEMA = "retrieval_arena.corpus_import_manifest.v2"
 MARKER = ".retrieval-arena-acquisition-owner"
 RECEIPT = "acquisition_receipt.json"
@@ -169,7 +170,7 @@ def _safe_path(path: Path) -> Path:
     return absolute
 
 
-def _inventory(git: GitRuntime, repo: Path, commit: str, d: dict[str, Any]) -> list[dict[str, Any]]:
+def _inventory(git: GitRuntime, repo: Path, commit: str, d: dict[str, Any], policy: str = POLICY) -> list[dict[str, Any]]:
     records = git.run(repo, "ls-tree", "-rz", "--full-tree", commit)
     inventory = []
     all_paths = []
@@ -182,7 +183,9 @@ def _inventory(git: GitRuntime, repo: Path, commit: str, d: dict[str, Any]) -> l
             relative = name.decode("utf-8")
         except (ValueError, UnicodeError):
             fail("tree-invalid")
-        if mode not in {"100644", "100755"} or kind != "blob" or not HEX40.fullmatch(oid):
+        prefix = d["docs_root"] + "/" if d["docs_root"] else ""
+        inert_link = mode == "120000" and policy == POLICY and bool(prefix) and not relative.startswith(prefix)
+        if (mode not in {"100644", "100755"} and not inert_link) or kind != "blob" or not HEX40.fullmatch(oid):
             fail("tree-entry-unsupported")
         if (PurePosixPath(relative).is_absolute() or "\\" in relative or
             any(p in {"", ".", ".."} or p.casefold() == ".git" for p in relative.split("/"))):
@@ -190,10 +193,9 @@ def _inventory(git: GitRuntime, repo: Path, commit: str, d: dict[str, Any]) -> l
         file = repo / relative
         _safe_path(file)
         content = git.run(repo, "cat-file", "blob", oid)
-        if not file.is_file() or file.read_bytes() != content:
+        if not stat.S_ISREG(file.lstat().st_mode) or file.read_bytes() != content:
             fail("materialized-file-mismatch")
         all_paths.append(relative)
-        prefix = d["docs_root"] + "/" if d["docs_root"] else ""
         if not relative.startswith(prefix):
             continue
         selected = relative[len(prefix):]
@@ -210,7 +212,7 @@ def _inventory(git: GitRuntime, repo: Path, commit: str, d: dict[str, Any]) -> l
     return sorted(inventory, key=lambda row: row["path"])
 
 
-def _observe(git: GitRuntime, repo: Path, commit: str, d: dict[str, Any]) -> dict[str, Any]:
+def _observe(git: GitRuntime, repo: Path, commit: str, d: dict[str, Any], policy: str = POLICY) -> dict[str, Any]:
     _safe_path(repo)
     if not (repo / ".git").is_dir() or (repo / ".git").is_symlink():
         fail("repository-not-independent")
@@ -228,6 +230,8 @@ def _observe(git: GitRuntime, repo: Path, commit: str, d: dict[str, Any]) -> dic
                "longpaths": {"true"}, "autocrlf": {"false"}}
     if any(key not in allowed or value not in allowed[key] for key, value in config["core"].items()):
         fail("git-config-invalid")
+    if policy == POLICY and config["core"].get("symlinks") != "false":
+        fail("inert-link-config-required")
     if dict(config['remote "origin"']) != {"url": d["source_url"]}:
         fail("origin-mismatch")
     for name in ("objects/info/alternates", "shallow", "info/grafts", "info/attributes"):
@@ -249,7 +253,7 @@ def _observe(git: GitRuntime, repo: Path, commit: str, d: dict[str, Any]) -> dic
         fail("tree-invalid")
     return {"resolved_commit": commit, "full_tree": tree, "docs_tree": docs_tree,
             "clean": True, "detached": True, "independent_objects": True,
-            "inventory": _inventory(git, repo, commit, d)}
+            "inventory": _inventory(git, repo, commit, d, policy)}
 
 
 def _write(path: Path, value: dict[str, Any] | list[Any]) -> None:
@@ -316,8 +320,9 @@ def _verify(root: Path, d: dict[str, Any], commit: str, expected_hash: str | Non
         fail("receipt-fields-invalid")
     if receipt != finalize_manifest(receipt) or (expected_hash and receipt["manifest_hash"] != expected_hash):
         fail("receipt-hash-mismatch")
-    if (receipt["schema_version"], receipt["policy_version"], receipt["phase"], receipt["status"], receipt["failure_class"]) != (
-        SCHEMA, POLICY, "complete", "success", None):
+    if receipt["policy_version"] not in {LEGACY_POLICY, POLICY} or (
+        receipt["schema_version"], receipt["phase"], receipt["status"], receipt["failure_class"]) != (
+        SCHEMA, "complete", "success", None):
         fail("receipt-terminal-invalid")
     identity = receipt["identity"]
     if set(identity) != {"descriptor", "descriptor_hash", "ref_interpretation", "resolved_commit", "full_tree",
@@ -355,7 +360,7 @@ def _verify(root: Path, d: dict[str, Any], commit: str, expected_hash: str | Non
     if _read(root / "descriptor.json") != d or _read(root / "inventory.json") != identity["inventory"]:
         fail("artifact-binding-mismatch")
     git = GitRuntime(_git_executable())
-    observed = _observe(git, root / "source", commit, d)
+    observed = _observe(git, root / "source", commit, d, receipt["policy_version"])
     if canonical_json_bytes({key: identity[key] for key in observed}) != canonical_json_bytes(observed):
         fail("materialization-mismatch")
     if identity["content_hash"] != sha256_json({"files": observed["inventory"]}):
@@ -439,6 +444,7 @@ def acquire_remote(descriptor: CorpusSourceDescriptor, *, capability: str = "dis
         git.run(repo, "init", "--template=", "-b", "acquisition-unborn")
         git.run(repo, "config", "core.longpaths", "true")
         git.run(repo, "config", "core.autocrlf", "false")
+        git.run(repo, "config", "core.symlinks", "false")
         git.run(repo, "config", "remote.origin.url", d["source_url"])
         git.run(repo, "fetch", "--no-tags", "--no-recurse-submodules", "--", d["source_url"], commit)
         git.run(repo, "checkout", "--detach", commit, "--")

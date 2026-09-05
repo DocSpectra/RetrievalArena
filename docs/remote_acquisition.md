@@ -72,7 +72,7 @@ Git diagnostics are never retained or echoed; failures use fixed reason codes.
 ## Receipt and lineage
 
 The receipt schema is `retrieval_arena.remote_git_acquisition.v1`, policy
-`exact-git-anonymous-v1`. Its closed top-level fields are `schema_version`,
+`exact-git-anonymous-inert-links-v2`. Its closed top-level fields are `schema_version`,
 `policy_version`, `created_at`, `identity`, `identity_hash`, `operational`,
 `phase`, `status`, `failure_class`, and `manifest_hash`.
 
@@ -84,8 +84,14 @@ The descriptor excludes the destination path. `identity_hash` is RA's
 `sha256_json(identity)`; `content_hash` is `sha256_json({"files": inventory})`.
 The inventory uses the existing import path/doc ID/size/SHA-256 entry shape.
 Git objects and materialized bytes are compared for every tracked ordinary
-file, including files outside the selected documentation scope. Symlinks,
-submodules, case collisions and transformed checkout bytes are rejected.
+file, including files outside the selected documentation scope. Before checkout,
+v2 sets `core.symlinks=false`. Git symlink blobs outside a nonempty documentation
+subtree become regular files containing the exact target text; no target is
+resolved. Documentation symlinks (even excluded ones), full-root symlinks,
+actual filesystem links, submodules, case collisions and transformed bytes
+are rejected. Verification requires the same inert configuration and bytes.
+Legacy `exact-git-anonymous-v1` receipts retain rejection of every Git symlink;
+reuse verifies their original policy and never relabels a receipt.
 
 `operational` records publication root and Git executable/version.
 `created_at` and operational paths are outside `identity_hash`. The receipt

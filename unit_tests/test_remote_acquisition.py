@@ -141,6 +141,66 @@ class RemoteAcquisitionTests(unittest.TestCase):
         d = replace(self.d, requested_ref=self.commit)
         self.verify(self.acquire(d), d)
 
+    def add_fixture_links(self):
+        for name, target in (("relative", "outside.md"), ("absolute", "/unavailable/target"),
+                             ("escaping", "../../unavailable-target")):
+            (self.repo / name).symlink_to(target)
+        self.git(self.repo, "add", "relative", "absolute", "escaping")
+        self.git(self.repo, "commit", "-m", "outside link fixtures")
+        self.commit = self.git(self.repo, "rev-parse", "HEAD")
+        self.git(self.repo, "push", str(self.remote), "refs/heads/fixture-main")
+
+    def test_outside_links_are_exact_inert_blobs_and_reuse_is_stable(self):
+        self.add_fixture_links()
+        result = self.acquire()
+        self.verify(result)
+        self.assertEqual(result.receipt["policy_version"], a.POLICY)
+        for name in ("relative", "absolute", "escaping"):
+            path = result.root / "source" / name
+            self.assertFalse(path.is_symlink())
+            self.assertTrue(path.is_file())
+            self.assertEqual(path.read_text(), os.readlink(self.repo / name))
+        self.assertEqual(self.acquire().receipt, result.receipt)
+
+    def test_outside_links_rejected_for_full_root_and_legacy_policy(self):
+        self.add_fixture_links()
+        with self.assertRaises(ValidationError):
+            self.acquire(replace(self.d, docs_root=None))
+        result = self.acquire()
+        self.rewrite_receipt(result, lambda r: r.update(policy_version=a.LEGACY_POLICY))
+        with self.assertRaises(ValidationError):
+            a.verify_acquisition(result.root, self.d, expected_commit=self.commit)
+
+    def test_legacy_ordinary_receipt_reuses_without_relabeling(self):
+        result = self.acquire()
+        self.rewrite_receipt(result, lambda r: r.update(policy_version=a.LEGACY_POLICY))
+        original = (result.root / a.RECEIPT).read_bytes()
+        reused = self.acquire()
+        self.assertTrue(reused.reused)
+        self.assertEqual(reused.receipt["policy_version"], a.LEGACY_POLICY)
+        self.assertEqual((result.root / a.RECEIPT).read_bytes(), original)
+
+    def test_inert_link_configuration_bytes_and_os_link_drift_rejected(self):
+        self.add_fixture_links()
+        result = self.acquire()
+        source = result.root / "source"
+        self.git(source, "config", "core.symlinks", "true")
+        with self.assertRaises(ValidationError):
+            self.verify(result)
+        self.git(source, "config", "core.symlinks", "false")
+        path = source / "relative"
+        original = path.read_bytes()
+        path.write_bytes(b"different-target")
+        with self.assertRaises(ValidationError):
+            self.verify(result)
+        path.unlink()
+        path.symlink_to("outside.md")
+        with self.assertRaises(ValidationError):
+            self.verify(result)
+        path.unlink()
+        path.write_bytes(original)
+        self.verify(result)
+
     def test_symlink_tree_entry_rejected(self):
         (self.repo / "docs/link.md").symlink_to("readme.md")
         self.git(self.repo, "add", "docs/link.md")
@@ -148,6 +208,8 @@ class RemoteAcquisitionTests(unittest.TestCase):
         self.git(self.repo, "push", str(self.remote), "refs/heads/fixture-main")
         with self.assertRaises(ValidationError):
             self.acquire()
+        with self.assertRaises(ValidationError):
+            self.acquire(replace(self.d, exclude=("link.md",)))
         self.assert_no_success()
 
     def test_submodule_tree_entry_rejected(self):
