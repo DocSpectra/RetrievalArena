@@ -303,3 +303,21 @@ evaluator-only inside the automatic result.
 - No result family may grade itself or mutate its qrels, packet, or policy.
 - No AP/MAP, R-precision, alpha-nDCG, ERR-IA, D#, inferred-AP, or composite
   endpoint is exposed by this implementation.
+
+### Registered offline score production
+
+Both verification adapters now expose `score-bertscore` using the existing
+admission and atomic publication owner. Its closed request schema is
+`retrieval_arena.bertscore_scoring_request.v1`, with the same config path and
+complete input inventory fields as the profile request. The referenced
+`retrieval_arena.bertscore_scoring_config.v1` contains only `schema_version`,
+`provider_path`, and `answer_pairs_path`. Paths are relative to the config;
+provider asset paths are relative to the provider and confined to admitted input.
+
+Scoring requires provider v2, produces `bertscore_scores.v1.json`, and emits
+`retrieval_arena.bertscore_scoring_operator_receipt.v1`. Both adapters assign
+8 GiB memory and two CPUs; network remains disabled. Input inventory and
+request bytes are revalidated before publication. The scorer uses the existing
+RA-owned implementation and does not infer judgments or inspect authoring state.
+Contract fixtures do not establish actual checkpoint availability; a separately
+provisioned immutable runtime and a real-model canary remain required.

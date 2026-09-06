@@ -24,6 +24,7 @@ COMMANDS = {
     ),
     "all": None,
     "evaluate-profile": (),
+    "score-bertscore": (),
     "review-packet": (),
 }
 
@@ -60,10 +61,10 @@ def main(argv: list[str]) -> int:
     os.chdir(SOURCE_ROOT)
     os.environ["RA_NETWORK_DISABLED"] = "1"
     sys.path.insert(0, str(SOURCE_ROOT))
-    if argv[1] == "evaluate-profile":
+    if argv[1] in {"evaluate-profile", "score-bertscore"}:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from evaluate_profile import main as evaluate_profile_main
-        return evaluate_profile_main()
+        return evaluate_profile_main(argv[1])
     if argv[1] == "review-packet":
         sys.path.insert(0, str(OPERATOR_ROOT))
         from review_packet import main as review_packet_main

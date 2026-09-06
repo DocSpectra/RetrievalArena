@@ -73,7 +73,7 @@ def _inside(root: Path, relative: str) -> Path:
     return candidate
 
 
-def _read_request() -> tuple[dict[str, Any], Path, list[dict[str, str]]]:
+def _read_request(command: str = "evaluate-profile") -> tuple[dict[str, Any], Path, list[dict[str, str]]]:
     request_path = INPUT / REQUEST
     if not request_path.is_file() or request_path.is_symlink():
         raise AdmissionError("operator-request-missing")
@@ -84,7 +84,9 @@ def _read_request() -> tuple[dict[str, Any], Path, list[dict[str, str]]]:
     expected = {"schema_version", "command", "config_path", "input_inventory", "input_inventory_sha256"}
     if not isinstance(request, dict) or set(request) != expected:
         raise AdmissionError("operator-request-fields-invalid")
-    if request["schema_version"] != REQUEST_SCHEMA or request["command"] != "evaluate-profile":
+    expected_schema = (REQUEST_SCHEMA if command == "evaluate-profile"
+                       else "retrieval_arena.bertscore_scoring_request.v1")
+    if command not in {"evaluate-profile", "score-bertscore"} or request["schema_version"] != expected_schema or request["command"] != command:
         raise AdmissionError("operator-request-command-invalid")
     if not isinstance(request["input_inventory"], list) or request["input_inventory_sha256"] != _sha(_canonical(request["input_inventory"])):
         raise AdmissionError("operator-input-inventory-hash-invalid")
@@ -114,7 +116,7 @@ def _admit_output() -> None:
         raise AdmissionError("operator-output-root-not-fresh")
 
 
-def _receipt(request: dict[str, Any] | None, inputs: list[dict[str, str]], exit_code: int, started: str, error: str | None) -> dict[str, Any]:
+def _receipt(request: dict[str, Any] | None, inputs: list[dict[str, str]], exit_code: int, started: str, error: str | None, command: str = "evaluate-profile") -> dict[str, Any]:
     identity = {
         "source_commit": os.environ.get("RA_SOURCE_COMMIT", ""),
         "source_tree": os.environ.get("RA_SOURCE_TREE", ""),
@@ -123,9 +125,9 @@ def _receipt(request: dict[str, Any] | None, inputs: list[dict[str, str]], exit_
         "platform": os.environ.get("RA_PLATFORM", ""),
     }
     value: dict[str, Any] = {
-        "schema_version": RECEIPT_SCHEMA,
-        "command": "evaluate-profile",
-        "argv": ["evaluate-profile", "--config", "/workspace/input/" + (request["config_path"] if request else ""), "--out-dir", "/workspace/output"],
+        "schema_version": RECEIPT_SCHEMA if command == "evaluate-profile" else "retrieval_arena.bertscore_scoring_operator_receipt.v1",
+        "command": command,
+        "argv": [command, "--config", "/workspace/input/" + (request["config_path"] if request else ""), "--out-dir", "/workspace/output"],
         "effective_config_path": "/workspace/input/" + (request["config_path"] if request else ""),
         "effective_output_path": "/workspace/output",
         "request_sha256": _file_sha(INPUT / REQUEST) if (INPUT / REQUEST).is_file() else None,
@@ -146,7 +148,40 @@ def _receipt(request: dict[str, Any] | None, inputs: list[dict[str, str]], exit_
     return value
 
 
-def main() -> int:
+def _score_bertscore_files(config_path: Path, staging: Path) -> dict[str, Any]:
+    """Score admitted pairs with the exact v2 provider, without interpreting qrels."""
+    from retrieval_arena.dual_profile import run_bertscore_offline
+
+    config = json.loads(config_path.read_bytes())
+    fields = {"schema_version", "provider_path", "answer_pairs_path"}
+    if not isinstance(config, dict) or set(config) != fields or config["schema_version"] != "retrieval_arena.bertscore_scoring_config.v1":
+        raise AdmissionError("bertscore-config-invalid")
+    paths = {}
+    for name in ("provider_path", "answer_pairs_path"):
+        if not isinstance(config[name], str):
+            raise AdmissionError("bertscore-path-invalid")
+        path = _inside(config_path.parent, config[name])
+        if not path.is_file() or path.is_symlink():
+            raise AdmissionError("bertscore-input-missing")
+        paths[name] = path
+    provider = json.loads(paths["provider_path"].read_bytes())
+    if not isinstance(provider, dict) or provider.get("schema_version") != "retrieval_arena.bertscore_provider.v2":
+        raise AdmissionError("bertscore-v2-provider-required")
+    for name in ("package_artifact_path", "model_artifact_path", "tokenizer_artifact_path", "baseline_artifact_path"):
+        value = provider.get(name)
+        if value is None and name == "baseline_artifact_path":
+            continue
+        if not isinstance(value, str):
+            raise AdmissionError("bertscore-provider-path-invalid")
+        path = _inside(paths["provider_path"].parent, value)
+        if not path.exists() or path.is_symlink() or not path.resolve().is_relative_to(INPUT.resolve()):
+            raise AdmissionError("bertscore-provider-path-invalid")
+    pairs = [json.loads(line) for line in paths["answer_pairs_path"].read_text(encoding="utf-8").splitlines() if line.strip()]
+    scores = run_bertscore_offline(provider, paths["provider_path"].parent, pairs)
+    (staging / "bertscore_scores.v1.json").write_bytes(_canonical(scores) + b"\n")
+    return {"result": {"evaluation_profile": "bertscore_scoring", "result_sha256": scores["scores_sha256"]}}
+
+def main(command: str = "evaluate-profile") -> int:
     started = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     request: dict[str, Any] | None = None
     inputs: list[dict[str, str]] = []
@@ -157,10 +192,14 @@ def main() -> int:
     try:
         _admit_output()
         output_admitted = True
-        request, config, inputs = _read_request()
+        admitted_request_sha256 = _file_sha(INPUT / REQUEST)
+        request, config, inputs = _read_request(command)
         staging = Path("/tmp/evaluation")
         staging.mkdir(parents=True, exist_ok=False)
-        evaluated = evaluate_profile_files(config, staging)
+        evaluated = (evaluate_profile_files(config, staging) if command == "evaluate-profile"
+                     else _score_bertscore_files(config, staging))
+        if _file_sha(INPUT / REQUEST) != admitted_request_sha256 or _read_request(command) != (request, config, inputs):
+            raise AdmissionError("operator-input-inventory-changed")
         try:
             for artifact in staging.iterdir():
                 if artifact.is_symlink() or not artifact.is_file():
@@ -188,7 +227,7 @@ def main() -> int:
     finally:
         if output_admitted and OUTPUT.is_dir() and not OUTPUT.is_symlink():
             try:
-                receipt = _receipt(request, inputs, exit_code, started, error)
+                receipt = _receipt(request, inputs, exit_code, started, error, command)
                 (OUTPUT / "operator_receipt.v1.json").write_bytes(json.dumps(receipt, sort_keys=True, indent=2).encode("utf-8") + b"\n")
             except Exception as exc:
                 print(f"operator-receipt-write-failed:{type(exc).__name__}", file=sys.stderr)

@@ -57,7 +57,11 @@ class VerificationContainerContractTests(unittest.TestCase):
         shell = self.text("scripts/run-verification.sh")
         # These occur in the focused/all branch after its isolated source mount.
         self.assertGreaterEqual(powershell.count("'--pids-limit','512','--memory','2g','--cpus','2'"), 2)
-        self.assertGreaterEqual(shell.count("--memory 2g --cpus 2"), 2)
+        self.assertIn("--memory 2g --cpus 2", shell)
+        self.assertIn('operator_memory=2g', shell)
+        self.assertIn('operator_memory=8g', shell)
+        self.assertIn('--memory "$operator_memory" --cpus 2', shell)
+        self.assertIn("$arguments[$memoryIndex + 1] = '8g'", powershell)
 
     def test_posix_adapters_cover_linux_and_macos_hash_tools_and_pretty_receipts(self):
         build = self.text("scripts/build-verification.sh")

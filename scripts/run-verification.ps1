@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('focused','all','evaluate-profile','review-packet')][string]$Command,
+    [Parameter(Mandatory = $true)][ValidateSet('focused','all','evaluate-profile','review-packet','score-bertscore')][string]$Command,
     [string]$InputRoot,
     [string]$OutputRoot,
     [string]$Receipt = '.tmp/verification-image.json'
@@ -35,7 +35,7 @@ if ($head -ne $value.source_commit -or $tree -ne $value.source_tree) { throw 've
 $labels = (& docker image inspect --format '{{json .Config.Labels}}' $image | ConvertFrom-Json)
 if ($LASTEXITCODE -ne 0 -or $labels.'org.opencontainers.image.revision' -ne $value.source_commit -or $labels.'io.retrieval-arena.source.tree' -ne $value.source_tree -or $labels.'io.retrieval-arena.verification.dependency-lock-sha256' -ne $value.dependency_lock_sha256 -or $labels.'io.retrieval-arena.verification.platform' -ne $value.platform) { throw 'verification-image-label-mismatch' }
 
-if ($Command -in @('evaluate-profile','review-packet')) {
+if ($Command -in @('evaluate-profile','review-packet','score-bertscore')) {
     if ([string]::IsNullOrWhiteSpace($InputRoot) -or [string]::IsNullOrWhiteSpace($OutputRoot)) { throw 'verification-operator-input-output-required' }
     $inputPath = (Resolve-Path -LiteralPath $InputRoot).Path
     $outputPath = (Resolve-Path -LiteralPath $OutputRoot).Path
@@ -57,6 +57,10 @@ if ($Command -in @('evaluate-profile','review-packet')) {
         '--env','HOME=/tmp','--env','TMPDIR=/tmp','--env','PYTHONHASHSEED=0','--env','PYTHONIOENCODING=utf-8','--env','TZ=UTC',
         $image,$Command
     )
+    if ($Command -eq 'score-bertscore') {
+        $memoryIndex = [Array]::IndexOf($arguments, '--memory')
+        $arguments[$memoryIndex + 1] = '8g'
+    }
     & docker @arguments
     exit $LASTEXITCODE
 }

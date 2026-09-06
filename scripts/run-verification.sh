@@ -2,12 +2,12 @@
 set -eu
 
 if [ "$#" -lt 1 ]; then
-  echo 'usage: run-verification.sh <focused|all> [receipt] | <evaluate-profile|review-packet> <input-root> <output-root> [receipt]' >&2
+  echo 'usage: run-verification.sh <focused|all> [receipt] | <evaluate-profile|review-packet|score-bertscore> <input-root> <output-root> [receipt]' >&2
   exit 2
 fi
 command_name=$1
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]; then
+if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ]; then
   [ "$#" -ge 3 ] && [ "$#" -le 4 ] || { echo verification-operator-input-output-required >&2; exit 2; }
   input_root=$2; output_root=$3; receipt=${4:-$repo/.tmp/verification-image.json}
 else
@@ -43,7 +43,7 @@ label_lock=$(docker image inspect --format '{{ index .Config.Labels "io.retrieva
 label_platform=$(docker image inspect --format '{{ index .Config.Labels "io.retrieval-arena.verification.platform" }}' "$image")
 [ "$label_commit" = "$commit" ] && [ "$label_tree" = "$tree" ] && [ "$label_lock" = "$receipt_lock" ] && [ "$label_platform" = "$platform" ] || { echo verification-image-label-mismatch >&2; exit 2; }
 
-if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]; then
+if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ]; then
   input_root=$(CDPATH= cd -- "$input_root" && pwd)
   output_root=$(CDPATH= cd -- "$output_root" && pwd)
   [ "$input_root" != "$output_root" ] && [ "$input_root" != "$repo" ] && [ "$output_root" != "$repo" ] && [ -f "$input_root/operator-request.json" ] || { echo verification-operator-root-admission-invalid >&2; exit 2; }
@@ -51,7 +51,9 @@ if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]
   case "$output_root/" in "$repo/"*|"$input_root/"*) echo verification-operator-root-admission-invalid >&2; exit 2 ;; esac
   case "$repo/" in "$input_root/"*|"$output_root/"*) echo verification-operator-root-admission-invalid >&2; exit 2 ;; esac
   [ "$(find "$output_root" -mindepth 1 -maxdepth 1 -exec basename {} \; | sort)" = .retrieval-arena-output-owner ] || { echo verification-operator-output-not-fresh >&2; exit 2; }
-  exec docker run --rm --platform "$platform" --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 \
+  operator_memory=2g
+  [ "$command_name" != score-bertscore ] || operator_memory=8g
+  exec docker run --rm --platform "$platform" --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory "$operator_memory" --cpus 2 \
     --mount "type=bind,src=$repo,dst=/workspace/source,readonly" --mount "type=bind,src=$input_root,dst=/workspace/input,readonly" --mount "type=bind,src=$output_root,dst=/workspace/output" \
     --tmpfs /tmp:rw,noexec,nosuid,nodev,size=256m,uid=65532,gid=65532 \
     --env "RA_SOURCE_COMMIT=$commit" --env "RA_SOURCE_TREE=$tree" --env "RA_DEPENDENCY_LOCK_SHA256=$receipt_lock" --env "RA_IMAGE_REFERENCE=$image" --env "RA_PLATFORM=$platform" \
