@@ -59,7 +59,7 @@ def _regular_inventory(root: Path, *, exclude: set[str] | None = None) -> list[d
         if not stat.S_ISREG(mode):
             raise AdmissionError("operator-nonregular-file-rejected")
         rows.append({"path": relative, "sha256": _file_sha(path)})
-    return rows
+    return sorted(rows, key=lambda row: row["path"])
 
 
 def _inside(root: Path, relative: str) -> Path:
