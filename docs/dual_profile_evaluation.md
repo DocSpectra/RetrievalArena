@@ -321,3 +321,17 @@ request bytes are revalidated before publication. The scorer uses the existing
 RA-owned implementation and does not infer judgments or inspect authoring state.
 Contract fixtures do not establish actual checkpoint availability; a separately
 provisioned immutable runtime and a real-model canary remain required.
+
+The scoring dependency closure now pins CPU PyTorch 2.8.0+cpu, Transformers
+4.55.4, bert-score 0.3.13, and every downloaded transitive wheel alongside the
+unchanged ranked dependency versions. `Dockerfile.provision` consumes a local
+build context containing that exact `requirements.lock` and a `wheels/`
+directory. Build with networking disabled from a verified immutable evaluator
+base (use a checked local tag when Docker cannot use a bare image ID in FROM).
+The recipe uses no index, enforces wheel hashes, checks installed dependencies,
+and verifies scoring imports. It performs no model inference.
+
+Pass the resulting image ID to the existing `build-verification.ps1
+-ProvisionedImage` path. That owner checks the new lock label and derives the
+source-bound verification image offline. Historical image/source receipts
+retain their previous dependency locks and are not upgraded by this build.
