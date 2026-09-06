@@ -197,6 +197,23 @@ answer-pair hashes. Missing registered provider material makes only BERTScore
 explicitly unavailable. A hash mismatch or provider substitution fails
 admission. Supplying a scores artifact without its provider is rejected.
 
+The opt-in `retrieval_arena.bertscore_provider.v2` extends the closed v1
+provider with a required positive integer `num_layers`. The provider self-hash
+binds that value and the offline scorer supplies it explicitly for local
+checkpoint paths. V2 canonicalizes distribution names according to the
+Python package naming convention (runs of dash, underscore, or dot become a
+dash, case-insensitively), while preserving exact version and artifact hashes.
+V2 also rejects empty pair inventories and rescaling without a registered
+baseline. V1 admission and invocation remain unchanged.
+
+V2 score admission retains finite raw provider values without clipping:
+floating-point overshoot and negative values are not rewritten as zero or
+one. Booleans, strings, and nonfinite values are rejected. The existing scores
+artifact binds its versioned provider identity, so this policy cannot be
+substituted without changing that identity. This contract extension alone does
+not establish a provisioned model/runtime or successful real-model execution;
+those require separate pinned-image and checkpoint qualification.
+
 BERTScore precision, recall, and F1 remain model-bound paraphrase diagnostics.
 They do not create qrels, transfer support, establish factuality, detect every
 contradiction, prove attribution, or replace semantic human judgments.

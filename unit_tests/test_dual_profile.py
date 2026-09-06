@@ -519,5 +519,71 @@ class DualProfileTests(unittest.TestCase):
                 run_bertscore_offline(provider, root, pairs)
 
 
+    def test_v2_bertscore_passes_local_layers_and_canonical_distribution_name(self):
+        with tempfile.TemporaryDirectory(dir=".tmp_unit_tests") as root_text:
+            root = Path(root_text)
+            provider, package_root = executable_bertscore_provider(root)
+            provider.update(schema_version="retrieval_arena.bertscore_provider.v2", num_layers=17)
+            implementation = package_root / "bert_score" / "__init__.py"
+            implementation.write_text(
+                "def score(candidates, references, **kwargs):\n"
+                "    assert kwargs['num_layers'] == 17\n"
+                "    return [1.0000001], [-0.01], [0.5]\n",
+                encoding="utf-8", newline="\n",
+            )
+            metadata = package_root / "bert_score-0.3.13.dist-info" / "METADATA"
+            metadata.write_text("Name: bert_score\nVersion: 0.3.13\n", encoding="utf-8", newline="\n")
+            provider["package_artifact_sha256"] = sha256_artifact(package_root)
+            hashed(provider, "provider_sha256")
+            pairs = [{"query_id": "q", "generated_answer": "a", "reference_answer": "a"}]
+            result = run_bertscore_offline(provider, root, pairs)
+            self.assertEqual(result["records"][0]["precision"], 1.0000001)
+            self.assertEqual(result["records"][0]["recall"], -0.01)
+            validate_bertscore_scores(result, provider, sha256_json(pairs))
+            provider["num_layers"] = 18
+            with self.assertRaisesRegex(ValidationError, "self-hash mismatch"):
+                validate_bertscore_provider(provider, root)
+
+    def test_v2_bertscore_layers_and_baseline_policy_fail_closed(self):
+        with tempfile.TemporaryDirectory(dir=".tmp_unit_tests") as root_text:
+            root = Path(root_text)
+            provider, _ = executable_bertscore_provider(root)
+            provider["schema_version"] = "retrieval_arena.bertscore_provider.v2"
+            for layers in (True, False, 0, -1, 1.5, "17", None):
+                with self.subTest(layers=layers):
+                    provider["num_layers"] = layers
+                    hashed(provider, "provider_sha256")
+                    with self.assertRaisesRegex(ValidationError, "positive integer"):
+                        validate_bertscore_provider(provider, root)
+            provider["num_layers"] = 17
+            provider["rescaling_policy"] = "rescale_with_registered_baseline"
+            hashed(provider, "provider_sha256")
+            with self.assertRaisesRegex(ValidationError, "requires a registered baseline"):
+                validate_bertscore_provider(provider, root)
+            provider["rescaling_policy"] = "none"
+            hashed(provider, "provider_sha256")
+            with self.assertRaisesRegex(ValidationError, "must be nonempty"):
+                run_bertscore_offline(provider, root, [])
+
+    def test_v2_bertscore_score_admission_preserves_finite_values_only(self):
+        provider = {"schema_version": "retrieval_arena.bertscore_provider.v2",
+                    "provider_id": "p", "provider_sha256": sha("provider")}
+        artifact = {"schema_version": "retrieval_arena.bertscore_scores.v1",
+                    "provider_id": "p", "provider_sha256": provider["provider_sha256"],
+                    "answer_pairs_sha256": sha("pairs"),
+                    "records": [{"query_id": "q", "precision": 1.0000001, "recall": -0.1, "f1": 0.5}]}
+        hashed(artifact, "scores_sha256")
+        accepted = validate_bertscore_scores(artifact, provider, sha("pairs"))
+        self.assertEqual(accepted["q"]["precision"], 1.0000001)
+        for bad in (True, float("nan"), float("inf"), "0.5"):
+            with self.subTest(value=bad):
+                mutated = copy.deepcopy(artifact)
+                mutated["records"][0]["f1"] = bad
+                with self.assertRaisesRegex(ValidationError, "finite numeric"):
+                    validate_bertscore_scores(mutated, provider, sha("pairs"))
+        provider["schema_version"] = "retrieval_arena.bertscore_provider.v1"
+        with self.assertRaises(ValidationError):
+            validate_bertscore_scores(artifact, provider, sha("pairs"))
+
 if __name__ == "__main__":
     unittest.main()

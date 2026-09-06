@@ -6,6 +6,7 @@ import importlib.metadata
 import json
 import math
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,7 @@ SCHEMA_REQUIREMENT_PREDICTION = "retrieval_arena.requirement_prediction.v1"
 SCHEMA_LINEAGE = "retrieval_arena.support_lineage.v1"
 SCHEMA_DESTINATION_QRELS = "retrieval_arena.destination_qrel_inventory.v2"
 SCHEMA_BERTSCORE_PROVIDER = "retrieval_arena.bertscore_provider.v1"
+SCHEMA_BERTSCORE_PROVIDER_V2 = "retrieval_arena.bertscore_provider.v2"
 SCHEMA_BERTSCORE_SCORES = "retrieval_arena.bertscore_scores.v1"
 SCHEMA_AUTOMATIC_RESULT = "retrieval_arena.automatic_result.v1"
 SCHEMA_CALIBRATION_RESULT = "retrieval_arena.calibration_result.v1"
@@ -921,9 +923,16 @@ def validate_bertscore_provider(registration: dict[str, Any], base_dir: Path) ->
         "runtime_download",
         "provider_sha256",
     }
-    _exact(registration, fields, "BERTScore provider registration")
-    if registration["schema_version"] != SCHEMA_BERTSCORE_PROVIDER:
+    schema = registration.get("schema_version")
+    if schema == SCHEMA_BERTSCORE_PROVIDER_V2:
+        fields = fields | {"num_layers"}
+    elif schema != SCHEMA_BERTSCORE_PROVIDER:
         raise ValidationError("unsupported BERTScore provider schema")
+    _exact(registration, fields, "BERTScore provider registration")
+    if schema == SCHEMA_BERTSCORE_PROVIDER_V2:
+        layers = registration["num_layers"]
+        if type(layers) is not int or layers <= 0:
+            raise ValidationError("BERTScore num_layers must be a positive integer")
     if registration["package_name"] != "bert-score" or registration["runtime_download"] is not False:
         raise ValidationError("BERTScore provider forbids package substitution and runtime download")
     for name in (
@@ -944,6 +953,12 @@ def validate_bertscore_provider(registration: dict[str, Any], base_dir: Path) ->
         raise ValidationError("unsupported BERTScore baseline policy")
     if registration["rescaling_policy"] not in {"none", "rescale_with_registered_baseline"}:
         raise ValidationError("unsupported BERTScore rescaling policy")
+    if (
+        schema == SCHEMA_BERTSCORE_PROVIDER_V2
+        and registration["rescaling_policy"] == "rescale_with_registered_baseline"
+        and registration["baseline_policy"] != "registered_artifact"
+    ):
+        raise ValidationError("BERTScore rescaling requires a registered baseline")
     def admit_file(path_value: Any, expected_hash: Any, owner: str, optional: bool = False) -> Path | None:
         if path_value is None and expected_hash is None and optional:
             return None
@@ -994,6 +1009,13 @@ def validate_bertscore_scores(
         raise ValidationError("unregistered BERTScore provider substitution")
     if artifact["answer_pairs_sha256"] != answer_pairs_sha256:
         raise ValidationError("BERTScore answer-pair identity mismatch")
+    def score_value(value: Any, name: str) -> float:
+        if provider["schema_version"] != SCHEMA_BERTSCORE_PROVIDER_V2:
+            return _finite_unit(value, name)
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise ValidationError(f"{name} must be finite numeric")
+        return float(value)
+
     result: dict[str, dict[str, float]] = {}
     for row in artifact["records"]:
         _exact(row, {"query_id", "precision", "recall", "f1"}, "BERTScore record")
@@ -1001,9 +1023,9 @@ def validate_bertscore_scores(
         if qid in result:
             raise ValidationError(f"duplicate BERTScore record:{qid}")
         result[qid] = {
-            "precision": _finite_unit(row["precision"], "BERTScore precision"),
-            "recall": _finite_unit(row["recall"], "BERTScore recall"),
-            "f1": _finite_unit(row["f1"], "BERTScore f1"),
+            "precision": score_value(row["precision"], "BERTScore precision"),
+            "recall": score_value(row["recall"], "BERTScore recall"),
+            "f1": score_value(row["f1"], "BERTScore f1"),
         }
     if _sha(artifact["scores_sha256"], "scores_sha256") != self_hash(artifact, "scores_sha256"):
         raise ValidationError("BERTScore scores self-hash mismatch")
@@ -1017,6 +1039,8 @@ def run_bertscore_offline(
 ) -> dict[str, Any]:
     """Run only the exact registered local BERTScore distribution tree."""
     validate_bertscore_provider(registration, base_dir)
+    if registration["schema_version"] == SCHEMA_BERTSCORE_PROVIDER_V2 and not answer_pairs:
+        raise ValidationError("BERTScore answer pairs must be nonempty")
     seen_queries: set[str] = set()
     for row in answer_pairs:
         _exact(row, {"query_id", "generated_answer", "reference_answer"}, "BERTScore answer pair")
@@ -1044,6 +1068,8 @@ def run_bertscore_offline(
             name, value = line.split(":", 1)
             if name in {"Name", "Version"} and name not in metadata_fields:
                 metadata_fields[name] = value.strip()
+    if registration["schema_version"] == SCHEMA_BERTSCORE_PROVIDER_V2 and "Name" in metadata_fields:
+        metadata_fields["Name"] = re.sub(r"[-_.]+", "-", metadata_fields["Name"]).lower()
     if metadata_fields != {"Name": registration["package_name"], "Version": registration["package_version"]}:
         raise ValidationError("BERTScore registered distribution name/version mismatch")
     model_path = Path(registration["model_artifact_path"])
@@ -1090,6 +1116,10 @@ def run_bertscore_offline(
         score_callable = getattr(provider_module, "score", None)
         if not callable(score_callable):
             raise ValidationError("BERTScore registered provider has no score callable")
+        layer_options = (
+            {"num_layers": registration["num_layers"]}
+            if registration["schema_version"] == SCHEMA_BERTSCORE_PROVIDER_V2 else {}
+        )
         precision, recall, f1 = score_callable(
             [row["generated_answer"] for row in answer_pairs],
             [row["reference_answer"] for row in answer_pairs],
@@ -1099,6 +1129,7 @@ def run_bertscore_offline(
             rescale_with_baseline=registration["rescaling_policy"] == "rescale_with_registered_baseline",
             baseline_path=baseline_path,
             verbose=False,
+            **layer_options,
         )
         for name, module in list(sys.modules.items()):
             if name == "bert_score" or name.startswith("bert_score."):
