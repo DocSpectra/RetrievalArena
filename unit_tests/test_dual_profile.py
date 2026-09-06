@@ -544,6 +544,12 @@ class DualProfileTests(unittest.TestCase):
             with self.assertRaisesRegex(ValidationError, "self-hash mismatch"):
                 validate_bertscore_provider(provider, root)
 
+    def test_bertscore_provider_nonobject_is_validation_error(self):
+        for value in (None, [], "provider"):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValidationError, "must be an object"):
+                    validate_bertscore_provider(value, Path("."))
+
     def test_v2_bertscore_layers_and_baseline_policy_fail_closed(self):
         with tempfile.TemporaryDirectory(dir=".tmp_unit_tests") as root_text:
             root = Path(root_text)

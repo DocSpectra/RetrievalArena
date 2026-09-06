@@ -923,6 +923,8 @@ def validate_bertscore_provider(registration: dict[str, Any], base_dir: Path) ->
         "runtime_download",
         "provider_sha256",
     }
+    if not isinstance(registration, dict):
+        raise ValidationError("BERTScore provider registration must be an object")
     schema = registration.get("schema_version")
     if schema == SCHEMA_BERTSCORE_PROVIDER_V2:
         fields = fields | {"num_layers"}
