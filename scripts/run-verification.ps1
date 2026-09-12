@@ -1,8 +1,9 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('focused','all','evaluate-profile','review-packet','score-bertscore')][string]$Command,
+    [Parameter(Mandatory = $true)][ValidateSet('focused','all','evaluate-profile','review-packet','score-bertscore','candidate-retrieve')][string]$Command,
     [string]$InputRoot,
     [string]$OutputRoot,
+    [string]$CandidateRoot,
     [string]$Receipt = '.tmp/verification-image.json'
 )
 
@@ -35,16 +36,56 @@ if ($head -ne $value.source_commit -or $tree -ne $value.source_tree) { throw 've
 $labels = (& docker image inspect --format '{{json .Config.Labels}}' $image | ConvertFrom-Json)
 if ($LASTEXITCODE -ne 0 -or $labels.'org.opencontainers.image.revision' -ne $value.source_commit -or $labels.'io.retrieval-arena.source.tree' -ne $value.source_tree -or $labels.'io.retrieval-arena.verification.dependency-lock-sha256' -ne $value.dependency_lock_sha256 -or $labels.'io.retrieval-arena.verification.platform' -ne $value.platform) { throw 'verification-image-label-mismatch' }
 
-if ($Command -in @('evaluate-profile','review-packet','score-bertscore')) {
+if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candidate-retrieve')) {
     if ([string]::IsNullOrWhiteSpace($InputRoot) -or [string]::IsNullOrWhiteSpace($OutputRoot)) { throw 'verification-operator-input-output-required' }
     $inputPath = (Resolve-Path -LiteralPath $InputRoot).Path
     $outputPath = (Resolve-Path -LiteralPath $OutputRoot).Path
-    $roots = @($repo,$inputPath,$outputPath)
+    $candidatePath = $null
+    if ($Command -eq 'candidate-retrieve') {
+        if ([string]::IsNullOrWhiteSpace($CandidateRoot)) { throw 'verification-candidate-root-required' }
+        $candidatePath = (Resolve-Path -LiteralPath $CandidateRoot).Path
+    }
+    $roots = @($repo,$inputPath,$outputPath) + $(if ($candidatePath) { @($candidatePath) } else { @() })
     $normalizedRoots = $roots | ForEach-Object { $_.TrimEnd([char[]]@('\','/')).ToLowerInvariant() }
     $nestedRoots = $false
     foreach ($left in $normalizedRoots) { foreach ($right in $normalizedRoots) { if ($left -ne $right -and $right.StartsWith($left + '\')) { $nestedRoots = $true } } }
-    if (($roots | Select-Object -Unique).Count -ne 3 -or $nestedRoots -or -not (Test-Path -LiteralPath (Join-Path $inputPath 'operator-request.json') -PathType Leaf)) { throw 'verification-operator-root-admission-invalid' }
+    $expectedRootCount = if ($Command -eq 'candidate-retrieve') { 4 } else { 3 }
+    if (($roots | Select-Object -Unique).Count -ne $expectedRootCount -or $nestedRoots -or -not (Test-Path -LiteralPath (Join-Path $inputPath 'operator-request.json') -PathType Leaf)) { throw 'verification-operator-root-admission-invalid' }
     if ((Get-ChildItem -Force -LiteralPath $outputPath | Select-Object -ExpandProperty Name) -ne '.retrieval-arena-output-owner') { throw 'verification-operator-output-not-fresh' }
+    if ($Command -eq 'candidate-retrieve') {
+        $common = @(
+            'run','--rm','--platform',[string]$value.platform,'--network','none','--read-only',
+            '--security-opt','no-new-privileges','--cap-drop','ALL','--pids-limit','512','--memory','2g','--cpus','2',
+            '--mount',"type=bind,src=$repo,dst=/workspace/source,readonly",
+            '--mount',"type=bind,src=$inputPath,dst=/workspace/input,readonly",
+            '--mount',"type=bind,src=$candidatePath,dst=/workspace/candidate,readonly",
+            '--mount',"type=bind,src=$outputPath,dst=/workspace/output",
+            '--env',"RA_SOURCE_COMMIT=$($value.source_commit)",'--env',"RA_SOURCE_TREE=$($value.source_tree)",
+            '--env',"RA_DEPENDENCY_LOCK_SHA256=$($value.dependency_lock_sha256)",'--env',"RA_IMAGE_REFERENCE=$image",'--env',"RA_PLATFORM=$($value.platform)",
+            '--env','HOME=/tmp','--env','TMPDIR=/tmp','--env','PYTHONHASHSEED=0','--env','PYTHONIOENCODING=utf-8','--env','TZ=UTC'
+        )
+        & docker @common '--tmpfs' '/tmp:rw,nosuid,nodev,size=256m,uid=65532,gid=65532' $image 'candidate-retrieve-prepare'
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        $launchPath = Join-Path $outputPath '.candidate-retrieval-work\launch.json'
+        try {
+            $launch = Get-Content -Raw -LiteralPath $launchPath | ConvertFrom-Json
+            if ($launch.schema_version -ne 'retrieval_arena.candidate_retrieval_launch.v1' -or $launch.platform -ne 'linux/amd64' -or $launch.network -ne 'none' -or [string]$launch.provider_image -notmatch '^retrieval-arena/rag-lexical-topk@sha256:[0-9a-f]{64}$') { throw 'verification-candidate-launch-invalid' }
+        }
+        catch {
+            [IO.File]::WriteAllText((Join-Path $outputPath '.candidate-retrieval-work\provider-exit.json'), "{`"exit_code`":-2}`n", [Text.UTF8Encoding]::new($false))
+            & docker @common '--tmpfs' '/tmp:rw,nosuid,nodev,size=256m,uid=65532,gid=65532' $image 'candidate-retrieve-finalize'
+            exit $LASTEXITCODE
+        }
+        $providerInput = (Resolve-Path -LiteralPath (Join-Path $outputPath '.candidate-retrieval-work\provider-input')).Path
+        $providerOutput = (Resolve-Path -LiteralPath (Join-Path $outputPath '.candidate-retrieval-work\provider-output')).Path
+        & docker run --rm --platform ([string]$launch.platform) --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 `
+            --mount "type=bind,src=$providerInput,dst=/input,readonly" --mount "type=bind,src=$providerOutput,dst=/output" `
+            --tmpfs '/tmp:rw,noexec,nosuid,nodev,size=128m' ([string]$launch.provider_image)
+        $providerExit = $LASTEXITCODE
+        [IO.File]::WriteAllText((Join-Path $outputPath '.candidate-retrieval-work\provider-exit.json'), ('{"exit_code":' + $providerExit + "}`n"), [Text.UTF8Encoding]::new($false))
+        & docker @common '--tmpfs' '/tmp:rw,nosuid,nodev,size=256m,uid=65532,gid=65532' $image 'candidate-retrieve-finalize'
+        exit $LASTEXITCODE
+    }
     $arguments = @(
         'run','--rm','--platform',[string]$value.platform,'--network','none','--read-only',
         '--security-opt','no-new-privileges','--cap-drop','ALL','--pids-limit','512','--memory','2g','--cpus','2',

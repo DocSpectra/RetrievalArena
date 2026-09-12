@@ -1,0 +1,13 @@
+{
+  "candidate": {"commit": "0000000000000000000000000000000000000000", "tree": "0000000000000000000000000000000000000000"},
+  "corpus": {"extensions": [".md"], "import_policy": "cikm_flat_path_sha1_v1", "root": "docs"},
+  "execution_id": "E-EXP1-argo-historical-v1-391960843-baseline",
+  "experiment_id": "E-EXP1-argo-historical-v1",
+  "input_inventory": [{"path": "questions.jsonl", "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "size_bytes": 0}],
+  "input_inventory_sha256": "1d9ed0aaf9ddc0c3adbc894cac77f11cfe2e085f0f3183304d39bec774d33323",
+  "output_identity": "replace-with-registered-output-identity",
+  "provider": {"image": "retrieval-arena/rag-lexical-topk@sha256:af35a19b05c699e72f88ec96bf2b05270355e4043435e9304b1ff7ee1f8eeac3", "max_context_chars_per_doc": 1500, "name": "rag_lexical_topk", "network": "none", "platform": "linux/amd64", "top_k": 5},
+  "queries_path": "questions.jsonl",
+  "ranked": {"context_item_budget_k": 5, "schema_version": "retrieval_arena.ranked_prediction.v2"},
+  "schema_version": "retrieval_arena.candidate_retrieval_config.v1"
+}

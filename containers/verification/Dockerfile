@@ -36,6 +36,7 @@ RUN if [ "$PROVISIONED" = "true" ]; then \
 COPY containers/verification/verify.py /opt/retrieval-arena/verify.py
 COPY containers/verification/evaluate_profile.py /opt/retrieval-arena/evaluate_profile.py
 COPY containers/verification/review_packet.py /opt/retrieval-arena/review_packet.py
+COPY containers/verification/candidate_retrieval.py /opt/retrieval-arena/candidate_retrieval.py
 RUN test -x /usr/bin/git \
     && mkdir -p /workspace/source \
     && chown 65532:65532 /workspace/source

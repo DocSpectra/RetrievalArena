@@ -150,6 +150,14 @@ context-item budget. See the specification's
 [plain-language metric guide and comparison](docs/ranked_retrieval_metrics_v2_plan.md#metric-guide)
 before the formal contracts and formulas.
 
+Candidate-bound prediction generation is exposed through the registered
+`candidate-retrieve` verification command. It admits an exact clean candidate
+Git commit/tree, a complete private-input inventory, and only an immutable
+`rag_lexical_topk` image; the provider runs offline and RA atomically publishes
+ranked-v2 predictions plus a self-hashed receipt. This stage does not score or
+mutate qrels. The closed shape is illustrated by
+`configs/candidate_retrieval.example.json`.
+
 Dual-profile evaluation preserves that ranked-v2 scorer and adds a zero-human
 `operational_automatic` family plus an optional artifact-only
 `scientific_calibration` family. Requirement coverage and support lineage are

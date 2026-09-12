@@ -76,6 +76,8 @@ class VerificationContainerContractTests(unittest.TestCase):
         self.assertIn('\"all\":', runner)
         self.assertIn('\"evaluate-profile\":', runner)
         self.assertIn('\"review-packet\":', runner)
+        self.assertIn('\"candidate-retrieve-prepare\":', runner)
+        self.assertIn('\"candidate-retrieve-finalize\":', runner)
         self.assertIn("argv[1] not in COMMANDS", runner)
         self.assertNotIn("subprocess", runner)
         self.assertIn("sys.path.insert(0, str(OPERATOR_ROOT))", runner)
@@ -90,6 +92,9 @@ class VerificationContainerContractTests(unittest.TestCase):
         review_operator = "containers/verification/review_packet.py"
         self.assertIn(f"!{review_operator}", dockerignore)
         self.assertIn(f"COPY {review_operator} /opt/retrieval-arena/review_packet.py", dockerfile)
+        candidate_operator = "containers/verification/candidate_retrieval.py"
+        self.assertIn(f"!{candidate_operator}", dockerignore)
+        self.assertIn(f"COPY {candidate_operator} /opt/retrieval-arena/candidate_retrieval.py", dockerfile)
 
     def test_review_packet_operator_is_atomic_and_receipted(self):
         operator = self.text("containers/verification/review_packet.py")

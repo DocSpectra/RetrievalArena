@@ -2,12 +2,15 @@
 set -eu
 
 if [ "$#" -lt 1 ]; then
-  echo 'usage: run-verification.sh <focused|all> [receipt] | <evaluate-profile|review-packet|score-bertscore> <input-root> <output-root> [receipt]' >&2
+  echo 'usage: run-verification.sh <focused|all> [receipt] | <evaluate-profile|review-packet|score-bertscore> <input-root> <output-root> [receipt] | candidate-retrieve <input-root> <output-root> <candidate-root> [receipt]' >&2
   exit 2
 fi
 command_name=$1
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ]; then
+if [ "$command_name" = candidate-retrieve ]; then
+  [ "$#" -ge 4 ] && [ "$#" -le 5 ] || { echo verification-candidate-root-required >&2; exit 2; }
+  input_root=$2; output_root=$3; candidate_root=$4; receipt=${5:-$repo/.tmp/verification-image.json}
+elif [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ]; then
   [ "$#" -ge 3 ] && [ "$#" -le 4 ] || { echo verification-operator-input-output-required >&2; exit 2; }
   input_root=$2; output_root=$3; receipt=${4:-$repo/.tmp/verification-image.json}
 else
@@ -43,7 +46,7 @@ label_lock=$(docker image inspect --format '{{ index .Config.Labels "io.retrieva
 label_platform=$(docker image inspect --format '{{ index .Config.Labels "io.retrieval-arena.verification.platform" }}' "$image")
 [ "$label_commit" = "$commit" ] && [ "$label_tree" = "$tree" ] && [ "$label_lock" = "$receipt_lock" ] && [ "$label_platform" = "$platform" ] || { echo verification-image-label-mismatch >&2; exit 2; }
 
-if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ]; then
+if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ] || [ "$command_name" = candidate-retrieve ]; then
   input_root=$(CDPATH= cd -- "$input_root" && pwd)
   output_root=$(CDPATH= cd -- "$output_root" && pwd)
   [ "$input_root" != "$output_root" ] && [ "$input_root" != "$repo" ] && [ "$output_root" != "$repo" ] && [ -f "$input_root/operator-request.json" ] || { echo verification-operator-root-admission-invalid >&2; exit 2; }
@@ -51,6 +54,41 @@ if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]
   case "$output_root/" in "$repo/"*|"$input_root/"*) echo verification-operator-root-admission-invalid >&2; exit 2 ;; esac
   case "$repo/" in "$input_root/"*|"$output_root/"*) echo verification-operator-root-admission-invalid >&2; exit 2 ;; esac
   [ "$(find "$output_root" -mindepth 1 -maxdepth 1 -exec basename {} \; | sort)" = .retrieval-arena-output-owner ] || { echo verification-operator-output-not-fresh >&2; exit 2; }
+  if [ "$command_name" = candidate-retrieve ]; then
+    candidate_root=$(CDPATH= cd -- "$candidate_root" && pwd)
+    admit_pair() {
+      [ "$1" != "$2" ] || { echo verification-operator-root-admission-invalid >&2; exit 2; }
+      case "$1/" in "$2/"*) echo verification-operator-root-admission-invalid >&2; exit 2 ;; esac
+      case "$2/" in "$1/"*) echo verification-operator-root-admission-invalid >&2; exit 2 ;; esac
+    }
+    admit_pair "$repo" "$input_root"; admit_pair "$repo" "$output_root"
+    admit_pair "$repo" "$candidate_root"; admit_pair "$input_root" "$output_root"
+    admit_pair "$input_root" "$candidate_root"; admit_pair "$output_root" "$candidate_root"
+    run_operator() {
+      docker run --rm --platform "$platform" --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 \
+        --mount "type=bind,src=$repo,dst=/workspace/source,readonly" --mount "type=bind,src=$input_root,dst=/workspace/input,readonly" \
+        --mount "type=bind,src=$candidate_root,dst=/workspace/candidate,readonly" --mount "type=bind,src=$output_root,dst=/workspace/output" \
+        --tmpfs /tmp:rw,nosuid,nodev,size=256m,uid=65532,gid=65532 \
+        --env "RA_SOURCE_COMMIT=$commit" --env "RA_SOURCE_TREE=$tree" --env "RA_DEPENDENCY_LOCK_SHA256=$receipt_lock" --env "RA_IMAGE_REFERENCE=$image" --env "RA_PLATFORM=$platform" \
+        --env HOME=/tmp --env TMPDIR=/tmp --env PYTHONHASHSEED=0 --env PYTHONIOENCODING=utf-8 --env TZ=UTC "$image" "$1"
+    }
+    run_operator candidate-retrieve-prepare
+    launch=$output_root/.candidate-retrieval-work/launch.json
+    provider_image=$(sed -n 's/.*"provider_image"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$launch")
+    if ! printf '%s\n' "$provider_image" | grep -Eq '^retrieval-arena/rag-lexical-topk@sha256:[0-9a-f]{64}$'; then
+      printf '{"exit_code":-2}\n' > "$output_root/.candidate-retrieval-work/provider-exit.json"
+      run_operator candidate-retrieve-finalize
+      exit $?
+    fi
+    provider_exit=0
+    docker run --rm --platform linux/amd64 --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 \
+      --mount "type=bind,src=$output_root/.candidate-retrieval-work/provider-input,dst=/input,readonly" \
+      --mount "type=bind,src=$output_root/.candidate-retrieval-work/provider-output,dst=/output" \
+      --tmpfs /tmp:rw,noexec,nosuid,nodev,size=128m "$provider_image" || provider_exit=$?
+    printf '{"exit_code":%s}\n' "$provider_exit" > "$output_root/.candidate-retrieval-work/provider-exit.json"
+    run_operator candidate-retrieve-finalize
+    exit $?
+  fi
   operator_memory=2g
   [ "$command_name" != score-bertscore ] || operator_memory=8g
   exec docker run --rm --platform "$platform" --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory "$operator_memory" --cpus 2 \

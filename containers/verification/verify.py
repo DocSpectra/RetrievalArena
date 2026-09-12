@@ -21,11 +21,14 @@ COMMANDS = {
         "unit_tests.test_task_execution",
         "unit_tests.test_remote_acquisition",
         "unit_tests.test_corpus_import",
+        "unit_tests.test_candidate_retrieval",
     ),
     "all": None,
     "evaluate-profile": (),
     "score-bertscore": (),
     "review-packet": (),
+    "candidate-retrieve-prepare": (),
+    "candidate-retrieve-finalize": (),
 }
 
 
@@ -69,6 +72,10 @@ def main(argv: list[str]) -> int:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from review_packet import main as review_packet_main
         return review_packet_main()
+    if argv[1] in {"candidate-retrieve-prepare", "candidate-retrieve-finalize"}:
+        sys.path.insert(0, str(OPERATOR_ROOT))
+        from candidate_retrieval import main as candidate_retrieval_main
+        return candidate_retrieval_main(argv[1])
     scratch = SOURCE_ROOT / ".tmp_unit_tests"
     html_scratch = SOURCE_ROOT / "unit_tests" / "_tmp_html_report"
     if not scratch.is_dir() or not html_scratch.is_dir():

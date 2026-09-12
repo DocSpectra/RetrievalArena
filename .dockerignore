@@ -8,3 +8,4 @@ containers/verification/*
 !containers/verification/verify.py
 !containers/verification/evaluate_profile.py
 !containers/verification/review_packet.py
+!containers/verification/candidate_retrieval.py
