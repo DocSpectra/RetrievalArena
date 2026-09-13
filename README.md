@@ -85,13 +85,19 @@ read-only, disables networking, and writes only result artifacts plus a
 self-hashed terminal receipt to the output root:
 
 ```powershell
-.\scripts\run-verification.ps1 evaluate-profile <input-root> <output-root> <image-receipt>
+.\scripts\run-verification.ps1 -Command evaluate-profile -InputRoot <input-root> -OutputRoot <output-root> -Receipt <image-receipt>
 ```
+
+`run-verification.ps1` binds its parameters by name (`-Command -InputRoot
+-OutputRoot [-CandidateRoot] -Receipt`); only `Command` may be passed
+positionally, and it requires PowerShell 7. `run-verification.sh` accepts the
+same named form (`--input-root=<p> --output-root=<p> [--candidate-root=<p>]
+[--receipt=<p>]`) as well as its positional form.
 
 The same immutable entrypoint exposes a generic review-packet boundary:
 
 ```powershell
-.\scripts\run-verification.ps1 review-packet <input-root> <output-root> <image-receipt>
+.\scripts\run-verification.ps1 -Command review-packet -InputRoot <input-root> -OutputRoot <output-root> -Receipt <image-receipt>
 ```
 
 Its `operator-request.json` is closed-world
@@ -153,10 +159,20 @@ before the formal contracts and formulas.
 Candidate-bound prediction generation is exposed through the registered
 `candidate-retrieve` verification command. It admits an exact clean candidate
 Git commit/tree, a complete private-input inventory, and only an immutable
-`rag_lexical_topk` image; the provider runs offline and RA atomically publishes
-ranked-v2 predictions plus a self-hashed receipt. This stage does not score or
-mutate qrels. The closed shape is illustrated by
-`configs/candidate_retrieval.example.json`.
+`rag_lexical_topk` image; the provider runs offline as uid/gid 65532:65532
+(the owner of the prepared `provider-output` directory) with `--cap-drop ALL`,
+and RA atomically publishes ranked-v2 predictions plus a self-hashed receipt.
+This stage does not score or mutate qrels. The closed shape is illustrated by
+`configs/candidate_retrieval.example.json`:
+
+```powershell
+.\scripts\run-verification.ps1 -Command candidate-retrieve -InputRoot <input-root> -OutputRoot <output-root> -CandidateRoot <candidate-root> -Receipt <image-receipt>
+```
+
+Follow-up (S024): the receipt still binds the operator adapters through the
+whole repository identity (HEAD and tree); binding the adapter scripts by their
+own hashes so an adapter-only fix would not require an image rebuild was judged
+too invasive for S024 and remains open.
 
 Dual-profile evaluation preserves that ranked-v2 scorer and adds a zero-human
 `operational_automatic` family plus an optional artifact-only

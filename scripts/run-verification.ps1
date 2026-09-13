@@ -1,10 +1,10 @@
-[CmdletBinding()]
+[CmdletBinding(PositionalBinding = $false)]
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('focused','all','evaluate-profile','review-packet','score-bertscore','candidate-retrieve')][string]$Command,
-    [string]$InputRoot,
-    [string]$OutputRoot,
-    [string]$CandidateRoot,
-    [string]$Receipt = '.tmp/verification-image.json'
+    [Parameter(Mandatory = $true, Position = 0)][ValidateSet('focused','all','evaluate-profile','review-packet','score-bertscore','candidate-retrieve')][string]$Command,
+    [Parameter()][string]$InputRoot,
+    [Parameter()][string]$OutputRoot,
+    [Parameter()][string]$CandidateRoot,
+    [Parameter()][string]$Receipt = '.tmp/verification-image.json'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -78,7 +78,7 @@ if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candida
         }
         $providerInput = (Resolve-Path -LiteralPath (Join-Path $outputPath '.candidate-retrieval-work\provider-input')).Path
         $providerOutput = (Resolve-Path -LiteralPath (Join-Path $outputPath '.candidate-retrieval-work\provider-output')).Path
-        & docker run --rm --platform ([string]$launch.platform) --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 `
+        & docker run --rm --platform ([string]$launch.platform) --user 65532:65532 --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 `
             --mount "type=bind,src=$providerInput,dst=/input,readonly" --mount "type=bind,src=$providerOutput,dst=/output" `
             --tmpfs '/tmp:rw,noexec,nosuid,nodev,size=128m' ([string]$launch.provider_image)
         $providerExit = $LASTEXITCODE
