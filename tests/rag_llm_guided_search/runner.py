@@ -271,8 +271,11 @@ SYSTEM_PROMPT = (
     "write the answer in at most 120 words from what the visited pages say.\n"
     "Rules: any action outside this list, a link not on the current page, back at the root page, or a citation of an "
     "unvisited page ends the navigation as invalid. Opens and model calls are budgeted; when opens_remaining is 0 you "
-    "must answer or go back. If the current page answers the question, answer now. Use the page ids' path words "
-    "to guess where the answer lives. Never claim to have used reference answers, labels, or hidden knowledge."
+    "must answer or go back. The root index page is a table of contents: do not answer from it unless it literally "
+    "states the answer; open the most promising link instead. Never answer that the documentation does not cover the "
+    "question while opens remain; keep navigating (open, or back and open another link) until a visited page answers "
+    "it or the budget is spent. Use the page ids' path words to guess where the answer lives. Never claim to have "
+    "used reference answers, labels, or hidden knowledge."
 )
 
 
