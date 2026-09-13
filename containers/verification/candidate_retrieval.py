@@ -131,7 +131,8 @@ def finalize() -> int:
             raise ValueError("candidate-retrieval-provider-exit")
         if provider_exit["exit_code"] != 0:
             raise ValueError("candidate-retrieval-provider-failure")
-        predictions, answers = project_ranked_predictions(config, provider_output, INPUT, WORK / "documents.json")
+        predictions, answers = project_ranked_predictions(config, provider_output, INPUT, WORK / "documents.json",
+                                                          provider_input)
         pending = OUTPUT / "predictions.v2.jsonl.pending"
         pending.write_bytes(b"".join(canonical(row) + b"\n" for row in predictions))
         answers_pending = OUTPUT / "generated_answers.v1.jsonl.pending"

@@ -22,6 +22,7 @@ COMMANDS = {
         "unit_tests.test_remote_acquisition",
         "unit_tests.test_corpus_import",
         "unit_tests.test_candidate_retrieval",
+        "unit_tests.test_rag_lexical_topk_runner",
     ),
     "all": None,
     "evaluate-profile": (),
