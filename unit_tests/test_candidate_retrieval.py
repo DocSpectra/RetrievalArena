@@ -275,8 +275,10 @@ class GraphProviderTests(CandidateRetrievalTests):
         self.assertEqual(set(ranked[0]["items"][0]), {"support_target_id", "rank", "score", "source_rank", "source_item_id", "source_provenance_sha256"})
         self.assertEqual(answers[0]["answer_policy"], "best_passage_v1"); self.assertIn("answer_provenance", answers[0])
         shutil.rmtree(output)
+        def reranked(*items):
+            return [{**item, "rank": rank} for rank, item in enumerate(items, 1)]
         bad = {
-            "provider-order": [[good[1], good[0], good[2]], [good[0], good[2], good[1]],
+            "provider-order": [reranked(good[1], good[0], good[2]), reranked(good[0], good[2], good[1]),
                                [item("guide__bbbdfa65", "Sync waves order resources.", 2.0, "seed", 1), item("guide_waves__3440d413", "W", 1.0, "seed", 2), item("guide_hooks__b1ec6f5b", "H", 0.5, "seed", 3)]],
             "provider-neighbor": [[good[0], item("guide_hooks__b1ec6f5b", "H", 0.5, "ranked_neighbor", 2)]],
             "provider-item-fields": [[{k: v for k, v in good[0].items() if k != "selection_role"}]],
