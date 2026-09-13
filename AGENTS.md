@@ -15,7 +15,7 @@ Knobs are the `config.get(...)` keys in each runner.
 
 | Provider | What it does |
 | --- | --- |
-| `rag_lexical_topk` | BM25 over whole documents, top-k; the EXP-1 flat retriever |
+| `rag_lexical_topk` | BM25 over whole documents, top-k; the EXP-1 flat retriever; `answer_policy: head_of_document_v1 \| best_passage_v1` (default head-of-document; best-passage adds `answer_provenance`) |
 | `rag_embedding_topk` | embedding similarity top-k (pinned local model, offline) |
 | `rag_vector` | minimal vector top-k example |
 | `rag_graph_expand` | BM25 seeds expanded along `graph_edges.csv` by N hops |
@@ -31,7 +31,8 @@ Knobs are the `config.get(...)` keys in each runner.
 | `llm_only` / `local_no_context_llm_e001b` | no-retrieval answer baselines |
 
 All providers currently emit `generated_answer` as the head of the top
-document (`max_context_chars_per_doc`); best-passage answers are S024 work.
+document (`max_context_chars_per_doc`). Only `rag_lexical_topk` implements
+`best_passage_v1`; other providers still emit head-of-document answers.
 
 ## Declaring An Experiment
 

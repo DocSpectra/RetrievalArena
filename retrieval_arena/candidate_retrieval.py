@@ -18,6 +18,10 @@ CONFIG_SCHEMA = "retrieval_arena.candidate_retrieval_config.v1"
 PREDICTION_SCHEMA = "retrieval_arena.ranked_prediction.v2"
 PROVIDER_SCHEMA = "retrieval_arena.lexical_provider_output.v1"
 PROVIDER_NAME = "rag_lexical_topk"
+ANSWER_POLICIES = ("head_of_document_v1", "best_passage_v1")
+DEFAULT_ANSWER_POLICY = "head_of_document_v1"
+PROVIDER_ROW_FIELDS = {"question_id", "question", "generated_answer", "retrieved_context"}
+PROVENANCE_FIELDS = {"doc_id", "section_heading", "passage_index", "char_start", "char_end"}
 
 
 def canonical(value: Any) -> bytes:
@@ -85,9 +89,14 @@ def validate_config(value: Any) -> dict[str, Any]:
     if corpus["extensions"] != [".md"] or corpus["import_policy"] != "cikm_flat_path_sha1_v1":
         raise ValidationError("candidate-retrieval-import-policy")
     _relative(config["queries_path"], "candidate-retrieval-queries-path")
-    provider = _exact(config["provider"], {
-        "name", "image", "platform", "network", "top_k", "max_context_chars_per_doc"
-    }, "candidate-retrieval-provider-fields")
+    provider_fields = {"name", "image", "platform", "network", "top_k", "max_context_chars_per_doc"}
+    if (not isinstance(config["provider"], dict)
+            or set(config["provider"]) not in (provider_fields, provider_fields | {"answer_policy"})):
+        raise ValidationError("candidate-retrieval-provider-fields")
+    # Legacy requests carry no answer_policy; the effective policy is always recorded.
+    provider = {**config["provider"],
+                "answer_policy": config["provider"].get("answer_policy", DEFAULT_ANSWER_POLICY)}
+    config = {**config, "provider": provider}
     if (provider["name"] != PROVIDER_NAME or provider["platform"] != "linux/amd64"
             or provider["network"] != "none"
             or not isinstance(provider["image"], str)
@@ -97,7 +106,8 @@ def validate_config(value: Any) -> dict[str, Any]:
             or provider["top_k"] < 1
             or isinstance(provider["max_context_chars_per_doc"], bool)
             or not isinstance(provider["max_context_chars_per_doc"], int)
-            or provider["max_context_chars_per_doc"] < 0):
+            or provider["max_context_chars_per_doc"] < 0
+            or provider["answer_policy"] not in ANSWER_POLICIES):
         raise ValidationError("candidate-retrieval-provider-policy")
     ranked = _exact(config["ranked"], {"schema_version", "context_item_budget_k"},
                     "candidate-retrieval-ranked-fields")
@@ -173,7 +183,8 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
         raise ValidationError("candidate-retrieval-corpus-empty")
     (provider_input / "questions.jsonl").write_bytes(queries.read_bytes())
     provider_config = {"top_k": config["provider"]["top_k"],
-                       "max_context_chars_per_doc": config["provider"]["max_context_chars_per_doc"]}
+                       "max_context_chars_per_doc": config["provider"]["max_context_chars_per_doc"],
+                       "answer_policy": config["provider"]["answer_policy"]}
     (provider_input / "config.yaml").write_bytes(canonical(provider_config) + b"\n")
     (provider_input.parent / "documents.json").write_bytes(canonical(document_rows) + b"\n")
     return {"schema_version": "retrieval_arena.candidate_retrieval_launch.v1",
@@ -185,8 +196,31 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
             "provider_input_inventory_sha256": sha256_bytes(canonical(regular_inventory(provider_input)))}
 
 
+def _validate_provenance(value: Any, context_ids: set[str], by_id: dict[Any, dict[str, Any]],
+                         provider_input: Path | None) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        raise ValidationError("candidate-retrieval-provider-provenance")
+    for entry in value:
+        _exact(entry, PROVENANCE_FIELDS, "candidate-retrieval-provider-provenance")
+        heading = entry["section_heading"]
+        if (not isinstance(entry["doc_id"], str) or entry["doc_id"] not in context_ids
+                or heading is not None and not isinstance(heading, str)
+                or any(isinstance(entry[name], bool) or not isinstance(entry[name], int)
+                       for name in ("passage_index", "char_start", "char_end"))
+                or entry["passage_index"] < 0 or not 0 <= entry["char_start"] < entry["char_end"]):
+            raise ValidationError("candidate-retrieval-provider-provenance")
+        if provider_input is not None:
+            imported = by_id[entry["doc_id"]].get("imported_path")
+            document = provider_input / "corpus" / imported if isinstance(imported, str) else None
+            if (document is None or not document.is_file() or document.is_symlink()
+                    or entry["char_end"] > len(document.read_text(encoding="utf-8"))):
+                raise ValidationError("candidate-retrieval-provider-provenance")
+    return value
+
+
 def project_ranked_predictions(config: dict[str, Any], provider_output: Path, input_root: Path,
-                               documents_path: Path) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+                               documents_path: Path, provider_input: Path | None = None,
+                               ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     config = validate_config(config)
     predictions_path = provider_output / "predictions.jsonl"
     metadata_path = provider_output / "metadata.json"
@@ -194,12 +228,15 @@ def project_ranked_predictions(config: dict[str, Any], provider_output: Path, in
             or predictions_path.is_symlink() or metadata_path.is_symlink()):
         raise ValidationError("candidate-retrieval-provider-output-shape")
     metadata = _exact(json.loads(metadata_path.read_bytes()), {
-        "name", "deterministic", "ranker", "top_k", "max_context_chars_per_doc"
+        "name", "deterministic", "ranker", "top_k", "max_context_chars_per_doc", "answer_policy"
     }, "candidate-retrieval-provider-metadata-fields")
     provider = config["provider"]
+    answer_policy = provider["answer_policy"]
+    best_passage = answer_policy == "best_passage_v1"
     if metadata != {"name": PROVIDER_NAME, "deterministic": True, "ranker": "bm25",
                     "top_k": provider["top_k"],
-                    "max_context_chars_per_doc": provider["max_context_chars_per_doc"]}:
+                    "max_context_chars_per_doc": provider["max_context_chars_per_doc"],
+                    "answer_policy": answer_policy}:
         raise ValidationError("candidate-retrieval-provider-metadata")
     rows = [json.loads(line) for line in predictions_path.read_text(encoding="utf-8").splitlines()
             if line.strip()]
@@ -221,11 +258,11 @@ def project_ranked_predictions(config: dict[str, Any], provider_output: Path, in
     if len(by_id) != len(documents) or None in by_id:
         raise ValidationError("candidate-retrieval-document-inventory")
     result = []
-    answers: list[dict[str, str]] = []
+    answers: list[dict[str, Any]] = []
     seen_queries: set[str] = set()
+    row_fields = PROVIDER_ROW_FIELDS | {"answer_provenance"} if best_passage else PROVIDER_ROW_FIELDS
     for row in rows:
-        _exact(row, {"question_id", "question", "generated_answer", "retrieved_context"},
-               "candidate-retrieval-provider-row-fields")
+        _exact(row, row_fields, "candidate-retrieval-provider-row-fields")
         query_id = row["question_id"]
         if (not isinstance(query_id, str) or not query_id or query_id in seen_queries
                 or not isinstance(row["generated_answer"], str)):
@@ -259,5 +296,10 @@ def project_ranked_predictions(config: dict[str, Any], provider_output: Path, in
                        "context_item_budget_k": provider["top_k"], "max_rank": len(items),
                        "retrieval_exhausted": len(items) < provider["top_k"], "items": items,
                        "duplicate_collapse_count": 0, "duplicate_collapse_sha256": None})
-        answers.append({"query_id": query_id, "generated_answer": row["generated_answer"]})
+        answer = {"query_id": query_id, "generated_answer": row["generated_answer"]}
+        if best_passage:
+            answer["answer_policy"] = answer_policy
+            answer["answer_provenance"] = _validate_provenance(
+                row["answer_provenance"], seen_items, by_id, provider_input)
+        answers.append(answer)
     return result, answers

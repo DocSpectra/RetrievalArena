@@ -52,7 +52,7 @@ class CandidateRetrievalTests(unittest.TestCase):
 
     def provider_output(self):
         output = self.root / "provider-output"; output.mkdir()
-        (output / "metadata.json").write_text(json.dumps({"name": "rag_lexical_topk", "deterministic": True, "ranker": "bm25", "top_k": 1, "max_context_chars_per_doc": 1500}), encoding="utf-8")
+        (output / "metadata.json").write_text(json.dumps({"name": "rag_lexical_topk", "deterministic": True, "ranker": "bm25", "top_k": 1, "max_context_chars_per_doc": 1500, "answer_policy": "head_of_document_v1"}), encoding="utf-8")
         item = {"doc_id": "guide__bbbdfa65", "text": "Sync waves", "score": 1.0, "source": "lexical_topk", "rank": 1}
         row = {"question_id": "q1", "question": "sync waves", "generated_answer": "Sync waves", "retrieved_context": [item]}
         (output / "predictions.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
@@ -77,6 +77,98 @@ class CandidateRetrievalTests(unittest.TestCase):
         (output / "predictions.jsonl").write_text("", encoding="utf-8")
         with self.assertRaisesRegex(ValidationError, "query-completeness"):
             project_ranked_predictions(self.config(), output, self.input, documents)
+
+    def provenance_output(self, provenance=None, metadata_policy="best_passage_v1"):
+        output = self.root / "provider-output"; output.mkdir()
+        (output / "metadata.json").write_text(json.dumps({"name": "rag_lexical_topk", "deterministic": True, "ranker": "bm25", "top_k": 1, "max_context_chars_per_doc": 1500, "answer_policy": metadata_policy}), encoding="utf-8")
+        item = {"doc_id": "guide__bbbdfa65", "text": "Sync waves order resources.", "score": 1.0, "source": "lexical_topk", "rank": 1}
+        if provenance is None:
+            provenance = [{"doc_id": "guide__bbbdfa65", "section_heading": "Guide", "passage_index": 0, "char_start": 8, "char_end": 35}]
+        row = {"question_id": "q1", "question": "sync waves", "generated_answer": "Sync waves order resources.", "retrieved_context": [item], "answer_provenance": provenance}
+        (output / "predictions.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+        return output
+
+    def test_answer_policy_config_default_and_rejection(self):
+        legacy = validate_config(self.config())
+        self.assertEqual(legacy["provider"]["answer_policy"], "head_of_document_v1")
+        self.assertNotIn("answer_policy", self.config()["provider"])
+        value = self.config(); value["provider"]["answer_policy"] = "best_passage_v1"
+        self.assertEqual(validate_config(value)["provider"]["answer_policy"], "best_passage_v1")
+        value = self.config(); value["provider"]["answer_policy"] = "whole_document_v9"
+        with self.assertRaisesRegex(ValidationError, "provider-policy"): validate_config(value)
+        value = self.config(); value["provider"]["answer_policy"] = None
+        with self.assertRaisesRegex(ValidationError, "provider-policy"): validate_config(value)
+        destination = self.root / "provider-input"
+        prepare_provider_input(self.config(), self.input, self.repo, destination)
+        self.assertEqual(json.loads((destination / "config.yaml").read_text(encoding="utf-8")), {"answer_policy": "head_of_document_v1", "max_context_chars_per_doc": 1500, "top_k": 1})
+
+    def test_legacy_policy_projection_rejects_metadata_and_row_drift(self):
+        documents = self.root / "documents.json"
+        documents.write_text(json.dumps([{"doc_id": "guide__bbbdfa65", "expected_text": "Sync waves"}]), encoding="utf-8")
+        output = self.provider_output()
+        (output / "metadata.json").write_text(json.dumps({"name": "rag_lexical_topk", "deterministic": True, "ranker": "bm25", "top_k": 1, "max_context_chars_per_doc": 1500}), encoding="utf-8")
+        with self.assertRaisesRegex(ValidationError, "provider-metadata-fields"):
+            project_ranked_predictions(self.config(), output, self.input, documents)
+        (output / "metadata.json").write_text(json.dumps({"name": "rag_lexical_topk", "deterministic": True, "ranker": "bm25", "top_k": 1, "max_context_chars_per_doc": 1500, "answer_policy": "head_of_document_v1"}), encoding="utf-8")
+        ranked, answers = project_ranked_predictions(self.config(), output, self.input, documents)
+        self.assertEqual(answers, [{"query_id": "q1", "generated_answer": "Sync waves"}])
+        self.assertEqual(set(ranked[0]["items"][0]), {"support_target_id", "rank", "score", "source_rank", "source_item_id", "source_provenance_sha256"})
+        row = json.loads((output / "predictions.jsonl").read_text(encoding="utf-8")); row["answer_provenance"] = []
+        (output / "predictions.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValidationError, "provider-row-fields"):
+            project_ranked_predictions(self.config(), output, self.input, documents)
+        (output / "metadata.json").write_text(json.dumps({"name": "rag_lexical_topk", "deterministic": True, "ranker": "bm25", "top_k": 1, "max_context_chars_per_doc": 1500, "answer_policy": "best_passage_v1"}), encoding="utf-8")
+        with self.assertRaisesRegex(ValidationError, "provider-metadata"):
+            project_ranked_predictions(self.config(), output, self.input, documents)
+
+    def test_best_passage_projection_carries_provenance(self):
+        config = self.config(); config["provider"]["answer_policy"] = "best_passage_v1"
+        provider_input = self.root / "provider-input"
+        prepare_provider_input(config, self.input, self.repo, provider_input)
+        documents = self.root / "documents.json"
+        rows = [{"doc_id": "guide__bbbdfa65", "imported_path": "guide__bbbdfa65.md", "expected_text": "Sync waves order resources."}]
+        documents.write_text(json.dumps(rows), encoding="utf-8")
+        output = self.provenance_output()
+        with self.assertRaisesRegex(ValidationError, "provider-metadata"):
+            project_ranked_predictions(self.config(), output, self.input, documents)
+        ranked, answers = project_ranked_predictions(config, output, self.input, documents)
+        self.assertEqual(answers, [{"query_id": "q1", "generated_answer": "Sync waves order resources.", "answer_policy": "best_passage_v1", "answer_provenance": [{"doc_id": "guide__bbbdfa65", "section_heading": "Guide", "passage_index": 0, "char_start": 8, "char_end": 35}]}])
+        self.assertEqual((ranked, answers), project_ranked_predictions(config, output, self.input, documents, provider_input))
+        self.assertEqual(ranked[0]["items"][0]["support_target_id"], "guide__bbbdfa65")
+        self.assertEqual(set(ranked[0]), {"schema_version", "query_id", "context_item_budget_k", "max_rank", "retrieval_exhausted", "items", "duplicate_collapse_count", "duplicate_collapse_sha256"})
+
+    def test_best_passage_provenance_validation_fails_closed(self):
+        import shutil
+        config = self.config(); config["provider"]["answer_policy"] = "best_passage_v1"
+        provider_input = self.root / "provider-input"
+        prepare_provider_input(config, self.input, self.repo, provider_input)
+        documents = self.root / "documents.json"
+        documents.write_text(json.dumps([{"doc_id": "guide__bbbdfa65", "imported_path": "guide__bbbdfa65.md", "expected_text": "Sync waves order resources."}]), encoding="utf-8")
+        good = {"doc_id": "guide__bbbdfa65", "section_heading": None, "passage_index": 0, "char_start": 8, "char_end": 35}
+        bad_entries = [
+            {**good, "doc_id": "other__00000000"}, {**good, "passage_index": -1}, {**good, "passage_index": True},
+            {**good, "char_start": 35}, {**good, "char_start": -1}, {**good, "section_heading": 3},
+            {k: v for k, v in good.items() if k != "char_end"}, {**good, "extra": 1}, "not-a-dict",
+        ]
+        for entry in bad_entries:
+            output = self.provenance_output([entry])
+            with self.assertRaisesRegex(ValidationError, "provider-provenance", msg=repr(entry)):
+                project_ranked_predictions(config, output, self.input, documents, provider_input)
+            shutil.rmtree(output)
+        output = self.provenance_output({"doc_id": "guide__bbbdfa65"})
+        with self.assertRaisesRegex(ValidationError, "provider-provenance"):
+            project_ranked_predictions(config, output, self.input, documents)
+        shutil.rmtree(output)
+        output = self.provenance_output([{**good, "char_end": 37}])
+        project_ranked_predictions(config, output, self.input, documents)
+        with self.assertRaisesRegex(ValidationError, "provider-provenance"):
+            project_ranked_predictions(config, output, self.input, documents, provider_input)
+        shutil.rmtree(output)
+        output = self.provenance_output()
+        row = json.loads((output / "predictions.jsonl").read_text(encoding="utf-8")); del row["answer_provenance"]
+        (output / "predictions.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValidationError, "provider-row-fields"):
+            project_ranked_predictions(config, output, self.input, documents, provider_input)
 
     def test_operator_parity_and_no_scoring(self):
         for relative in ("scripts/run-verification.ps1", "scripts/run-verification.sh"):
