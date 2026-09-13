@@ -1,22 +1,47 @@
 #!/bin/sh
 set -eu
 
-if [ "$#" -lt 1 ]; then
+usage() {
   echo 'usage: run-verification.sh <focused|all> [receipt] | <evaluate-profile|review-packet|score-bertscore> <input-root> <output-root> [receipt] | candidate-retrieve <input-root> <output-root> <candidate-root> [receipt]' >&2
+  echo '       named form: run-verification.sh <command> --input-root=<p> --output-root=<p> [--candidate-root=<p>] [--receipt=<p>]' >&2
   exit 2
-fi
-command_name=$1
+}
+[ "$#" -ge 1 ] || usage
+command_name=$1; shift
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-if [ "$command_name" = candidate-retrieve ]; then
-  [ "$#" -ge 4 ] && [ "$#" -le 5 ] || { echo verification-candidate-root-required >&2; exit 2; }
-  input_root=$2; output_root=$3; candidate_root=$4; receipt=${5:-$repo/.tmp/verification-image.json}
+named_input_root=; named_output_root=; named_candidate_root=; named_receipt=; named_seen=0
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --input-root=*) named_input_root=${1#--input-root=}; named_seen=1; shift ;;
+    --output-root=*) named_output_root=${1#--output-root=}; named_seen=1; shift ;;
+    --candidate-root=*) named_candidate_root=${1#--candidate-root=}; named_seen=1; shift ;;
+    --receipt=*) named_receipt=${1#--receipt=}; named_seen=1; shift ;;
+    --*) echo verification-option-invalid >&2; exit 2 ;;
+    *) break ;;
+  esac
+done
+if [ "$named_seen" -eq 1 ]; then
+  [ "$#" -eq 0 ] || usage
+  input_root=$named_input_root; output_root=$named_output_root; candidate_root=$named_candidate_root
+  receipt=${named_receipt:-$repo/.tmp/verification-image.json}
+  case "$command_name" in
+    candidate-retrieve) [ -n "$input_root" ] && [ -n "$output_root" ] || { echo verification-operator-input-output-required >&2; exit 2; }
+      [ -n "$candidate_root" ] || { echo verification-candidate-root-required >&2; exit 2; } ;;
+    evaluate-profile|review-packet|score-bertscore) [ -n "$input_root" ] && [ -n "$output_root" ] || { echo verification-operator-input-output-required >&2; exit 2; }
+      [ -z "$candidate_root" ] || { echo verification-command-invalid >&2; exit 2; } ;;
+    focused|all) [ -z "$input_root" ] && [ -z "$output_root" ] && [ -z "$candidate_root" ] || { echo verification-command-invalid >&2; exit 2; } ;;
+    *) echo verification-command-invalid >&2; exit 2 ;;
+  esac
+elif [ "$command_name" = candidate-retrieve ]; then
+  [ "$#" -ge 3 ] && [ "$#" -le 4 ] || { echo verification-candidate-root-required >&2; exit 2; }
+  input_root=$1; output_root=$2; candidate_root=$3; receipt=${4:-$repo/.tmp/verification-image.json}
 elif [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ]; then
-  [ "$#" -ge 3 ] && [ "$#" -le 4 ] || { echo verification-operator-input-output-required >&2; exit 2; }
-  input_root=$2; output_root=$3; receipt=${4:-$repo/.tmp/verification-image.json}
+  [ "$#" -ge 2 ] && [ "$#" -le 3 ] || { echo verification-operator-input-output-required >&2; exit 2; }
+  input_root=$1; output_root=$2; receipt=${3:-$repo/.tmp/verification-image.json}
 else
-  [ "$#" -le 2 ] || { echo verification-command-invalid >&2; exit 2; }
+  [ "$#" -le 1 ] || { echo verification-command-invalid >&2; exit 2; }
   case "$command_name" in focused|all) ;; *) echo verification-command-invalid >&2; exit 2 ;; esac
-  receipt=${2:-$repo/.tmp/verification-image.json}
+  receipt=${1:-$repo/.tmp/verification-image.json}
 fi
 case "$receipt" in /*) ;; *) receipt=$repo/$receipt ;; esac
 
@@ -81,7 +106,7 @@ if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]
       exit $?
     fi
     provider_exit=0
-    docker run --rm --platform linux/amd64 --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 \
+    docker run --rm --platform linux/amd64 --user 65532:65532 --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 \
       --mount "type=bind,src=$output_root/.candidate-retrieval-work/provider-input,dst=/input,readonly" \
       --mount "type=bind,src=$output_root/.candidate-retrieval-work/provider-output,dst=/output" \
       --tmpfs /tmp:rw,noexec,nosuid,nodev,size=128m "$provider_image" || provider_exit=$?

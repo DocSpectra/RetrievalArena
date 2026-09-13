@@ -81,7 +81,8 @@ class CandidateRetrievalTests(unittest.TestCase):
     def test_operator_parity_and_no_scoring(self):
         for relative in ("scripts/run-verification.ps1", "scripts/run-verification.sh"):
             text = (ROOT / relative).read_text(encoding="utf-8")
-            for token in ("candidate-retrieve", "--network", "none", "rag-lexical-topk@sha256"): self.assertIn(token, text)
+            for token in ("candidate-retrieve", "--network", "none", "rag-lexical-topk@sha256", "--user 65532:65532"): self.assertIn(token, text)
+        self.assertIn("PositionalBinding = $false", (ROOT / "scripts" / "run-verification.ps1").read_text(encoding="utf-8"))
         module = (ROOT / "retrieval_arena" / "candidate_retrieval.py").read_text(encoding="utf-8")
         self.assertNotIn("score_ranked", module); self.assertNotIn("qrels", module)
 

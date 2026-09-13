@@ -51,14 +51,27 @@ Parameters, by name: `-Command` (`focused`, `all`, `evaluate-profile`,
 `review-packet`, `score-bertscore`, `candidate-retrieve`), `-InputRoot`,
 `-OutputRoot` (fresh, containing only `.retrieval-arena-output-owner`),
 `-CandidateRoot` (candidate-retrieve only), `-Receipt`. PowerShell 7 is
-required. The receipt (`retrieval_arena.verification_image_receipt.v2`)
-pins image digest, source commit/tree, and dependency lock; the operator
-refuses unless repository HEAD, tree, and lock match it and the image
-labels agree — so any commit here needs `build-verification` and a new
-receipt. `candidate-retrieve` admits one config-declared provider per
-request (`rag_lexical_topk` only at `d00b38d`; generalized in S025) and
-requires a standalone candidate repository whose corpus sits under a
-subdirectory (`corpus.root`, e.g. `docs`).
+required. Since S024 the `.ps1` binds by name only (`PositionalBinding =
+$false`; `Command` is the sole positional), so `-InputRoot -OutputRoot
+[-CandidateRoot] -Receipt` must be spelled out; the `.sh` accepts the
+same as `--input-root= --output-root= [--candidate-root=] --receipt=`
+alongside its positional form. The receipt
+(`retrieval_arena.verification_image_receipt.v2`) pins image digest,
+source commit/tree, and dependency lock; the operator refuses unless
+repository HEAD, tree, and lock match it and the image labels agree — so
+any commit here needs `build-verification` and a new receipt.
+`candidate-retrieve` admits one config-declared provider per request
+(`rag_lexical_topk` only at `d00b38d`; generalized in S025) and requires
+a standalone candidate repository whose corpus sits under a subdirectory
+(`corpus.root`, e.g. `docs`). The provider container runs as uid/gid
+65532:65532 (the prepare step's user, which owns `provider-output`) with
+`--cap-drop ALL`; running it as root cannot write the output directory.
+
+Follow-up (S024): the operator's adapter identity is still the whole
+repository (HEAD and tree must equal `receipt.source_commit` /
+`source_tree`); binding `run-verification.ps1`/`.sh` by their own file
+hashes in the receipt instead, so an adapter-only fix would not force an
+image rebuild, was judged too invasive for S024 and remains open.
 
 ## Adding A Provider
 
