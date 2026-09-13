@@ -27,6 +27,7 @@ Knobs are the `config.get(...)` keys in each runner.
 | `rag_random_seed_graph_traversal` | randomized traversal baseline (`num_trials`, `rng_seed`) |
 | `rag_iterative_search` | iterative query refinement over the corpus |
 | `rag_llm_guided_search_mock` | bounded action controller and action-trace schema (`e007b.action_trace.v1`) with a mock policy; the navigator scaffold |
+| `rag_llm_guided_search` | S026 (EXP-1c): the promoted navigator. Starts at the corpus root `index.md`, actions `open(link)` (a link the current page carries, resolved through `graph_edges.csv`), `back`, `answer(cited_pages, text)`; budgets `page_visit_budget` opens and `model_call_budget` calls per query; a real local model (`model_policy`: Ollama, digest-pinned, observed before the run and after every call) reached only at `http://host.docker.internal:11434` over the allowlisted routes; one trace per query under `traces/<question_id>.jsonl` (`e007b.action_trace.v1`, policy `bounded_provider_action_controller_v1`), `answer_policy: agent_answer_v1` (the agent's text; cited pages are the context items). `scripts/navigation_metrics.py` recomputes success@N, hops-to-first-support, pages-per-success, and dead-ends from the traces plus the judge's support file |
 | `oracle_perfect` / `oracle_partial` / `oracle_empty` / `oracle_graph_support` | oracles for calibration and graph-support bounds |
 | `llm_only` / `local_no_context_llm_e001b` | no-retrieval answer baselines |
 
@@ -78,7 +79,7 @@ any commit here needs `build-verification` and a new receipt.
 `candidate-retrieve` admits one config-declared provider per request from
 the closed profile table in `retrieval_arena/candidate_retrieval.py`
 (`rag_lexical_topk` only at `d00b38d`; `rag_graph_ranked_expand` added in
-S025, each pinned by `image@sha256`) and requires a standalone candidate
+S025; `rag_llm_guided_search` added in S026, each pinned by `image@sha256`) and requires a standalone candidate
 repository whose corpus sits under a subdirectory (`corpus.root`, e.g.
 `docs`). A `requires_graph` provider gets the candidate's own link graph
 (`graph_edges.csv`, `write_markdown_link_graph`'s resolver over the corpus
@@ -86,6 +87,17 @@ tree with flat ids) extracted at prepare, hashed into the launch and the
 receipt (`graph_edges_sha256`), and published beside the predictions. The provider container runs as uid/gid
 65532:65532 (the prepare step's user, which owns `provider-output`) with
 `--cap-drop ALL`; running it as root cannot write the output directory.
+Network: every retriever's provider container runs `--network none`. The one
+exception (S026) is the navigator profile (`network: host_model_alias`): the
+operator runs it on Docker's default bridge with `--add-host
+host.docker.internal:host-gateway` (the direct lane's relay posture, S031 D4),
+the runner's own client enforces the relay rules (private upstream only,
+`GET /api/tags` and `POST /api/chat`, model digest observed per call), and
+the receipt's `isolation.network` records the exception. The navigator's
+`traces/` directory and `navigation.json` are published beside the
+predictions and inventoried in the receipt (`traces_inventory_sha256`,
+`navigation_sha256`); the operator-side projection validates every trace
+against the declared budgets and the admitted document ids.
 
 Follow-up (S024): the operator's adapter identity is still the whole
 repository (HEAD and tree must equal `receipt.source_commit` /
