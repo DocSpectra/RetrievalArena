@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,6 +24,7 @@ CONFIG = {"top_k": 5, "max_context_chars_per_doc": 1500, "answer_policy": "agent
 def load(path: Path):
     spec = importlib.util.spec_from_file_location(path.stem + "_" + path.parent.name, path)
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # dataclasses resolve annotations through sys.modules
     spec.loader.exec_module(module)
     return module
 

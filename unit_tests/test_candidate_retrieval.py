@@ -405,7 +405,8 @@ class NavigatorProviderTests(GraphProviderTests):
         shutil.rmtree(output)
         bad = {
             "provider-navigation-row": [dict(cited=["guide_hooks__b1ec6f5b"], trace_overrides={"answer": {"cited_pages": [], "text": "Waves order resources."}}),
-                                        dict(cited=["guide_hooks__b1ec6f5b", "guide_hooks__b1ec6f5b"])],
+                                        dict(cited=["guide_hooks__b1ec6f5b"], trace_overrides={"final_context_doc_ids": []})],
+            "provider-item": [dict(cited=["guide_hooks__b1ec6f5b", "guide_hooks__b1ec6f5b"])],
             "provider-trace-budget": [dict(cited=["guide_hooks__b1ec6f5b"], trace_overrides={"opens": 3}),
                                       dict(cited=["guide_hooks__b1ec6f5b"], trace_overrides={"model_calls": 13}),
                                       dict(cited=["guide_hooks__b1ec6f5b"], trace_overrides={"visits": ["guide__bbbdfa65", "guide_waves__3440d413", "nope__00000000"]}),
