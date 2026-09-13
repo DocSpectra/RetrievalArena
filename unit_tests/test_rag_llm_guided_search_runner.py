@@ -44,6 +44,7 @@ class FakeClient:
 
     def chat(self, messages, schema):
         observation = json.loads(messages[1]["content"].split("\n", 1)[1])
+        assert schema["properties"]["action"]["enum"] == observation["allowed_actions"]
         self.calls.append(observation)
         script = self.scripts[observation["question_id"]]
         action = script.pop(0)
