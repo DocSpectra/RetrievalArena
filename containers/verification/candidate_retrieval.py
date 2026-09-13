@@ -10,8 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from retrieval_arena.candidate_retrieval import (
-    GRAPH_EDGES_FILE, canonical, prepare_provider_input, project_ranked_predictions, regular_inventory,
-    sha256_bytes, sha256_file, validate_config,
+    GRAPH_EDGES_FILE, TRACES_DIR, canonical, prepare_provider_input, project_ranked_predictions,
+    provider_profile, regular_inventory, sha256_bytes, sha256_file, validate_config,
 )
 
 INPUT = Path("/workspace/input")
@@ -59,15 +59,24 @@ def _failure(error, exit_code, started, request=None, config=None):
              "provider_output_inventory_available": provider_inventory_available,
              "predictions_sha256": None, "generated_answers_sha256": None,
              "prediction_count": 0, "generated_answer_count": 0,
-             "graph_edges_sha256": None,
+             "graph_edges_sha256": None, "traces_inventory_sha256": None, "navigation_sha256": None,
              "identity": _identity(),
-             "isolation": {"network": "none", "candidate_mount": "read_only",
+             "isolation": {"network": _network(config), "candidate_mount": "read_only",
                            "input_mount": "read_only", "root_filesystem": "read_only"},
              "started_at": started,
              "finished_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
              "receipt_sha256": "0" * 64}
     value["receipt_sha256"] = sha256_bytes(canonical(value))
     return value
+
+
+def _network(config):
+    """The provider container's network, from the declared profile (S026: the navigator alone
+    reaches the host model alias; every retriever runs with network none)."""
+    try:
+        return provider_profile(config["provider"]["name"]).network if isinstance(config, dict) else "none"
+    except Exception:
+        return "none"
 
 
 def _config():
@@ -148,6 +157,20 @@ def finalize() -> int:
                 raise ValueError("candidate-retrieval-graph-edges-changed")
             graph_pending = OUTPUT / (GRAPH_EDGES_FILE + ".pending")
             graph_pending.write_bytes(graph_source.read_bytes())
+        # S026: the navigator's per-query action traces and run summary are
+        # the scientific artifact; they are published beside the predictions
+        # (validated by project_ranked_predictions) and inventoried in the receipt.
+        profile = provider_profile(config["provider"]["name"])
+        traces_pending = navigation_pending = None
+        traces_inventory_sha256 = navigation_sha256 = None
+        if profile.publishes_traces:
+            import shutil
+            traces_pending = OUTPUT / (TRACES_DIR + ".pending")
+            shutil.copytree(provider_output / TRACES_DIR, traces_pending, symlinks=False)
+            traces_inventory_sha256 = sha256_bytes(canonical(regular_inventory(traces_pending)))
+            navigation_pending = OUTPUT / "navigation.json.pending"
+            navigation_pending.write_bytes((provider_output / "navigation.json").read_bytes())
+            navigation_sha256 = sha256_file(navigation_pending)
         receipt = {
             "schema_version": "retrieval_arena.candidate_retrieval_operator_receipt.v1",
             "command": "candidate-retrieve", "status": "completed", "exit_code": 0,
@@ -160,8 +183,9 @@ def finalize() -> int:
             "predictions_sha256": sha256_file(pending), "prediction_count": len(predictions),
             "generated_answers_sha256": sha256_file(answers_pending),
             "generated_answer_count": len(answers), "graph_edges_sha256": graph_edges_sha256,
+            "traces_inventory_sha256": traces_inventory_sha256, "navigation_sha256": navigation_sha256,
             "identity": _identity(),
-            "isolation": {"network": "none", "candidate_mount": "read_only",
+            "isolation": {"network": launch["network"], "candidate_mount": "read_only",
                           "input_mount": "read_only", "root_filesystem": "read_only"},
             "started_at": started,
             "finished_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
@@ -176,20 +200,29 @@ def finalize() -> int:
         answers_pending.replace(answers_final)
         if graph_pending is not None:
             graph_pending.replace(OUTPUT / GRAPH_EDGES_FILE)
+        if traces_pending is not None:
+            traces_pending.replace(OUTPUT / TRACES_DIR)
+            navigation_pending.replace(OUTPUT / "navigation.json")
         try:
             (OUTPUT / "operator_receipt.v1.json.pending").replace(receipt_final)
         except Exception:
             prediction_final.unlink(missing_ok=True)
             answers_final.unlink(missing_ok=True)
             (OUTPUT / GRAPH_EDGES_FILE).unlink(missing_ok=True)
+            _unlink_traces()
             raise
         return 0
     except Exception as error:
+        import shutil
         for path in OUTPUT.glob("*.pending"):
-            path.unlink(missing_ok=True)
+            if path.is_dir() and not path.is_symlink():
+                shutil.rmtree(path)
+            else:
+                path.unlink(missing_ok=True)
         (OUTPUT / "predictions.v2.jsonl").unlink(missing_ok=True)
         (OUTPUT / "generated_answers.v1.jsonl").unlink(missing_ok=True)
         (OUTPUT / GRAPH_EDGES_FILE).unlink(missing_ok=True)
+        _unlink_traces()
         failure = _failure(error, 1, started, request, config)
         (OUTPUT / "operator_receipt.v1.json").write_bytes(canonical(failure) + b"\n")
         print(str(error), file=sys.stderr)
@@ -199,6 +232,13 @@ def finalize() -> int:
         import shutil
         if WORK.exists() and not WORK.is_symlink():
             shutil.rmtree(WORK)
+
+
+def _unlink_traces() -> None:
+    import shutil
+    (OUTPUT / "navigation.json").unlink(missing_ok=True)
+    if (OUTPUT / TRACES_DIR).is_dir() and not (OUTPUT / TRACES_DIR).is_symlink():
+        shutil.rmtree(OUTPUT / TRACES_DIR)
 
 
 def main(command: str) -> int:

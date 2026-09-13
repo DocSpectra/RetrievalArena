@@ -105,8 +105,21 @@ if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]
       run_operator candidate-retrieve-finalize
       exit $?
     fi
+    # S026: the navigator provider (and only it) runs on the default bridge with the host model alias.
+    launch_network=$(sed -n 's/.*"network"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$launch")
+    launch_provider=$(sed -n 's/.*"provider_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$launch")
+    if [ "$launch_network" = host_model_alias ] && [ "$launch_provider" = rag_llm_guided_search ]; then
+      set -- --add-host host.docker.internal:host-gateway
+    elif [ "$launch_network" = none ]; then
+      set -- --network none
+    else
+      printf '{"exit_code":-2}
+' > "$output_root/.candidate-retrieval-work/provider-exit.json"
+      run_operator candidate-retrieve-finalize
+      exit $?
+    fi
     provider_exit=0
-    docker run --rm --platform linux/amd64 --user 65532:65532 --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 \
+    docker run --rm --platform linux/amd64 --user 65532:65532 "$@" --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 \
       --mount "type=bind,src=$output_root/.candidate-retrieval-work/provider-input,dst=/input,readonly" \
       --mount "type=bind,src=$output_root/.candidate-retrieval-work/provider-output,dst=/output" \
       --tmpfs /tmp:rw,noexec,nosuid,nodev,size=128m "$provider_image" || provider_exit=$?

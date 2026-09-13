@@ -299,4 +299,132 @@ class GraphProviderTests(CandidateRetrievalTests):
             project_ranked_predictions(config, output, self.input, documents, provider_input)
 
 
+NAVIGATOR_IMAGE = "retrieval-arena/rag-llm-guided-search@sha256:" + "c" * 64
+MODEL_POLICY = {"backend": "ollama", "model": "qwen3:14b", "digest": "sha256:" + "d" * 64, "temperature": 0.2, "top_p": 0.9,
+                "seed": 391960843, "context_window_tokens": 8192, "max_output_tokens": 1024, "timeout_seconds": 300,
+                "max_attempts": 1, "endpoint": "http://host.docker.internal:11434", "thinking": False}
+
+
+class NavigatorProviderTests(GraphProviderTests):
+    """S026: the bounded navigator; host model alias network, agent answers, published traces."""
+
+    def navigator_config(self, **overrides):
+        value = self.config()
+        value["provider"] = {"name": "rag_llm_guided_search", "image": NAVIGATOR_IMAGE, "platform": "linux/amd64",
+                             "network": "host_model_alias", "top_k": 3, "max_context_chars_per_doc": 1500,
+                             "answer_policy": "agent_answer_v1", "model_policy": dict(MODEL_POLICY),
+                             "page_visit_budget": 8, "model_call_budget": 12, "page_char_limit": 12000, **overrides}
+        value["ranked"]["context_item_budget_k"] = value["provider"]["top_k"]
+        return value
+
+    def test_navigator_declared_with_model_policy_and_network_exception(self):
+        config = validate_config(self.navigator_config())
+        self.assertEqual(config["provider"]["network"], "host_model_alias")
+        cases = {
+            "provider-policy": [{"network": "none"}, {"answer_policy": "best_passage_v1"}, {"image": GRAPH_IMAGE}],
+            "provider-model-policy": [{"page_visit_budget": 0}, {"model_call_budget": True},
+                                      {"model_policy": {**MODEL_POLICY, "max_attempts": 2}},
+                                      {"model_policy": {**MODEL_POLICY, "endpoint": "http://127.0.0.1:11434"}},
+                                      {"model_policy": {**MODEL_POLICY, "digest": "d" * 64}},
+                                      {"model_policy": {**MODEL_POLICY, "backend": "openai"}},
+                                      {"model_policy": {k: v for k, v in MODEL_POLICY.items() if k != "thinking"}}],
+        }
+        for code, overrides_list in cases.items():
+            for overrides in overrides_list:
+                with self.assertRaisesRegex(ValidationError, code, msg=repr(overrides)):
+                    validate_config(self.navigator_config(**overrides))
+        # Every retriever keeps network none; the alias is the navigator's alone.
+        with self.assertRaisesRegex(ValidationError, "provider-policy"):
+            validate_config(self.graph_config(network="host_model_alias"))
+        value = self.navigator_config(); del value["provider"]["page_char_limit"]
+        with self.assertRaisesRegex(ValidationError, "provider-fields"): validate_config(value)
+
+    def test_navigator_prepare_carries_graph_and_launch_network(self):
+        destination = self.root / "provider-input"
+        launch = prepare_provider_input(self.navigator_config(), self.input, self.repo, destination)
+        self.assertEqual((launch["provider_name"], launch["network"]), ("rag_llm_guided_search", "host_model_alias"))
+        self.assertIsNotNone(launch["graph_edges_sha256"])
+        provider_config = json.loads((destination / "config.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(provider_config["model_policy"], MODEL_POLICY)
+        self.assertEqual((provider_config["page_visit_budget"], provider_config["model_call_budget"], provider_config["page_char_limit"]), (8, 12, 12000))
+        flat = prepare_provider_input(self.config(), self.input, self.repo, self.root / "flat-input")
+        self.assertEqual(flat["network"], "none")
+
+    def navigator_output(self, cited, *, text="Waves order resources.", trace_overrides=None, terminal="answer", metadata_overrides=None):
+        output = self.root / "provider-output"; output.mkdir()
+        metadata = {"name": "rag_llm_guided_search", "deterministic": False, "top_k": 3, "max_context_chars_per_doc": 1500,
+                    "answer_policy": "agent_answer_v1", "page_visit_budget": 8, "model_call_budget": 12, "page_char_limit": 12000,
+                    "model_policy": MODEL_POLICY, "trace_schema_version": "e007b.action_trace.v1",
+                    "provider_policy": "bounded_provider_action_controller_v1", "prompt_version": "e007c_navigator_prompt_v1",
+                    "start_document": "index.md", **(metadata_overrides or {})}
+        (output / "metadata.json").write_text(json.dumps(metadata), encoding="utf-8")
+        expected = {"guide__bbbdfa65": "Sync waves order resources.", "guide_waves__3440d413": "W", "guide_hooks__b1ec6f5b": "H"}
+        context = [{"doc_id": d, "text": expected[d], "score": float(len(cited[:3]) - i), "source": "llm_guided_navigation", "rank": i + 1}
+                   for i, d in enumerate(cited[:3])]
+        row = {"question_id": "q1", "question": "sync waves", "generated_answer": text, "retrieved_context": context,
+               "answer_policy": "agent_answer_v1", "cited_pages": cited}
+        (output / "predictions.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+        (output / "navigation.json").write_text(json.dumps({"status": "completed"}), encoding="utf-8")
+        traces = output / "traces"; traces.mkdir()
+        header = {"record": "header", "question_id": "q1", "schema_version": "e007b.action_trace.v1",
+                  "compatible_action_schema_version": "e007a.action_trace.v1", "policy": "bounded_provider_action_controller_v1",
+                  "controller": {}, "start_doc_id": "guide__bbbdfa65"}
+        visits = ["guide__bbbdfa65", "guide_waves__3440d413", "guide_hooks__b1ec6f5b"]
+        actions = [{"record": "action", "step": 1, "action": "open", "budget_remaining": 11, "details": {"from_doc_id": visits[0], "doc_id": visits[1], "dead_end": False}},
+                   {"record": "action", "step": 2, "action": "open", "budget_remaining": 10, "details": {"from_doc_id": visits[1], "doc_id": visits[2], "dead_end": False}}]
+        if terminal == "answer":
+            actions.append({"record": "action", "step": 3, "action": "answer", "budget_remaining": 9, "details": {"cited_pages": cited, "text": text}})
+        actions.append({"record": "action", "step": len(actions) + 1, "action": "stop", "budget_remaining": 9, "details": {}})
+        last = {"record": "terminal", "terminal": {"reason": terminal}, "visits": visits, "opens": 2, "model_calls": 3, "dead_ends": 0,
+                "answer": {"cited_pages": cited, "text": text}, "final_context_doc_ids": cited[:3], "provider_calls": [],
+                "paper_facing_evidence": False, **(trace_overrides or {})}
+        (traces / "q1.jsonl").write_text("".join(json.dumps(r) + "\n" for r in [header, *actions, last]), encoding="utf-8")
+        return output
+
+    def test_navigator_projection_publishes_cited_pages_and_validates_traces(self):
+        import shutil
+        config = self.navigator_config()
+        provider_input = self.root / "provider-input"
+        prepare_provider_input(config, self.input, self.repo, provider_input)
+        documents = self.root / "documents.json"
+        documents.write_text(json.dumps([
+            {"doc_id": "guide__bbbdfa65", "imported_path": "guide__bbbdfa65.md", "expected_text": "Sync waves order resources."},
+            {"doc_id": "guide_waves__3440d413", "imported_path": "guide_waves__3440d413.md", "expected_text": "W"},
+            {"doc_id": "guide_hooks__b1ec6f5b", "imported_path": "guide_hooks__b1ec6f5b.md", "expected_text": "H"}]), encoding="utf-8")
+        output = self.navigator_output(["guide_hooks__b1ec6f5b", "guide_waves__3440d413"])
+        ranked, answers = project_ranked_predictions(config, output, self.input, documents, provider_input)
+        self.assertEqual([i["support_target_id"] for i in ranked[0]["items"]], ["guide_hooks__b1ec6f5b", "guide_waves__3440d413"])
+        self.assertEqual(ranked[0]["retrieval_exhausted"], True)
+        self.assertEqual(answers[0], {"query_id": "q1", "generated_answer": "Waves order resources.", "answer_policy": "agent_answer_v1",
+                                      "cited_pages": ["guide_hooks__b1ec6f5b", "guide_waves__3440d413"]})
+        shutil.rmtree(output)
+        # An empty answer (budget exhausted) projects an empty context and an empty answer.
+        output = self.navigator_output([], text="", terminal="budget_exhausted")
+        ranked, answers = project_ranked_predictions(config, output, self.input, documents, provider_input)
+        self.assertEqual((ranked[0]["items"], answers[0]["generated_answer"]), ([], ""))
+        shutil.rmtree(output)
+        bad = {
+            "provider-navigation-row": [dict(cited=["guide_hooks__b1ec6f5b"], trace_overrides={"answer": {"cited_pages": [], "text": "Waves order resources."}}),
+                                        dict(cited=["guide_hooks__b1ec6f5b", "guide_hooks__b1ec6f5b"])],
+            "provider-trace-budget": [dict(cited=["guide_hooks__b1ec6f5b"], trace_overrides={"opens": 3}),
+                                      dict(cited=["guide_hooks__b1ec6f5b"], trace_overrides={"model_calls": 13}),
+                                      dict(cited=["guide_hooks__b1ec6f5b"], trace_overrides={"visits": ["guide__bbbdfa65", "guide_waves__3440d413", "nope__00000000"]}),
+                                      dict(cited=["guide_hooks__b1ec6f5b"], trace_overrides={"terminal": {"reason": "answer"}}, terminal="invalid_action")],
+            "provider-output-shape": [dict(cited=[], text="", terminal="budget_exhausted", remove="navigation.json")],
+            "provider-traces": [dict(cited=[], text="", terminal="budget_exhausted", remove="traces/q1.jsonl")],
+        }
+        for code, cases in bad.items():
+            for case in cases:
+                remove = case.pop("remove", None)
+                output = self.navigator_output(**case)
+                if remove:
+                    (output / remove).unlink()
+                with self.assertRaisesRegex(ValidationError, code, msg=json.dumps(case)):
+                    project_ranked_predictions(config, output, self.input, documents, provider_input)
+                shutil.rmtree(output)
+        output = self.navigator_output([], text="", terminal="budget_exhausted", metadata_overrides={"page_visit_budget": 9})
+        with self.assertRaisesRegex(ValidationError, "provider-metadata"):
+            project_ranked_predictions(config, output, self.input, documents, provider_input)
+
+
 if __name__ == "__main__": unittest.main()
