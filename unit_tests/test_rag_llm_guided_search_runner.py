@@ -80,7 +80,9 @@ class NavigatorRunnerTests(unittest.TestCase):
         (self.input / "questions.jsonl").write_text(
             "".join(json.dumps({"question_id": q, "question": f"what about {q}?"}) + "\n" for q in ids), encoding="utf-8")
 
-    def run_with(self, scripts: dict[str, list[dict]]) -> tuple[int, FakeClient]:
+    def run_with(self, scripts: dict[str, list[dict]], **config) -> tuple[int, FakeClient]:
+        if config:
+            (self.input / "config.yaml").write_text(json.dumps({**CONFIG, **config}), encoding="utf-8")
         client = FakeClient(scripts)
         code = self.runner.run(self.input, self.output, client_factory=lambda policy: client)
         return code, client
@@ -158,19 +160,19 @@ class NavigatorRunnerTests(unittest.TestCase):
                       {"action": "open", "link": "faq__00000002"}, {"action": "answer", "cited_pages": [], "text": "done"}],
             "calls": [{"action": "open", "link": "guide__00000001"}, {"action": "back"}] * 3,
             "error": [{"action": "open", "link": "guide__00000001"}, {"action": "__error__"}],
-        })
+        }, model_call_budget=6)
         self.assertEqual(code, 0)
         terminal = lambda q: self.read_trace(q)[-1]["terminal"]
         self.assertEqual(terminal("bad_link")["reason"], "invalid_action")
         self.assertEqual(terminal("bad_link")["validation_error"], "link_not_on_page")
         self.assertEqual(terminal("back_root")["validation_error"], "back_at_root")
         self.assertEqual(terminal("cite_unvisited")["validation_error"], "answer_cites_unvisited_page")
-        # Three opens fill the visit budget; the answer still lands within the five calls.
+        # Three opens fill the visit budget; the answer still lands within the six calls.
         self.assertEqual(terminal("opens"), {"reason": "answer"})
         self.assertEqual(self.read_trace("opens")[-1]["opens"], 3)
-        # Five calls without an answer exhaust the call budget.
+        # Six calls without an answer exhaust the call budget.
         self.assertEqual(terminal("calls"), {"reason": "budget_exhausted", "exhausted": "model_calls"})
-        self.assertEqual(self.read_trace("calls")[-1]["model_calls"], 5)
+        self.assertEqual(self.read_trace("calls")[-1]["model_calls"], 6)
         self.assertEqual(terminal("error")["reason"], "provider_error")
         predictions = [json.loads(line) for line in (self.output / "predictions.jsonl").read_text(encoding="utf-8").splitlines()]
         self.assertEqual([row["generated_answer"] for row in predictions], ["", "", "", "done", "", ""])
@@ -180,12 +182,13 @@ class NavigatorRunnerTests(unittest.TestCase):
 
     def test_open_beyond_visit_budget_is_budget_exhausted(self):
         self.questions("q")
-        self.run_with({"q": [{"action": "open", "link": "guide__00000001"}, {"action": "back"}] * 3 + [{"action": "open", "link": "guide__00000001"}]})
+        self.run_with({"q": [{"action": "open", "link": "guide__00000001"}, {"action": "back"}] * 3 + [{"action": "open", "link": "guide__00000001"}]},
+                      model_call_budget=10)
         rows = self.read_trace("q")
         self.assertEqual(rows[-1]["terminal"], {"reason": "budget_exhausted", "exhausted": "page_visits",
                                                 "requested": {"action": "open", "link": "guide__00000001"}})
         self.assertEqual(rows[-1]["opens"], 3)
-        self.assertEqual(rows[-1]["model_calls"], 5)
+        self.assertEqual(rows[-1]["model_calls"], 7)
 
     def test_missing_start_page_is_unavailable(self):
         (self.input / "corpus" / f"{self.start}.md").unlink()
@@ -223,10 +226,10 @@ class NavigatorRunnerTests(unittest.TestCase):
         result = metrics.compute(self.output / "traces", support)
         slot = result["slot"]
         self.assertEqual((slot["query_count"], slot["success_count"]), (3, 2))
-        self.assertAlmostEqual(slot["success_at_n"], 2 / 3)
+        self.assertAlmostEqual(slot["success_at_n"], 2 / 3, places=5)
         self.assertEqual(slot["hops_to_first_support"], 1.0)  # (2 + 0) / 2
         self.assertEqual(slot["pages_per_success"], 1.5)  # 3 opens / 2 successes
-        self.assertAlmostEqual(slot["dead_ends"], 2 / 3)  # faq is a dead end, opened twice
+        self.assertAlmostEqual(slot["dead_ends"], 2 / 3, places=5)  # faq is a dead end, opened twice
         self.assertEqual(slot["terminals"]["answer"], 3)
         by_query = {row["query_id"]: row for row in result["per_query"]}
         self.assertEqual(by_query["hit"]["hops_to_first_support"], 2)
