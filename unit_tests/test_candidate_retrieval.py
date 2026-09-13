@@ -52,7 +52,7 @@ class CandidateRetrievalTests(unittest.TestCase):
 
     def provider_output(self):
         output = self.root / "provider-output"; output.mkdir()
-        (output / "metadata.json").write_text(json.dumps({"name": "rag_lexical_topk", "deterministic": True, "ranker": "bm25", "top_k": 1, "max_context_chars_per_doc": 1500}), encoding="utf-8")
+        (output / "metadata.json").write_text(json.dumps({"name": "rag_lexical_topk", "deterministic": True, "ranker": "bm25", "top_k": 1, "max_context_chars_per_doc": 1500, "answer_policy": "head_of_document_v1"}), encoding="utf-8")
         item = {"doc_id": "guide__bbbdfa65", "text": "Sync waves", "score": 1.0, "source": "lexical_topk", "rank": 1}
         row = {"question_id": "q1", "question": "sync waves", "generated_answer": "Sync waves", "retrieved_context": [item]}
         (output / "predictions.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
@@ -106,6 +106,7 @@ class CandidateRetrievalTests(unittest.TestCase):
         documents = self.root / "documents.json"
         documents.write_text(json.dumps([{"doc_id": "guide__bbbdfa65", "expected_text": "Sync waves"}]), encoding="utf-8")
         output = self.provider_output()
+        (output / "metadata.json").write_text(json.dumps({"name": "rag_lexical_topk", "deterministic": True, "ranker": "bm25", "top_k": 1, "max_context_chars_per_doc": 1500}), encoding="utf-8")
         with self.assertRaisesRegex(ValidationError, "provider-metadata-fields"):
             project_ranked_predictions(self.config(), output, self.input, documents)
         (output / "metadata.json").write_text(json.dumps({"name": "rag_lexical_topk", "deterministic": True, "ranker": "bm25", "top_k": 1, "max_context_chars_per_doc": 1500, "answer_policy": "head_of_document_v1"}), encoding="utf-8")
