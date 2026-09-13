@@ -69,7 +69,7 @@ if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candida
         $launchPath = Join-Path $outputPath '.candidate-retrieval-work\launch.json'
         try {
             $launch = Get-Content -Raw -LiteralPath $launchPath | ConvertFrom-Json
-            if ($launch.schema_version -ne 'retrieval_arena.candidate_retrieval_launch.v1' -or $launch.platform -ne 'linux/amd64' -or $launch.network -ne 'none' -or [string]$launch.provider_image -notmatch '^retrieval-arena/rag-lexical-topk@sha256:[0-9a-f]{64}$') { throw 'verification-candidate-launch-invalid' }
+            if ($launch.schema_version -ne 'retrieval_arena.candidate_retrieval_launch.v1' -or $launch.platform -ne 'linux/amd64' -or $launch.network -ne 'none' -or [string]$launch.provider_image -notmatch '^retrieval-arena/[a-z0-9-]+@sha256:[0-9a-f]{64}$') { throw 'verification-candidate-launch-invalid' }
         }
         catch {
             [IO.File]::WriteAllText((Join-Path $outputPath '.candidate-retrieval-work\provider-exit.json'), "{`"exit_code`":-2}`n", [Text.UTF8Encoding]::new($false))

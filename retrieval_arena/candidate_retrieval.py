@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from dataclasses import dataclass
 import math
 import os
 import re
@@ -13,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from .errors import ValidationError
+from .graph.links import extract_markdown_link_edges, write_edges_csv
 
 CONFIG_SCHEMA = "retrieval_arena.candidate_retrieval_config.v1"
 PREDICTION_SCHEMA = "retrieval_arena.ranked_prediction.v2"
@@ -21,7 +23,65 @@ PROVIDER_NAME = "rag_lexical_topk"
 ANSWER_POLICIES = ("head_of_document_v1", "best_passage_v1")
 DEFAULT_ANSWER_POLICY = "head_of_document_v1"
 PROVIDER_ROW_FIELDS = {"question_id", "question", "generated_answer", "retrieved_context"}
+PROVIDER_ITEM_FIELDS = {"doc_id", "text", "score", "source", "rank"}
 PROVENANCE_FIELDS = {"doc_id", "section_heading", "passage_index", "char_start", "char_end"}
+BASE_PROVIDER_FIELDS = frozenset({"name", "image", "platform", "network", "top_k", "max_context_chars_per_doc"})
+GRAPH_EDGES_FILE = "graph_edges.csv"
+GRAPH_SELECTION_ROLES = ("seed", "ranked_neighbor")
+
+
+@dataclass(frozen=True)
+class ProviderProfile:
+    """One config-declared provider the endpoint admits (S025).
+
+    ``config_fields`` are the provider-specific knobs the candidate-retrieval
+    config must carry (exactly, beyond the base fields and ``answer_policy``);
+    ``item_fields`` the context-item keys beyond the common row shape;
+    ``requires_graph`` whether prepare extracts the candidate's link graph.
+    """
+
+    name: str
+    image_repository: str
+    item_source: str
+    requires_graph: bool
+    config_fields: frozenset[str]
+    item_fields: frozenset[str]
+
+    @property
+    def image_pattern(self) -> str:
+        return rf"{re.escape(self.image_repository)}@sha256:[0-9a-f]{{64}}"
+
+
+PROVIDERS: dict[str, ProviderProfile] = {
+    "rag_lexical_topk": ProviderProfile(
+        "rag_lexical_topk", "retrieval-arena/rag-lexical-topk", "lexical_topk", False,
+        frozenset(), frozenset()),
+    # BM25 seeds plus a ranked one-hop neighbour budget; the context budget
+    # ``top_k`` is split as ``seed_top_k + neighbor_budget``.
+    "rag_graph_ranked_expand": ProviderProfile(
+        "rag_graph_ranked_expand", "retrieval-arena/rag-graph-ranked-expand", "graph_ranked_expand", True,
+        frozenset({"graph_expansion_hops", "seed_top_k", "neighbor_budget"}), frozenset({"selection_role"})),
+}
+PROVIDER_IMAGE_PATTERN = re.compile(r"retrieval-arena/[a-z0-9-]+@sha256:[0-9a-f]{64}")
+
+
+def provider_profile(name: Any) -> ProviderProfile:
+    if not isinstance(name, str) or name not in PROVIDERS:
+        raise ValidationError("candidate-retrieval-provider-undeclared")
+    return PROVIDERS[name]
+
+
+def _positive_int(value: Any, *, minimum: int) -> bool:
+    return not isinstance(value, bool) and isinstance(value, int) and value >= minimum
+
+
+def imported_document_name(relative_text: str) -> tuple[str, str]:
+    """Return (imported file name, doc id) under ``cikm_flat_path_sha1_v1``."""
+    relative = Path(relative_text)
+    stem = re.sub(r"[^A-Za-z0-9]+", "_", relative.with_suffix("").as_posix()).strip("_").lower()
+    suffix = hashlib.sha1(relative_text.encode("utf-8"), usedforsecurity=False).hexdigest()[:8]
+    imported_name = f"{stem}__{suffix}.md"
+    return imported_name, Path(imported_name).with_suffix("").as_posix()
 
 
 def canonical(value: Any) -> bytes:
@@ -89,26 +149,29 @@ def validate_config(value: Any) -> dict[str, Any]:
     if corpus["extensions"] != [".md"] or corpus["import_policy"] != "cikm_flat_path_sha1_v1":
         raise ValidationError("candidate-retrieval-import-policy")
     _relative(config["queries_path"], "candidate-retrieval-queries-path")
-    provider_fields = {"name", "image", "platform", "network", "top_k", "max_context_chars_per_doc"}
-    if (not isinstance(config["provider"], dict)
-            or set(config["provider"]) not in (provider_fields, provider_fields | {"answer_policy"})):
+    if not isinstance(config["provider"], dict):
+        raise ValidationError("candidate-retrieval-provider-fields")
+    profile = provider_profile(config["provider"].get("name"))
+    provider_fields = BASE_PROVIDER_FIELDS | profile.config_fields
+    if set(config["provider"]) not in (provider_fields, provider_fields | {"answer_policy"}):
         raise ValidationError("candidate-retrieval-provider-fields")
     # Legacy requests carry no answer_policy; the effective policy is always recorded.
     provider = {**config["provider"],
                 "answer_policy": config["provider"].get("answer_policy", DEFAULT_ANSWER_POLICY)}
     config = {**config, "provider": provider}
-    if (provider["name"] != PROVIDER_NAME or provider["platform"] != "linux/amd64"
-            or provider["network"] != "none"
+    if (provider["platform"] != "linux/amd64" or provider["network"] != "none"
             or not isinstance(provider["image"], str)
-            or not provider["image"].startswith("retrieval-arena/rag-lexical-topk@sha256:")
-            or re.fullmatch(r"retrieval-arena/rag-lexical-topk@sha256:[0-9a-f]{64}", provider["image"]) is None
-            or isinstance(provider["top_k"], bool) or not isinstance(provider["top_k"], int)
-            or provider["top_k"] < 1
-            or isinstance(provider["max_context_chars_per_doc"], bool)
-            or not isinstance(provider["max_context_chars_per_doc"], int)
-            or provider["max_context_chars_per_doc"] < 0
+            or re.fullmatch(profile.image_pattern, provider["image"]) is None
+            or not _positive_int(provider["top_k"], minimum=1)
+            or not _positive_int(provider["max_context_chars_per_doc"], minimum=0)
             or provider["answer_policy"] not in ANSWER_POLICIES):
         raise ValidationError("candidate-retrieval-provider-policy")
+    if profile.requires_graph and (
+            provider["graph_expansion_hops"] != 1
+            or not _positive_int(provider["seed_top_k"], minimum=1)
+            or not _positive_int(provider["neighbor_budget"], minimum=0)
+            or provider["seed_top_k"] + provider["neighbor_budget"] != provider["top_k"]):
+        raise ValidationError("candidate-retrieval-provider-graph-policy")
     ranked = _exact(config["ranked"], {"schema_version", "context_item_budget_k"},
                     "candidate-retrieval-ranked-fields")
     if (ranked["schema_version"] != PREDICTION_SCHEMA
@@ -159,11 +222,8 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
     for source in sorted(corpus_root.rglob("*.md")):
         if source.is_symlink() or not source.is_file():
             raise ValidationError("candidate-retrieval-corpus-file")
-        relative = source.relative_to(corpus_root)
-        relative_text = relative.as_posix()
-        stem = re.sub(r"[^A-Za-z0-9]+", "_", relative.with_suffix("").as_posix()).strip("_").lower()
-        suffix = hashlib.sha1(relative_text.encode("utf-8"), usedforsecurity=False).hexdigest()[:8]
-        imported_name = f"{stem}__{suffix}.md"
+        relative_text = source.relative_to(corpus_root).as_posix()
+        imported_name, doc_id = imported_document_name(relative_text)
         destination = provider_input / "corpus" / imported_name
         if destination.exists():
             raise ValidationError("candidate-retrieval-document-id-collision")
@@ -176,24 +236,93 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
         if limit > 0 and len(snippet) > limit:
             snippet = snippet[:limit].rsplit(" ", 1)[0].strip()
         document_rows.append({"path": relative_text, "imported_path": imported_name,
-                              "doc_id": Path(imported_name).with_suffix("").as_posix(),
+                              "doc_id": doc_id,
                               "sha256": sha256_file(source), "size_bytes": source.stat().st_size,
                               "expected_text": snippet})
     if not document_rows:
         raise ValidationError("candidate-retrieval-corpus-empty")
     (provider_input / "questions.jsonl").write_bytes(queries.read_bytes())
+    profile = provider_profile(config["provider"]["name"])
     provider_config = {"top_k": config["provider"]["top_k"],
                        "max_context_chars_per_doc": config["provider"]["max_context_chars_per_doc"],
-                       "answer_policy": config["provider"]["answer_policy"]}
+                       "answer_policy": config["provider"]["answer_policy"],
+                       **{name: config["provider"][name] for name in sorted(profile.config_fields)}}
     (provider_input / "config.yaml").write_bytes(canonical(provider_config) + b"\n")
+    graph_edges_sha256 = None
+    if profile.requires_graph:
+        # Per-candidate link graph: the resolver of write_markdown_link_graph
+        # over the candidate's own docs tree, nodes = imported .md documents.
+        edges = extract_markdown_link_edges(
+            corpus_root, doc_id_for=lambda relative: imported_document_name(relative)[1],
+            extensions=config["corpus"]["extensions"])
+        write_edges_csv(edges, provider_input / GRAPH_EDGES_FILE)
+        graph_edges_sha256 = sha256_file(provider_input / GRAPH_EDGES_FILE)
     (provider_input.parent / "documents.json").write_bytes(canonical(document_rows) + b"\n")
     return {"schema_version": "retrieval_arena.candidate_retrieval_launch.v1",
+            "provider_name": profile.name,
             "provider_image": config["provider"]["image"], "platform": "linux/amd64",
             "network": "none", "candidate_commit": config["candidate"]["commit"],
             "candidate_tree": config["candidate"]["tree"],
+            "graph_edges_sha256": graph_edges_sha256,
             "document_inventory_sha256": sha256_bytes(canonical(document_rows)),
             "provider_input_inventory": regular_inventory(provider_input),
             "provider_input_inventory_sha256": sha256_bytes(canonical(regular_inventory(provider_input)))}
+
+
+def expected_provider_metadata(provider: dict[str, Any]) -> dict[str, Any]:
+    """The exact ``metadata.json`` a declared provider must publish."""
+    profile = provider_profile(provider["name"])
+    common = {"name": profile.name, "deterministic": True, "top_k": provider["top_k"],
+              "max_context_chars_per_doc": provider["max_context_chars_per_doc"],
+              "answer_policy": provider["answer_policy"]}
+    if profile.requires_graph:
+        return {**common, "seed_ranker": "bm25", "neighbor_ranker": "bm25",
+                "graph_expansion_hops": provider["graph_expansion_hops"],
+                "seed_top_k": provider["seed_top_k"], "neighbor_budget": provider["neighbor_budget"]}
+    return {**common, "ranker": "bm25"}
+
+
+def _read_graph(path: Path) -> dict[str, set[str]]:
+    """Undirected adjacency of the published edge file (the provider expands both ways)."""
+    if not path.is_file() or path.is_symlink():
+        raise ValidationError("candidate-retrieval-graph-missing")
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if not lines or lines[0] != "source,target":
+        raise ValidationError("candidate-retrieval-graph-header")
+    adjacency: dict[str, set[str]] = {}
+    for line in lines[1:]:
+        source, separator, target = line.partition(",")
+        if not separator or not source or not target:
+            raise ValidationError("candidate-retrieval-graph-row")
+        adjacency.setdefault(source, set()).add(target)
+        adjacency.setdefault(target, set()).add(source)
+    return adjacency
+
+
+def _score_sorted(items: list[dict[str, Any]]) -> bool:
+    return items == sorted(items, key=lambda item: (-item["score"], item["support_target_id"]))
+
+
+def _check_order(profile: ProviderProfile, provider: dict[str, Any], items: list[dict[str, Any]],
+                 roles: list[str], graph: dict[str, set[str]] | None) -> None:
+    if not profile.requires_graph:
+        if not _score_sorted(items):
+            raise ValidationError("candidate-retrieval-provider-order")
+        return
+    # Seeds (score order) precede ranked neighbours (score order); counts
+    # respect the declared split; each neighbour is adjacent to a seed.
+    seed_count = roles.count("seed")
+    if (any(role not in GRAPH_SELECTION_ROLES for role in roles)
+            or roles != ["seed"] * seed_count + ["ranked_neighbor"] * (len(roles) - seed_count)
+            or seed_count > provider["seed_top_k"]
+            or len(roles) - seed_count > provider["neighbor_budget"]
+            or not _score_sorted(items[:seed_count]) or not _score_sorted(items[seed_count:])):
+        raise ValidationError("candidate-retrieval-provider-order")
+    if graph is not None:
+        seeds = {item["support_target_id"] for item in items[:seed_count]}
+        frontier: set[str] = set().union(*(graph.get(seed, set()) for seed in seeds)) - seeds
+        if any(item["support_target_id"] not in frontier for item in items[seed_count:]):
+            raise ValidationError("candidate-retrieval-provider-neighbor")
 
 
 def _validate_provenance(value: Any, context_ids: set[str], by_id: dict[Any, dict[str, Any]],
@@ -227,17 +356,17 @@ def project_ranked_predictions(config: dict[str, Any], provider_output: Path, in
     if (set(path.name for path in provider_output.iterdir()) != {"metadata.json", "predictions.jsonl"}
             or predictions_path.is_symlink() or metadata_path.is_symlink()):
         raise ValidationError("candidate-retrieval-provider-output-shape")
-    metadata = _exact(json.loads(metadata_path.read_bytes()), {
-        "name", "deterministic", "ranker", "top_k", "max_context_chars_per_doc", "answer_policy"
-    }, "candidate-retrieval-provider-metadata-fields")
     provider = config["provider"]
+    profile = provider_profile(provider["name"])
+    expected_metadata = expected_provider_metadata(provider)
+    metadata = _exact(json.loads(metadata_path.read_bytes()), set(expected_metadata),
+                      "candidate-retrieval-provider-metadata-fields")
     answer_policy = provider["answer_policy"]
     best_passage = answer_policy == "best_passage_v1"
-    if metadata != {"name": PROVIDER_NAME, "deterministic": True, "ranker": "bm25",
-                    "top_k": provider["top_k"],
-                    "max_context_chars_per_doc": provider["max_context_chars_per_doc"],
-                    "answer_policy": answer_policy}:
+    if metadata != expected_metadata:
         raise ValidationError("candidate-retrieval-provider-metadata")
+    graph = (_read_graph(provider_input / GRAPH_EDGES_FILE)
+             if profile.requires_graph and provider_input is not None else None)
     rows = [json.loads(line) for line in predictions_path.read_text(encoding="utf-8").splitlines()
             if line.strip()]
     questions = [json.loads(line) for line in (input_root / config["queries_path"]).read_text(
@@ -273,25 +402,25 @@ def project_ranked_predictions(config: dict[str, Any], provider_output: Path, in
             raise ValidationError("candidate-retrieval-provider-context")
         items = []
         seen_items: set[str] = set()
+        roles: list[str] = []
         for source_rank, item in enumerate(context, 1):
-            _exact(item, {"doc_id", "text", "score", "source", "rank"},
+            _exact(item, PROVIDER_ITEM_FIELDS | profile.item_fields,
                    "candidate-retrieval-provider-item-fields")
             score = item["score"]
             admitted = by_id.get(item.get("doc_id"))
-            if (item["source"] != "lexical_topk" or item["rank"] != source_rank
+            if (item["source"] != profile.item_source or item["rank"] != source_rank
                     or not isinstance(item["doc_id"], str) or not item["doc_id"]
                     or item["doc_id"] in seen_items or isinstance(score, bool)
                     or not isinstance(score, (int, float)) or not math.isfinite(score)
                     or admitted is None or item["text"] != admitted.get("expected_text")):
                 raise ValidationError("candidate-retrieval-provider-item")
             seen_items.add(item["doc_id"])
+            roles.append(item.get("selection_role", "seed"))
             items.append({"support_target_id": item["doc_id"], "rank": source_rank,
                           "score": float(score), "source_rank": source_rank,
                           "source_item_id": item["doc_id"],
                           "source_provenance_sha256": sha256_bytes(canonical(item))})
-        expected = sorted(items, key=lambda item: (-item["score"], item["support_target_id"]))
-        if items != expected:
-            raise ValidationError("candidate-retrieval-provider-order")
+        _check_order(profile, provider, items, roles, graph)
         result.append({"schema_version": PREDICTION_SCHEMA, "query_id": query_id,
                        "context_item_budget_k": provider["top_k"], "max_rank": len(items),
                        "retrieval_exhausted": len(items) < provider["top_k"], "items": items,

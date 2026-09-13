@@ -158,12 +158,19 @@ before the formal contracts and formulas.
 
 Candidate-bound prediction generation is exposed through the registered
 `candidate-retrieve` verification command. It admits an exact clean candidate
-Git commit/tree, a complete private-input inventory, and only an immutable
-`rag_lexical_topk` image; the provider runs offline as uid/gid 65532:65532
-(the owner of the prepared `provider-output` directory) with `--cap-drop ALL`,
-and RA atomically publishes ranked-v2 predictions plus a self-hashed receipt.
-This stage does not score or mutate qrels. The closed shape is illustrated by
-`configs/candidate_retrieval.example.json`:
+Git commit/tree, a complete private-input inventory, and one config-declared
+provider from the closed table in `retrieval_arena/candidate_retrieval.py`
+(`rag_lexical_topk`, and since S025 `rag_graph_ranked_expand`), each pinned by
+an immutable `image@sha256` digest; the provider runs offline as uid/gid
+65532:65532 (the owner of the prepared `provider-output` directory) with
+`--cap-drop ALL`, and RA atomically publishes ranked-v2 predictions plus a
+self-hashed receipt. For a provider that declares `requires_graph`, prepare
+extracts the candidate's own Markdown link graph (`graph_edges.csv`, directed,
+flat document ids) into the provider input, binds its sha256 in the launch and
+the receipt, and finalize publishes the same file beside the predictions.
+This stage does not score or mutate qrels. The closed shapes are illustrated by
+`configs/candidate_retrieval.example.json` and
+`configs/candidate_retrieval.graph.example.json`:
 
 ```powershell
 .\scripts\run-verification.ps1 -Command candidate-retrieve -InputRoot <input-root> -OutputRoot <output-root> -CandidateRoot <candidate-root> -Receipt <image-receipt>

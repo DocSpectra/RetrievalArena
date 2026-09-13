@@ -19,7 +19,7 @@ Knobs are the `config.get(...)` keys in each runner.
 | `rag_embedding_topk` | embedding similarity top-k (pinned local model, offline) |
 | `rag_vector` | minimal vector top-k example |
 | `rag_graph_expand` | BM25 seeds expanded along `graph_edges.csv` by N hops |
-| `rag_graph_ranked_expand` | BM25 seeds plus a ranked neighbor budget (`seed_top_k`, `neighbor_budget`) |
+| `rag_graph_ranked_expand` | BM25 seeds plus a ranked one-hop neighbor budget (`seed_top_k`, `neighbor_budget`; `top_k` = their sum, `graph_expansion_hops` fixed at 1); the S025 graph retriever; `answer_policy` as `rag_lexical_topk` |
 | `rag_graph_rerank` | BM25 seeds, graph-aware rerank to `final_top_k` |
 | `rag_graph_multihop_rerank` | multi-hop frontier search with distance penalty and reserved deep slots |
 | `rag_directed_spectral_rerank` | directed link bonuses plus PageRank/hub authority priors |
@@ -30,9 +30,11 @@ Knobs are the `config.get(...)` keys in each runner.
 | `oracle_perfect` / `oracle_partial` / `oracle_empty` / `oracle_graph_support` | oracles for calibration and graph-support bounds |
 | `llm_only` / `local_no_context_llm_e001b` | no-retrieval answer baselines |
 
-All providers currently emit `generated_answer` as the head of the top
-document (`max_context_chars_per_doc`). Only `rag_lexical_topk` implements
-`best_passage_v1`; other providers still emit head-of-document answers.
+Providers emit `generated_answer` as the head of the top document
+(`max_context_chars_per_doc`) unless they implement `best_passage_v1`:
+`rag_lexical_topk` and `rag_graph_ranked_expand` do (the graph runner carries a
+byte-identical copy of the passage functions, asserted by its unit test);
+other providers still emit head-of-document answers.
 
 ## Declaring An Experiment
 
@@ -61,10 +63,15 @@ alongside its positional form. The receipt
 source commit/tree, and dependency lock; the operator refuses unless
 repository HEAD, tree, and lock match it and the image labels agree — so
 any commit here needs `build-verification` and a new receipt.
-`candidate-retrieve` admits one config-declared provider per request
-(`rag_lexical_topk` only at `d00b38d`; generalized in S025) and requires
-a standalone candidate repository whose corpus sits under a subdirectory
-(`corpus.root`, e.g. `docs`). The provider container runs as uid/gid
+`candidate-retrieve` admits one config-declared provider per request from
+the closed profile table in `retrieval_arena/candidate_retrieval.py`
+(`rag_lexical_topk` only at `d00b38d`; `rag_graph_ranked_expand` added in
+S025, each pinned by `image@sha256`) and requires a standalone candidate
+repository whose corpus sits under a subdirectory (`corpus.root`, e.g.
+`docs`). A `requires_graph` provider gets the candidate's own link graph
+(`graph_edges.csv`, `write_markdown_link_graph`'s resolver over the corpus
+tree with flat ids) extracted at prepare, hashed into the launch and the
+receipt (`graph_edges_sha256`), and published beside the predictions. The provider container runs as uid/gid
 65532:65532 (the prepare step's user, which owns `provider-output`) with
 `--cap-drop ALL`; running it as root cannot write the output directory.
 
@@ -79,5 +86,8 @@ image rebuild, was judged too invasive for S024 and remains open.
 Create `tests/<name>/runner.py` and build context, read the standard
 `/input` layout, write `/output/predictions.jsonl` with the common row
 shape, add a `tests` entry with a pinned image digest to the experiment
-YAML, and a unit test under `unit_tests/`. Declare graph needs so the
-operator supplies `graph_edges.csv`. No host-side executor scripts.
+YAML, and a unit test under `unit_tests/`. To admit it at
+`candidate-retrieve`, add a `ProviderProfile` row (image repository, item
+source, provider-specific config keys, `requires_graph`) and its metadata
+shape in `retrieval_arena/candidate_retrieval.py`. No host-side executor
+scripts.

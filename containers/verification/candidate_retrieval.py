@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from retrieval_arena.candidate_retrieval import (
-    canonical, prepare_provider_input, project_ranked_predictions, regular_inventory,
+    GRAPH_EDGES_FILE, canonical, prepare_provider_input, project_ranked_predictions, regular_inventory,
     sha256_bytes, sha256_file, validate_config,
 )
 
@@ -59,6 +59,7 @@ def _failure(error, exit_code, started, request=None, config=None):
              "provider_output_inventory_available": provider_inventory_available,
              "predictions_sha256": None, "generated_answers_sha256": None,
              "prediction_count": 0, "generated_answer_count": 0,
+             "graph_edges_sha256": None,
              "identity": _identity(),
              "isolation": {"network": "none", "candidate_mount": "read_only",
                            "input_mount": "read_only", "root_filesystem": "read_only"},
@@ -137,6 +138,16 @@ def finalize() -> int:
         pending.write_bytes(b"".join(canonical(row) + b"\n" for row in predictions))
         answers_pending = OUTPUT / "generated_answers.v1.jsonl.pending"
         answers_pending.write_bytes(b"".join(canonical(row) + b"\n" for row in answers))
+        # S025: a graph provider's per-candidate link graph is published beside
+        # the predictions; its hash is the one prepare bound in the launch.
+        graph_edges_sha256 = launch.get("graph_edges_sha256")
+        graph_pending = None
+        if graph_edges_sha256 is not None:
+            graph_source = provider_input / GRAPH_EDGES_FILE
+            if sha256_file(graph_source) != graph_edges_sha256:
+                raise ValueError("candidate-retrieval-graph-edges-changed")
+            graph_pending = OUTPUT / (GRAPH_EDGES_FILE + ".pending")
+            graph_pending.write_bytes(graph_source.read_bytes())
         receipt = {
             "schema_version": "retrieval_arena.candidate_retrieval_operator_receipt.v1",
             "command": "candidate-retrieve", "status": "completed", "exit_code": 0,
@@ -148,7 +159,8 @@ def finalize() -> int:
             "provider_output_inventory_available": True,
             "predictions_sha256": sha256_file(pending), "prediction_count": len(predictions),
             "generated_answers_sha256": sha256_file(answers_pending),
-            "generated_answer_count": len(answers), "identity": _identity(),
+            "generated_answer_count": len(answers), "graph_edges_sha256": graph_edges_sha256,
+            "identity": _identity(),
             "isolation": {"network": "none", "candidate_mount": "read_only",
                           "input_mount": "read_only", "root_filesystem": "read_only"},
             "started_at": started,
@@ -162,11 +174,14 @@ def finalize() -> int:
         receipt_final = OUTPUT / "operator_receipt.v1.json"
         pending.replace(prediction_final)
         answers_pending.replace(answers_final)
+        if graph_pending is not None:
+            graph_pending.replace(OUTPUT / GRAPH_EDGES_FILE)
         try:
             (OUTPUT / "operator_receipt.v1.json.pending").replace(receipt_final)
         except Exception:
             prediction_final.unlink(missing_ok=True)
             answers_final.unlink(missing_ok=True)
+            (OUTPUT / GRAPH_EDGES_FILE).unlink(missing_ok=True)
             raise
         return 0
     except Exception as error:
@@ -174,6 +189,7 @@ def finalize() -> int:
             path.unlink(missing_ok=True)
         (OUTPUT / "predictions.v2.jsonl").unlink(missing_ok=True)
         (OUTPUT / "generated_answers.v1.jsonl").unlink(missing_ok=True)
+        (OUTPUT / GRAPH_EDGES_FILE).unlink(missing_ok=True)
         failure = _failure(error, 1, started, request, config)
         (OUTPUT / "operator_receipt.v1.json").write_bytes(canonical(failure) + b"\n")
         print(str(error), file=sys.stderr)

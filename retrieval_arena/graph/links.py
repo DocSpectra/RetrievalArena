@@ -4,7 +4,7 @@ import csv
 import re
 from collections import defaultdict, deque
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Iterable
 from urllib.parse import unquote, urlparse
 
 from ..hashing import sha256_file, sha256_json
@@ -22,11 +22,7 @@ def write_markdown_link_graph(dataset_path: Path) -> dict[str, Any]:
     path_to_doc = _path_to_doc_id(corpus_dir)
     edges = sorted(_extract_edges(corpus_dir, path_to_doc))
     edge_path = dataset_path / "graph_edges.csv"
-    with edge_path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["source", "target"])
-        writer.writeheader()
-        for source, target in edges:
-            writer.writerow({"source": source, "target": target})
+    write_edges_csv(edges, edge_path)
     metrics = graph_metrics(edges, sorted(set(path_to_doc.values())))
     metrics_path = dataset_path / "graph_metrics.json"
     metrics_path.write_text(_json(metrics), encoding="utf-8")
@@ -40,6 +36,28 @@ def write_markdown_link_graph(dataset_path: Path) -> dict[str, Any]:
         "edge_count": metrics["edge_count"],
         "graph_metrics": metrics,
     }
+
+
+def extract_markdown_link_edges(corpus_dir: Path, *, doc_id_for: Callable[[str], str] = corpus_doc_id,
+                                extensions: Iterable[str] | None = None) -> list[tuple[str, str]]:
+    """Return the sorted directed Markdown link edges of a corpus tree.
+
+    The resolver is the one ``write_markdown_link_graph`` uses; ``doc_id_for``
+    maps a corpus-relative POSIX path to the node id (S025: the candidate
+    corpus is imported under ``cikm_flat_path_sha1_v1`` ids), and
+    ``extensions`` restricts the node set (``[".md"]`` keeps every node a
+    corpus document, so links to images or data files resolve to nothing).
+    """
+    path_to_doc = _path_to_doc_id(corpus_dir, doc_id_for=doc_id_for, extensions=extensions)
+    return sorted(_extract_edges(corpus_dir, path_to_doc))
+
+
+def write_edges_csv(edges: Iterable[tuple[str, str]], edge_path: Path) -> None:
+    with edge_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["source", "target"])
+        writer.writeheader()
+        for source, target in edges:
+            writer.writerow({"source": source, "target": target})
 
 
 def graph_metrics(edges: list[tuple[str, str]], corpus_nodes: list[str]) -> dict[str, Any]:
@@ -131,11 +149,13 @@ def _normalize_candidate(path: str) -> str:
     return "/".join(parts)
 
 
-def _path_to_doc_id(corpus_dir: Path) -> dict[str, str]:
+def _path_to_doc_id(corpus_dir: Path, *, doc_id_for: Callable[[str], str] = corpus_doc_id,
+                    extensions: Iterable[str] | None = None) -> dict[str, str]:
+    admitted = None if extensions is None else {extension.lower() for extension in extensions}
     return {
-        path.relative_to(corpus_dir).as_posix(): corpus_doc_id(path.relative_to(corpus_dir).as_posix())
+        path.relative_to(corpus_dir).as_posix(): doc_id_for(path.relative_to(corpus_dir).as_posix())
         for path in sorted(corpus_dir.rglob("*"))
-        if path.is_file()
+        if path.is_file() and (admitted is None or path.suffix.lower() in admitted)
     }
 
 

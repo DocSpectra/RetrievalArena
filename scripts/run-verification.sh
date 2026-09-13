@@ -100,7 +100,7 @@ if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]
     run_operator candidate-retrieve-prepare
     launch=$output_root/.candidate-retrieval-work/launch.json
     provider_image=$(sed -n 's/.*"provider_image"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$launch")
-    if ! printf '%s\n' "$provider_image" | grep -Eq '^retrieval-arena/rag-lexical-topk@sha256:[0-9a-f]{64}$'; then
+    if ! printf '%s\n' "$provider_image" | grep -Eq '^retrieval-arena/[a-z0-9-]+@sha256:[0-9a-f]{64}$'; then
       printf '{"exit_code":-2}\n' > "$output_root/.candidate-retrieval-work/provider-exit.json"
       run_operator candidate-retrieve-finalize
       exit $?
