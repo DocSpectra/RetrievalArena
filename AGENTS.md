@@ -36,6 +36,18 @@ Providers emit `generated_answer` as the head of the top document
 byte-identical copy of the passage functions, asserted by its unit test);
 other providers still emit head-of-document answers.
 
+The answer *synthesis* stage (S031, EXP-1d: a fixed local model reading a
+provider's `best_passage_v1` passages) does not live here. It is the
+Capstone capsule command `synthesize-direct-exp1`
+(`git/DocSpectraCapstone/src/docspectra_capstone/direct_exp1_synthesis.py`),
+because it needs the host model through the capsule's Ollama relay with the
+same observed-identity admission as authoring, and `candidate-retrieve`
+provider containers run with `--network none` (the
+`local_no_context_llm_e001b` loopback gate cannot reach the host model from
+a provider container). RA judges the synthesized answers with the unchanged
+`score-bertscore` command over pairs Capstone composes
+(`<directory>::<context_policy>::<query_id>`).
+
 ## Declaring An Experiment
 
 `configs/<experiment>.yaml`: `datasets` (name, path), `tests` (provider
