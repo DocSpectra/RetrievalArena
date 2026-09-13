@@ -245,13 +245,14 @@ class ModelClient:
 
 # --- prompt and action schema -----------------------------------------------------
 
-def action_schema() -> dict[str, Any]:
+def action_schema(allowed: list[str] | None = None) -> dict[str, Any]:
+    """The structured-output schema of one call; ``action`` is limited to the actions the observation allows."""
     return {
         "type": "object",
         "required": ["action"],
         "additionalProperties": False,
         "properties": {
-            "action": {"type": "string", "enum": list(ACTIONS)},
+            "action": {"type": "string", "enum": list(allowed) if allowed else list(ACTIONS)},
             "link": {"type": "string"},
             "cited_pages": {"type": "array", "items": {"type": "string"}},
             "text": {"type": "string"},
@@ -273,8 +274,8 @@ SYSTEM_PROMPT = (
     "unvisited page ends the navigation as invalid. Opens and model calls are budgeted; when opens_remaining is 0 you "
     "must answer or go back. The root index page is a table of contents: do not answer from it unless it literally "
     "states the answer; open the most promising link instead. Never answer that the documentation does not cover the "
-    "question while opens remain; keep navigating (open, or back and open another link) until a visited page answers "
-    "it or the budget is spent. Use the page ids' path words to guess where the answer lives. Never claim to have "
+    "question while opens remain; keep navigating (open a link; go back only to reach a different link) until a "
+    "visited page answers it or the budget is spent. Use the page ids' path words to guess where the answer lives. Never claim to have "
     "used reference answers, labels, or hidden knowledge."
 )
 
@@ -341,7 +342,7 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
             calls_remaining=config.model_call_budget - calls)
         call_index = calls + 1
         try:
-            requested, usage = client.chat(build_messages(observation), action_schema())
+            requested, usage = client.chat(build_messages(observation), action_schema(observation["allowed_actions"]))
             digest = client.observe_identity()
         except NavigatorError as error:
             calls += 1
