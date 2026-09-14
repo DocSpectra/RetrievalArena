@@ -20,9 +20,22 @@ CONFIG_SCHEMA = "retrieval_arena.candidate_retrieval_config.v1"
 PREDICTION_SCHEMA = "retrieval_arena.ranked_prediction.v2"
 PROVIDER_SCHEMA = "retrieval_arena.lexical_provider_output.v1"
 PROVIDER_NAME = "rag_lexical_topk"
-ANSWER_POLICIES = ("head_of_document_v1", "best_passage_v1")
+ANSWER_POLICIES = ("head_of_document_v1", "best_passage_v1", "agent_answer_v1")
 DEFAULT_ANSWER_POLICY = "head_of_document_v1"
+AGENT_ANSWER_POLICY = "agent_answer_v1"
 PROVIDER_ROW_FIELDS = {"question_id", "question", "generated_answer", "retrieved_context"}
+# S026: the navigator's provider row carries its answer policy and the cited pages.
+NAVIGATOR_ROW_FIELDS = PROVIDER_ROW_FIELDS | {"answer_policy", "cited_pages"}
+NAVIGATOR_OUTPUT_FILES = {"metadata.json", "predictions.jsonl", "navigation.json"}
+TRACES_DIR = "traces"
+TRACE_SCHEMA = "e007b.action_trace.v1"
+TRACE_POLICY = "bounded_provider_action_controller_v1"
+TRACE_TERMINALS = ("answer", "budget_exhausted", "invalid_action", "provider_error")
+NETWORK_NONE = "none"
+NETWORK_HOST_MODEL_ALIAS = "host_model_alias"
+MODEL_ALIAS_ENDPOINT = "http://host.docker.internal:11434"
+MODEL_POLICY_FIELDS = {"backend", "model", "digest", "temperature", "top_p", "seed", "context_window_tokens",
+                       "max_output_tokens", "timeout_seconds", "max_attempts", "endpoint", "thinking"}
 PROVIDER_ITEM_FIELDS = {"doc_id", "text", "score", "source", "rank"}
 PROVENANCE_FIELDS = {"doc_id", "section_heading", "passage_index", "char_start", "char_end"}
 BASE_PROVIDER_FIELDS = frozenset({"name", "image", "platform", "network", "top_k", "max_context_chars_per_doc"})
@@ -46,6 +59,17 @@ class ProviderProfile:
     requires_graph: bool
     config_fields: frozenset[str]
     item_fields: frozenset[str]
+    # S026: the provider's admissible answer policies, its container network
+    # (``none`` for every retriever; ``host_model_alias`` only for the
+    # navigator, which reaches the host model alias and nothing else), and
+    # whether it publishes per-query action traces beside the predictions.
+    answer_policies: tuple[str, ...] = ("head_of_document_v1", "best_passage_v1")
+    network: str = NETWORK_NONE
+    publishes_traces: bool = False
+
+    @property
+    def navigator(self) -> bool:
+        return self.publishes_traces
 
     @property
     def image_pattern(self) -> str:
@@ -61,6 +85,13 @@ PROVIDERS: dict[str, ProviderProfile] = {
     "rag_graph_ranked_expand": ProviderProfile(
         "rag_graph_ranked_expand", "retrieval-arena/rag-graph-ranked-expand", "graph_ranked_expand", True,
         frozenset({"graph_expansion_hops", "seed_top_k", "neighbor_budget"}), frozenset({"selection_role"})),
+    # S026: the bounded link-following navigator (real local model through
+    # the host model alias); cited pages are its context items, its answer
+    # text is the agent's, and one action trace per query is published.
+    "rag_llm_guided_search": ProviderProfile(
+        "rag_llm_guided_search", "retrieval-arena/rag-llm-guided-search", "llm_guided_navigation", True,
+        frozenset({"model_policy", "page_visit_budget", "model_call_budget", "page_char_limit"}), frozenset(),
+        answer_policies=(AGENT_ANSWER_POLICY,), network=NETWORK_HOST_MODEL_ALIAS, publishes_traces=True),
 }
 PROVIDER_IMAGE_PATTERN = re.compile(r"retrieval-arena/[a-z0-9-]+@sha256:[0-9a-f]{64}")
 
@@ -159,14 +190,16 @@ def validate_config(value: Any) -> dict[str, Any]:
     provider = {**config["provider"],
                 "answer_policy": config["provider"].get("answer_policy", DEFAULT_ANSWER_POLICY)}
     config = {**config, "provider": provider}
-    if (provider["platform"] != "linux/amd64" or provider["network"] != "none"
+    if (provider["platform"] != "linux/amd64" or provider["network"] != profile.network
             or not isinstance(provider["image"], str)
             or re.fullmatch(profile.image_pattern, provider["image"]) is None
             or not _positive_int(provider["top_k"], minimum=1)
             or not _positive_int(provider["max_context_chars_per_doc"], minimum=0)
-            or provider["answer_policy"] not in ANSWER_POLICIES):
+            or provider["answer_policy"] not in profile.answer_policies):
         raise ValidationError("candidate-retrieval-provider-policy")
-    if profile.requires_graph and (
+    if profile.navigator:
+        _validate_navigator_policy(provider)
+    elif profile.requires_graph and (
             provider["graph_expansion_hops"] != 1
             or not _positive_int(provider["seed_top_k"], minimum=1)
             or not _positive_int(provider["neighbor_budget"], minimum=0)
@@ -184,6 +217,25 @@ def validate_config(value: Any) -> dict[str, Any]:
             or config["input_inventory_sha256"] != sha256_bytes(canonical(inventory))):
         raise ValidationError("candidate-retrieval-inventory")
     return config
+
+
+def _validate_navigator_policy(provider: dict[str, Any]) -> None:
+    """S026: budgets are positive; the model policy is closed and names the host alias."""
+    policy = provider["model_policy"]
+    if (not _positive_int(provider["page_visit_budget"], minimum=1)
+            or not _positive_int(provider["model_call_budget"], minimum=1)
+            or not _positive_int(provider["page_char_limit"], minimum=1)
+            or not isinstance(policy, dict) or set(policy) != MODEL_POLICY_FIELDS
+            or policy["backend"] != "ollama" or not isinstance(policy["model"], str) or not policy["model"]
+            or not isinstance(policy["digest"], str) or re.fullmatch(r"sha256:[0-9a-f]{64}", policy["digest"]) is None
+            or any(isinstance(policy[name], bool) or not isinstance(policy[name], (int, float))
+                   or not math.isfinite(policy[name]) for name in ("temperature", "top_p", "timeout_seconds"))
+            or any(not _positive_int(policy[name], minimum=1)
+                   for name in ("context_window_tokens", "max_output_tokens", "max_attempts"))
+            or isinstance(policy["seed"], bool) or not isinstance(policy["seed"], int)
+            or policy["max_attempts"] != 1 or policy["endpoint"] != MODEL_ALIAS_ENDPOINT
+            or not isinstance(policy["thinking"], bool)):
+        raise ValidationError("candidate-retrieval-provider-model-policy")
 
 
 def _git(repo: Path, *arguments: str) -> str:
@@ -261,7 +313,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
     return {"schema_version": "retrieval_arena.candidate_retrieval_launch.v1",
             "provider_name": profile.name,
             "provider_image": config["provider"]["image"], "platform": "linux/amd64",
-            "network": "none", "candidate_commit": config["candidate"]["commit"],
+            "network": profile.network, "candidate_commit": config["candidate"]["commit"],
             "candidate_tree": config["candidate"]["tree"],
             "graph_edges_sha256": graph_edges_sha256,
             "document_inventory_sha256": sha256_bytes(canonical(document_rows)),
@@ -275,6 +327,13 @@ def expected_provider_metadata(provider: dict[str, Any]) -> dict[str, Any]:
     common = {"name": profile.name, "deterministic": True, "top_k": provider["top_k"],
               "max_context_chars_per_doc": provider["max_context_chars_per_doc"],
               "answer_policy": provider["answer_policy"]}
+    if profile.navigator:
+        return {**common, "deterministic": False,
+                "page_visit_budget": provider["page_visit_budget"],
+                "model_call_budget": provider["model_call_budget"],
+                "page_char_limit": provider["page_char_limit"], "model_policy": provider["model_policy"],
+                "trace_schema_version": TRACE_SCHEMA, "provider_policy": TRACE_POLICY,
+                "prompt_version": "e007c_navigator_prompt_v1", "start_document": "index.md"}
     if profile.requires_graph:
         return {**common, "seed_ranker": "bm25", "neighbor_ranker": "bm25",
                 "graph_expansion_hops": provider["graph_expansion_hops"],
@@ -305,7 +364,9 @@ def _score_sorted(items: list[dict[str, Any]]) -> bool:
 
 def _check_order(profile: ProviderProfile, provider: dict[str, Any], items: list[dict[str, Any]],
                  roles: list[str], graph: dict[str, set[str]] | None) -> None:
-    if not profile.requires_graph:
+    if not profile.requires_graph or profile.navigator:
+        # Retrievers rank by score; the navigator's cited pages carry a
+        # descending citation-order score, so the same check applies.
         if not _score_sorted(items):
             raise ValidationError("candidate-retrieval-provider-order")
         return
@@ -353,11 +414,13 @@ def project_ranked_predictions(config: dict[str, Any], provider_output: Path, in
     config = validate_config(config)
     predictions_path = provider_output / "predictions.jsonl"
     metadata_path = provider_output / "metadata.json"
-    if (set(path.name for path in provider_output.iterdir()) != {"metadata.json", "predictions.jsonl"}
-            or predictions_path.is_symlink() or metadata_path.is_symlink()):
-        raise ValidationError("candidate-retrieval-provider-output-shape")
     provider = config["provider"]
     profile = provider_profile(provider["name"])
+    expected_files = NAVIGATOR_OUTPUT_FILES | {TRACES_DIR} if profile.navigator else {"metadata.json", "predictions.jsonl"}
+    if (set(path.name for path in provider_output.iterdir()) != expected_files
+            or predictions_path.is_symlink() or metadata_path.is_symlink()
+            or profile.navigator and (provider_output / TRACES_DIR).is_symlink()):
+        raise ValidationError("candidate-retrieval-provider-output-shape")
     expected_metadata = expected_provider_metadata(provider)
     metadata = _exact(json.loads(metadata_path.read_bytes()), set(expected_metadata),
                       "candidate-retrieval-provider-metadata-fields")
@@ -390,6 +453,11 @@ def project_ranked_predictions(config: dict[str, Any], provider_output: Path, in
     answers: list[dict[str, Any]] = []
     seen_queries: set[str] = set()
     row_fields = PROVIDER_ROW_FIELDS | {"answer_provenance"} if best_passage else PROVIDER_ROW_FIELDS
+    traces: dict[str, dict[str, Any]] = {}
+    if profile.navigator:
+        row_fields = NAVIGATOR_ROW_FIELDS
+        traces = validate_traces(provider_output / TRACES_DIR, [row["question_id"] for row in questions],
+                                 set(by_id), provider)
     for row in rows:
         _exact(row, row_fields, "candidate-retrieval-provider-row-fields")
         query_id = row["question_id"]
@@ -430,5 +498,62 @@ def project_ranked_predictions(config: dict[str, Any], provider_output: Path, in
             answer["answer_policy"] = answer_policy
             answer["answer_provenance"] = _validate_provenance(
                 row["answer_provenance"], seen_items, by_id, provider_input)
+        if profile.navigator:
+            cited = row["cited_pages"]
+            trace = traces[query_id]
+            if (row["answer_policy"] != AGENT_ANSWER_POLICY or not isinstance(cited, list)
+                    or any(not isinstance(c, str) or c not in by_id for c in cited)
+                    or len(cited) != len(set(cited))
+                    or [item["support_target_id"] for item in items] != cited[:provider["top_k"]]
+                    or trace["answer"] != {"cited_pages": cited, "text": row["generated_answer"]}
+                    or trace["final_context_doc_ids"] != cited[:provider["top_k"]]):
+                raise ValidationError("candidate-retrieval-provider-navigation-row")
+            answer["answer_policy"] = AGENT_ANSWER_POLICY
+            answer["cited_pages"] = cited
         answers.append(answer)
     return result, answers
+
+
+def validate_traces(traces_dir: Path, question_ids: list[str], doc_ids: set[str],
+                    provider: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """S026: one trace per question, bounded by the declared budgets, over admitted pages.
+
+    A trace file is a header line, one line per action, and a terminal line.
+    Returns each trace's terminal record keyed by question id.
+    """
+    if not traces_dir.is_dir() or traces_dir.is_symlink():
+        raise ValidationError("candidate-retrieval-provider-traces")
+    names = {path.name for path in traces_dir.iterdir()}
+    if names != {f"{query_id}.jsonl" for query_id in question_ids}:
+        raise ValidationError("candidate-retrieval-provider-traces")
+    terminals: dict[str, dict[str, Any]] = {}
+    for query_id in question_ids:
+        path = traces_dir / f"{query_id}.jsonl"
+        if path.is_symlink() or not path.is_file():
+            raise ValidationError("candidate-retrieval-provider-traces")
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        if (len(rows) < 3 or rows[0].get("record") != "header" or rows[-1].get("record") != "terminal"
+                or rows[0].get("question_id") != query_id or rows[0].get("schema_version") != TRACE_SCHEMA
+                or rows[0].get("policy") != TRACE_POLICY
+                or any(row.get("record") != "action" for row in rows[1:-1])):
+            raise ValidationError("candidate-retrieval-provider-trace-shape")
+        terminal = rows[-1]
+        actions = rows[1:-1]
+        opens = [row for row in actions if row.get("action") == "open"]
+        visits = terminal.get("visits")
+        reason = terminal.get("terminal", {}).get("reason") if isinstance(terminal.get("terminal"), dict) else None
+        answered = len(actions) > 1 and actions[-2].get("action") == "answer"
+        if (actions[-1].get("action") != "stop"
+                or any(row.get("action") not in {"open", "back", "answer", "stop"} for row in actions)
+                or not isinstance(visits, list) or not visits or visits[0] != rows[0].get("start_doc_id")
+                or any(v not in doc_ids for v in visits)
+                or [row["details"]["doc_id"] for row in opens] != visits[1:]
+                or terminal.get("opens") != len(opens) or len(opens) > provider["page_visit_budget"]
+                or isinstance(terminal.get("model_calls"), bool) or not isinstance(terminal.get("model_calls"), int)
+                or terminal["model_calls"] > provider["model_call_budget"]
+                or reason not in TRACE_TERMINALS or (reason == "answer") != answered
+                or not isinstance(terminal.get("answer"), dict)
+                or any(c not in visits for c in terminal["answer"].get("cited_pages", []))):
+            raise ValidationError("candidate-retrieval-provider-trace-budget")
+        terminals[query_id] = terminal
+    return terminals

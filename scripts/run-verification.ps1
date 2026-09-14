@@ -69,7 +69,10 @@ if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candida
         $launchPath = Join-Path $outputPath '.candidate-retrieval-work\launch.json'
         try {
             $launch = Get-Content -Raw -LiteralPath $launchPath | ConvertFrom-Json
-            if ($launch.schema_version -ne 'retrieval_arena.candidate_retrieval_launch.v1' -or $launch.platform -ne 'linux/amd64' -or $launch.network -ne 'none' -or [string]$launch.provider_image -notmatch '^retrieval-arena/[a-z0-9-]+@sha256:[0-9a-f]{64}$') { throw 'verification-candidate-launch-invalid' }
+            # S026: the navigator provider (and only it) runs on the default bridge with the
+            # host model alias added; every other provider keeps network none.
+            $networkAdmitted = ($launch.network -eq 'none') -or ($launch.network -eq 'host_model_alias' -and $launch.provider_name -eq 'rag_llm_guided_search')
+            if ($launch.schema_version -ne 'retrieval_arena.candidate_retrieval_launch.v1' -or $launch.platform -ne 'linux/amd64' -or -not $networkAdmitted -or [string]$launch.provider_image -notmatch '^retrieval-arena/[a-z0-9-]+@sha256:[0-9a-f]{64}$') { throw 'verification-candidate-launch-invalid' }
         }
         catch {
             [IO.File]::WriteAllText((Join-Path $outputPath '.candidate-retrieval-work\provider-exit.json'), "{`"exit_code`":-2}`n", [Text.UTF8Encoding]::new($false))
@@ -78,7 +81,8 @@ if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candida
         }
         $providerInput = (Resolve-Path -LiteralPath (Join-Path $outputPath '.candidate-retrieval-work\provider-input')).Path
         $providerOutput = (Resolve-Path -LiteralPath (Join-Path $outputPath '.candidate-retrieval-work\provider-output')).Path
-        & docker run --rm --platform ([string]$launch.platform) --user 65532:65532 --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 `
+        $providerNetwork = if ($launch.network -eq 'host_model_alias') { @('--add-host','host.docker.internal:host-gateway') } else { @('--network','none') }
+        & docker run --rm --platform ([string]$launch.platform) --user 65532:65532 @providerNetwork --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 `
             --mount "type=bind,src=$providerInput,dst=/input,readonly" --mount "type=bind,src=$providerOutput,dst=/output" `
             --tmpfs '/tmp:rw,noexec,nosuid,nodev,size=128m' ([string]$launch.provider_image)
         $providerExit = $LASTEXITCODE
