@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from retrieval_arena.candidate_retrieval import canonical, prepare_provider_input, project_ranked_predictions, regular_inventory, sha256_bytes, validate_config
+from retrieval_arena.candidate_retrieval import IMPORT_POLICY_LOWER, canonical, imported_document_name, prepare_provider_input, project_ranked_predictions, regular_inventory, sha256_bytes, validate_config
 from retrieval_arena.errors import ValidationError
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,6 +37,54 @@ class CandidateRetrievalTests(unittest.TestCase):
     def config(self):
         inventory = regular_inventory(self.input)
         return {"schema_version": "retrieval_arena.candidate_retrieval_config.v1", "experiment_id": "exp", "execution_id": "slot", "output_identity": "output", "candidate": {"commit": self.commit, "tree": self.tree}, "corpus": {"root": "docs", "extensions": [".md"], "import_policy": "cikm_flat_path_sha1_v1"}, "queries_path": "questions.jsonl", "provider": {"name": "rag_lexical_topk", "image": IMAGE, "platform": "linux/amd64", "network": "none", "top_k": 1, "max_context_chars_per_doc": 1500}, "ranked": {"schema_version": "retrieval_arena.ranked_prediction.v2", "context_item_budget_k": 1}, "input_inventory": inventory, "input_inventory_sha256": sha256_bytes(canonical(inventory))}
+
+    def test_import_policy_lowercase_matches_the_dataset_importer_rule(self):
+        """S044 (ID-1/ID-2): the lowercase policy reproduces the S019 support ids on an uppercase path."""
+        as_written = imported_document_name("operator-manual/applicationset/Generators-Git.md")
+        lowered = imported_document_name("operator-manual/applicationset/Generators-Git.md", IMPORT_POLICY_LOWER)
+        self.assertEqual(as_written[1], "operator_manual_applicationset_generators_git__ab35aa5e")
+        self.assertEqual(lowered[1], "operator_manual_applicationset_generators_git__523ee31f")
+        self.assertEqual(imported_document_name("docs/guide.md", IMPORT_POLICY_LOWER), imported_document_name("docs/guide.md"))
+        self.assertEqual(imported_document_name("Foo.md", IMPORT_POLICY_LOWER), imported_document_name("foo.md", IMPORT_POLICY_LOWER))
+        with self.assertRaisesRegex(ValidationError, "import-policy"): imported_document_name("guide.md", "cikm_flat_path_md5_v1")
+        value = self.config(); value["corpus"]["import_policy"] = "cikm_flat_path_md5_v1"
+        with self.assertRaisesRegex(ValidationError, "import-policy"): validate_config(value)
+        docs = self.repo / "docs"; (docs / "Sync-Waves.md").write_text("# Waves
+Ordered.
+", encoding="utf-8")
+        subprocess.run(["git", "-C", str(self.repo), "add", "docs/Sync-Waves.md"], check=True)
+        subprocess.run(["git", "-C", str(self.repo), "commit", "-qm", "uppercase"], check=True)
+        value = self.config(); value["corpus"]["import_policy"] = IMPORT_POLICY_LOWER
+        value["candidate"] = {"commit": subprocess.check_output(["git", "-C", str(self.repo), "rev-parse", "HEAD"], text=True).strip(),
+                              "tree": subprocess.check_output(["git", "-C", str(self.repo), "rev-parse", "HEAD^{tree}"], text=True).strip()}
+        destination = self.root / "provider-input-lower"
+        launch = prepare_provider_input(value, self.input, self.repo, destination)
+        self.assertEqual(launch["import_policy"], IMPORT_POLICY_LOWER)
+        self.assertTrue((destination / "corpus" / "guide__bbbdfa65.md").is_file())
+        self.assertTrue((destination / "corpus" / ("sync_waves__" + hashlib.sha1(b"sync-waves.md").hexdigest()[:8] + ".md")).is_file())
+        documents = json.loads((destination.parent / "documents.json").read_bytes())
+        self.assertEqual({row["path"]: row["doc_id"] for row in documents if row["path"] == "Sync-Waves.md"},
+                         {"Sync-Waves.md": "sync_waves__" + hashlib.sha1(b"sync-waves.md").hexdigest()[:8]})
+
+    def test_case_only_path_pair_is_refused_not_merged(self):
+        """S044: two documents whose paths differ only by case must never share one id silently."""
+        docs = self.repo / "docs"
+        (docs / "Guide.md").write_text("# Other guide
+Different content.
+", encoding="utf-8")
+        listed = subprocess.check_output(["git", "-C", str(self.repo), "ls-files", "--", "docs"], text=True).split()
+        try:
+            subprocess.run(["git", "-C", str(self.repo), "add", "docs/Guide.md"], check=True)
+            subprocess.run(["git", "-C", str(self.repo), "commit", "-qm", "case pair"], check=True)
+        except subprocess.CalledProcessError:
+            self.skipTest("filesystem folds case: the pair cannot coexist")
+        if sorted(subprocess.check_output(["git", "-C", str(self.repo), "ls-files", "--", "docs"], text=True).split()) == sorted(listed):
+            self.skipTest("filesystem folds case: the pair cannot coexist")
+        value = self.config(); value["corpus"]["import_policy"] = IMPORT_POLICY_LOWER
+        value["candidate"] = {"commit": subprocess.check_output(["git", "-C", str(self.repo), "rev-parse", "HEAD"], text=True).strip(),
+                              "tree": subprocess.check_output(["git", "-C", str(self.repo), "rev-parse", "HEAD^{tree}"], text=True).strip()}
+        with self.assertRaisesRegex(ValidationError, "document-id-collision"):
+            prepare_provider_input(value, self.input, self.repo, self.root / "collision")
 
     def test_closed_config_and_provider_selection(self):
         value = self.config(); validate_config(value); value["unknown"] = True

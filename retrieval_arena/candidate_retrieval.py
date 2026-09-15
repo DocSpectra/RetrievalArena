@@ -40,6 +40,11 @@ PROVIDER_ITEM_FIELDS = {"doc_id", "text", "score", "source", "rank"}
 PROVENANCE_FIELDS = {"doc_id", "section_heading", "passage_index", "char_start", "char_end"}
 BASE_PROVIDER_FIELDS = frozenset({"name", "image", "platform", "network", "top_k", "max_context_chars_per_doc"})
 GRAPH_EDGES_FILE = "graph_edges.csv"
+# S044: the corpus import policy is declared per request; the lowercase rule
+# is the one the support ids were produced under.
+IMPORT_POLICY_AS_WRITTEN = "cikm_flat_path_sha1_v1"
+IMPORT_POLICY_LOWER = "cikm_flat_path_sha1_lower_v1"
+IMPORT_POLICIES = (IMPORT_POLICY_AS_WRITTEN, IMPORT_POLICY_LOWER)
 GRAPH_SELECTION_ROLES = ("seed", "ranked_neighbor")
 
 
@@ -106,11 +111,23 @@ def _positive_int(value: Any, *, minimum: int) -> bool:
     return not isinstance(value, bool) and isinstance(value, int) and value >= minimum
 
 
-def imported_document_name(relative_text: str) -> tuple[str, str]:
-    """Return (imported file name, doc id) under ``cikm_flat_path_sha1_v1``."""
-    relative = Path(relative_text)
+def imported_document_name(relative_text: str, import_policy: str = IMPORT_POLICY_AS_WRITTEN) -> tuple[str, str]:
+    """Return (imported file name, doc id) under one declared import policy.
+
+    ``cikm_flat_path_sha1_v1`` hashes the corpus-relative path as written;
+    ``cikm_flat_path_sha1_lower_v1`` (S044) hashes it lowercased, which is the
+    rule of the CIKM dataset importer (``stable_doc_id``) that produced the
+    support ids every ranked metric joins against. Under the lowercase rule two
+    paths differing only by letter case share one id; ``prepare_provider_input``
+    refuses such a corpus (``candidate-retrieval-document-id-collision``) rather
+    than merging the documents.
+    """
+    if import_policy not in IMPORT_POLICIES:
+        raise ValidationError("candidate-retrieval-import-policy")
+    hashed = relative_text.lower() if import_policy == IMPORT_POLICY_LOWER else relative_text
+    relative = Path(hashed)
     stem = re.sub(r"[^A-Za-z0-9]+", "_", relative.with_suffix("").as_posix()).strip("_").lower()
-    suffix = hashlib.sha1(relative_text.encode("utf-8"), usedforsecurity=False).hexdigest()[:8]
+    suffix = hashlib.sha1(hashed.encode("utf-8"), usedforsecurity=False).hexdigest()[:8]
     imported_name = f"{stem}__{suffix}.md"
     return imported_name, Path(imported_name).with_suffix("").as_posix()
 
@@ -177,7 +194,7 @@ def validate_config(value: Any) -> dict[str, Any]:
     corpus = _exact(config["corpus"], {"root", "extensions", "import_policy"},
                     "candidate-retrieval-corpus-fields")
     _relative(corpus["root"], "candidate-retrieval-corpus-root")
-    if corpus["extensions"] != [".md"] or corpus["import_policy"] != "cikm_flat_path_sha1_v1":
+    if corpus["extensions"] != [".md"] or corpus["import_policy"] not in IMPORT_POLICIES:
         raise ValidationError("candidate-retrieval-import-policy")
     _relative(config["queries_path"], "candidate-retrieval-queries-path")
     if not isinstance(config["provider"], dict):
@@ -261,6 +278,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
             or _git(candidate_root, "status", "--porcelain", "--untracked-files=all")):
         raise ValidationError("candidate-retrieval-candidate-admission")
     corpus_root = candidate_root / config["corpus"]["root"]
+    import_policy = config["corpus"]["import_policy"]
     if not corpus_root.is_dir() or corpus_root.is_symlink():
         raise ValidationError("candidate-retrieval-corpus-root")
     queries = input_root / config["queries_path"]
@@ -275,7 +293,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
         if source.is_symlink() or not source.is_file():
             raise ValidationError("candidate-retrieval-corpus-file")
         relative_text = source.relative_to(corpus_root).as_posix()
-        imported_name, doc_id = imported_document_name(relative_text)
+        imported_name, doc_id = imported_document_name(relative_text, import_policy)
         destination = provider_input / "corpus" / imported_name
         if destination.exists():
             raise ValidationError("candidate-retrieval-document-id-collision")
@@ -305,7 +323,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
         # Per-candidate link graph: the resolver of write_markdown_link_graph
         # over the candidate's own docs tree, nodes = imported .md documents.
         edges = extract_markdown_link_edges(
-            corpus_root, doc_id_for=lambda relative: imported_document_name(relative)[1],
+            corpus_root, doc_id_for=lambda relative: imported_document_name(relative, import_policy)[1],
             extensions=config["corpus"]["extensions"])
         write_edges_csv(edges, provider_input / GRAPH_EDGES_FILE)
         graph_edges_sha256 = sha256_file(provider_input / GRAPH_EDGES_FILE)
@@ -315,6 +333,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
             "provider_image": config["provider"]["image"], "platform": "linux/amd64",
             "network": profile.network, "candidate_commit": config["candidate"]["commit"],
             "candidate_tree": config["candidate"]["tree"],
+            "import_policy": import_policy,
             "graph_edges_sha256": graph_edges_sha256,
             "document_inventory_sha256": sha256_bytes(canonical(document_rows)),
             "provider_input_inventory": regular_inventory(provider_input),
