@@ -371,6 +371,7 @@ def main(argv: list[str] | None = None) -> int:
                 "receipt_hash": result["receipt"]["manifest_hash"], "reused": result["reused"]}, sort_keys=True))
         elif args.command == "corpus" and args.corpus_command == "compare-snapshots":
             result = run_corpus_snapshot_comparison(Path(args.plan))
+            print(result["summary"])
         elif args.command == "corpus" and args.corpus_command == "reachability":
             from .corpus.dataset_export import build_reachability_surface
             dataset = Path(args.dataset)
