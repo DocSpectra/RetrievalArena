@@ -159,6 +159,11 @@ def build_parser() -> argparse.ArgumentParser:
     acquire.add_argument("--transport", choices=("local-only", "host-network"), default="local-only")
     corpus_compare = corpus_subparsers.add_parser("compare-snapshots", help="Run a corpus source comparison plan.")
     corpus_compare.add_argument("--plan", required=True, help="Path to corpus snapshot comparison plan JSON.")
+    corpus_reachability = corpus_subparsers.add_parser(
+        "reachability", help="Write the support reachability surface (S036) for an already-imported dataset."
+    )
+    corpus_reachability.add_argument("--dataset", required=True, help="Prepared dataset directory (corpus/, graph_edges.csv, questions.jsonl, faq_support_audit.jsonl).")
+    corpus_reachability.add_argument("--query-set-id", help="Optional query set identifier recorded in the manifest.")
     snapshot = subparsers.add_parser("snapshot", help="Generate snapshot observability artifacts.")
     snapshot_subparsers = snapshot.add_subparsers(dest="snapshot_command", required=True)
     manifest = snapshot_subparsers.add_parser("manifest", help="Write snapshot manifests for a prepared dataset.")
@@ -366,7 +371,26 @@ def main(argv: list[str] | None = None) -> int:
                 "receipt_hash": result["receipt"]["manifest_hash"], "reused": result["reused"]}, sort_keys=True))
         elif args.command == "corpus" and args.corpus_command == "compare-snapshots":
             result = run_corpus_snapshot_comparison(Path(args.plan))
-            print(result["summary"])
+        elif args.command == "corpus" and args.corpus_command == "reachability":
+            from .corpus.dataset_export import build_reachability_surface
+            dataset = Path(args.dataset)
+            preparation = dataset / "dataset_preparation_manifest.json"
+            built = build_reachability_surface(
+                dataset,
+                preparation if preparation.is_file() else None,
+                query_set_id=args.query_set_id,
+            )
+            result = {
+                "dataset_path": str(dataset.resolve()),
+                "surface_path": str(built["surface_path"].resolve()),
+                "surface_sha256": built["manifest"]["support_reachability_file_hash"],
+                "manifest_path": str(built["manifest_path"].resolve()),
+                "status": built["surface"]["status"],
+                "reason": built["surface"].get("reason"),
+                "root_doc_id": built["surface"].get("root_doc_id"),
+                "aggregate": built["surface"].get("aggregate"),
+            }
+            print(json.dumps(result, sort_keys=True))
         elif args.command == "snapshot" and args.snapshot_command == "manifest":
             dataset_path = Path(args.dataset)
             out_dir = Path(args.out_dir)

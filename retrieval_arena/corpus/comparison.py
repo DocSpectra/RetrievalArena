@@ -13,7 +13,7 @@ from ..snapshots import (
     write_graph_snapshot_manifest,
     write_support_surface_manifest,
 )
-from .dataset_export import build_graph_transformation, build_support_surface, prepare_dataset
+from .dataset_export import build_graph_transformation, build_reachability_surface, build_support_surface, prepare_dataset
 from .importers import import_corpus_source
 from .sources import CorpusSourceDescriptor, descriptor_from_dict
 
@@ -198,6 +198,7 @@ def _materialize_snapshot(
             )
     support_manifest_path = None
     support_construction = None
+    reachability = None
     if support_config.get("enabled"):
         support_source_path = support_config.get("records_path")
         support_construction = build_support_surface(
@@ -222,6 +223,14 @@ def _materialize_snapshot(
                 query_set_id=query_set_id or "default",
                 created_at=created_at,
             )
+            # S036: the reachability surface follows the support audit it
+            # reads; a dataset without a graph gets an `unavailable` verdict.
+            reachability = build_reachability_surface(
+                dataset_dir,
+                prepared["manifest_path"],
+                query_set_id=query_set_id,
+                created_at=created_at,
+            )
     return {
         "corpus_id": descriptor.corpus_id,
         "snapshot_id": descriptor.snapshot_id,
@@ -237,6 +246,7 @@ def _materialize_snapshot(
         "graph_snapshot_manifest": str(graph_manifest_path.resolve()) if graph_manifest_path else None,
         "support_construction_manifest": str(support_construction["manifest_path"].resolve()) if support_construction else None,
         "support_surface_manifest": str(support_manifest_path.resolve()) if support_manifest_path else None,
+        "support_reachability_manifest": str(reachability["manifest_path"].resolve()) if reachability else None,
     }
 
 

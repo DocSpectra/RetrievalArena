@@ -13,11 +13,17 @@ from ..schemas import validate_dataset
 from ..snapshots import utc_now_iso
 from ..graph.links import GRAPH_EXTRACTION_VERSION, write_markdown_link_graph
 from ..support.surface import SUPPORT_CONSTRUCTION_METHOD, write_answer_overlap_support
+from ..support.reachability import (
+    SUPPORT_REACHABILITY_FILE,
+    SUPPORT_REACHABILITY_METHOD,
+    write_support_reachability,
+)
 
 
 DATASET_PREPARATION_SCHEMA_VERSION = "retrieval_arena.dataset_preparation_manifest.v1"
 GRAPH_TRANSFORMATION_SCHEMA_VERSION = "retrieval_arena.graph_transformation_manifest.v1"
 SUPPORT_CONSTRUCTION_SCHEMA_VERSION = "retrieval_arena.support_construction_manifest.v1"
+SUPPORT_REACHABILITY_SCHEMA_VERSION = "retrieval_arena.support_reachability_manifest.v1"
 DATASET_PREPARATION_VERSION = "retrieval_arena.dataset_preparation.copy-v1"
 
 
@@ -247,6 +253,64 @@ def build_support_surface(
     }
     written = write_manifest(dataset_path / "support_construction_manifest.json", manifest)
     return {"manifest": written, "manifest_path": dataset_path / "support_construction_manifest.json"}
+
+
+def build_reachability_surface(
+    dataset_path: Path,
+    dataset_preparation_manifest_path: Path | None = None,
+    *,
+    query_set_id: str | None = None,
+    created_at: str | None = None,
+) -> dict[str, Any]:
+    """Write ``support_reachability.v1.json`` beside the support audit (S036).
+
+    Runs after ``build_support_surface`` in the import chain and on its own
+    (``corpus reachability --dataset``) for a dataset imported earlier. The
+    surface is computed from ``corpus/``, ``graph_edges.csv``,
+    ``questions.jsonl`` and the support audit's target ids and labels; a
+    dataset missing one of them gets ``status: unavailable`` with the input
+    named. Recorded like the support audit: the file hash and the method id in
+    ``support_reachability_manifest.json``.
+    """
+    preparation = None
+    if dataset_preparation_manifest_path is not None and Path(dataset_preparation_manifest_path).is_file():
+        preparation = read_manifest(Path(dataset_preparation_manifest_path))
+    destination, surface = write_support_reachability(dataset_path)
+    manifest = {
+        "schema_version": SUPPORT_REACHABILITY_SCHEMA_VERSION,
+        "created_at": created_at or utc_now_iso(),
+        "manifest_type": "support_reachability",
+        "corpus_id": None if preparation is None else preparation["corpus_id"],
+        "snapshot_id": None if preparation is None else preparation["snapshot_id"],
+        "dataset_preparation_manifest_path": (
+            None if preparation is None else str(Path(dataset_preparation_manifest_path).resolve())
+        ),
+        "dataset_preparation_manifest_hash": None if preparation is None else preparation["manifest_hash"],
+        "source_dataset_identity_hash": None if preparation is None else preparation.get("output_dataset_identity_hash"),
+        "query_set_id": query_set_id or (None if preparation is None else preparation.get("query_set_id")),
+        "reachability_method": SUPPORT_REACHABILITY_METHOD,
+        "support_reachability_file": SUPPORT_REACHABILITY_FILE,
+        "support_reachability_file_hash": sha256_file(destination),
+        "support_audit_file_hash": (
+            sha256_jsonl(dataset_path / "faq_support_audit.jsonl")
+            if (dataset_path / "faq_support_audit.jsonl").is_file() else None
+        ),
+        "graph_edge_file_hash": sha256_file(dataset_path / "graph_edges.csv") if (dataset_path / "graph_edges.csv").is_file() else None,
+        "questions_file_hash": sha256_jsonl(dataset_path / "questions.jsonl") if (dataset_path / "questions.jsonl").is_file() else None,
+        "corpus_directory_hash": sha256_directory(dataset_path / "corpus") if (dataset_path / "corpus").is_dir() else None,
+        "status": surface["status"],
+        "reason": surface.get("reason"),
+        "root_doc_id": surface.get("root_doc_id"),
+        "aggregate": surface.get("aggregate"),
+        "stage_status": "ok" if surface["status"] == "ok" else "unavailable",
+    }
+    written = write_manifest(dataset_path / "support_reachability_manifest.json", manifest)
+    return {
+        "manifest": written,
+        "manifest_path": dataset_path / "support_reachability_manifest.json",
+        "surface_path": destination,
+        "surface": surface,
+    }
 
 
 def _read_edges(path: Path) -> list[tuple[str, str]]:

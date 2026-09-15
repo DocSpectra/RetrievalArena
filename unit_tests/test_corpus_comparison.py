@@ -110,6 +110,18 @@ class CorpusComparisonTests(unittest.TestCase):
             preparation = read_manifest(tmp / "reports" / "before" / "dataset" / "dataset_preparation_manifest.json")
             self.assertEqual(preparation["query_set_id"], "toy-queries")
             self.assertEqual(preparation["validation_status"], "ok")
+            # S036: the reachability surface follows the support audit in the
+            # chain; the toy corpus has no root `index` document, so the
+            # verdict is `unavailable` with the reason named and no numbers.
+            reachability = read_manifest(tmp / "reports" / "before" / "dataset" / "support_reachability_manifest.json")
+            self.assertEqual(reachability["manifest_type"], "support_reachability")
+            self.assertEqual(reachability["reachability_method"], "support_reachability_v1")
+            self.assertEqual((reachability["status"], reachability["reason"]), ("unavailable", "root_missing"))
+            self.assertIsNone(reachability["aggregate"])
+            self.assertEqual(reachability["dataset_preparation_manifest_hash"], preparation["manifest_hash"])
+            surface = json.loads((tmp / "reports" / "before" / "dataset" / "support_reachability.v1.json").read_text(encoding="utf-8"))
+            self.assertEqual(surface["status"], "unavailable")
+            self.assertEqual(first["manifest"]["before"]["support_reachability_manifest"], str((tmp / "reports" / "before" / "dataset" / "support_reachability_manifest.json").resolve()))
 
 
 if __name__ == "__main__":
