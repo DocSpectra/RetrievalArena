@@ -72,8 +72,14 @@ name, pinned `image`, `build_context`, `config`), `scoring` (method,
 threshold), `output_dir`. See `configs/experiment.example.yaml` and the
 `docs_pilot_*.yaml` corpus pilots. Run with
 `python -m retrieval_arena.cli ...` (see README Core Commands). Corpus
-import policy `cikm_flat_path_sha1_v1` derives document ids from paths
-(`<stem>__<sha1(path)[:8]>`), so ids survive content edits.
+import policies derive document ids from paths (`<stem>__<sha1(path)[:8]>`),
+so ids survive content edits: `cikm_flat_path_sha1_v1` hashes the path as
+written; `cikm_flat_path_sha1_lower_v1` (S044) hashes it lowercased, the rule
+of the CIKM dataset importer that produced the support ids, so candidate ids
+and support ids join under one rule. The policy is declared per
+candidate-retrieve request (`corpus.import_policy`) and recorded in the
+launch record; a corpus whose paths differ only by case is refused at import
+(`candidate-retrieval-document-id-collision`), never merged.
 
 ## Operator Contract
 

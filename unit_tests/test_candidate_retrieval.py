@@ -49,9 +49,7 @@ class CandidateRetrievalTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "import-policy"): imported_document_name("guide.md", "cikm_flat_path_md5_v1")
         value = self.config(); value["corpus"]["import_policy"] = "cikm_flat_path_md5_v1"
         with self.assertRaisesRegex(ValidationError, "import-policy"): validate_config(value)
-        docs = self.repo / "docs"; (docs / "Sync-Waves.md").write_text("# Waves
-Ordered.
-", encoding="utf-8")
+        docs = self.repo / "docs"; (docs / "Sync-Waves.md").write_text("# Waves" + chr(10) + "Ordered." + chr(10), encoding="utf-8")
         subprocess.run(["git", "-C", str(self.repo), "add", "docs/Sync-Waves.md"], check=True)
         subprocess.run(["git", "-C", str(self.repo), "commit", "-qm", "uppercase"], check=True)
         value = self.config(); value["corpus"]["import_policy"] = IMPORT_POLICY_LOWER
@@ -69,9 +67,7 @@ Ordered.
     def test_case_only_path_pair_is_refused_not_merged(self):
         """S044: two documents whose paths differ only by case must never share one id silently."""
         docs = self.repo / "docs"
-        (docs / "Guide.md").write_text("# Other guide
-Different content.
-", encoding="utf-8")
+        (docs / "Guide.md").write_text("# Other guide" + chr(10) + "Different content." + chr(10), encoding="utf-8")
         listed = subprocess.check_output(["git", "-C", str(self.repo), "ls-files", "--", "docs"], text=True).split()
         try:
             subprocess.run(["git", "-C", str(self.repo), "add", "docs/Guide.md"], check=True)
