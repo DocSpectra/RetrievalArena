@@ -49,6 +49,22 @@ a provider container). RA judges the synthesized answers with the unchanged
 `score-bertscore` command over pairs Capstone composes
 (`<directory>::<context_policy>::<query_id>`).
 
+## Support Reachability At Import (S036)
+
+`retrieval_arena/corpus/dataset_export.py::build_reachability_surface` runs
+after `build_support_surface` in the import chain and standalone as
+`python -m retrieval_arena.cli corpus reachability --dataset <path>`. It reads
+`corpus/`, `graph_edges.csv`, `questions.jsonl` and the support audit's target
+ids and `support_label` (never `answers.jsonl`) and writes
+`support_reachability.v1.json` beside the audit (per-target degrees, size,
+directed/undirected hops from the root `index` document; fractions within
+1/2/3/8 hops, median hops, orphan fraction, questions with a target within 3
+hops, support-class mix) plus `support_reachability_manifest.json` (file hash,
+method id `support_reachability_v1`). A dataset missing an input gets
+`status: unavailable` with the input named. The computation is
+`retrieval_arena/support/reachability.py`; `unit_tests/test_reachability_surface.py`
+is in the `focused` suite.
+
 ## Declaring An Experiment
 
 `configs/<experiment>.yaml`: `datasets` (name, path), `tests` (provider
