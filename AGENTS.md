@@ -72,7 +72,10 @@ is in the `focused` suite.
 name, pinned `image`, `build_context`, `config`), `scoring` (method,
 threshold), `output_dir`. See `configs/experiment.example.yaml` and the
 `docs_pilot_*.yaml` corpus pilots. Run with
-`python -m retrieval_arena.cli ...` (see README Core Commands). Corpus
+`python -m retrieval_arena.cli ...` (the operator commands are
+`docs/operator.md`). The table of every evaluation a test or scoring
+surface can apply, one page per row, is `docs/evaluations/README.md`
+(`docs/retrieval_evaluation.md` explains the contract). Corpus
 import policies derive document ids from paths (`<stem>__<sha1(path)[:8]>`),
 so ids survive content edits: `cikm_flat_path_sha1_v1` hashes the path as
 written; `cikm_flat_path_sha1_lower_v1` (S044) hashes it lowercased, the rule
@@ -139,6 +142,21 @@ repository (HEAD and tree must equal `receipt.source_commit` /
 `source_tree`); binding `run-verification.ps1`/`.sh` by their own file
 hashes in the receipt instead, so an adapter-only fix would not force an
 image rebuild, was judged too invasive for S024 and remains open.
+
+## Checkouts
+
+One checkout: `git/RetrievalArena` on `capstone/retrieval-metrics-v2` is the
+only working tree of this object store that outlives a sprint. A pin is a
+tag, never a directory (`e-exp1-evaluator-pin` names the 33V evaluator
+source `d412e87`; the BigData freeze is `bigdata2026-evidence-freeze-2026-05-31`);
+replaying one is `git worktree add <short-path> <tag>` for the replay, then
+`git worktree remove`. A sprint's linked worktrees (`.s0xxwt/ra`,
+`.s0xxwt/ra-review`, an LF operator checkout at the receipt's commit) are
+transient: created from a short workspace-root path, removed at that
+sprint's close (S048, 2026-09-16). Because the operator's identity is the
+whole repository, an RA scoring command after a docs-only commit still
+runs from a transient worktree at the receipt's `source_commit` until the
+next image rebuild rebinds the receipt.
 
 ## Adding A Provider
 
