@@ -360,7 +360,10 @@ def build_observation(question: dict[str, str], *, page: dict[str, Any] | None, 
                       searches: list[dict[str, Any]], offered_hits: list[str], history: list[str],
                       searches_remaining: int, opens_remaining: int, calls_remaining: int,
                       follow_links: bool) -> dict[str, Any]:
-    openable = sorted(set(offered_hits) | (set(links) if follow_links else set()))
+    # The page already open is not offered again (re-opening it reads nothing new;
+    # the probe showed a six-fold re-open loop on one page); earlier pages stay openable.
+    current = page["doc_id"] if page else None
+    openable = sorted((set(offered_hits) | (set(links) if follow_links else set())) - {current})
     allowed = []
     if opens_remaining > 0 and openable:
         allowed.append("open")
@@ -487,7 +490,7 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
                 break
             via_search = isinstance(doc_id, str) and doc_id in offered_by_search
             via_link = isinstance(doc_id, str) and doc_id in links
-            if not (via_search or via_link):
+            if not (via_search or via_link) or doc_id == current:
                 terminal = {"reason": "invalid_action", "validation_error": "page_not_offered", "requested": requested}
                 break
             # Route precedence: a page any search has offered is a search

@@ -178,7 +178,8 @@ class RepoSearchAgentTests(unittest.TestCase):
         self.assertEqual(second["current_page"]["doc_id"], "sync_windows__00000001")
         self.assertTrue(second["current_page"]["truncated"])
         self.assertEqual(second["links"], ["hooks__00000003"])
-        self.assertEqual(second["openable_pages"], ["faq__00000002", "hooks__00000003", "sync_windows__00000001"])
+        # The current page is not offered again; the other hit and the page's link are.
+        self.assertEqual(second["openable_pages"], ["faq__00000002", "hooks__00000003"])
         self.assertEqual(second["allowed_actions"], ["open", "search", "answer"])
         rows = self.read_trace("q1")
         self.assertEqual(rows[2]["details"]["route"], "landing")
@@ -198,7 +199,7 @@ class RepoSearchAgentTests(unittest.TestCase):
         self.assertEqual(code, 0)
         second = client.calls[1]
         self.assertNotIn("links", second)
-        self.assertEqual(second["openable_pages"], ["faq__00000002", "sync_windows__00000001"])
+        self.assertEqual(second["openable_pages"], ["faq__00000002"])
         rows = self.read_trace("q1")
         self.assertEqual(rows[0]["follow_links"], False)
         self.assertEqual(rows[-1]["terminal"], {"reason": "invalid_action", "validation_error": "page_not_offered",
@@ -237,14 +238,15 @@ class RepoSearchAgentTests(unittest.TestCase):
                                                           "doc_ids": ["sync_windows__00000001", "faq__00000002"]})
 
     def test_rsa4_budgets_end_the_trace(self):
-        self.questions(q1="sync windows", q2="sync windows", q3="sync windows")
+        self.questions(q1="sync windows", q2="sync windows", q3="sync windows", q4="sync windows")
         code, client = self.run_with({
             "q1": [{"action": "search", "query": "hooks"}, {"action": "search", "query": "waves"},
                    {"action": "answer", "cited_pages": [], "text": "spent"}],
             "q2": [{"action": "open", "doc_id": "sync_windows__00000001"}, {"action": "back"},
                    {"action": "open", "doc_id": "faq__00000002"}, {"action": "answer", "cited_pages": [], "text": "x"}],
-            "q3": [{"action": "open", "doc_id": "sync_windows__00000001"}] * 2 + [{"action": "search", "query": "hooks"}] * 2
-                  + [{"action": "back"}],
+            "q3": [{"action": "open", "doc_id": "sync_windows__00000001"}, {"action": "open", "doc_id": "faq__00000002"}]
+                  + [{"action": "search", "query": "hooks"}] * 2 + [{"action": "back"}],
+            "q4": [{"action": "open", "doc_id": "sync_windows__00000001"}, {"action": "open", "doc_id": "sync_windows__00000001"}],
         }, search_budget=3, page_visit_budget=2, model_call_budget=5)
         self.assertEqual(code, 0)
         # q1: the third search is the last allowed; the fourth call's enum no longer offers search.
@@ -259,6 +261,8 @@ class RepoSearchAgentTests(unittest.TestCase):
         self.assertEqual(q3_calls[2]["allowed_actions"], ["search", "answer", "back"])
         self.assertEqual(rows[-1]["terminal"], {"reason": "budget_exhausted", "exhausted": "model_calls"})
         self.assertEqual((rows[-1]["opens"], rows[-1]["searches"], rows[-1]["model_calls"]), (2, 3, 5))
+        # q4: re-opening the page already open is not offered and ends the trace as invalid.
+        self.assertEqual(self.read_trace("q4")[-1]["terminal"]["validation_error"], "page_not_offered")
 
     def test_rsa5_link_route_and_link_new_against_a_baseline_graph(self):
         metrics = load(METRICS_PATH)
