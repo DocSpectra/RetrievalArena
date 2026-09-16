@@ -25,6 +25,7 @@ Embedding seeds expanded along the graph (policy `semantic_seeded_graph_rerank_v
 | `embedding_dimensions` | `512` |
 | `model_id` | `local-hashing-tfidf-v1` |
 | `embedding_backend` | `local_hashing_tfidf` |
+| `model_revision` | `""` |
 | `model_lock_path` | `/model_provenance/embedding_models.lock.json` |
 | `model_cache_path` | `/models/minilm` |
 | `batch_size` | `32` |
