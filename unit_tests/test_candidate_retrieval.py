@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from retrieval_arena.candidate_retrieval import IMPORT_POLICY_LOWER, canonical, imported_document_name, prepare_provider_input, project_ranked_predictions, regular_inventory, sha256_bytes, validate_config
+from retrieval_arena.candidate_retrieval import IMPORT_POLICY_LOWER, canonical, expected_provider_metadata, imported_document_name, prepare_provider_input, project_ranked_predictions, regular_inventory, sha256_bytes, validate_config
 from retrieval_arena.errors import ValidationError
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -468,6 +468,149 @@ class NavigatorProviderTests(GraphProviderTests):
                     project_ranked_predictions(config, output, self.input, documents, provider_input)
                 shutil.rmtree(output)
         output = self.navigator_output([], text="", terminal="budget_exhausted", metadata_overrides={"page_visit_budget": 9})
+        with self.assertRaisesRegex(ValidationError, "provider-metadata"):
+            project_ranked_predictions(config, output, self.input, documents, provider_input)
+
+    # --- S046: the repo-search agent reader ---------------------------------------
+
+    SEARCH_IMAGE = "retrieval-arena/rag-repo-search-agent@sha256:" + "c" * 64
+
+    def search_config(self, name="rag_repo_search_agent", **overrides):
+        value = self.config()
+        value["provider"] = {"name": name, "image": self.SEARCH_IMAGE, "platform": "linux/amd64",
+                             "network": "host_model_alias", "top_k": 3, "max_context_chars_per_doc": 1500,
+                             "answer_policy": "agent_answer_v1", "model_policy": dict(MODEL_POLICY),
+                             "search_budget": 3, "search_hit_files": 10, "search_hit_lines_per_file": 3,
+                             "page_visit_budget": 8, "model_call_budget": 12, "page_char_limit": 12000,
+                             "follow_links": name == "rag_repo_search_agent", **overrides}
+        value["ranked"]["context_item_budget_k"] = value["provider"]["top_k"]
+        return value
+
+    def test_repo_search_agent_declared_in_two_variants_fixed_by_name(self):
+        for name, follow in (("rag_repo_search_agent", True), ("rag_repo_search_agent_nolinks", False)):
+            config = validate_config(self.search_config(name))
+            self.assertEqual((config["provider"]["network"], config["provider"]["follow_links"]), ("host_model_alias", follow))
+            metadata = expected_provider_metadata(config["provider"])
+            self.assertEqual((metadata["name"], metadata["follow_links"], metadata["trace_schema_version"], metadata["provider_policy"]),
+                             (name, follow, "e007c.action_trace.v1", "bounded_repo_search_controller_v1"))
+        cases = {
+            "provider-policy": [{"network": "none"}, {"answer_policy": "best_passage_v1"}, {"image": NAVIGATOR_IMAGE}],
+            "provider-model-policy": [{"page_visit_budget": 0}, {"model_policy": {**MODEL_POLICY, "endpoint": "http://127.0.0.1:11434"}}],
+            # RSA-2: the variant is the name; a config that contradicts it is refused.
+            "provider-search-policy": [{"follow_links": False}, {"follow_links": "yes"}, {"search_budget": 0},
+                                       {"search_hit_files": True}, {"search_hit_lines_per_file": 0}],
+        }
+        for code, overrides_list in cases.items():
+            for overrides in overrides_list:
+                with self.assertRaisesRegex(ValidationError, code, msg=repr(overrides)):
+                    validate_config(self.search_config(**overrides))
+        with self.assertRaisesRegex(ValidationError, "provider-search-policy"):
+            validate_config(self.search_config("rag_repo_search_agent_nolinks", follow_links=True))
+        value = self.search_config(); del value["provider"]["follow_links"]
+        with self.assertRaisesRegex(ValidationError, "provider-fields"): validate_config(value)
+        launch = prepare_provider_input(self.search_config("rag_repo_search_agent_nolinks"), self.input, self.repo, self.root / "search-input")
+        self.assertEqual((launch["provider_name"], launch["network"]), ("rag_repo_search_agent_nolinks", "host_model_alias"))
+        self.assertIsNotNone(launch["graph_edges_sha256"])
+        provider_config = json.loads((self.root / "search-input" / "config.yaml").read_text(encoding="utf-8"))
+        self.assertEqual((provider_config["follow_links"], provider_config["search_budget"], provider_config["search_hit_files"]), (False, 3, 10))
+        # The provider input carries the corpus, the questions, the graph and the config only (V2).
+        self.assertEqual(sorted(p.name for p in (self.root / "search-input").iterdir()), ["config.yaml", "corpus", "graph_edges.csv", "questions.jsonl"])
+
+    def search_output(self, cited, *, text="Waves order resources.", trace_overrides=None, terminal="answer",
+                      metadata_overrides=None, follow_links=True, actions=None, header_overrides=None):
+        output = self.root / "provider-output"; output.mkdir()
+        name = "rag_repo_search_agent" if follow_links else "rag_repo_search_agent_nolinks"
+        metadata = {"name": name, "deterministic": False, "top_k": 3, "max_context_chars_per_doc": 1500,
+                    "answer_policy": "agent_answer_v1", "search_budget": 3, "search_hit_files": 10, "search_hit_lines_per_file": 3,
+                    "page_visit_budget": 8, "model_call_budget": 12, "page_char_limit": 12000, "follow_links": follow_links,
+                    "model_policy": MODEL_POLICY, "trace_schema_version": "e007c.action_trace.v1",
+                    "provider_policy": "bounded_repo_search_controller_v1", "prompt_version": "e007d_repo_search_prompt_v1",
+                    "landing": "search_question_text", **(metadata_overrides or {})}
+        (output / "metadata.json").write_text(json.dumps(metadata), encoding="utf-8")
+        expected = {"guide__bbbdfa65": "Sync waves order resources.", "guide_waves__3440d413": "W", "guide_hooks__b1ec6f5b": "H"}
+        context = [{"doc_id": d, "text": expected[d], "score": float(len(cited[:3]) - i), "source": "repo_search_navigation", "rank": i + 1}
+                   for i, d in enumerate(cited[:3])]
+        row = {"question_id": "q1", "question": "sync waves", "generated_answer": text, "retrieved_context": context,
+               "answer_policy": "agent_answer_v1", "cited_pages": cited}
+        (output / "predictions.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+        (output / "navigation.json").write_text(json.dumps({"status": "completed"}), encoding="utf-8")
+        traces = output / "traces"; traces.mkdir()
+        header = {"record": "header", "question_id": "q1", "schema_version": "e007c.action_trace.v1",
+                  "compatible_action_schema_version": "e007b.action_trace.v1", "policy": "bounded_repo_search_controller_v1",
+                  "controller": {}, "follow_links": follow_links, "landing_query": "sync waves", "start_doc_id": None,
+                  **(header_overrides or {})}
+        visits = ["guide_waves__3440d413", "guide_hooks__b1ec6f5b"]
+        if actions is None:
+            actions = [{"action": "search", "details": {"search_index": 1, "query": "sync waves", "landing": True, "doc_ids": ["guide_waves__3440d413"], "hit_count": 1}},
+                       {"action": "open", "details": {"from_doc_id": None, "doc_id": visits[0], "route": "landing", "search_index": 1, "dead_end": False, "searches_before": 1, "opens_before": 0}},
+                       {"action": "open", "details": {"from_doc_id": visits[0], "doc_id": visits[1], "route": "link", "search_index": None, "dead_end": True, "searches_before": 1, "opens_before": 1}}]
+        actions = [dict(a) for a in actions]
+        if terminal == "answer":
+            actions.append({"action": "answer", "details": {"cited_pages": cited, "text": text}})
+        actions.append({"action": "stop", "details": {}})
+        rows = [{"record": "action", "step": i + 1, "budget_remaining": 9, **a} for i, a in enumerate(actions)]
+        opens = [a["details"]["doc_id"] for a in actions if a["action"] == "open"]
+        last = {"record": "terminal", "terminal": {"reason": terminal}, "visits": opens, "opens": len(opens),
+                "searches": sum(1 for a in actions if a["action"] == "search"), "zero_hit_searches": 0, "model_calls": 3, "dead_ends": 1,
+                "answer": {"cited_pages": cited, "text": text}, "final_context_doc_ids": cited[:3], "provider_calls": [],
+                "paper_facing_evidence": False, **(trace_overrides or {})}
+        (traces / "q1.jsonl").write_text("".join(json.dumps(r) + "\n" for r in [header, *rows, last]), encoding="utf-8")
+        return output
+
+    def test_repo_search_projection_validates_e007c_traces_at_finalize(self):
+        import shutil
+        config = self.search_config()
+        provider_input = self.root / "provider-input"
+        prepare_provider_input(config, self.input, self.repo, provider_input)
+        documents = self.root / "documents.json"
+        documents.write_text(json.dumps([
+            {"doc_id": "guide__bbbdfa65", "imported_path": "guide__bbbdfa65.md", "expected_text": "Sync waves order resources."},
+            {"doc_id": "guide_waves__3440d413", "imported_path": "guide_waves__3440d413.md", "expected_text": "W"},
+            {"doc_id": "guide_hooks__b1ec6f5b", "imported_path": "guide_hooks__b1ec6f5b.md", "expected_text": "H"}]), encoding="utf-8")
+        output = self.search_output(["guide_hooks__b1ec6f5b", "guide_waves__3440d413"])
+        ranked, answers = project_ranked_predictions(config, output, self.input, documents, provider_input)
+        self.assertEqual([i["support_target_id"] for i in ranked[0]["items"]], ["guide_hooks__b1ec6f5b", "guide_waves__3440d413"])
+        self.assertEqual(answers[0]["cited_pages"], ["guide_hooks__b1ec6f5b", "guide_waves__3440d413"])
+        shutil.rmtree(output)
+        output = self.search_output([], text="", terminal="budget_exhausted")
+        ranked, answers = project_ranked_predictions(config, output, self.input, documents, provider_input)
+        self.assertEqual((ranked[0]["items"], answers[0]["generated_answer"]), ([], ""))
+        shutil.rmtree(output)
+        landing = {"action": "search", "details": {"search_index": 1, "query": "sync waves", "landing": True, "doc_ids": ["guide_waves__3440d413"], "hit_count": 1}}
+        open1 = {"action": "open", "details": {"from_doc_id": None, "doc_id": "guide_waves__3440d413", "route": "landing", "search_index": 1, "dead_end": False, "searches_before": 1, "opens_before": 0}}
+        later = lambda i, ids: {"action": "search", "details": {"search_index": i, "query": "q", "landing": False, "doc_ids": ids, "hit_count": len(ids)}}
+        bad = {
+            # RSA-4: a fourth search, a ninth open, a thirteenth call, a citation of an unvisited page.
+            "provider-trace-budget": [
+                dict(cited=[], text="", terminal="budget_exhausted", actions=[landing, later(2, []), later(3, []), later(4, [])]),
+                dict(cited=[], text="", terminal="budget_exhausted", actions=[landing] + [open1] * 9),
+                dict(cited=[], text="", terminal="budget_exhausted", trace_overrides={"model_calls": 13}),
+                dict(cited=["guide__bbbdfa65"]),
+                dict(cited=[], text="", terminal="budget_exhausted", trace_overrides={"visits": ["guide_waves__3440d413"]}),
+                dict(cited=[], text="", terminal="budget_exhausted", trace_overrides={"searches": 2}),
+                # the landing must be the first action and carry the header's query; a later search is not a landing
+                dict(cited=[], text="", terminal="budget_exhausted", actions=[open1, landing]),
+                dict(cited=[], text="", terminal="budget_exhausted", actions=[landing, later(2, ["nope__00000000"])]),
+                dict(cited=[], text="", terminal="budget_exhausted", actions=[{**landing, "details": {**landing["details"], "query": "other"}}]),
+                # RSA-2: a link route in the nolinks variant
+                dict(cited=[], text="", terminal="budget_exhausted", follow_links=False,
+                     actions=[landing, open1, {"action": "open", "details": {"from_doc_id": "guide_waves__3440d413", "doc_id": "guide_hooks__b1ec6f5b", "route": "link", "search_index": None, "dead_end": True, "searches_before": 1, "opens_before": 1}}]),
+                dict(cited=[], text="", terminal="budget_exhausted", actions=[landing, {**open1, "details": {**open1["details"], "route": "teleport"}}]),
+            ],
+            "provider-trace-shape": [dict(cited=[], text="", terminal="budget_exhausted", header_overrides={"follow_links": False}),
+                                     dict(cited=[], text="", terminal="budget_exhausted", header_overrides={"schema_version": "e007b.action_trace.v1"})],
+        }
+        for code, cases in bad.items():
+            for case in cases:
+                follow = case.get("follow_links", True)
+                case_config = config if follow else self.search_config("rag_repo_search_agent_nolinks")
+                if not follow:
+                    case["metadata_overrides"] = {"name": "rag_repo_search_agent_nolinks", "follow_links": False}
+                output = self.search_output(**case)
+                with self.assertRaisesRegex(ValidationError, code, msg=json.dumps(case, default=str)):
+                    project_ranked_predictions(case_config, output, self.input, documents, provider_input)
+                shutil.rmtree(output)
+        output = self.search_output([], text="", terminal="budget_exhausted", metadata_overrides={"search_budget": 4})
         with self.assertRaisesRegex(ValidationError, "provider-metadata"):
             project_ranked_predictions(config, output, self.input, documents, provider_input)
 

@@ -28,6 +28,7 @@ Knobs are the `config.get(...)` keys in each runner.
 | `rag_iterative_search` | iterative query refinement over the corpus |
 | `rag_llm_guided_search_mock` | bounded action controller and action-trace schema (`e007b.action_trace.v1`) with a mock policy; the navigator scaffold |
 | `rag_llm_guided_search` | S026 (EXP-1c): the promoted navigator. Starts at the corpus root `index.md`, actions `open(link)` (a link the current page carries, resolved through `graph_edges.csv`), `back`, `answer(cited_pages, text)`; budgets `page_visit_budget` opens and `model_call_budget` calls per query; a real local model (`model_policy`: Ollama, digest-pinned, observed before the run and after every call) reached only at `http://host.docker.internal:11434` over the allowlisted routes; one trace per query under `traces/<question_id>.jsonl` (`e007b.action_trace.v1`, policy `bounded_provider_action_controller_v1`), `answer_policy: agent_answer_v1` (the agent's text; cited pages are the context items). `scripts/navigation_metrics.py` recomputes success@N, hops-to-first-support, pages-per-success, and dead-ends from the traces plus the judge's support file |
+| `rag_repo_search_agent` / `rag_repo_search_agent_nolinks` | S046 (EXP-1e): the repo-search agent reader, one image in two variants fixed by the provider name (`follow_links` true / false). Lands by an automatic literal, case-insensitive line grep of the question over the corpus Markdown (`search_hit_files` files by match count then id, `search_hit_lines_per_file` lines each; a query is text, never a path); actions `search(query)`, `open(doc_id)` (a hit of any search so far or, in the links variant, an admissible outlink of the current page), `back`, `answer(cited_pages, text)`; budgets `search_budget` (the landing counts), `page_visit_budget`, `model_call_budget`; the navigator's model policy, relay rules and network exception; one `e007c.action_trace.v1` trace per query (policy `bounded_repo_search_controller_v1`: search lines with their queries and returned ids, opens with a `route` -- `landing`/`search`/`link`, search before link when both offered the page). `scripts/search_navigation_metrics.py` recomputes success, landing hits, successes by route, `link_new` against a baseline graph, cost to first support, from the traces plus the judge's support file |
 | `oracle_perfect` / `oracle_partial` / `oracle_empty` / `oracle_graph_support` | oracles for calibration and graph-support bounds |
 | `llm_only` / `local_no_context_llm_e001b` | no-retrieval answer baselines |
 
@@ -101,7 +102,7 @@ any commit here needs `build-verification` and a new receipt.
 `candidate-retrieve` admits one config-declared provider per request from
 the closed profile table in `retrieval_arena/candidate_retrieval.py`
 (`rag_lexical_topk` only at `d00b38d`; `rag_graph_ranked_expand` added in
-S025; `rag_llm_guided_search` added in S026, each pinned by `image@sha256`) and requires a standalone candidate
+S025; `rag_llm_guided_search` added in S026, `rag_repo_search_agent` and its `_nolinks` variant in S046, each pinned by `image@sha256`) and requires a standalone candidate
 repository whose corpus sits under a subdirectory (`corpus.root`, e.g.
 `docs`). A `requires_graph` provider gets the candidate's own link graph
 (`graph_edges.csv`, `write_markdown_link_graph`'s resolver over the corpus
@@ -110,7 +111,7 @@ receipt (`graph_edges_sha256`), and published beside the predictions. The provid
 65532:65532 (the prepare step's user, which owns `provider-output`) with
 `--cap-drop ALL`; running it as root cannot write the output directory.
 Network: every retriever's provider container runs `--network none`. The one
-exception (S026) is the navigator profile (`network: host_model_alias`): the
+exception (S026; S046 extends it to the repo-search agent's two variants) is the navigator profile (`network: host_model_alias`): the
 operator runs it on Docker's default bridge with `--add-host
 host.docker.internal:host-gateway` (the direct lane's relay posture, S031 D4),
 the runner's own client enforces the relay rules (private upstream only,

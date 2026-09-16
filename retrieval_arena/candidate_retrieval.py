@@ -30,6 +30,13 @@ NAVIGATOR_OUTPUT_FILES = {"metadata.json", "predictions.jsonl", "navigation.json
 TRACES_DIR = "traces"
 TRACE_SCHEMA = "e007b.action_trace.v1"
 TRACE_POLICY = "bounded_provider_action_controller_v1"
+# S046: the repo-search agent's trace (a superset of e007b: search lines,
+# opens attributed to a route, no start page -- the reader lands by a search).
+SEARCH_TRACE_SCHEMA = "e007c.action_trace.v1"
+SEARCH_TRACE_POLICY = "bounded_repo_search_controller_v1"
+SEARCH_ROUTES = ("landing", "search", "link")
+SEARCH_PROVIDER_FIELDS = frozenset({"model_policy", "search_budget", "search_hit_files", "search_hit_lines_per_file",
+                                    "page_visit_budget", "model_call_budget", "page_char_limit", "follow_links"})
 TRACE_TERMINALS = ("answer", "budget_exhausted", "invalid_action", "provider_error")
 NETWORK_NONE = "none"
 NETWORK_HOST_MODEL_ALIAS = "host_model_alias"
@@ -71,10 +78,19 @@ class ProviderProfile:
     answer_policies: tuple[str, ...] = ("head_of_document_v1", "best_passage_v1")
     network: str = NETWORK_NONE
     publishes_traces: bool = False
+    # S046: the trace schema and controller policy a trace-publishing provider
+    # writes, and, for the repo-search agent, the variant its name fixes.
+    trace_schema: str = TRACE_SCHEMA
+    trace_policy: str = TRACE_POLICY
+    follow_links: bool | None = None
 
     @property
     def navigator(self) -> bool:
         return self.publishes_traces
+
+    @property
+    def repo_search(self) -> bool:
+        return self.trace_schema == SEARCH_TRACE_SCHEMA
 
     @property
     def image_pattern(self) -> str:
@@ -97,6 +113,20 @@ PROVIDERS: dict[str, ProviderProfile] = {
         "rag_llm_guided_search", "retrieval-arena/rag-llm-guided-search", "llm_guided_navigation", True,
         frozenset({"model_policy", "page_visit_budget", "model_call_budget", "page_char_limit"}), frozenset(),
         answer_policies=(AGENT_ANSWER_POLICY,), network=NETWORK_HOST_MODEL_ALIAS, publishes_traces=True),
+    # S046: the repo-search agent reader in its two variants (grep + open +
+    # follow links; grep + open only), one image, the variant fixed by the
+    # provider name and its ``follow_links`` value; same reach and isolation
+    # as the navigator, one e007c trace per query.
+    "rag_repo_search_agent": ProviderProfile(
+        "rag_repo_search_agent", "retrieval-arena/rag-repo-search-agent", "repo_search_navigation", True,
+        SEARCH_PROVIDER_FIELDS, frozenset(),
+        answer_policies=(AGENT_ANSWER_POLICY,), network=NETWORK_HOST_MODEL_ALIAS, publishes_traces=True,
+        trace_schema=SEARCH_TRACE_SCHEMA, trace_policy=SEARCH_TRACE_POLICY, follow_links=True),
+    "rag_repo_search_agent_nolinks": ProviderProfile(
+        "rag_repo_search_agent_nolinks", "retrieval-arena/rag-repo-search-agent", "repo_search_navigation", True,
+        SEARCH_PROVIDER_FIELDS, frozenset(),
+        answer_policies=(AGENT_ANSWER_POLICY,), network=NETWORK_HOST_MODEL_ALIAS, publishes_traces=True,
+        trace_schema=SEARCH_TRACE_SCHEMA, trace_policy=SEARCH_TRACE_POLICY, follow_links=False),
 }
 PROVIDER_IMAGE_PATTERN = re.compile(r"retrieval-arena/[a-z0-9-]+@sha256:[0-9a-f]{64}")
 
@@ -216,6 +246,8 @@ def validate_config(value: Any) -> dict[str, Any]:
         raise ValidationError("candidate-retrieval-provider-policy")
     if profile.navigator:
         _validate_navigator_policy(provider)
+        if profile.repo_search:
+            _validate_repo_search_policy(provider, profile)
     elif profile.requires_graph and (
             provider["graph_expansion_hops"] != 1
             or not _positive_int(provider["seed_top_k"], minimum=1)
@@ -253,6 +285,16 @@ def _validate_navigator_policy(provider: dict[str, Any]) -> None:
             or policy["max_attempts"] != 1 or policy["endpoint"] != MODEL_ALIAS_ENDPOINT
             or not isinstance(policy["thinking"], bool)):
         raise ValidationError("candidate-retrieval-provider-model-policy")
+
+
+def _validate_repo_search_policy(provider: dict[str, Any], profile: ProviderProfile) -> None:
+    """S046: the search budgets are positive and the variant matches the provider's name."""
+    if (not _positive_int(provider["search_budget"], minimum=1)
+            or not _positive_int(provider["search_hit_files"], minimum=1)
+            or not _positive_int(provider["search_hit_lines_per_file"], minimum=1)
+            or not isinstance(provider["follow_links"], bool)
+            or provider["follow_links"] != profile.follow_links):
+        raise ValidationError("candidate-retrieval-provider-search-policy")
 
 
 def _git(repo: Path, *arguments: str) -> str:
@@ -346,6 +388,13 @@ def expected_provider_metadata(provider: dict[str, Any]) -> dict[str, Any]:
     common = {"name": profile.name, "deterministic": True, "top_k": provider["top_k"],
               "max_context_chars_per_doc": provider["max_context_chars_per_doc"],
               "answer_policy": provider["answer_policy"]}
+    if profile.repo_search:
+        return {**common, "deterministic": False,
+                **{name: provider[name] for name in ("search_budget", "search_hit_files", "search_hit_lines_per_file",
+                                                     "page_visit_budget", "model_call_budget", "page_char_limit",
+                                                     "follow_links", "model_policy")},
+                "trace_schema_version": SEARCH_TRACE_SCHEMA, "provider_policy": SEARCH_TRACE_POLICY,
+                "prompt_version": "e007d_repo_search_prompt_v1", "landing": "search_question_text"}
     if profile.navigator:
         return {**common, "deterministic": False,
                 "page_visit_budget": provider["page_visit_budget"],
@@ -475,8 +524,8 @@ def project_ranked_predictions(config: dict[str, Any], provider_output: Path, in
     traces: dict[str, dict[str, Any]] = {}
     if profile.navigator:
         row_fields = NAVIGATOR_ROW_FIELDS
-        traces = validate_traces(provider_output / TRACES_DIR, [row["question_id"] for row in questions],
-                                 set(by_id), provider)
+        traces = (validate_search_traces if profile.repo_search else validate_traces)(
+            provider_output / TRACES_DIR, [row["question_id"] for row in questions], set(by_id), provider)
     for row in rows:
         _exact(row, row_fields, "candidate-retrieval-provider-row-fields")
         query_id = row["question_id"]
@@ -568,6 +617,69 @@ def validate_traces(traces_dir: Path, question_ids: list[str], doc_ids: set[str]
                 or any(v not in doc_ids for v in visits)
                 or [row["details"]["doc_id"] for row in opens] != visits[1:]
                 or terminal.get("opens") != len(opens) or len(opens) > provider["page_visit_budget"]
+                or isinstance(terminal.get("model_calls"), bool) or not isinstance(terminal.get("model_calls"), int)
+                or terminal["model_calls"] > provider["model_call_budget"]
+                or reason not in TRACE_TERMINALS or (reason == "answer") != answered
+                or not isinstance(terminal.get("answer"), dict)
+                or any(c not in visits for c in terminal["answer"].get("cited_pages", []))):
+            raise ValidationError("candidate-retrieval-provider-trace-budget")
+        terminals[query_id] = terminal
+    return terminals
+
+
+def validate_search_traces(traces_dir: Path, question_ids: list[str], doc_ids: set[str],
+                           provider: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """S046: one e007c trace per question, bounded by the three budgets, over admitted pages.
+
+    The first action is the landing search (``landing: true``, the question as
+    query); every search carries its query and the ids it returned; every open
+    names its route (``landing``/``search``/``link``, a link only in the
+    ``follow_links`` variant) and lands on an admitted page; the visits are
+    exactly the opened pages in order; searches, opens and model calls stay
+    within the declared budgets; a citation is a visited page.
+    """
+    if not traces_dir.is_dir() or traces_dir.is_symlink():
+        raise ValidationError("candidate-retrieval-provider-traces")
+    names = {path.name for path in traces_dir.iterdir()}
+    if names != {f"{query_id}.jsonl" for query_id in question_ids}:
+        raise ValidationError("candidate-retrieval-provider-traces")
+    terminals: dict[str, dict[str, Any]] = {}
+    for query_id in question_ids:
+        path = traces_dir / f"{query_id}.jsonl"
+        if path.is_symlink() or not path.is_file():
+            raise ValidationError("candidate-retrieval-provider-traces")
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        if (len(rows) < 3 or rows[0].get("record") != "header" or rows[-1].get("record") != "terminal"
+                or rows[0].get("question_id") != query_id or rows[0].get("schema_version") != SEARCH_TRACE_SCHEMA
+                or rows[0].get("policy") != SEARCH_TRACE_POLICY
+                or rows[0].get("follow_links") != provider["follow_links"]
+                or not isinstance(rows[0].get("landing_query"), str)
+                or any(row.get("record") != "action" for row in rows[1:-1])):
+            raise ValidationError("candidate-retrieval-provider-trace-shape")
+        terminal = rows[-1]
+        actions = rows[1:-1]
+        searches = [row for row in actions if row.get("action") == "search"]
+        opens = [row for row in actions if row.get("action") == "open"]
+        visits = terminal.get("visits")
+        reason = terminal.get("terminal", {}).get("reason") if isinstance(terminal.get("terminal"), dict) else None
+        answered = len(actions) > 1 and actions[-2].get("action") == "answer"
+        details = [row.get("details") for row in actions]
+        if (actions[-1].get("action") != "stop"
+                or any(not isinstance(d, dict) for d in details)
+                or any(row.get("action") not in {"search", "open", "back", "answer", "stop"} for row in actions)
+                or not searches or actions[0].get("action") != "search" or actions[0]["details"].get("landing") is not True
+                or actions[0]["details"].get("query") != rows[0]["landing_query"]
+                or any(row["details"].get("landing") is not False for row in searches[1:])
+                or any(not isinstance(row["details"].get("query"), str)
+                       or not isinstance(row["details"].get("doc_ids"), list)
+                       or any(d not in doc_ids for d in row["details"]["doc_ids"]) for row in searches)
+                or [row["details"].get("search_index") for row in searches] != list(range(1, len(searches) + 1))
+                or any(row["details"].get("route") not in SEARCH_ROUTES
+                       or (row["details"]["route"] == "link" and not provider["follow_links"]) for row in opens)
+                or not isinstance(visits, list) or any(v not in doc_ids for v in visits)
+                or [row["details"].get("doc_id") for row in opens] != visits
+                or terminal.get("opens") != len(opens) or len(opens) > provider["page_visit_budget"]
+                or terminal.get("searches") != len(searches) or len(searches) > provider["search_budget"]
                 or isinstance(terminal.get("model_calls"), bool) or not isinstance(terminal.get("model_calls"), int)
                 or terminal["model_calls"] > provider["model_call_budget"]
                 or reason not in TRACE_TERMINALS or (reason == "answer") != answered

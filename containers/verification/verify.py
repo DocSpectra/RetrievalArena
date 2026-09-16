@@ -25,6 +25,7 @@ COMMANDS = {
         "unit_tests.test_rag_lexical_topk_runner",
         "unit_tests.test_rag_graph_ranked_expand_runner",
         "unit_tests.test_rag_llm_guided_search_runner",
+        "unit_tests.test_rag_repo_search_agent_runner",
         "unit_tests.test_reachability_surface",
     ),
     "all": None,

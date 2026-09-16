@@ -69,9 +69,11 @@ if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candida
         $launchPath = Join-Path $outputPath '.candidate-retrieval-work\launch.json'
         try {
             $launch = Get-Content -Raw -LiteralPath $launchPath | ConvertFrom-Json
-            # S026: the navigator provider (and only it) runs on the default bridge with the
-            # host model alias added; every other provider keeps network none.
-            $networkAdmitted = ($launch.network -eq 'none') -or ($launch.network -eq 'host_model_alias' -and $launch.provider_name -eq 'rag_llm_guided_search')
+            # S026: the navigator provider runs on the default bridge with the host model
+            # alias added (S046: the repo-search agent's two variants too); every other
+            # provider keeps network none.
+            $aliasProviders = @('rag_llm_guided_search', 'rag_repo_search_agent', 'rag_repo_search_agent_nolinks')
+            $networkAdmitted = ($launch.network -eq 'none') -or ($launch.network -eq 'host_model_alias' -and $aliasProviders -contains [string]$launch.provider_name)
             if ($launch.schema_version -ne 'retrieval_arena.candidate_retrieval_launch.v1' -or $launch.platform -ne 'linux/amd64' -or -not $networkAdmitted -or [string]$launch.provider_image -notmatch '^retrieval-arena/[a-z0-9-]+@sha256:[0-9a-f]{64}$') { throw 'verification-candidate-launch-invalid' }
         }
         catch {

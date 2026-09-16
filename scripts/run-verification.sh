@@ -105,10 +105,10 @@ if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]
       run_operator candidate-retrieve-finalize
       exit $?
     fi
-    # S026: the navigator provider (and only it) runs on the default bridge with the host model alias.
+    # S026: the navigator provider runs on the default bridge with the host model alias (S046: the repo-search agent's two variants too).
     launch_network=$(sed -n 's/.*"network"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$launch")
     launch_provider=$(sed -n 's/.*"provider_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$launch")
-    if [ "$launch_network" = host_model_alias ] && [ "$launch_provider" = rag_llm_guided_search ]; then
+    if [ "$launch_network" = host_model_alias ] && { [ "$launch_provider" = rag_llm_guided_search ] || [ "$launch_provider" = rag_repo_search_agent ] || [ "$launch_provider" = rag_repo_search_agent_nolinks ]; }; then
       set -- --add-host host.docker.internal:host-gateway
     elif [ "$launch_network" = none ]; then
       set -- --network none
