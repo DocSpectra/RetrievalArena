@@ -1,6 +1,6 @@
 # `rag_repo_search_agent_nolinks`
 
-The `rag_repo_search_agent` image with `follow_links: false`: a grep-only reader that never sees or opens a page's outlinks — `open(doc_id)` admits search hits only and a link id is refused. Everything else (landing grep, budgets, model policy, traces) is the links variant's; the variant is fixed by the provider name, not by the request.
+The `rag_repo_search_agent` image with `follow_links: false`: a grep-only reader that never sees or opens a page's outlinks — `open(doc_id)` admits search hits only and a link id is refused. Everything else (the landing under the request's `landing_policy`, budgets, model policy, traces) is the links variant's; the variant is fixed by the provider name, not by the request.
 
 **Input:** As `rag_repo_search_agent`.
 

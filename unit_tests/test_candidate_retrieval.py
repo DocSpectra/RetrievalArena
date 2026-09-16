@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from retrieval_arena import candidate_retrieval
 from retrieval_arena.candidate_retrieval import EXCLUDE_POLICY_FAQ, IMPORT_POLICY_LOWER, canonical, excluded_by_policy, expected_provider_metadata, imported_document_name, prepare_provider_input, project_ranked_predictions, regular_inventory, sha256_bytes, validate_config
 from retrieval_arena.errors import ValidationError
 
@@ -567,7 +568,7 @@ class NavigatorProviderTests(GraphProviderTests):
                              "answer_policy": "agent_answer_v1", "model_policy": dict(MODEL_POLICY),
                              "search_budget": 3, "search_hit_files": 10, "search_hit_lines_per_file": 3,
                              "page_visit_budget": 8, "model_call_budget": 12, "page_char_limit": 12000,
-                             "follow_links": name == "rag_repo_search_agent", **overrides}
+                             "follow_links": name == "rag_repo_search_agent", "landing_policy": "search_question_text", **overrides}
         value["ranked"]["context_item_budget_k"] = value["provider"]["top_k"]
         return value
 
@@ -593,8 +594,25 @@ class NavigatorProviderTests(GraphProviderTests):
             validate_config(self.search_config("rag_repo_search_agent_nolinks", follow_links=True))
         value = self.search_config(); del value["provider"]["follow_links"]
         with self.assertRaisesRegex(ValidationError, "provider-fields"): validate_config(value)
+        # S046b (RL-4): the landing policy is required and closed; the tokenised policy's metadata names the
+        # v2 prompt and echoes the stop-word list, the literal policy's metadata is the S046 one.
+        value = self.search_config(); del value["provider"]["landing_policy"]
+        with self.assertRaisesRegex(ValidationError, "provider-landing-policy"): validate_config(value)
+        with self.assertRaisesRegex(ValidationError, "provider-landing-policy"):
+            validate_config(self.search_config(landing_policy="bm25_v1"))
+        tokenised = validate_config(self.search_config(landing_policy="tokenised_content_words_v1"))
+        metadata = expected_provider_metadata(tokenised["provider"])
+        self.assertEqual((metadata["landing"], metadata["prompt_version"], metadata["stop_word_list"], len(metadata["stop_words"])),
+                         ("tokenised_content_words_v1", "e007d_repo_search_prompt_v2", "STOP_WORDS_EN_V1", 110))
+        literal = expected_provider_metadata(validate_config(self.search_config())["provider"])
+        self.assertEqual((literal["landing"], literal["prompt_version"]), ("search_question_text", "e007d_repo_search_prompt_v1"))
+        self.assertNotIn("stop_words", literal)
+        launch_t = prepare_provider_input(self.search_config(landing_policy="tokenised_content_words_v1"), self.input, self.repo, self.root / "search-input-t")
+        self.assertEqual(launch_t["landing_policy"], "tokenised_content_words_v1")
+        self.assertEqual(json.loads((self.root / "search-input-t" / "config.yaml").read_text(encoding="utf-8"))["landing_policy"], "tokenised_content_words_v1")
         launch = prepare_provider_input(self.search_config("rag_repo_search_agent_nolinks"), self.input, self.repo, self.root / "search-input")
-        self.assertEqual((launch["provider_name"], launch["network"]), ("rag_repo_search_agent_nolinks", "host_model_alias"))
+        self.assertEqual((launch["provider_name"], launch["network"], launch["landing_policy"]),
+                         ("rag_repo_search_agent_nolinks", "host_model_alias", "search_question_text"))
         self.assertIsNotNone(launch["graph_edges_sha256"])
         provider_config = json.loads((self.root / "search-input" / "config.yaml").read_text(encoding="utf-8"))
         self.assertEqual((provider_config["follow_links"], provider_config["search_budget"], provider_config["search_hit_files"]), (False, 3, 10))
@@ -698,6 +716,41 @@ class NavigatorProviderTests(GraphProviderTests):
         output = self.search_output([], text="", terminal="budget_exhausted", metadata_overrides={"search_budget": 4})
         with self.assertRaisesRegex(ValidationError, "provider-metadata"):
             project_ranked_predictions(config, output, self.input, documents, provider_input)
+        shutil.rmtree(output)
+        # S046b (RL-4): under the literal policy a v1-shaped trace validates (above) and a header naming the
+        # tokenised policy is refused; under the tokenised policy the header must name it and carry the
+        # terms the rule yields for landing_query ("sync waves" -> ["sync", "waves"]), the landing line's
+        # terms (when present) likewise, and the metadata names prompt v2 and the stop-word list.
+        for header in ({"landing": "tokenised_content_words_v1"}, {"landing_terms": ["sync", "waves"]}):
+            output = self.search_output([], text="", terminal="budget_exhausted", header_overrides=header)
+            with self.assertRaisesRegex(ValidationError, "provider-landing-policy", msg=repr(header)):
+                project_ranked_predictions(config, output, self.input, documents, provider_input)
+            shutil.rmtree(output)
+        tokenised = validate_config(self.search_config(landing_policy="tokenised_content_words_v1"))
+        t_input = self.root / "provider-input-t"
+        prepare_provider_input(tokenised, self.input, self.repo, t_input)
+        stop_words = list(candidate_retrieval.STOP_WORDS_EN_V1)
+        t_metadata = {"landing": "tokenised_content_words_v1", "prompt_version": "e007d_repo_search_prompt_v2",
+                      "stop_words": stop_words, "stop_word_list": "STOP_WORDS_EN_V1"}
+        t_header = {"landing": "tokenised_content_words_v1", "landing_terms": ["sync", "waves"]}
+        t_landing = {**landing, "details": {**landing["details"], "landing_terms": ["sync", "waves"]}}
+        output = self.search_output([], text="", terminal="budget_exhausted", metadata_overrides=t_metadata,
+                                    header_overrides=t_header, actions=[t_landing, open1])
+        ranked, answers = project_ranked_predictions(tokenised, output, self.input, documents, t_input)
+        self.assertEqual(ranked[0]["items"], [])
+        shutil.rmtree(output)
+        for header, action in (({}, t_landing), ({**t_header, "landing_terms": ["sync"]}, t_landing),
+                               ({**t_header, "landing": "search_question_text"}, t_landing),
+                               (t_header, {**landing, "details": {**landing["details"], "landing_terms": ["waves"]}})):
+            output = self.search_output([], text="", terminal="budget_exhausted", metadata_overrides=t_metadata,
+                                        header_overrides=header, actions=[action, open1])
+            with self.assertRaisesRegex(ValidationError, "provider-landing-policy", msg=repr((header, action))):
+                project_ranked_predictions(tokenised, output, self.input, documents, t_input)
+            shutil.rmtree(output)
+        output = self.search_output([], text="", terminal="budget_exhausted", header_overrides=t_header, actions=[t_landing, open1],
+                                    metadata_overrides={**t_metadata, "stop_words": stop_words[:-1]})
+        with self.assertRaisesRegex(ValidationError, "provider-metadata"):
+            project_ranked_predictions(tokenised, output, self.input, documents, t_input)
 
 
 if __name__ == "__main__": unittest.main()

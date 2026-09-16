@@ -3,13 +3,18 @@
 Promoted from ``rag_llm_guided_search`` (the bounded action controller, the
 relay-rule model client, the ``e007b`` trace shape) and ``rag_iterative_search``
 (a search loop over the corpus). The reader is an agent with the repository in
-front of it: it lands by a literal grep of the question over the corpus's
+front of it: it lands by a search over the corpus's
 Markdown, opens a hit, reads it, follows a relative link (``follow_links``
 variant) or greps again with words it learned from the page, and answers.
 
 Start state: the corpus plus the question; the trace opens with an automatic
-``search(<question text>)`` (no model call), so the reader lands
-deterministically. Actions: ``search(query)`` (a literal, case-insensitive
+landing search (no model call), so the reader lands deterministically. The
+landing is the request's ``landing_policy`` (S046b): ``search_question_text``
+greps the whole question literally (E-EXP1e); ``tokenised_content_words_v1``
+splits the question into content words (``[a-z0-9]+`` runs of at least two
+characters, ``STOP_WORDS_EN_V1`` removed) and ranks files by how many of
+those words they carry as whole tokens -- a developer whose whole-question
+grep finds nothing greps its words. Actions: ``search(query)`` (a literal, case-insensitive
 line grep; several words match a line carrying every word), ``open(doc_id)``
 (a hit of any search so far, or, in the links variant, an admissible outlink
 of the current page resolved through ``graph_edges.csv``), ``back``, and
@@ -51,8 +56,24 @@ PROVIDER_NAME = "rag_repo_search_agent"
 PROVIDER_NAME_NOLINKS = "rag_repo_search_agent_nolinks"
 ITEM_SOURCE = "repo_search_navigation"
 ANSWER_POLICY = "agent_answer_v1"
-PROMPT_VERSION = "e007d_repo_search_prompt_v1"
 RESPONSE_SCHEMA_VERSION = "e007d.repo_search_action.v1"
+# S046b: the landing policies (closed). The prompt version follows the policy:
+# v1 verbatim under the literal landing, v1 plus one sentence under the
+# tokenised one.
+LANDING_QUESTION_TEXT = "search_question_text"
+LANDING_TOKENISED = "tokenised_content_words_v1"
+LANDING_POLICIES = (LANDING_QUESTION_TEXT, LANDING_TOKENISED)
+PROMPT_VERSIONS = {LANDING_QUESTION_TEXT: "e007d_repo_search_prompt_v1", LANDING_TOKENISED: "e007d_repo_search_prompt_v2"}
+STOP_WORDS_NAME = "STOP_WORDS_EN_V1"
+# The fixed stop-word list of the tokenised landing; adding or removing a word is a deviation.
+STOP_WORDS_EN_V1 = (
+    "a an the and or but if of to in on at by for from with without into onto over under about as is are was "
+    "were be been being am do does did doing have has had having can could should would may might must will "
+    "shall i you he she it we they me him her us them my your his its our their this that these those what "
+    "which who whom whose when where why how not no yes any some all each every there here than then so too "
+    "very just also only up down out off again further once more most other such own same").split()
+TOKEN_RE = re.compile(r"[a-z0-9]+")
+MIN_TOKEN_CHARS = 2
 ACTIONS = ("search", "open", "back", "answer")
 ROUTES = ("landing", "search", "link")
 TERMINALS = ("answer", "budget_exhausted", "invalid_action", "provider_error")
@@ -98,11 +119,20 @@ class ReaderConfig:
     model_call_budget: int
     page_char_limit: int
     follow_links: bool
+    landing_policy: str
     model_policy: ModelPolicy
 
     @property
     def provider_name(self) -> str:
         return PROVIDER_NAME if self.follow_links else PROVIDER_NAME_NOLINKS
+
+    @property
+    def prompt_version(self) -> str:
+        return PROMPT_VERSIONS[self.landing_policy]
+
+    @property
+    def tokenised_landing(self) -> bool:
+        return self.landing_policy == LANDING_TOKENISED
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -141,6 +171,10 @@ def parse_config(raw: dict[str, Any]) -> ReaderConfig:
         raise NavigatorError("answer_policy_unsupported")
     if not isinstance(raw.get("follow_links"), bool):
         raise NavigatorError("follow_links_missing")
+    if "landing_policy" not in raw:
+        raise NavigatorError("landing_policy_missing")
+    if raw["landing_policy"] not in LANDING_POLICIES:
+        raise NavigatorError("landing_policy_unknown")
     return ReaderConfig(
         top_k=max(1, int(raw.get("top_k", 5))),
         max_context_chars_per_doc=max(0, int(raw.get("max_context_chars_per_doc", 1500))),
@@ -152,6 +186,7 @@ def parse_config(raw: dict[str, Any]) -> ReaderConfig:
         model_call_budget=max(1, int(raw.get("model_call_budget", 12))),
         page_char_limit=max(1, int(raw.get("page_char_limit", 12000))),
         follow_links=raw["follow_links"],
+        landing_policy=raw["landing_policy"],
         model_policy=parse_model_policy(raw.get("model_policy")))
 
 
@@ -219,6 +254,59 @@ def search_corpus(corpus: dict[str, str], query: str, *, hit_files: int, lines_p
         for line in lines:
             hits.append({"doc_id": doc_id, "path": f"{doc_id}.md", "line_number": line["line_number"],
                          "text": line["text"], "matching_lines": count})
+    return hits
+
+
+# --- the tokenised landing (S046b, landing_policy tokenised_content_words_v1) ------
+
+def tokens(text: str) -> list[str]:
+    """The ``[a-z0-9]+`` runs of the lower-cased text (no stemming, no substrings)."""
+    return TOKEN_RE.findall(text.lower())
+
+
+def landing_terms(question: str) -> list[str]:
+    """The question's content words: its first QUERY_CHAR_LIMIT characters tokenised, tokens shorter
+    than MIN_TOKEN_CHARS and STOP_WORDS_EN_V1 dropped, duplicates removed, order kept."""
+    stop = set(STOP_WORDS_EN_V1)
+    return list(dict.fromkeys(t for t in tokens(question[:QUERY_CHAR_LIMIT]) if len(t) >= MIN_TOKEN_CHARS and t not in stop))
+
+
+def landing_search(corpus: dict[str, str], terms: list[str], *, hit_files: int, lines_per_file: int) -> list[dict[str, Any]]:
+    """Rank corpus files by the landing terms they carry as whole tokens.
+
+    A file's matched set is the landing terms occurring as whole tokens anywhere
+    in it. Files are ranked by matched-set size descending, then by the largest
+    number of landing terms on one line descending, then by document id; at most
+    ``hit_files`` files are offered, each with at most ``lines_per_file`` lines
+    chosen by landing terms on the line descending then line number ascending.
+    Every hit carries the file's matched set (``matched_words``, in landing-term
+    order) and its size. No landing terms, or no file carrying any of them, is a
+    zero-hit landing (``[]``). Reads the corpus only: a term is a token, never a
+    path or a pattern.
+    """
+    if not terms:
+        return []
+    wanted = set(terms)
+    ranked: list[tuple[int, int, str, list[str], list[dict[str, Any]]]] = []
+    for doc_id in sorted(corpus):
+        matched: set[str] = set()
+        lines: list[tuple[int, int, str]] = []
+        for number, line in enumerate(corpus[doc_id].splitlines(), 1):
+            on_line = wanted & set(tokens(line))
+            if on_line:
+                matched |= on_line
+                lines.append((-len(on_line), number, line.strip()[:HIT_TEXT_CHARS]))
+        if matched:
+            lines.sort()
+            best = -lines[0][0]
+            ranked.append((-len(matched), -best, doc_id, [t for t in terms if t in matched],
+                           [{"line_number": n, "text": text} for _, n, text in lines[:lines_per_file]]))
+    ranked.sort(key=lambda row: row[:3])
+    hits = []
+    for _, _, doc_id, words, lines in ranked[:hit_files]:
+        for line in lines:
+            hits.append({"doc_id": doc_id, "path": f"{doc_id}.md", "line_number": line["line_number"],
+                         "text": line["text"], "matched_words": words, "matched_word_count": len(words)})
     return hits
 
 
@@ -341,17 +429,23 @@ SYSTEM_PROMPT = (
     "is spent. Use the page ids' path words and the hit lines to judge where the answer lives. Never claim to "
     "have used reference answers, labels, or hidden knowledge."
 )
+# S046b (prompt v2): the v1 text plus this one sentence, present only under the tokenised landing.
+TOKENISED_LANDING_SENTENCE = (
+    " The first search was made for you from the question's content words (landing_terms in the observation): its "
+    "hits are the files carrying the most of those words, and a hit line need not contain the whole question."
+)
 
 
-def system_prompt(follow_links: bool) -> str:
+def system_prompt(follow_links: bool, tokenised_landing: bool = False) -> str:
     return (SYSTEM_PROMPT
             .replace("<LINK_CLAUSE>", " or among the links of the current page" if follow_links else "")
-            .replace("<FOLLOW_CLAUSE>", ", follow a link" if follow_links else ""))
+            .replace("<FOLLOW_CLAUSE>", ", follow a link" if follow_links else "")
+            + (TOKENISED_LANDING_SENTENCE if tokenised_landing else ""))
 
 
-def build_messages(observation: dict[str, Any], *, follow_links: bool) -> list[dict[str, str]]:
+def build_messages(observation: dict[str, Any], *, follow_links: bool, tokenised_landing: bool = False) -> list[dict[str, str]]:
     return [
-        {"role": "system", "content": system_prompt(follow_links)},
+        {"role": "system", "content": system_prompt(follow_links, tokenised_landing)},
         {"role": "user", "content": "Observation (JSON):\n" + json.dumps(observation, sort_keys=True, ensure_ascii=False)},
     ]
 
@@ -359,7 +453,7 @@ def build_messages(observation: dict[str, Any], *, follow_links: bool) -> list[d
 def build_observation(question: dict[str, str], *, page: dict[str, Any] | None, links: list[str],
                       searches: list[dict[str, Any]], offered_hits: list[str], history: list[str],
                       searches_remaining: int, opens_remaining: int, calls_remaining: int,
-                      follow_links: bool) -> dict[str, Any]:
+                      follow_links: bool, landing_terms: list[str] | None = None) -> dict[str, Any]:
     # The page already open is not offered again (re-opening it reads nothing new;
     # the probe showed a six-fold re-open loop on one page); earlier pages stay openable.
     current = page["doc_id"] if page else None
@@ -393,6 +487,8 @@ def build_observation(question: dict[str, str], *, page: dict[str, Any] | None, 
     }
     if follow_links:
         observation["links"] = links
+    if landing_terms is not None:
+        observation["landing_terms"] = list(landing_terms)
     return observation
 
 
@@ -426,21 +522,33 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
     def admissible(doc_id: str) -> list[str]:
         return sorted(edges.get(doc_id, set()) & set(corpus))
 
+    # S046b: the landing is the request's policy; the model's own searches are
+    # the literal all-words line grep under either policy.
+    terms: list[str] | None = landing_terms(question["question"]) if config.tokenised_landing else None
+
     def run_search(query: str, *, landing: bool) -> None:
         nonlocal searches, zero_hit_searches
         searches += 1
-        hits = search_corpus(corpus, query, hit_files=config.search_hit_files,
-                             lines_per_file=config.search_hit_lines_per_file)
+        if landing and terms is not None:
+            hits = landing_search(corpus, terms, hit_files=config.search_hit_files,
+                                  lines_per_file=config.search_hit_lines_per_file)
+        else:
+            hits = search_corpus(corpus, query, hit_files=config.search_hit_files,
+                                 lines_per_file=config.search_hit_lines_per_file)
         doc_ids = list(dict.fromkeys(hit["doc_id"] for hit in hits))
         for doc_id in doc_ids:
             offered_by_search.setdefault(doc_id, searches)
         if not doc_ids:
             zero_hit_searches += 1
-        search_views.append({"search_index": searches, "query": query, "hits": hits})
-        trace_action(actions, "search", budget_remaining=config.model_call_budget - calls,
-                     details={"search_index": searches, "query": query, "landing": landing,
-                              "doc_ids": doc_ids, "hit_count": len(hits),
-                              "searches_remaining": config.search_budget - searches})
+        view = {"search_index": searches, "query": query, "hits": hits}
+        details = {"search_index": searches, "query": query, "landing": landing,
+                   "doc_ids": doc_ids, "hit_count": len(hits),
+                   "searches_remaining": config.search_budget - searches}
+        if landing and terms is not None:
+            view["landing_terms"] = list(terms)
+            details["landing_terms"] = list(terms)
+        search_views.append(view)
+        trace_action(actions, "search", budget_remaining=config.model_call_budget - calls, details=details)
 
     run_search(question["question"], landing=True)
 
@@ -450,14 +558,16 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
             break
         current = stack[-1] if stack else None
         links = admissible(current) if (current is not None and config.follow_links) else []
+        page = page_view(current, corpus[current], limit=config.page_char_limit) if current else None
         observation = build_observation(
-            question, page=page_view(current, corpus[current], limit=config.page_char_limit) if current else None,
+            question, page=page,
             links=links, searches=search_views, offered_hits=list(offered_by_search), history=stack,
             searches_remaining=config.search_budget - searches, opens_remaining=config.page_visit_budget - opens,
-            calls_remaining=config.model_call_budget - calls, follow_links=config.follow_links)
+            calls_remaining=config.model_call_budget - calls, follow_links=config.follow_links, landing_terms=terms)
         call_index = calls + 1
         try:
-            requested, usage = client.chat(build_messages(observation, follow_links=config.follow_links),
+            requested, usage = client.chat(build_messages(observation, follow_links=config.follow_links,
+                                                          tokenised_landing=config.tokenised_landing),
                                            action_schema(observation["allowed_actions"]))
             digest = client.observe_identity()
         except NavigatorError as error:
@@ -468,7 +578,7 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
         calls += 1
         provider_calls.append({"request_index": call_index, "current_page": current, "links_offered": len(links),
                                "hits_offered": len(offered_by_search), "requested_action": requested,
-                               "usage": usage, "model_digest": digest, "prompt_version": PROMPT_VERSION})
+                               "usage": usage, "model_digest": digest, "prompt_version": config.prompt_version})
         remaining = config.model_call_budget - calls
         if not isinstance(requested, dict) or requested.get("action") not in ACTIONS:
             terminal = {"reason": "invalid_action", "validation_error": "unsupported_action", "requested": requested}
@@ -505,11 +615,14 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
             visits.append(doc_id)
             dead_end = not admissible(doc_id)
             dead_ends += int(dead_end)
+            # S046b: the page view's truncation is recorded per open (E-EXP1e I8 read it by hand).
             trace_action(actions, "open", budget_remaining=remaining,
                          details={"from_doc_id": current, "doc_id": doc_id, "open_index": opens, "route": route,
                                   "search_index": offered_by_search.get(doc_id), "dead_end": dead_end,
                                   "revisit": visits.count(doc_id) > 1,
-                                  "searches_before": searches, "opens_before": opens - 1})
+                                  "searches_before": searches, "opens_before": opens - 1,
+                                  "truncated": len(corpus[doc_id]) > config.page_char_limit,
+                                  "char_count": len(corpus[doc_id])})
         elif name == "back":
             if len(stack) < 2:
                 terminal = {"reason": "invalid_action", "validation_error": "back_at_first_page", "requested": requested}
@@ -546,7 +659,7 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
         "compatible_action_schema_version": COMPATIBLE_ACTION_SCHEMA_VERSION,
         "policy": PROVIDER_POLICY_NAME,
         "controller": {"type": "provider_action", "provider": policy.backend, "model_id": policy.model,
-                       "model_digest": policy.digest, "prompt_version": PROMPT_VERSION,
+                       "model_digest": policy.digest, "prompt_version": config.prompt_version,
                        "response_schema_version": RESPONSE_SCHEMA_VERSION,
                        "temperature": policy.temperature, "top_p": policy.top_p, "seed": policy.seed,
                        "max_tokens": policy.max_output_tokens, "thinking": policy.thinking,
@@ -555,7 +668,9 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
                        "page_visit_budget": config.page_visit_budget,
                        "model_call_budget": config.model_call_budget, "page_char_limit": config.page_char_limit},
         "follow_links": config.follow_links,
+        "landing": config.landing_policy,
         "landing_query": question["question"],
+        "landing_terms": terms,
         "start_doc_id": None,
         "actions": actions,
         "provider_calls": provider_calls,
@@ -576,7 +691,7 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
 def write_trace(path: Path, trace: dict[str, Any]) -> None:
     """One JSONL file per question: a header line, one line per action (searches included), one terminal line."""
     header = {k: trace[k] for k in ("question_id", "schema_version", "compatible_action_schema_version", "policy",
-                                    "controller", "follow_links", "landing_query", "start_doc_id")}
+                                    "controller", "follow_links", "landing", "landing_query", "landing_terms", "start_doc_id")}
     header["record"] = "header"
     rows = [header]
     for action in trace["actions"]:
@@ -607,7 +722,8 @@ def metadata(config: ReaderConfig) -> dict[str, Any]:
                          "timeout_seconds": policy.timeout_seconds, "max_attempts": policy.max_attempts,
                          "endpoint": policy.endpoint, "thinking": policy.thinking},
         "trace_schema_version": TRACE_SCHEMA_VERSION, "provider_policy": PROVIDER_POLICY_NAME,
-        "prompt_version": PROMPT_VERSION, "landing": "search_question_text",
+        "prompt_version": config.prompt_version, "landing": config.landing_policy,
+        **({"stop_words": list(STOP_WORDS_EN_V1), "stop_word_list": STOP_WORDS_NAME} if config.tokenised_landing else {}),
     }
 
 
@@ -618,7 +734,7 @@ def run(input_dir: Path, output_dir: Path, *, client_factory=ModelClient) -> int
     corpus = {path.stem: path.read_text(encoding="utf-8") for path in sorted((input_dir / "corpus").glob("*.md"))}
     edges = read_edges(input_dir / "graph_edges.csv")
     summary: dict[str, Any] = {"schema_version": "retrieval_arena.navigation_run.v1", "provider": config.provider_name,
-                               "start_doc_id": None, "landing": "search_question_text",
+                               "start_doc_id": None, "landing": config.landing_policy,
                                "follow_links": config.follow_links, "question_count": len(questions),
                                "document_count": len(corpus),
                                "upstream_host": urlparse(config.model_policy.endpoint).hostname}

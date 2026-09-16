@@ -19,7 +19,7 @@ POLICY = {"backend": "ollama", "model": "qwen3:14b", "digest": DIGEST, "temperat
           "max_attempts": 1, "endpoint": "http://host.docker.internal:11434", "thinking": False}
 CONFIG = {"top_k": 5, "max_context_chars_per_doc": 1500, "answer_policy": "agent_answer_v1",
           "search_budget": 3, "search_hit_files": 10, "search_hit_lines_per_file": 3,
-          "page_visit_budget": 8, "model_call_budget": 12, "page_char_limit": 40, "follow_links": True,
+          "page_visit_budget": 8, "model_call_budget": 12, "page_char_limit": 40, "follow_links": True, "landing_policy": "search_question_text",
           "model_policy": POLICY}
 # The six-page fixture corpus (RSA-1): two pages carry both "sync" and "windows".
 PAGES = {
@@ -346,6 +346,132 @@ class RepoSearchAgentTests(unittest.TestCase):
             self.runner.parse_config({k: v for k, v in CONFIG.items() if k != "follow_links"})
         with self.assertRaisesRegex(self.runner.NavigatorError, "answer_policy_unsupported"):
             self.runner.parse_config({**CONFIG, "answer_policy": "best_passage_v1"})
+        # S046b: the landing policy is required and closed.
+        with self.assertRaisesRegex(self.runner.NavigatorError, "landing_policy_missing"):
+            self.runner.parse_config({k: v for k, v in CONFIG.items() if k != "landing_policy"})
+        with self.assertRaisesRegex(self.runner.NavigatorError, "landing_policy_unknown"):
+            self.runner.parse_config({**CONFIG, "landing_policy": "bm25_v1"})
+        self.assertEqual(self.runner.parse_config(CONFIG).prompt_version, "e007d_repo_search_prompt_v1")
+        self.assertEqual(self.runner.parse_config({**CONFIG, "landing_policy": "tokenised_content_words_v1"}).prompt_version,
+                         "e007d_repo_search_prompt_v2")
+
+    # --- S046b: the tokenised landing (RL-1..3) ------------------------------------
+
+    def test_rl1_landing_terms_drop_stop_words_and_short_tokens_and_a_termless_question_lands_nowhere(self):
+        terms = self.runner.landing_terms
+        self.assertEqual(terms("How do I fix the issue?"), ["fix", "issue"])
+        self.assertEqual(terms("What is Argo CD?"), ["argo", "cd"])
+        self.assertEqual(terms("Why?"), [])
+        self.assertEqual(terms("Sync, SYNC and sync-windows: v2.1"), ["sync", "windows", "v2"])
+        self.assertEqual(len(self.runner.STOP_WORDS_EN_V1), 110)
+        self.assertEqual(len(set(self.runner.STOP_WORDS_EN_V1)), 110)
+        # The endpoint recomputes the terms at finalize with the same list and rule.
+        from retrieval_arena import candidate_retrieval
+        self.assertEqual(list(candidate_retrieval.STOP_WORDS_EN_V1), list(self.runner.STOP_WORDS_EN_V1))
+        self.assertEqual(candidate_retrieval.LANDING_POLICIES, self.runner.LANDING_POLICIES)
+        self.assertEqual(candidate_retrieval.SEARCH_PROMPT_VERSIONS, self.runner.PROMPT_VERSIONS)
+        for question in ("How do I fix the issue?", "Sync, SYNC and sync-windows: v2.1", "../support.json", "x" * 300, "Why?"):
+            self.assertEqual(candidate_retrieval.landing_terms(question), terms(question))
+        # The whole run under the tokenised policy: the landing is the question's words as a set, the header
+        # and the landing line carry the terms, metadata echoes the policy, the stop words and prompt v2.
+        self.questions(q1="How do sync windows block a sync?", q2="Why?")
+        code, client = self.run_with({"q1": [{"action": "answer", "cited_pages": [], "text": "x"}],
+                                      "q2": [{"action": "answer", "cited_pages": [], "text": "y"}]},
+                                     landing_policy="tokenised_content_words_v1")
+        self.assertEqual(code, 0)
+        rows = self.read_trace("q1")
+        self.assertEqual((rows[0]["landing"], rows[0]["landing_query"], rows[0]["landing_terms"]),
+                         ("tokenised_content_words_v1", "How do sync windows block a sync?", ["sync", "windows", "block"]))
+        landing = rows[1]["details"]
+        self.assertEqual((landing["landing"], landing["landing_terms"]), (True, ["sync", "windows", "block"]))
+        # faq and sync_windows carry all three terms on one line (tied, id order); hooks, orphan and waves
+        # carry one term each (id order). The literal grep offered only lines carrying every word.
+        self.assertEqual(landing["doc_ids"], ["faq__00000002", "sync_windows__00000001", "hooks__00000003",
+                                              "orphan__00000005", "waves__00000004"])
+        first = client.calls[0]
+        self.assertEqual(first["landing_terms"], ["sync", "windows", "block"])
+        hit = first["searches"][0]["hits"][0]
+        self.assertEqual((hit["doc_id"], hit["line_number"], hit["matched_words"], hit["matched_word_count"]),
+                         ("faq__00000002", 2, ["sync", "windows", "block"], 3))
+        self.assertEqual(first["searches"][0]["landing_terms"], ["sync", "windows", "block"])
+        self.assertEqual(first["allowed_actions"], ["open", "search", "answer"])
+        # Prompt v2 is v1 plus the one sentence; v1 is untouched.
+        self.assertEqual(self.runner.system_prompt(True, True), self.runner.system_prompt(True) + self.runner.TOKENISED_LANDING_SENTENCE)
+        self.assertNotIn("landing_terms", self.runner.system_prompt(False))
+        # q2 has no landing terms: a zero-hit landing, no open offered on the first call.
+        q2 = self.read_trace("q2")
+        self.assertEqual((q2[0]["landing_terms"], q2[1]["details"]["doc_ids"], q2[-1]["zero_hit_searches"]), ([], [], 1))
+        self.assertEqual(client.calls[1]["allowed_actions"], ["search", "answer"])
+        metadata = json.loads((self.output / "metadata.json").read_text(encoding="utf-8"))
+        self.assertEqual((metadata["landing"], metadata["prompt_version"], metadata["stop_word_list"]),
+                         ("tokenised_content_words_v1", "e007d_repo_search_prompt_v2", "STOP_WORDS_EN_V1"))
+        self.assertEqual(metadata["stop_words"], list(self.runner.STOP_WORDS_EN_V1))
+        summary = json.loads((self.output / "navigation.json").read_text(encoding="utf-8"))
+        self.assertEqual(summary["landing"], "tokenised_content_words_v1")
+        # Under the literal policy nothing changed: v1 metadata, no landing terms, no stop words.
+        import shutil; shutil.rmtree(self.output)
+        code, client = self.run_with({"q1": [{"action": "answer", "cited_pages": [], "text": "x"}],
+                                      "q2": [{"action": "answer", "cited_pages": [], "text": "y"}]},
+                                     landing_policy="search_question_text")
+        rows = self.read_trace("q1")
+        self.assertEqual((rows[0]["landing"], rows[0]["landing_terms"], rows[1]["details"]["doc_ids"]), ("search_question_text", None, []))
+        self.assertNotIn("landing_terms", client.calls[0])
+        metadata = json.loads((self.output / "metadata.json").read_text(encoding="utf-8"))
+        self.assertEqual((metadata["landing"], metadata["prompt_version"]), ("search_question_text", "e007d_repo_search_prompt_v1"))
+        self.assertNotIn("stop_words", metadata)
+
+    def test_rl2_landing_ranks_files_by_matched_set_then_best_line_then_id_and_lines_by_terms_then_number(self):
+        corpus = {
+            # A: all three terms, two of them on one line (best line 2).
+            "a_page__00000001": "# A\nsync waves here\nnothing\nhooks below\nsync again\n",
+            # B: two terms on one line (matched set 2).
+            "b_page__00000002": "# B\nsync waves on one line, twice: waves\n",
+            # C: the same three terms as A, one per line (best line 1); its id sorts after A.
+            "c_page__00000003": "# C\nsync\nwaves\nhooks\n",
+            "d_page__00000004": "# D\nno term at all; synchronisation is another token.\n",
+        }
+        terms = self.runner.landing_terms("How do sync waves and hooks interact?")
+        self.assertEqual(terms, ["sync", "waves", "hooks", "interact"])
+        hits = self.runner.landing_search(corpus, terms, hit_files=10, lines_per_file=3)
+        self.assertEqual(list(dict.fromkeys(h["doc_id"] for h in hits)), ["a_page__00000001", "c_page__00000003", "b_page__00000002"])
+        by_doc = {}
+        for h in hits:
+            by_doc.setdefault(h["doc_id"], []).append(h)
+        self.assertEqual([(h["line_number"], h["text"]) for h in by_doc["a_page__00000001"]],
+                         [(2, "sync waves here"), (4, "hooks below"), (5, "sync again")])
+        self.assertEqual({(h["matched_words"][0], h["matched_word_count"]) for h in by_doc["a_page__00000001"]}, {("sync", 3)})
+        self.assertEqual(by_doc["a_page__00000001"][0]["matched_words"], ["sync", "waves", "hooks"])
+        self.assertEqual([h["line_number"] for h in by_doc["c_page__00000003"]], [2, 3, 4])
+        self.assertEqual((by_doc["b_page__00000002"][0]["matched_words"], by_doc["b_page__00000002"][0]["path"]),
+                         (["sync", "waves"], "b_page__00000002.md"))
+        # Substrings never match ("synchronisation" is not "sync"); the file limit and the line limit bind.
+        self.assertNotIn("d_page__00000004", by_doc)
+        limited = self.runner.landing_search(corpus, terms, hit_files=2, lines_per_file=1)
+        self.assertEqual([(h["doc_id"], h["line_number"]) for h in limited], [("a_page__00000001", 2), ("c_page__00000003", 2)])
+        self.assertEqual(self.runner.landing_search(corpus, [], hit_files=10, lines_per_file=3), [])
+        self.assertEqual(self.runner.landing_search(corpus, ["absent"], hit_files=10, lines_per_file=3), [])
+
+    def test_rl3_landing_terms_are_tokens_never_paths_or_patterns(self):
+        terms = self.runner.landing_terms
+        self.assertEqual(terms("../support.json"), ["support", "json"])
+        self.assertEqual(terms("/etc/passwd and .* or w[i]ndows"), ["etc", "passwd", "ndows"])
+        self.assertEqual(terms("x" * 300), ["x" * 200])
+        corpus = dict(PAGES)
+        for question in ("../support.json", "/etc/passwd", ".*", "docs/index.md"):
+            self.runner.landing_search(corpus, terms(question), hit_files=10, lines_per_file=3)  # no exception, corpus only
+        self.assertEqual(self.runner.landing_search(corpus, terms("../support.json"), hit_files=10, lines_per_file=3), [])
+        # The model's own search is unchanged under the tokenised policy (RL-5): the literal all-words grep.
+        self.questions(q1="How do sync windows block a sync?")
+        code, client = self.run_with({"q1": [{"action": "search", "query": "sync windows block"},
+                                             {"action": "answer", "cited_pages": [], "text": "x"}]},
+                                     landing_policy="tokenised_content_words_v1")
+        self.assertEqual(code, 0)
+        second = client.calls[1]["searches"][-1]
+        self.assertEqual((second["search_index"], second["query"]), (2, "sync windows block"))
+        self.assertEqual([(h["doc_id"], h["line_number"], h["matching_lines"]) for h in second["hits"]],
+                         [("faq__00000002", 2, 1), ("sync_windows__00000001", 2, 1)])
+        self.assertNotIn("landing_terms", second)
+        self.assertIs(self.read_trace("q1")[2]["details"].get("landing"), False)
 
 
 if __name__ == "__main__":

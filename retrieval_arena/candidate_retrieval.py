@@ -37,7 +37,36 @@ SEARCH_TRACE_SCHEMA = "e007c.action_trace.v1"
 SEARCH_TRACE_POLICY = "bounded_repo_search_controller_v1"
 SEARCH_ROUTES = ("landing", "search", "link")
 SEARCH_PROVIDER_FIELDS = frozenset({"model_policy", "search_budget", "search_hit_files", "search_hit_lines_per_file",
-                                    "page_visit_budget", "model_call_budget", "page_char_limit", "follow_links"})
+                                    "page_visit_budget", "model_call_budget", "page_char_limit", "follow_links",
+                                    "landing_policy"})
+# S046b: the reader's landing policy is declared per request (closed). Under
+# ``tokenised_content_words_v1`` the landing terms are the question's content
+# words -- ``[a-z0-9]+`` runs of the lower-cased first 200 characters, tokens
+# shorter than two characters and the fixed stop words dropped, duplicates
+# removed, order kept -- and finalize recomputes them from the header's
+# ``landing_query``. The list and the rule are the runner's
+# (``tests/rag_repo_search_agent/runner.py``), asserted equal by unit test.
+LANDING_QUESTION_TEXT = "search_question_text"
+LANDING_TOKENISED = "tokenised_content_words_v1"
+LANDING_POLICIES = (LANDING_QUESTION_TEXT, LANDING_TOKENISED)
+SEARCH_PROMPT_VERSIONS = {LANDING_QUESTION_TEXT: "e007d_repo_search_prompt_v1", LANDING_TOKENISED: "e007d_repo_search_prompt_v2"}
+STOP_WORDS_NAME = "STOP_WORDS_EN_V1"
+STOP_WORDS_EN_V1 = (
+    "a an the and or but if of to in on at by for from with without into onto over under about as is are was "
+    "were be been being am do does did doing have has had having can could should would may might must will "
+    "shall i you he she it we they me him her us them my your his its our their this that these those what "
+    "which who whom whose when where why how not no yes any some all each every there here than then so too "
+    "very just also only up down out off again further once more most other such own same").split()
+LANDING_TOKEN_RE = re.compile(r"[a-z0-9]+")
+LANDING_QUERY_CHAR_LIMIT = 200
+LANDING_MIN_TOKEN_CHARS = 2
+
+
+def landing_terms(question: str) -> list[str]:
+    """The tokenised landing's terms for one question (the runner's rule, recomputed at finalize)."""
+    stop = set(STOP_WORDS_EN_V1)
+    return list(dict.fromkeys(t for t in LANDING_TOKEN_RE.findall(question[:LANDING_QUERY_CHAR_LIMIT].lower())
+                              if len(t) >= LANDING_MIN_TOKEN_CHARS and t not in stop))
 TRACE_TERMINALS = ("answer", "budget_exhausted", "invalid_action", "provider_error")
 NETWORK_NONE = "none"
 NETWORK_HOST_MODEL_ALIAS = "host_model_alias"
@@ -259,6 +288,9 @@ def validate_config(value: Any) -> dict[str, Any]:
     if not isinstance(config["provider"], dict):
         raise ValidationError("candidate-retrieval-provider-fields")
     profile = provider_profile(config["provider"].get("name"))
+    # S046b: a repo-search request without a landing policy is refused by name.
+    if profile.repo_search and "landing_policy" not in config["provider"]:
+        raise ValidationError("candidate-retrieval-provider-landing-policy")
     provider_fields = BASE_PROVIDER_FIELDS | profile.config_fields
     if set(config["provider"]) not in (provider_fields, provider_fields | {"answer_policy"}):
         raise ValidationError("candidate-retrieval-provider-fields")
@@ -324,6 +356,8 @@ def _validate_repo_search_policy(provider: dict[str, Any], profile: ProviderProf
             or not isinstance(provider["follow_links"], bool)
             or provider["follow_links"] != profile.follow_links):
         raise ValidationError("candidate-retrieval-provider-search-policy")
+    if provider["landing_policy"] not in LANDING_POLICIES:
+        raise ValidationError("candidate-retrieval-provider-landing-policy")
 
 
 def _git(repo: Path, *arguments: str) -> str:
@@ -421,6 +455,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
             "candidate_tree": config["candidate"]["tree"],
             "import_policy": import_policy,
             "corpus_exclude_policy": exclude_policy,
+            "landing_policy": config["provider"].get("landing_policy"),
             "excluded_document_count": len(excluded_ids),
             "excluded_document_ids": excluded_ids,
             "graph_edges_sha256": graph_edges_sha256,
@@ -441,7 +476,10 @@ def expected_provider_metadata(provider: dict[str, Any]) -> dict[str, Any]:
                                                      "page_visit_budget", "model_call_budget", "page_char_limit",
                                                      "follow_links", "model_policy")},
                 "trace_schema_version": SEARCH_TRACE_SCHEMA, "provider_policy": SEARCH_TRACE_POLICY,
-                "prompt_version": "e007d_repo_search_prompt_v1", "landing": "search_question_text"}
+                "prompt_version": SEARCH_PROMPT_VERSIONS[provider["landing_policy"]],
+                "landing": provider["landing_policy"],
+                **({"stop_words": list(STOP_WORDS_EN_V1), "stop_word_list": STOP_WORDS_NAME}
+                   if provider["landing_policy"] == LANDING_TOKENISED else {})}
     if profile.navigator:
         return {**common, "deterministic": False,
                 "page_visit_budget": provider["page_visit_budget"],
@@ -686,8 +724,14 @@ def validate_search_traces(traces_dir: Path, question_ids: list[str], doc_ids: s
     names its route (``landing``/``search``/``link``, a link only in the
     ``follow_links`` variant) and lands on an admitted page; the visits are
     exactly the opened pages in order; searches, opens and model calls stay
-    within the declared budgets; a citation is a visited page.
+    within the declared budgets; a citation is a visited page. S046b: the
+    header's ``landing`` (when present -- a v1-shaped trace carries none and
+    validates under ``search_question_text`` only) is the request's policy,
+    and under the tokenised policy its ``landing_terms`` (and the landing
+    line's, when present) equal the rule applied to ``landing_query``.
     """
+    policy = provider["landing_policy"]
+    tokenised = policy == LANDING_TOKENISED
     if not traces_dir.is_dir() or traces_dir.is_symlink():
         raise ValidationError("candidate-retrieval-provider-traces")
     names = {path.name for path in traces_dir.iterdir()}
@@ -706,6 +750,12 @@ def validate_search_traces(traces_dir: Path, question_ids: list[str], doc_ids: s
                 or not isinstance(rows[0].get("landing_query"), str)
                 or any(row.get("record") != "action" for row in rows[1:-1])):
             raise ValidationError("candidate-retrieval-provider-trace-shape")
+        expected_terms = landing_terms(rows[0]["landing_query"]) if tokenised else None
+        first_details = rows[1].get("details") if isinstance(rows[1].get("details"), dict) else {}
+        if (("landing" in rows[0] or tokenised) and rows[0].get("landing") != policy
+                or ("landing_terms" in rows[0] or tokenised) and rows[0].get("landing_terms") != expected_terms
+                or ("landing_terms" in first_details or tokenised) and first_details.get("landing_terms") != expected_terms):
+            raise ValidationError("candidate-retrieval-provider-landing-policy")
         terminal = rows[-1]
         actions = rows[1:-1]
         searches = [row for row in actions if row.get("action") == "search"]
