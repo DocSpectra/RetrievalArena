@@ -13,7 +13,6 @@ from retrieval_arena.corpus.importers import import_corpus_source
 from retrieval_arena.corpus.sources import CorpusSourceDescriptor
 from retrieval_arena.errors import ValidationError
 from retrieval_arena.manifests import read_manifest
-from studies.bigdata2026.toy_study import run_toy_study
 
 
 CREATED_AT = "2026-05-25T00:00:00+00:00"
@@ -254,28 +253,6 @@ class CorpusImportTests(unittest.TestCase):
             self.assertEqual(read_manifest(graph["manifest_path"])["source_dataset_identity_hash"], preparation_manifest["output_dataset_identity_hash"])
             self.assertEqual(read_manifest(support_result["manifest_path"])["support_target_doc_ids"], ["install"])
             self.assertEqual(read_manifest(support_result["manifest_path"])["source_dataset_identity_hash"], preparation_manifest["output_dataset_identity_hash"])
-
-    def test_bigdata_toy_study_runs_source_to_snapshot_diff(self):
-        with self.workspace_tempdir() as tmp:
-            before_source = tmp / "before_source"
-            after_source = tmp / "after_source"
-            before_source.mkdir()
-            after_source.mkdir()
-            (before_source / "install.md").write_text("Use pip.\n", encoding="utf-8")
-            (after_source / "install.md").write_text("Use uv.\n", encoding="utf-8")
-            questions, answers = self.write_query_files(tmp)
-
-            result = run_toy_study(
-                CorpusSourceDescriptor("toy", "before", "local", tmp / "imports", source_path=before_source, include=("*.md",)),
-                CorpusSourceDescriptor("toy", "after", "local", tmp / "imports", source_path=after_source, include=("*.md",)),
-                tmp / "study",
-                before_questions=questions,
-                before_answers=answers,
-                created_at=CREATED_AT,
-            )
-
-            self.assertEqual(read_manifest(result["manifest_path"])["manifest_type"], "bigdata2026_toy_study")
-            self.assertEqual(result["snapshot_diff"]["summary"]["changed_file_count"], 1)
 
     def git(self, repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
         result = subprocess.run(["git", "-C", str(repo), *args], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

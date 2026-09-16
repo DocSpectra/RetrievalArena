@@ -1,2 +1,0 @@
-"""RetrievalArena study orchestration packages."""
-
