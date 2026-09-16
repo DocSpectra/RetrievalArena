@@ -60,6 +60,9 @@ def _failure(error, exit_code, started, request=None, config=None):
              "predictions_sha256": None, "generated_answers_sha256": None,
              "prediction_count": 0, "generated_answer_count": 0,
              "graph_edges_sha256": None, "traces_inventory_sha256": None, "navigation_sha256": None,
+             "corpus_exclude_policy": (config.get("corpus", {}).get("exclude_policy")
+                                       if isinstance(config, dict) and isinstance(config.get("corpus"), dict) else None),
+             "excluded_document_count": None, "excluded_document_ids": None,
              "identity": _identity(),
              "isolation": {"network": _network(config), "candidate_mount": "read_only",
                            "input_mount": "read_only", "root_filesystem": "read_only"},
@@ -184,6 +187,10 @@ def finalize() -> int:
             "generated_answers_sha256": sha256_file(answers_pending),
             "generated_answer_count": len(answers), "graph_edges_sha256": graph_edges_sha256,
             "traces_inventory_sha256": traces_inventory_sha256, "navigation_sha256": navigation_sha256,
+            # S047: which corpus this request read -- the exclusion policy and the pages it removed.
+            "corpus_exclude_policy": launch["corpus_exclude_policy"],
+            "excluded_document_count": launch["excluded_document_count"],
+            "excluded_document_ids": launch["excluded_document_ids"],
             "identity": _identity(),
             "isolation": {"network": launch["network"], "candidate_mount": "read_only",
                           "input_mount": "read_only", "root_filesystem": "read_only"},

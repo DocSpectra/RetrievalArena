@@ -80,7 +80,19 @@ of the CIKM dataset importer that produced the support ids, so candidate ids
 and support ids join under one rule. The policy is declared per
 candidate-retrieve request (`corpus.import_policy`) and recorded in the
 launch record; a corpus whose paths differ only by case is refused at import
-(`candidate-retrieval-document-id-collision`), never merged.
+(`candidate-retrieval-document-id-collision`), never merged. A request may
+also declare `corpus.exclude_policy` (S047): the closed id
+`cikm_faq_pattern_v1` is the CIKM exporter's FAQ rule (the lowercased
+corpus-relative path matches `*faq*` or carries `faq` in any path part,
+Capstone `configs/pinned_cikm_exporter.yaml` as the rule of record); a page it
+names is neither copied into the provider input nor a node of the extracted
+graph (a link to it resolves to nothing), and the launch record and the
+operator receipt carry `corpus_exclude_policy`, `excluded_document_count` and
+`excluded_document_ids`, so a scored root states which corpus it read. A
+request whose `experiment_id` starts with `E-EXP` (every direct-lane
+campaign) is refused without the field
+(`candidate-retrieval-exclude-policy-required`). The rule reads paths, never
+content.
 
 ## Operator Contract
 

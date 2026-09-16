@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import hashlib
 import json
 from dataclasses import dataclass
@@ -52,6 +53,17 @@ GRAPH_EDGES_FILE = "graph_edges.csv"
 IMPORT_POLICY_AS_WRITTEN = "cikm_flat_path_sha1_v1"
 IMPORT_POLICY_LOWER = "cikm_flat_path_sha1_lower_v1"
 IMPORT_POLICIES = (IMPORT_POLICY_AS_WRITTEN, IMPORT_POLICY_LOWER)
+# S047: a request may declare a corpus exclusion policy; a page the policy
+# names is neither imported nor a graph node, and the receipt records the
+# policy id and the excluded ids. ``cikm_faq_pattern_v1`` is the CIKM
+# exporter's FAQ rule (Capstone ``configs/pinned_cikm_exporter.yaml``,
+# ``retrieval/pinned_cikm.py::discover_pages``): the lowercased
+# corpus-relative path matches ``*faq*`` or carries ``faq`` in any path part.
+# Every request whose experiment id names a direct-lane campaign
+# (``E-EXP…``) must declare it; the rule reads paths, never content.
+EXCLUDE_POLICY_FAQ = "cikm_faq_pattern_v1"
+EXCLUDE_POLICIES = (EXCLUDE_POLICY_FAQ,)
+EXCLUDE_REQUIRED_PREFIX = "E-EXP"
 GRAPH_SELECTION_ROLES = ("seed", "ranked_neighbor")
 
 
@@ -162,6 +174,16 @@ def imported_document_name(relative_text: str, import_policy: str = IMPORT_POLIC
     return imported_name, Path(imported_name).with_suffix("").as_posix()
 
 
+def excluded_by_policy(relative_text: str, exclude_policy: str | None) -> bool:
+    """Whether one corpus-relative path is excluded under the declared policy (S047)."""
+    if exclude_policy is None:
+        return False
+    if exclude_policy not in EXCLUDE_POLICIES:
+        raise ValidationError("candidate-retrieval-exclude-policy")
+    lowered = relative_text.lower()
+    return fnmatch.fnmatch(lowered, "*faq*") or any("faq" in part for part in lowered.split("/"))
+
+
 def canonical(value: Any) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
                       allow_nan=False).encode("utf-8")
@@ -221,11 +243,18 @@ def validate_config(value: Any) -> dict[str, Any]:
            or any(ch not in "0123456789abcdef" for ch in candidate[name])
            for name in ("commit", "tree")):
         raise ValidationError("candidate-retrieval-candidate-identity")
-    corpus = _exact(config["corpus"], {"root", "extensions", "import_policy"},
-                    "candidate-retrieval-corpus-fields")
+    corpus_fields = {"root", "extensions", "import_policy"}
+    if not isinstance(config["corpus"], dict) or set(config["corpus"]) not in (corpus_fields, corpus_fields | {"exclude_policy"}):
+        raise ValidationError("candidate-retrieval-corpus-fields")
+    corpus = config["corpus"]
     _relative(corpus["root"], "candidate-retrieval-corpus-root")
     if corpus["extensions"] != [".md"] or corpus["import_policy"] not in IMPORT_POLICIES:
         raise ValidationError("candidate-retrieval-import-policy")
+    # S047: the exclusion policy is a closed id; a direct-lane request without it is refused.
+    if "exclude_policy" in corpus and corpus["exclude_policy"] not in EXCLUDE_POLICIES:
+        raise ValidationError("candidate-retrieval-exclude-policy")
+    if "exclude_policy" not in corpus and config["experiment_id"].startswith(EXCLUDE_REQUIRED_PREFIX):
+        raise ValidationError("candidate-retrieval-exclude-policy-required")
     _relative(config["queries_path"], "candidate-retrieval-queries-path")
     if not isinstance(config["provider"], dict):
         raise ValidationError("candidate-retrieval-provider-fields")
@@ -321,6 +350,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
         raise ValidationError("candidate-retrieval-candidate-admission")
     corpus_root = candidate_root / config["corpus"]["root"]
     import_policy = config["corpus"]["import_policy"]
+    exclude_policy = config["corpus"].get("exclude_policy")
     if not corpus_root.is_dir() or corpus_root.is_symlink():
         raise ValidationError("candidate-retrieval-corpus-root")
     queries = input_root / config["queries_path"]
@@ -331,14 +361,24 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
     provider_input.mkdir()
     (provider_input / "corpus").mkdir()
     document_rows = []
+    excluded_rows = []
+    seen_imported: set[str] = set()
     for source in sorted(corpus_root.rglob("*.md")):
         if source.is_symlink() or not source.is_file():
             raise ValidationError("candidate-retrieval-corpus-file")
         relative_text = source.relative_to(corpus_root).as_posix()
         imported_name, doc_id = imported_document_name(relative_text, import_policy)
-        destination = provider_input / "corpus" / imported_name
-        if destination.exists():
+        if imported_name in seen_imported:
             raise ValidationError("candidate-retrieval-document-id-collision")
+        seen_imported.add(imported_name)
+        if excluded_by_policy(relative_text, exclude_policy):
+            # S047: an excluded page is inventoried (so the receipt can name
+            # it) but never copied into the provider input.
+            excluded_rows.append({"path": relative_text, "imported_path": imported_name, "doc_id": doc_id,
+                                  "sha256": sha256_file(source), "size_bytes": source.stat().st_size,
+                                  "excluded": True})
+            continue
+        destination = provider_input / "corpus" / imported_name
         destination.write_bytes(source.read_bytes())
         text = source.read_text(encoding="utf-8")
         lines = [line.strip("# ").strip() for line in text.splitlines()
@@ -353,6 +393,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
                               "expected_text": snippet})
     if not document_rows:
         raise ValidationError("candidate-retrieval-corpus-empty")
+    excluded_ids = sorted(row["doc_id"] for row in excluded_rows)
     (provider_input / "questions.jsonl").write_bytes(queries.read_bytes())
     profile = provider_profile(config["provider"]["name"])
     provider_config = {"top_k": config["provider"]["top_k"],
@@ -364,20 +405,26 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
     if profile.requires_graph:
         # Per-candidate link graph: the resolver of write_markdown_link_graph
         # over the candidate's own docs tree, nodes = imported .md documents.
+        # S047: an excluded page is not a node, so a link to it resolves to nothing.
         edges = extract_markdown_link_edges(
             corpus_root, doc_id_for=lambda relative: imported_document_name(relative, import_policy)[1],
-            extensions=config["corpus"]["extensions"])
+            extensions=config["corpus"]["extensions"],
+            include=lambda relative: not excluded_by_policy(relative, exclude_policy))
         write_edges_csv(edges, provider_input / GRAPH_EDGES_FILE)
         graph_edges_sha256 = sha256_file(provider_input / GRAPH_EDGES_FILE)
-    (provider_input.parent / "documents.json").write_bytes(canonical(document_rows) + b"\n")
+    inventory_rows = document_rows + excluded_rows
+    (provider_input.parent / "documents.json").write_bytes(canonical(inventory_rows) + b"\n")
     return {"schema_version": "retrieval_arena.candidate_retrieval_launch.v1",
             "provider_name": profile.name,
             "provider_image": config["provider"]["image"], "platform": "linux/amd64",
             "network": profile.network, "candidate_commit": config["candidate"]["commit"],
             "candidate_tree": config["candidate"]["tree"],
             "import_policy": import_policy,
+            "corpus_exclude_policy": exclude_policy,
+            "excluded_document_count": len(excluded_ids),
+            "excluded_document_ids": excluded_ids,
             "graph_edges_sha256": graph_edges_sha256,
-            "document_inventory_sha256": sha256_bytes(canonical(document_rows)),
+            "document_inventory_sha256": sha256_bytes(canonical(inventory_rows)),
             "provider_input_inventory": regular_inventory(provider_input),
             "provider_input_inventory_sha256": sha256_bytes(canonical(regular_inventory(provider_input)))}
 
@@ -517,6 +564,9 @@ def project_ranked_predictions(config: dict[str, Any], provider_output: Path, in
     by_id = {row.get("doc_id"): row for row in documents if isinstance(row, dict)}
     if len(by_id) != len(documents) or None in by_id:
         raise ValidationError("candidate-retrieval-document-inventory")
+    # S047: an excluded page is inventoried but never admitted as a context
+    # item, a cited page, a visited page or a provenance source.
+    by_id = {doc_id: row for doc_id, row in by_id.items() if not row.get("excluded")}
     result = []
     answers: list[dict[str, Any]] = []
     seen_queries: set[str] = set()

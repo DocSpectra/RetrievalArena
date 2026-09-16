@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from retrieval_arena.candidate_retrieval import IMPORT_POLICY_LOWER, canonical, expected_provider_metadata, imported_document_name, prepare_provider_input, project_ranked_predictions, regular_inventory, sha256_bytes, validate_config
+from retrieval_arena.candidate_retrieval import EXCLUDE_POLICY_FAQ, IMPORT_POLICY_LOWER, canonical, excluded_by_policy, expected_provider_metadata, imported_document_name, prepare_provider_input, project_ranked_predictions, regular_inventory, sha256_bytes, validate_config
 from retrieval_arena.errors import ValidationError
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -284,6 +284,91 @@ class GraphProviderTests(CandidateRetrievalTests):
         flat = prepare_provider_input(self.config(), self.input, self.repo, self.root / "flat-input")
         self.assertIsNone(flat["graph_edges_sha256"])
         self.assertFalse((self.root / "flat-input" / "graph_edges.csv").exists())
+
+    def faq_fixture(self):
+        """S047 FX-1: three FAQ-named pages under three spellings, all linked from guide.md."""
+        docs = self.repo / "docs"
+        (docs / "notes").mkdir()
+        (docs / "faq.md").write_text("# FAQ" + chr(10) + "## How do sync waves work?" + chr(10) + "The gold answer." + chr(10), encoding="utf-8")
+        (docs / "guide" / "FAQ.md").write_text("# Guide FAQ" + chr(10) + "Entries." + chr(10), encoding="utf-8")
+        (docs / "notes" / "faqs-old.md").write_text("# Old FAQs" + chr(10) + "See [waves](../guide/waves.md)." + chr(10), encoding="utf-8")
+        (docs / "guide.md").write_text("# Guide" + chr(10) + "Sync waves order resources. See [faq](faq.md), [guide faq](guide/FAQ.md), "
+                                       "[old](notes/faqs-old.md) and [waves](guide/waves.md)." + chr(10), encoding="utf-8")
+        subprocess.run(["git", "-C", str(self.repo), "add", "-A"], check=True)
+        subprocess.run(["git", "-C", str(self.repo), "commit", "-qm", "faq fixture"], check=True)
+        self.commit = subprocess.check_output(["git", "-C", str(self.repo), "rev-parse", "HEAD"], text=True).strip()
+        self.tree = subprocess.check_output(["git", "-C", str(self.repo), "rev-parse", "HEAD^{tree}"], text=True).strip()
+
+    def test_s047_faq_exclusion_rule_reads_paths_only(self):
+        """S047: the rule is the CIKM exporter's -- ``*faq*`` on the lowercased path or ``faq`` in any part."""
+        for path in ("faq.md", "developer-guide/faq.md", "guide/FAQ.md", "notes/faqs-old.md", "FAQ/index.md", "x/myfaqs/y.md"):
+            self.assertTrue(excluded_by_policy(path, EXCLUDE_POLICY_FAQ), path)
+        for path in ("guide.md", "guide/waves.md", "operator-manual/applicationset/Generators-Git.md"):
+            self.assertFalse(excluded_by_policy(path, EXCLUDE_POLICY_FAQ), path)
+        self.assertFalse(excluded_by_policy("faq.md", None))
+        with self.assertRaisesRegex(ValidationError, "exclude-policy"): excluded_by_policy("faq.md", "faq_by_content_v1")
+
+    def test_s047_exclusion_is_declared_closed_and_required_for_direct_lane_requests(self):
+        value = self.graph_config(); value["corpus"]["exclude_policy"] = EXCLUDE_POLICY_FAQ
+        self.assertEqual(validate_config(value)["corpus"]["exclude_policy"], EXCLUDE_POLICY_FAQ)
+        value = self.graph_config(); value["corpus"]["exclude_policy"] = "faq_by_content_v1"
+        with self.assertRaisesRegex(ValidationError, "exclude-policy"): validate_config(value)
+        value = self.graph_config(); value["corpus"]["exclude"] = ["*faq*"]
+        with self.assertRaisesRegex(ValidationError, "corpus-fields"): validate_config(value)
+        # a request of any direct-lane campaign (E-EXP1, E-EXP1b, E-EXP1o, E-EXP3, E-EXP4 ...) must declare it
+        for experiment_id in ("E-EXP1-argo-historical-v1", "E-EXP1o-argo-nofaq-v1", "E-EXP3-argo-historical-v1", "E-EXP4-argo-historical-v1"):
+            value = self.graph_config(); value["experiment_id"] = experiment_id
+            with self.assertRaisesRegex(ValidationError, "exclude-policy-required", msg=experiment_id): validate_config(value)
+            value["corpus"]["exclude_policy"] = EXCLUDE_POLICY_FAQ
+            validate_config(value)
+        # a request outside the direct lane may still omit it (its corpus then carries every page)
+        validate_config(self.graph_config())
+
+    def test_s047_fx1_prepare_skips_faq_pages_and_the_graph_has_no_edge_to_them(self):
+        """FX-1: the three FAQ pages are neither imported nor graph nodes; the receipt fields name them."""
+        self.faq_fixture()
+        value = self.graph_config(); value["corpus"]["exclude_policy"] = EXCLUDE_POLICY_FAQ
+        value["corpus"]["import_policy"] = IMPORT_POLICY_LOWER
+        destination = self.root / "provider-input-faq"
+        launch = prepare_provider_input(value, self.input, self.repo, destination)
+        imported = sorted(path.name for path in (destination / "corpus").iterdir())
+        self.assertEqual(imported, ["guide__bbbdfa65.md", "guide_hooks__b1ec6f5b.md", "guide_waves__3440d413.md"])
+        excluded = {imported_document_name(path, IMPORT_POLICY_LOWER)[1] for path in ("faq.md", "guide/FAQ.md", "notes/faqs-old.md")}
+        self.assertEqual(launch["corpus_exclude_policy"], EXCLUDE_POLICY_FAQ)
+        self.assertEqual(launch["excluded_document_count"], 3)
+        self.assertEqual(launch["excluded_document_ids"], sorted(excluded))
+        edges = (destination / "graph_edges.csv").read_text(encoding="utf-8").splitlines()[1:]
+        nodes = {node for edge in edges for node in edge.split(",")}
+        self.assertFalse(nodes & excluded, edges)
+        self.assertIn("guide__bbbdfa65,guide_waves__3440d413", edges)
+        documents = json.loads((destination.parent / "documents.json").read_bytes())
+        self.assertEqual({row["doc_id"] for row in documents if row.get("excluded")}, excluded)
+        self.assertEqual({row["doc_id"] for row in documents if not row.get("excluded")}, set(nodes) | {"guide_hooks__b1ec6f5b"} - excluded)
+        # the same fixture without the policy: every page imported, the FAQ pages are nodes
+        plain = prepare_provider_input(self.graph_config(), self.input, self.repo, self.root / "provider-input-plain")
+        self.assertEqual(plain["excluded_document_count"], 0)
+        self.assertIsNone(plain["corpus_exclude_policy"])
+        self.assertEqual(len(list((self.root / "provider-input-plain" / "corpus").iterdir())), 6)
+        plain_edges = (self.root / "provider-input-plain" / "graph_edges.csv").read_text(encoding="utf-8").splitlines()[1:]
+        self.assertTrue({node for edge in plain_edges for node in edge.split(",")} & excluded)
+        # and an E-EXP1 request without the policy is refused before anything is written
+        refused = self.graph_config(); refused["experiment_id"] = "E-EXP1-argo-historical-v1"
+        with self.assertRaisesRegex(ValidationError, "exclude-policy-required"):
+            prepare_provider_input(refused, self.input, self.repo, self.root / "refused")
+        self.assertFalse((self.root / "refused").exists())
+
+    def test_s047_excluded_page_is_never_an_admitted_context_item(self):
+        """An excluded page's id is in the inventory (excluded: true) but no provider row may cite it."""
+        self.faq_fixture()
+        value = self.graph_config(); value["corpus"]["exclude_policy"] = EXCLUDE_POLICY_FAQ
+        destination = self.root / "provider-input-faq"
+        prepare_provider_input(value, self.input, self.repo, destination)
+        faq_id = imported_document_name("faq.md")[1]
+        context = [{"doc_id": faq_id, "text": "FAQ How do sync waves work? The gold answer.", "score": 2.0,
+                    "source": "graph_ranked_expand", "rank": 1, "selection_role": "seed"}]
+        output = self.graph_output(context)
+        with self.assertRaisesRegex(ValidationError, "provider-item"):
+            project_ranked_predictions(value, output, self.input, destination.parent / "documents.json", destination)
 
     def graph_output(self, context, metadata_overrides=None):
         output = self.root / "provider-output"; output.mkdir()

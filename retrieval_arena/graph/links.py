@@ -39,7 +39,8 @@ def write_markdown_link_graph(dataset_path: Path) -> dict[str, Any]:
 
 
 def extract_markdown_link_edges(corpus_dir: Path, *, doc_id_for: Callable[[str], str] = corpus_doc_id,
-                                extensions: Iterable[str] | None = None) -> list[tuple[str, str]]:
+                                extensions: Iterable[str] | None = None,
+                                include: Callable[[str], bool] | None = None) -> list[tuple[str, str]]:
     """Return the sorted directed Markdown link edges of a corpus tree.
 
     The resolver is the one ``write_markdown_link_graph`` uses; ``doc_id_for``
@@ -47,8 +48,10 @@ def extract_markdown_link_edges(corpus_dir: Path, *, doc_id_for: Callable[[str],
     corpus is imported under ``cikm_flat_path_sha1_v1`` ids), and
     ``extensions`` restricts the node set (``[".md"]`` keeps every node a
     corpus document, so links to images or data files resolve to nothing).
+    ``include`` (S047) is a predicate over the corpus-relative path: a path it
+    rejects is not a node, so it neither sources an edge nor receives one.
     """
-    path_to_doc = _path_to_doc_id(corpus_dir, doc_id_for=doc_id_for, extensions=extensions)
+    path_to_doc = _path_to_doc_id(corpus_dir, doc_id_for=doc_id_for, extensions=extensions, include=include)
     return sorted(_extract_edges(corpus_dir, path_to_doc))
 
 
@@ -150,12 +153,14 @@ def _normalize_candidate(path: str) -> str:
 
 
 def _path_to_doc_id(corpus_dir: Path, *, doc_id_for: Callable[[str], str] = corpus_doc_id,
-                    extensions: Iterable[str] | None = None) -> dict[str, str]:
+                    extensions: Iterable[str] | None = None,
+                    include: Callable[[str], bool] | None = None) -> dict[str, str]:
     admitted = None if extensions is None else {extension.lower() for extension in extensions}
     return {
         path.relative_to(corpus_dir).as_posix(): doc_id_for(path.relative_to(corpus_dir).as_posix())
         for path in sorted(corpus_dir.rglob("*"))
         if path.is_file() and (admitted is None or path.suffix.lower() in admitted)
+        and (include is None or include(path.relative_to(corpus_dir).as_posix()))
     }
 
 
