@@ -63,6 +63,8 @@ def _failure(error, exit_code, started, request=None, config=None):
              "corpus_exclude_policy": (config.get("corpus", {}).get("exclude_policy")
                                        if isinstance(config, dict) and isinstance(config.get("corpus"), dict) else None),
              "excluded_document_count": None, "excluded_document_ids": None,
+             "corpus_faq_patterns": (config.get("corpus", {}).get("faq_patterns")
+                                     if isinstance(config, dict) and isinstance(config.get("corpus"), dict) else None),
              "landing_policy": (config.get("provider", {}).get("landing_policy")
                                 if isinstance(config, dict) and isinstance(config.get("provider"), dict) else None),
              "identity": _identity(),
@@ -193,6 +195,8 @@ def finalize() -> int:
             "corpus_exclude_policy": launch["corpus_exclude_policy"],
             "excluded_document_count": launch["excluded_document_count"],
             "excluded_document_ids": launch["excluded_document_ids"],
+            # S023: the per-request FAQ pattern list of cikm_faq_pattern_v2 (None under v1).
+            "corpus_faq_patterns": launch.get("corpus_faq_patterns"),
             # S046b: the reader's landing policy (None for every other provider).
             "landing_policy": launch.get("landing_policy"),
             "identity": _identity(),

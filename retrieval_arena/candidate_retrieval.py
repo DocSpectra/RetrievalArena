@@ -91,7 +91,18 @@ IMPORT_POLICIES = (IMPORT_POLICY_AS_WRITTEN, IMPORT_POLICY_LOWER)
 # Every request whose experiment id names a direct-lane campaign
 # (``E-EXP…``) must declare it; the rule reads paths, never content.
 EXCLUDE_POLICY_FAQ = "cikm_faq_pattern_v1"
-EXCLUDE_POLICIES = (EXCLUDE_POLICY_FAQ,)
+# S023: ``cikm_faq_pattern_v2`` is the CIKM exporter's whole page rule with the
+# corpus's own FAQ pattern list declared on the request (``corpus.faq_patterns``,
+# the ``faq_patterns`` of the corpus's CIKM config): a page is excluded when
+# its lowercased corpus-relative path, or its lowercased file name, matches any
+# declared pattern, when ``faq`` occurs in any path part (the v1 clause), or
+# when any directory on its path starts with ``_`` other than ``_sources``
+# (the exporter's ``discover_markdown_pages`` skip rule -- ``_snippets``
+# fragments are not pages). ``faq_patterns`` is required under v2 and refused
+# under v1; the launch record and the receipt carry it.
+EXCLUDE_POLICY_CIKM_V2 = "cikm_faq_pattern_v2"
+EXCLUDE_POLICIES = (EXCLUDE_POLICY_FAQ, EXCLUDE_POLICY_CIKM_V2)
+EXCLUDE_UNDERSCORE_EXEMPT = ("_sources",)
 EXCLUDE_REQUIRED_PREFIX = "E-EXP"
 GRAPH_SELECTION_ROLES = ("seed", "ranked_neighbor")
 
@@ -203,14 +214,34 @@ def imported_document_name(relative_text: str, import_policy: str = IMPORT_POLIC
     return imported_name, Path(imported_name).with_suffix("").as_posix()
 
 
-def excluded_by_policy(relative_text: str, exclude_policy: str | None) -> bool:
-    """Whether one corpus-relative path is excluded under the declared policy (S047)."""
+def validate_faq_patterns(value: Any) -> tuple[str, ...]:
+    """S023: the closed per-request FAQ pattern list of ``cikm_faq_pattern_v2``."""
+    if (not isinstance(value, list) or not value
+            or any(not isinstance(item, str) or not item.strip() or "/" in item or "\\" in item for item in value)
+            or len(set(value)) != len(value)):
+        raise ValidationError("candidate-retrieval-faq-patterns")
+    return tuple(value)
+
+
+def excluded_by_policy(relative_text: str, exclude_policy: str | None,
+                       faq_patterns: tuple[str, ...] | list[str] | None = None) -> bool:
+    """Whether one corpus-relative path is excluded under the declared policy (S047; S023 v2)."""
     if exclude_policy is None:
         return False
     if exclude_policy not in EXCLUDE_POLICIES:
         raise ValidationError("candidate-retrieval-exclude-policy")
     lowered = relative_text.lower()
-    return fnmatch.fnmatch(lowered, "*faq*") or any("faq" in part for part in lowered.split("/"))
+    parts = lowered.split("/")
+    if exclude_policy == EXCLUDE_POLICY_FAQ:
+        if faq_patterns is not None:
+            raise ValidationError("candidate-retrieval-faq-patterns")
+        return fnmatch.fnmatch(lowered, "*faq*") or any("faq" in part for part in parts)
+    patterns = validate_faq_patterns(list(faq_patterns) if faq_patterns is not None else None)
+    if any(part.startswith("_") and part not in EXCLUDE_UNDERSCORE_EXEMPT for part in parts[:-1]):
+        return True
+    return (any(fnmatch.fnmatch(lowered, pattern.lower()) or fnmatch.fnmatch(parts[-1], pattern.lower())
+                for pattern in patterns)
+            or any("faq" in part for part in parts))
 
 
 def canonical(value: Any) -> bytes:
@@ -273,7 +304,9 @@ def validate_config(value: Any) -> dict[str, Any]:
            for name in ("commit", "tree")):
         raise ValidationError("candidate-retrieval-candidate-identity")
     corpus_fields = {"root", "extensions", "import_policy"}
-    if not isinstance(config["corpus"], dict) or set(config["corpus"]) not in (corpus_fields, corpus_fields | {"exclude_policy"}):
+    if (not isinstance(config["corpus"], dict)
+            or set(config["corpus"]) not in (corpus_fields, corpus_fields | {"exclude_policy"},
+                                             corpus_fields | {"exclude_policy", "faq_patterns"})):
         raise ValidationError("candidate-retrieval-corpus-fields")
     corpus = config["corpus"]
     _relative(corpus["root"], "candidate-retrieval-corpus-root")
@@ -282,6 +315,11 @@ def validate_config(value: Any) -> dict[str, Any]:
     # S047: the exclusion policy is a closed id; a direct-lane request without it is refused.
     if "exclude_policy" in corpus and corpus["exclude_policy"] not in EXCLUDE_POLICIES:
         raise ValidationError("candidate-retrieval-exclude-policy")
+    # S023: v2 carries the corpus's FAQ pattern list exactly; v1 and an absent policy carry none.
+    if (corpus.get("exclude_policy") == EXCLUDE_POLICY_CIKM_V2) != ("faq_patterns" in corpus):
+        raise ValidationError("candidate-retrieval-faq-patterns")
+    if "faq_patterns" in corpus:
+        validate_faq_patterns(corpus["faq_patterns"])
     if "exclude_policy" not in corpus and config["experiment_id"].startswith(EXCLUDE_REQUIRED_PREFIX):
         raise ValidationError("candidate-retrieval-exclude-policy-required")
     _relative(config["queries_path"], "candidate-retrieval-queries-path")
@@ -385,6 +423,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
     corpus_root = candidate_root / config["corpus"]["root"]
     import_policy = config["corpus"]["import_policy"]
     exclude_policy = config["corpus"].get("exclude_policy")
+    faq_patterns = config["corpus"].get("faq_patterns")
     if not corpus_root.is_dir() or corpus_root.is_symlink():
         raise ValidationError("candidate-retrieval-corpus-root")
     queries = input_root / config["queries_path"]
@@ -405,7 +444,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
         if imported_name in seen_imported:
             raise ValidationError("candidate-retrieval-document-id-collision")
         seen_imported.add(imported_name)
-        if excluded_by_policy(relative_text, exclude_policy):
+        if excluded_by_policy(relative_text, exclude_policy, faq_patterns):
             # S047: an excluded page is inventoried (so the receipt can name
             # it) but never copied into the provider input.
             excluded_rows.append({"path": relative_text, "imported_path": imported_name, "doc_id": doc_id,
@@ -443,7 +482,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
         edges = extract_markdown_link_edges(
             corpus_root, doc_id_for=lambda relative: imported_document_name(relative, import_policy)[1],
             extensions=config["corpus"]["extensions"],
-            include=lambda relative: not excluded_by_policy(relative, exclude_policy))
+            include=lambda relative: not excluded_by_policy(relative, exclude_policy, faq_patterns))
         write_edges_csv(edges, provider_input / GRAPH_EDGES_FILE)
         graph_edges_sha256 = sha256_file(provider_input / GRAPH_EDGES_FILE)
     inventory_rows = document_rows + excluded_rows
@@ -455,6 +494,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
             "candidate_tree": config["candidate"]["tree"],
             "import_policy": import_policy,
             "corpus_exclude_policy": exclude_policy,
+            "corpus_faq_patterns": list(faq_patterns) if faq_patterns is not None else None,
             "landing_policy": config["provider"].get("landing_policy"),
             "excluded_document_count": len(excluded_ids),
             "excluded_document_ids": excluded_ids,

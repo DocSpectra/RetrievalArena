@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 from retrieval_arena import candidate_retrieval
-from retrieval_arena.candidate_retrieval import EXCLUDE_POLICY_FAQ, IMPORT_POLICY_LOWER, canonical, excluded_by_policy, expected_provider_metadata, imported_document_name, prepare_provider_input, project_ranked_predictions, regular_inventory, sha256_bytes, validate_config
+from retrieval_arena.candidate_retrieval import EXCLUDE_POLICY_CIKM_V2, EXCLUDE_POLICY_FAQ, IMPORT_POLICY_LOWER, canonical, excluded_by_policy, expected_provider_metadata, imported_document_name, prepare_provider_input, project_ranked_predictions, regular_inventory, sha256_bytes, validate_config
 from retrieval_arena.errors import ValidationError
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -357,6 +357,61 @@ class GraphProviderTests(CandidateRetrievalTests):
         with self.assertRaisesRegex(ValidationError, "exclude-policy-required"):
             prepare_provider_input(refused, self.input, self.repo, self.root / "refused")
         self.assertFalse((self.root / "refused").exists())
+
+    def test_s023_cikm_pattern_v2_reads_the_declared_patterns_and_the_underscore_rule(self):
+        """S023: v2 excludes the request's FAQ patterns (path or file name), ``faq`` in any part, and ``_`` directories."""
+        patterns = ["*faq*", "*frequently*"]
+        for path in ("faq.md", "guide/FAQ.md", "x/myfaqs/y.md", "troubleshoot/frequently-asked-questions.md",
+                     "solutions/kspm-Frequently-Asked-Questions.md", "manage/_snippets/agentless.md", "_snippets/x/y.md"):
+            self.assertTrue(excluded_by_policy(path, EXCLUDE_POLICY_CIKM_V2, patterns), path)
+        for path in ("guide.md", "guide/waves.md", "_sources/kept.md", "under_score/kept.md", "a/b_c/kept.md"):
+            self.assertFalse(excluded_by_policy(path, EXCLUDE_POLICY_CIKM_V2, patterns), path)
+        # v2 with the Argo pattern list alone is v1 plus the underscore rule
+        self.assertFalse(excluded_by_policy("troubleshoot/frequently-asked-questions.md", EXCLUDE_POLICY_CIKM_V2, ["*faq*"]))
+        self.assertFalse(excluded_by_policy("manage/_snippets/agentless.md", EXCLUDE_POLICY_FAQ))
+        # the pattern list is required under v2 and refused under v1
+        with self.assertRaisesRegex(ValidationError, "faq-patterns"): excluded_by_policy("faq.md", EXCLUDE_POLICY_CIKM_V2)
+        with self.assertRaisesRegex(ValidationError, "faq-patterns"): excluded_by_policy("faq.md", EXCLUDE_POLICY_CIKM_V2, [])
+        with self.assertRaisesRegex(ValidationError, "faq-patterns"): excluded_by_policy("faq.md", EXCLUDE_POLICY_FAQ, ["*faq*"])
+        value = self.graph_config(); value["corpus"]["exclude_policy"] = EXCLUDE_POLICY_CIKM_V2
+        with self.assertRaisesRegex(ValidationError, "faq-patterns"): validate_config(value)
+        value["corpus"]["faq_patterns"] = patterns
+        self.assertEqual(validate_config(value)["corpus"]["faq_patterns"], patterns)
+        value["corpus"]["faq_patterns"] = ["*faq*", "*faq*"]
+        with self.assertRaisesRegex(ValidationError, "faq-patterns"): validate_config(value)
+        value = self.graph_config(); value["corpus"]["exclude_policy"] = EXCLUDE_POLICY_FAQ; value["corpus"]["faq_patterns"] = patterns
+        with self.assertRaisesRegex(ValidationError, "faq-patterns"): validate_config(value)
+
+    def test_s023_v2_prepare_skips_pattern_pages_and_snippet_directories_and_the_receipt_names_the_patterns(self):
+        self.faq_fixture()
+        docs = self.repo / "docs"
+        (docs / "guide" / "_snippets").mkdir()
+        (docs / "guide" / "_snippets" / "fragment.md").write_text("# Fragment" + chr(10) + "Sync waves." + chr(10), encoding="utf-8")
+        (docs / "frequently-asked.md").write_text("# Frequently asked" + chr(10) + "See [waves](guide/waves.md)." + chr(10), encoding="utf-8")
+        subprocess.run(["git", "-C", str(self.repo), "add", "-A"], check=True)
+        subprocess.run(["git", "-C", str(self.repo), "commit", "-qm", "v2 fixture"], check=True)
+        self.commit = subprocess.check_output(["git", "-C", str(self.repo), "rev-parse", "HEAD"], text=True).strip()
+        self.tree = subprocess.check_output(["git", "-C", str(self.repo), "rev-parse", "HEAD^{tree}"], text=True).strip()
+        value = self.graph_config(); value["corpus"]["import_policy"] = IMPORT_POLICY_LOWER
+        value["corpus"]["exclude_policy"] = EXCLUDE_POLICY_CIKM_V2; value["corpus"]["faq_patterns"] = ["*faq*", "*frequently*"]
+        destination = self.root / "provider-input-v2"
+        launch = prepare_provider_input(value, self.input, self.repo, destination)
+        imported = sorted(path.name for path in (destination / "corpus").iterdir())
+        self.assertEqual(imported, ["guide__bbbdfa65.md", "guide_hooks__b1ec6f5b.md", "guide_waves__3440d413.md"])
+        excluded = {imported_document_name(path, IMPORT_POLICY_LOWER)[1]
+                    for path in ("faq.md", "guide/FAQ.md", "notes/faqs-old.md", "guide/_snippets/fragment.md", "frequently-asked.md")}
+        self.assertEqual(launch["corpus_exclude_policy"], EXCLUDE_POLICY_CIKM_V2)
+        self.assertEqual(launch["corpus_faq_patterns"], ["*faq*", "*frequently*"])
+        self.assertEqual(launch["excluded_document_count"], 5)
+        self.assertEqual(launch["excluded_document_ids"], sorted(excluded))
+        edges = (destination / "graph_edges.csv").read_text(encoding="utf-8").splitlines()[1:]
+        self.assertFalse({node for edge in edges for node in edge.split(",")} & excluded, edges)
+        # under v1 on the same tree the two new pages are imported (the pattern and the directory are not FAQ under v1)
+        v1 = self.graph_config(); v1["corpus"]["import_policy"] = IMPORT_POLICY_LOWER; v1["corpus"]["exclude_policy"] = EXCLUDE_POLICY_FAQ
+        plain = prepare_provider_input(v1, self.input, self.repo, self.root / "provider-input-v1")
+        self.assertEqual(plain["excluded_document_count"], 3)
+        self.assertIsNone(plain["corpus_faq_patterns"])
+        self.assertEqual(len(list((self.root / "provider-input-v1" / "corpus").iterdir())), 5)
 
     def test_s047_excluded_page_is_never_an_admitted_context_item(self):
         """An excluded page's id is in the inventory (excluded: true) but no provider row may cite it."""

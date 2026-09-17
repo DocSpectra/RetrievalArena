@@ -77,4 +77,14 @@ the shapes `configs/candidate_retrieval*.example.json`. The request's
   `excluded_document_ids`. A request whose `experiment_id` starts with
   `E-EXP` is refused without it (`candidate-retrieval-exclude-policy-required`).
   The rule of record is the DocSpectra Capstone exporter config
-  (`configs/pinned_cikm_exporter.yaml` there); the rule reads paths, never content.
+  (`configs/pinned_cikm_exporter.yaml` there); the rule reads paths, never content;
+- `exclude_policy` `cikm_faq_pattern_v2` with `faq_patterns` (S023): the CIKM
+  exporter's whole page rule with the corpus's own FAQ pattern list declared
+  on the request (the `faq_patterns` of its CIKM corpus config, for example
+  `["*faq*", "*frequently*"]` for `elasticsearch_docs`). A page is excluded
+  when its lowercased corpus-relative path or its lowercased file name matches
+  any declared pattern, when `faq` occurs in any path part, or when any
+  directory on its path starts with `_` other than `_sources` (the exporter's
+  `discover_markdown_pages` skip rule: `_snippets` fragments are not pages).
+  `faq_patterns` is required under v2 and refused under v1; the launch record
+  and the receipt carry it as `corpus_faq_patterns`.

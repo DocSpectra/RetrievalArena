@@ -95,7 +95,11 @@ operator receipt carry `corpus_exclude_policy`, `excluded_document_count` and
 request whose `experiment_id` starts with `E-EXP` (every direct-lane
 campaign) is refused without the field
 (`candidate-retrieval-exclude-policy-required`). The rule reads paths, never
-content.
+content. `cikm_faq_pattern_v2` (S023) is the same rule with the corpus's own
+pattern list declared on the request (`corpus.faq_patterns`, required under
+v2, refused under v1) plus the exporter's underscore-directory skip
+(`_snippets` and every other `_`-prefixed directory but `_sources`); the
+launch record and the receipt carry `corpus_faq_patterns`.
 
 ## Operator Contract
 
