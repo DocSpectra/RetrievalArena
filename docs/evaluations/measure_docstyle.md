@@ -69,10 +69,17 @@ The paper's text, under the export's column names
 (`github_per_document.csv` of the paper's data package; paper
 `moving_avg_ttr` → `moving_avg_type_token_ratio`, paper `repo_path` →
 `doc_path`; the paper's `sentence_count` under Basic NLP is the spaCy
-count, its Text Volume `sentence_count_basic` the regex count). Every
-column is computed from the **raw Markdown source** — front matter, Liquid
-tags and fenced code included, nothing stripped — as the export's notes
-state.
+count, its Text Volume `sentence_count_basic` the regex count). The file
+and Markdown-structure columns are computed from the **raw Markdown
+source**, fence-aware. The text columns — `word_count`,
+`sentence_count_basic`, `paragraph_count`, the two marker densities and
+the spaCy input — read the **text view**: the source with fenced code
+blocks (fence lines and contents) and inline code spans removed; front
+matter and Liquid tags stay. This is reading revision **R1** of the S052
+calibration (2026-09-21): the export README's "code blocks … are parsed
+structurally, not stripped" read as *code is structure, not text*; with
+the raw source `word_count` reproduced the paper's export on 71.5 % of the
+rows, with the text view on 99.7 %.
 
 - **File**: `bytes`, `chars`, `lines`.
 - **Markdown structure (13)**: `header_count`, `header_h1_count` …
@@ -104,12 +111,14 @@ Zero conventions: every density and ratio is `0.0` on a zero denominator;
 has zero numeric columns, empty `entity_type_counts` / `top_entities`, and
 its identity fields intact.
 
-**Known paper-tool discrepancy.** The export shows the paper's tool wrote
-`list_item_count == bullet_list_count` on every row while thousands of rows
-carry numbered items. This command carries the paper's text
-(`bullet_list_count + numbered_list_count`, checklist items counted inside
-`bullet_list_count` as the export does); the calibration reports the
-difference instead of fixing it.
+**Known paper-tool discrepancies** (reported by the calibration, never
+adopted): the paper's tool wrote `list_item_count == bullet_list_count` on
+every row while thousands of rows carry numbered items — this command
+carries the paper's text (`bullet_list_count + numbered_list_count`,
+checklist items counted inside `bullet_list_count` as the export does); and
+the tool counted headers and list markers **inside fenced code** (a `#`
+comment in a Dockerfile block as an H1) — this command is fence-aware, as
+"parsed structurally" requires.
 
 ## Algorithm choices
 
@@ -121,13 +130,13 @@ authoritative list):
 | Choice | Rule |
 | --- | --- |
 | `lines` | `len(text.splitlines())` |
-| `word_count` | `len(text.split())` |
+| `word_count` | `len(text_view.split())` (R1; before R1 the raw source) |
 | header | ATX only: `^ {0,3}(#{1,6})(?:\s|$)` outside a fence; setext underlines are not headers |
 | code fence | a line outside a fence whose lstrip starts with ``` or ~~~ opens a block; the next line starting with the same fence character closes it; an unclosed block runs to the end; `code_fence_count` counts opened blocks, `code_block_lines` the lines strictly between the fence lines |
 | bullet / numbered / checklist | `^\s*[-*+]\s+\S` / `^\s*\d+[.)]\s+\S` outside a fence, any indent; a checklist is a bullet whose item text starts with `[ ]`, `[x]` or `[X]` |
-| `paragraph_count` | maximal runs of non-blank lines outside fences whose first line is neither a header nor a list item |
-| `sentence_count_basic` | `len(re.findall(r'[.!?]+(?=\s|$)', text))` |
-| spaCy input | the whole decoded text in one `nlp()` call, `exclude=[]` |
+| `paragraph_count` | every maximal run of non-blank lines of the text view, headers and list items included (R1; before R1: runs outside fences whose first line was neither a header nor a list item) |
+| `sentence_count_basic` | `len(re.findall(r'[.!?]+(?=\s|$)', text_view))` |
+| spaCy input | the whole text view in one `nlp()` call, `exclude=[]` |
 | `type_token_ratio` | distinct casefolded non-space token texts / `token_count` |
 | MATTR | window 50 over the casefolded non-space token sequence; equal to TTR when `token_count` ≤ 50 (the export decides the window: MATTR == TTR on every document ≤ 50 tokens and none above) |
 | entities | `doc.ents`; unique = distinct `ent.text` (case-sensitive); `top_entities` ordered by (−count, text) |

@@ -18,7 +18,7 @@ from retrieval_arena.docstyle_measurement import (
     ALGORITHM_CHOICES, CATALOG_DIR, CONFIG_SCHEMA, EXPORT_METRIC_COLUMNS, EXTRA_COLUMNS, NUMERIC_COLUMNS,
     REQUEST_SCHEMA, ROW_COLUMNS, column_summary, count_markers, load_catalogs, load_spacy, load_support_ids,
     marker_metrics, measure_rows, nlp_metrics, order_statistic, percentile_rank, spearman, structure_metrics,
-    summarize, validate_config,
+    summarize, text_view, validate_config,
 )
 from retrieval_arena.errors import ValidationError
 
@@ -28,6 +28,9 @@ CAPSTONE_CATALOGS = ROOT.parent.parent / "git" / "DocSpectraCapstone" / "src" / 
 
 # Hand-computed from the fixture text (see the file contents): every File, Markdown Structure,
 # Text Volume, vagueness and constraint column. Densities are count / word_count * 1000.
+# Under reading revision R1 (S052 calibration) word_count, sentence_count_basic, paragraph_count and
+# the marker densities read the text view (fenced blocks and inline code removed); paragraphs are
+# every blank-line-separated block of that view.
 ZERO = {"header_count": 0, "code_fence_count": 0, "code_block_lines": 0, "bullet_list_count": 0,
         "numbered_list_count": 0, "checklist_count": 0, "list_item_count": 0, "paragraph_count": 0,
         "word_count": 0, "sentence_count_basic": 0, "vagueness": 0, "constraint": 0,
@@ -43,16 +46,16 @@ EXPECTED = {
     "lists.md": {**ZERO, "lines": 13, "bullet_list_count": 8, "numbered_list_count": 3, "checklist_count": 3,
                  "list_item_count": 11, "paragraph_count": 1, "word_count": 30, "sentence_count_basic": 2},
     "fences.md": {**ZERO, "lines": 16, "code_fence_count": 3, "code_block_lines": 7, "paragraph_count": 1,
-                  "word_count": 22, "sentence_count_basic": 1},
+                  "word_count": 2, "sentence_count_basic": 1},
     "frontmatter.md": {**ZERO, "lines": 6, "paragraph_count": 2, "word_count": 10, "sentence_count_basic": 1},
-    "liquid.md": {**ZERO, "lines": 3, "header_count": 1, "header_h1_count": 1, "paragraph_count": 1,
+    "liquid.md": {**ZERO, "lines": 3, "header_count": 1, "header_h1_count": 1, "paragraph_count": 2,
                   "word_count": 19, "sentence_count_basic": 2, "vagueness": 2, "constraint": 2},
     "markers.md": {**ZERO, "lines": 2, "paragraph_count": 1, "word_count": 24, "sentence_count_basic": 8,
                    "vagueness": 5, "constraint": 10},
     "nested_numbered.md": {**ZERO, "lines": 9, "bullet_list_count": 1, "numbered_list_count": 3,
-                           "list_item_count": 4, "paragraph_count": 2, "word_count": 18, "sentence_count_basic": 6},
+                           "list_item_count": 4, "paragraph_count": 3, "word_count": 18, "sentence_count_basic": 6},
     "code_inline.md": {**ZERO, "lines": 7, "header_count": 1, "header_h2_count": 1, "code_fence_count": 1,
-                       "code_block_lines": 1, "paragraph_count": 1, "word_count": 14, "sentence_count_basic": 1},
+                       "code_block_lines": 1, "paragraph_count": 2, "word_count": 7, "sentence_count_basic": 1},
     "table.md": {**ZERO, "lines": 5, "paragraph_count": 2, "word_count": 12, "sentence_count_basic": 1},
     "entities.md": {**ZERO, "lines": 1, "paragraph_count": 1, "word_count": 20, "sentence_count_basic": 2},
 }
@@ -77,7 +80,7 @@ class DocstyleStructureTests(unittest.TestCase):
             raw = (FIXTURE / name).read_bytes()
             text = raw.decode("utf-8")
             values = structure_metrics(text, raw)
-            values.update(marker_metrics(text, values["word_count"], self.catalogs))
+            values.update(marker_metrics(text_view(text), values["word_count"], self.catalogs))
             with self.subTest(name=name):
                 self.assertEqual(values["bytes"], len(raw))
                 self.assertEqual(values["chars"], len(text))
@@ -89,6 +92,11 @@ class DocstyleStructureTests(unittest.TestCase):
                 words = expected["word_count"]
                 self.assertEqual(values["vagueness_density"], expected["vagueness"] / words * 1000 if words else 0.0)
                 self.assertEqual(values["constraint_density"], expected["constraint"] / words * 1000 if words else 0.0)
+
+    def test_text_view_drops_fenced_blocks_and_inline_code_only(self):
+        self.assertEqual(text_view("a `b` c\n```\nx\n```\nd `e\nf` g\n"), "a  c\nd  g")
+        self.assertEqual(text_view("---\ntitle: T\n---\n{% data x %}"), "---\ntitle: T\n---\n{% data x %}")
+        self.assertEqual(text_view("~~~\nunclosed\n- code"), "")
 
     def test_typographic_apostrophes_count_as_bytes_not_chars(self):
         raw = (FIXTURE / "markers.md").read_bytes()

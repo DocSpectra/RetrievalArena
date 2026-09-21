@@ -13,6 +13,15 @@ declared once in ``ALGORITHM_CHOICES`` and written into the manifest, never
 tuned toward the paper's exported tables. Column names are the export's
 (``github_per_document.csv``).
 
+Reading revision R1 (S052 calibration, 2026-09-21, the one revision the
+prompt allows): the text metrics (word count, marker densities, the regex
+sentence count and the spaCy input) read the *text view* -- the raw source
+with fenced code blocks and inline code spans removed -- and
+``paragraph_count`` counts every blank-line-separated block of that view.
+The export README's "code blocks ... are parsed structurally, not stripped"
+is read as: code is structure (counted by the code metrics), not text. The
+file and Markdown-structure metrics still read the raw source, fence-aware.
+
 No retrieval, no question, no generative model: a measurement.
 """
 
@@ -62,21 +71,21 @@ ROW_COLUMNS = IDENTITY_COLUMNS + EXPORT_METRIC_COLUMNS + EXTRA_COLUMNS
 
 # Every algorithmic choice the paper's text leaves open, stated before any calibration run.
 ALGORITHM_CHOICES = {
-    "source_text": "the raw Markdown source decoded as UTF-8 (front matter, Liquid tags and fenced code included; nothing stripped)",
+    "source_text": "the raw Markdown source decoded as UTF-8 for the file and structure metrics; the text metrics (word_count, sentence_count_basic, paragraph_count, marker densities, the spaCy input) read the text view: the source with fenced code blocks (fence lines and their contents, the structure parser's fence state) and inline code spans (`...`, across lines) removed, nothing else stripped (front matter and Liquid tags stay) -- reading revision R1 of the S052 calibration",
     "bytes": "len(source bytes)",
     "chars": "len(decoded text)",
     "lines": "len(text.splitlines())",
-    "word_count": "len(text.split()) -- whitespace-separated over the raw source",
+    "word_count": "len(text_view.split()) -- whitespace-separated over the text view (R1; before R1: over the raw source)",
     "header": "ATX only: a line outside a fence matching ^ {0,3}(#{1,6})(?:\\s|$); setext underlines are not headers",
     "code_fence": "a line outside a fence whose lstrip starts with ``` or ~~~ opens a block; the next line starting with the same fence character run closes it; an unclosed block runs to the end; code_fence_count counts opened blocks; code_block_lines counts the lines strictly between the fence lines",
     "bullet_list": "a line outside a fence matching ^\\s*[-*+]\\s+\\S (any indent; nested items count)",
     "numbered_list": "a line outside a fence matching ^\\s*\\d+[.)]\\s+\\S",
     "checklist": "a bullet line whose item text starts with [ ] or [x]/[X]; counted inside bullet_list_count as well (the export's rule)",
     "list_item_count": "bullet_list_count + numbered_list_count (the paper's text: total list items; the paper's tool wrote bullets only -- a declared paper-tool discrepancy)",
-    "paragraph_count": "maximal runs of non-blank lines outside fences whose first line is neither a header nor a list item",
-    "sentence_count_basic": "len(re.findall(r'[.!?]+(?=\\s|$)', text))",
-    "marker_matching": "over the raw text casefolded, U+2019 -> U+0027, whitespace collapsed; case-insensitive, word-boundary, longest match first, non-overlapping (the S051 rule); density = count / word_count * 1000",
-    "spacy_input": "the whole decoded text in one nlp() call, exclude=[]",
+    "paragraph_count": "every maximal run of non-blank lines of the text view, headers and list items included (R1; before R1: runs outside fences whose first line was neither a header nor a list item)",
+    "sentence_count_basic": "len(re.findall(r'[.!?]+(?=\\s|$)', text_view))",
+    "marker_matching": "over the text view casefolded, U+2019 -> U+0027, whitespace collapsed; case-insensitive, word-boundary, longest match first, non-overlapping (the S051 rule); density = count / word_count * 1000",
+    "spacy_input": "the whole text view in one nlp() call, exclude=[]",
     "token_count": "tokens with not token.is_space (punctuation included)",
     "sentence_count": "len(list(doc.sents))",
     "avg_sentence_len_tokens": "token_count / sentence_count",
@@ -103,6 +112,7 @@ _BULLET = re.compile(r"^\s*[-*+]\s+(\S.*)$")
 _NUMBERED = re.compile(r"^\s*\d+[.)]\s+\S")
 _CHECKBOX = re.compile(r"^\[( |x|X)\](?:\s|$)")
 _SENTENCE_BASIC = re.compile(r"[.!?]+(?=\s|$)")
+_INLINE_CODE = re.compile(r"`[^`]*`")
 _SUBJECT_DEPS = {"nsubj", "nsubjpass", "csubj", "expl"}
 
 
@@ -142,13 +152,31 @@ def count_markers(text: str, pattern: re.Pattern[str]) -> int:
 
 # --- Markdown structure, file and text-volume metrics (no model) -------------------------------------
 
-def structure_metrics(text: str, raw: bytes) -> dict[str, Any]:
-    """File (3), Markdown Structure (13) and Text Volume (3) of Appendix B over the raw source."""
-    headers = Counter()
-    fence_count = code_lines = bullets = numbered = checklists = paragraphs = 0
+def text_view(text: str) -> str:
+    """R1: the source without fenced code blocks (the structure parser's fence state) and inline code spans."""
+    kept = []
     in_fence = False
     fence_char = ""
-    in_paragraph = False
+    for line in text.splitlines():
+        fence = _FENCE.match(line)
+        if in_fence:
+            if fence and fence.group(1)[0] == fence_char:
+                in_fence = False
+            continue
+        if fence:
+            in_fence = True
+            fence_char = fence.group(1)[0]
+            continue
+        kept.append(line)
+    return _INLINE_CODE.sub("", "\n".join(kept))
+
+
+def structure_metrics(text: str, raw: bytes) -> dict[str, Any]:
+    """File (3), Markdown Structure (13) of Appendix B over the raw source; Text Volume (3) over the text view."""
+    headers = Counter()
+    fence_count = code_lines = bullets = numbered = checklists = 0
+    in_fence = False
+    fence_char = ""
     for line in text.splitlines():
         fence = _FENCE.match(line)
         if in_fence:
@@ -156,29 +184,29 @@ def structure_metrics(text: str, raw: bytes) -> dict[str, Any]:
                 in_fence = False
             else:
                 code_lines += 1
-            in_paragraph = False
             continue
         if fence:
             in_fence = True
             fence_char = fence.group(1)[0]
             fence_count += 1
-            in_paragraph = False
             continue
         if not line.strip():
-            in_paragraph = False
             continue
         header = _HEADER.match(line)
         bullet = _BULLET.match(line)
         if header:
             headers[len(header.group(1))] += 1
-            in_paragraph = False
         elif bullet:
             bullets += 1
             if _CHECKBOX.match(bullet.group(1)):
                 checklists += 1
-            in_paragraph = False
         elif _NUMBERED.match(line):
             numbered += 1
+    view = text_view(text)
+    paragraphs = 0
+    in_paragraph = False
+    for line in view.splitlines():
+        if not line.strip():
             in_paragraph = False
         elif not in_paragraph:
             paragraphs += 1
@@ -190,8 +218,8 @@ def structure_metrics(text: str, raw: bytes) -> dict[str, Any]:
     values.update({"code_fence_count": fence_count, "code_block_lines": code_lines,
                    "bullet_list_count": bullets, "numbered_list_count": numbered,
                    "checklist_count": checklists, "list_item_count": bullets + numbered,
-                   "word_count": len(text.split()), "paragraph_count": paragraphs,
-                   "sentence_count_basic": len(_SENTENCE_BASIC.findall(text))})
+                   "word_count": len(view.split()), "paragraph_count": paragraphs,
+                   "sentence_count_basic": len(_SENTENCE_BASIC.findall(view))})
     return values
 
 
@@ -350,8 +378,9 @@ def measure_document(source: Path, nlp: Any, catalogs: dict[str, dict[str, Any]]
     raw = source.read_bytes()
     text = raw.decode("utf-8")
     values = structure_metrics(text, raw)
-    values.update(marker_metrics(text, values["word_count"], catalogs))
-    values.update(nlp_metrics(nlp(text)))
+    view = text_view(text)
+    values.update(marker_metrics(view, values["word_count"], catalogs))
+    values.update(nlp_metrics(nlp(view)))
     return values
 
 
