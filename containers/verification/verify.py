@@ -27,6 +27,7 @@ COMMANDS = {
         "unit_tests.test_rag_llm_guided_search_runner",
         "unit_tests.test_rag_repo_search_agent_runner",
         "unit_tests.test_reachability_surface",
+        "unit_tests.test_docstyle_measurement",
     ),
     "all": None,
     "evaluate-profile": (),
@@ -34,6 +35,7 @@ COMMANDS = {
     "review-packet": (),
     "candidate-retrieve-prepare": (),
     "candidate-retrieve-finalize": (),
+    "measure-docstyle": (),
 }
 
 
@@ -81,6 +83,10 @@ def main(argv: list[str]) -> int:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from candidate_retrieval import main as candidate_retrieval_main
         return candidate_retrieval_main(argv[1])
+    if argv[1] == "measure-docstyle":
+        sys.path.insert(0, str(OPERATOR_ROOT))
+        from docstyle_measurement import main as docstyle_measurement_main
+        return docstyle_measurement_main()
     scratch = SOURCE_ROOT / ".tmp_unit_tests"
     html_scratch = SOURCE_ROOT / "unit_tests" / "_tmp_html_report"
     if not scratch.is_dir() or not html_scratch.is_dir():

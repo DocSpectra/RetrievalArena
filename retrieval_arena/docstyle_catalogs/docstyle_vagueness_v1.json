@@ -1,0 +1,49 @@
+{
+  "catalog_name": "docstyle_vagueness_markers",
+  "catalog_version": "1.0.0",
+  "entries": [
+    "may",
+    "might",
+    "could",
+    "would",
+    "should",
+    "can",
+    "possibly",
+    "perhaps",
+    "probably",
+    "likely",
+    "somewhat",
+    "relatively",
+    "fairly",
+    "rather",
+    "quite",
+    "sort of",
+    "kind of",
+    "apparently",
+    "seemingly",
+    "arguably",
+    "roughly",
+    "approximately",
+    "about",
+    "around",
+    "generally",
+    "typically",
+    "often",
+    "sometimes",
+    "usually",
+    "mostly"
+  ],
+  "metadata": {
+    "source_basis": "paper_appendix_b",
+    "source": {
+      "doi": "10.1145/3820755.3821485",
+      "citation": "D'Antonio, Xie, Guo. Operational Runbooks as Living Documents: A Longitudinal Study of Document Evolution under Assisted Post-Incident Revision. DocEng '26.",
+      "location": "Appendix B, Vagueness & Constraint, vagueness_density"
+    },
+    "paper_definition": "Lexical markers of uncertainty and imprecision, computed as occurrences per 1,000 words.",
+    "paper_stated_entry_count": 30,
+    "printed_entry_count": 30,
+    "transcription": "verbatim from the PDF text layer (S051, 2026-09-19); entry order is the printed order",
+    "matching": "case-insensitive, word-boundary, longest-match-first non-overlapping over visible Markdown text"
+  }
+}

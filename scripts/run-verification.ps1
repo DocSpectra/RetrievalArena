@@ -1,6 +1,6 @@
 [CmdletBinding(PositionalBinding = $false)]
 param(
-    [Parameter(Mandatory = $true, Position = 0)][ValidateSet('focused','all','evaluate-profile','review-packet','score-bertscore','candidate-retrieve')][string]$Command,
+    [Parameter(Mandatory = $true, Position = 0)][ValidateSet('focused','all','evaluate-profile','review-packet','score-bertscore','candidate-retrieve','measure-docstyle')][string]$Command,
     [Parameter()][string]$InputRoot,
     [Parameter()][string]$OutputRoot,
     [Parameter()][string]$CandidateRoot,
@@ -36,12 +36,12 @@ if ($head -ne $value.source_commit -or $tree -ne $value.source_tree) { throw 've
 $labels = (& docker image inspect --format '{{json .Config.Labels}}' $image | ConvertFrom-Json)
 if ($LASTEXITCODE -ne 0 -or $labels.'org.opencontainers.image.revision' -ne $value.source_commit -or $labels.'io.retrieval-arena.source.tree' -ne $value.source_tree -or $labels.'io.retrieval-arena.verification.dependency-lock-sha256' -ne $value.dependency_lock_sha256 -or $labels.'io.retrieval-arena.verification.platform' -ne $value.platform) { throw 'verification-image-label-mismatch' }
 
-if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candidate-retrieve')) {
+if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candidate-retrieve','measure-docstyle')) {
     if ([string]::IsNullOrWhiteSpace($InputRoot) -or [string]::IsNullOrWhiteSpace($OutputRoot)) { throw 'verification-operator-input-output-required' }
     $inputPath = (Resolve-Path -LiteralPath $InputRoot).Path
     $outputPath = (Resolve-Path -LiteralPath $OutputRoot).Path
     $candidatePath = $null
-    if ($Command -eq 'candidate-retrieve') {
+    if ($Command -in @('candidate-retrieve','measure-docstyle')) {
         if ([string]::IsNullOrWhiteSpace($CandidateRoot)) { throw 'verification-candidate-root-required' }
         $candidatePath = (Resolve-Path -LiteralPath $CandidateRoot).Path
     }
@@ -49,7 +49,7 @@ if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candida
     $normalizedRoots = $roots | ForEach-Object { $_.TrimEnd([char[]]@('\','/')).ToLowerInvariant() }
     $nestedRoots = $false
     foreach ($left in $normalizedRoots) { foreach ($right in $normalizedRoots) { if ($left -ne $right -and $right.StartsWith($left + '\')) { $nestedRoots = $true } } }
-    $expectedRootCount = if ($Command -eq 'candidate-retrieve') { 4 } else { 3 }
+    $expectedRootCount = if ($Command -in @('candidate-retrieve','measure-docstyle')) { 4 } else { 3 }
     if (($roots | Select-Object -Unique).Count -ne $expectedRootCount -or $nestedRoots -or -not (Test-Path -LiteralPath (Join-Path $inputPath 'operator-request.json') -PathType Leaf)) { throw 'verification-operator-root-admission-invalid' }
     if ((Get-ChildItem -Force -LiteralPath $outputPath | Select-Object -ExpandProperty Name) -ne '.retrieval-arena-output-owner') { throw 'verification-operator-output-not-fresh' }
     if ($Command -eq 'candidate-retrieve') {
@@ -92,12 +92,14 @@ if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candida
         & docker @common '--tmpfs' '/tmp:rw,nosuid,nodev,size=256m,uid=65532,gid=65532' $image 'candidate-retrieve-finalize'
         exit $LASTEXITCODE
     }
+    # S052: measure-docstyle is a single phase with the candidate mounted read-only.
+    $candidateMount = if ($Command -eq 'measure-docstyle') { @('--mount',"type=bind,src=$candidatePath,dst=/workspace/candidate,readonly") } else { @() }
     $arguments = @(
         'run','--rm','--platform',[string]$value.platform,'--network','none','--read-only',
         '--security-opt','no-new-privileges','--cap-drop','ALL','--pids-limit','512','--memory','2g','--cpus','2',
         '--mount',"type=bind,src=$repo,dst=/workspace/source,readonly",
         '--mount',"type=bind,src=$inputPath,dst=/workspace/input,readonly",
-        '--mount',"type=bind,src=$outputPath,dst=/workspace/output",
+        '--mount',"type=bind,src=$outputPath,dst=/workspace/output") + $candidateMount + @(
         '--tmpfs','/tmp:rw,noexec,nosuid,nodev,size=256m,uid=65532,gid=65532',
         '--env',"RA_SOURCE_COMMIT=$($value.source_commit)",'--env',"RA_SOURCE_TREE=$($value.source_tree)",
         '--env',"RA_DEPENDENCY_LOCK_SHA256=$($value.dependency_lock_sha256)",'--env',"RA_IMAGE_REFERENCE=$image",'--env',"RA_PLATFORM=$($value.platform)",

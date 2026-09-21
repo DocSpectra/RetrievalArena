@@ -2,7 +2,7 @@
 set -eu
 
 usage() {
-  echo 'usage: run-verification.sh <focused|all> [receipt] | <evaluate-profile|review-packet|score-bertscore> <input-root> <output-root> [receipt] | candidate-retrieve <input-root> <output-root> <candidate-root> [receipt]' >&2
+  echo 'usage: run-verification.sh <focused|all> [receipt] | <evaluate-profile|review-packet|score-bertscore> <input-root> <output-root> [receipt] | <candidate-retrieve|measure-docstyle> <input-root> <output-root> <candidate-root> [receipt]' >&2
   echo '       named form: run-verification.sh <command> --input-root=<p> --output-root=<p> [--candidate-root=<p>] [--receipt=<p>]' >&2
   exit 2
 }
@@ -25,14 +25,14 @@ if [ "$named_seen" -eq 1 ]; then
   input_root=$named_input_root; output_root=$named_output_root; candidate_root=$named_candidate_root
   receipt=${named_receipt:-$repo/.tmp/verification-image.json}
   case "$command_name" in
-    candidate-retrieve) [ -n "$input_root" ] && [ -n "$output_root" ] || { echo verification-operator-input-output-required >&2; exit 2; }
+    candidate-retrieve|measure-docstyle) [ -n "$input_root" ] && [ -n "$output_root" ] || { echo verification-operator-input-output-required >&2; exit 2; }
       [ -n "$candidate_root" ] || { echo verification-candidate-root-required >&2; exit 2; } ;;
     evaluate-profile|review-packet|score-bertscore) [ -n "$input_root" ] && [ -n "$output_root" ] || { echo verification-operator-input-output-required >&2; exit 2; }
       [ -z "$candidate_root" ] || { echo verification-command-invalid >&2; exit 2; } ;;
     focused|all) [ -z "$input_root" ] && [ -z "$output_root" ] && [ -z "$candidate_root" ] || { echo verification-command-invalid >&2; exit 2; } ;;
     *) echo verification-command-invalid >&2; exit 2 ;;
   esac
-elif [ "$command_name" = candidate-retrieve ]; then
+elif [ "$command_name" = candidate-retrieve ] || [ "$command_name" = measure-docstyle ]; then
   [ "$#" -ge 3 ] && [ "$#" -le 4 ] || { echo verification-candidate-root-required >&2; exit 2; }
   input_root=$1; output_root=$2; candidate_root=$3; receipt=${4:-$repo/.tmp/verification-image.json}
 elif [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ]; then
@@ -71,7 +71,7 @@ label_lock=$(docker image inspect --format '{{ index .Config.Labels "io.retrieva
 label_platform=$(docker image inspect --format '{{ index .Config.Labels "io.retrieval-arena.verification.platform" }}' "$image")
 [ "$label_commit" = "$commit" ] && [ "$label_tree" = "$tree" ] && [ "$label_lock" = "$receipt_lock" ] && [ "$label_platform" = "$platform" ] || { echo verification-image-label-mismatch >&2; exit 2; }
 
-if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ] || [ "$command_name" = candidate-retrieve ]; then
+if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ] || [ "$command_name" = candidate-retrieve ] || [ "$command_name" = measure-docstyle ]; then
   input_root=$(CDPATH= cd -- "$input_root" && pwd)
   output_root=$(CDPATH= cd -- "$output_root" && pwd)
   [ "$input_root" != "$output_root" ] && [ "$input_root" != "$repo" ] && [ "$output_root" != "$repo" ] && [ -f "$input_root/operator-request.json" ] || { echo verification-operator-root-admission-invalid >&2; exit 2; }
@@ -79,7 +79,7 @@ if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]
   case "$output_root/" in "$repo/"*|"$input_root/"*) echo verification-operator-root-admission-invalid >&2; exit 2 ;; esac
   case "$repo/" in "$input_root/"*|"$output_root/"*) echo verification-operator-root-admission-invalid >&2; exit 2 ;; esac
   [ "$(find "$output_root" -mindepth 1 -maxdepth 1 -exec basename {} \; | sort)" = .retrieval-arena-output-owner ] || { echo verification-operator-output-not-fresh >&2; exit 2; }
-  if [ "$command_name" = candidate-retrieve ]; then
+  if [ "$command_name" = candidate-retrieve ] || [ "$command_name" = measure-docstyle ]; then
     candidate_root=$(CDPATH= cd -- "$candidate_root" && pwd)
     admit_pair() {
       [ "$1" != "$2" ] || { echo verification-operator-root-admission-invalid >&2; exit 2; }
@@ -89,6 +89,17 @@ if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]
     admit_pair "$repo" "$input_root"; admit_pair "$repo" "$output_root"
     admit_pair "$repo" "$candidate_root"; admit_pair "$input_root" "$output_root"
     admit_pair "$input_root" "$candidate_root"; admit_pair "$output_root" "$candidate_root"
+  fi
+  # S052: measure-docstyle is a single phase with the candidate mounted read-only.
+  if [ "$command_name" = measure-docstyle ]; then
+    exec docker run --rm --platform "$platform" --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 \
+      --mount "type=bind,src=$repo,dst=/workspace/source,readonly" --mount "type=bind,src=$input_root,dst=/workspace/input,readonly" \
+      --mount "type=bind,src=$candidate_root,dst=/workspace/candidate,readonly" --mount "type=bind,src=$output_root,dst=/workspace/output" \
+      --tmpfs /tmp:rw,noexec,nosuid,nodev,size=256m,uid=65532,gid=65532 \
+      --env "RA_SOURCE_COMMIT=$commit" --env "RA_SOURCE_TREE=$tree" --env "RA_DEPENDENCY_LOCK_SHA256=$receipt_lock" --env "RA_IMAGE_REFERENCE=$image" --env "RA_PLATFORM=$platform" \
+      --env HOME=/tmp --env TMPDIR=/tmp --env PYTHONHASHSEED=0 --env PYTHONIOENCODING=utf-8 --env TZ=UTC "$image" measure-docstyle
+  fi
+  if [ "$command_name" = candidate-retrieve ]; then
     run_operator() {
       docker run --rm --platform "$platform" --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory 2g --cpus 2 \
         --mount "type=bind,src=$repo,dst=/workspace/source,readonly" --mount "type=bind,src=$input_root,dst=/workspace/input,readonly" \

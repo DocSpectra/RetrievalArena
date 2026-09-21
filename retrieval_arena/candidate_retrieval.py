@@ -409,6 +409,14 @@ def _git(repo: Path, *arguments: str) -> str:
     return result.stdout.strip()
 
 
+def admit_candidate(candidate_root: Path, candidate: dict[str, Any]) -> None:
+    """A clean checkout at exactly the declared commit and tree (S052: shared with measure-docstyle)."""
+    if (_git(candidate_root, "rev-parse", "HEAD") != candidate["commit"]
+            or _git(candidate_root, "rev-parse", "HEAD^{tree}") != candidate["tree"]
+            or _git(candidate_root, "status", "--porcelain", "--untracked-files=all")):
+        raise ValidationError("candidate-retrieval-candidate-admission")
+
+
 def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_root: Path,
                            provider_input: Path) -> dict[str, Any]:
     config = validate_config(config)
@@ -416,10 +424,7 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
                          if row["path"] not in {"config.json", "operator-request.json"}]
     if payload_inventory != config["input_inventory"]:
         raise ValidationError("candidate-retrieval-input-inventory-mismatch")
-    if (_git(candidate_root, "rev-parse", "HEAD") != config["candidate"]["commit"]
-            or _git(candidate_root, "rev-parse", "HEAD^{tree}") != config["candidate"]["tree"]
-            or _git(candidate_root, "status", "--porcelain", "--untracked-files=all")):
-        raise ValidationError("candidate-retrieval-candidate-admission")
+    admit_candidate(candidate_root, config["candidate"])
     corpus_root = candidate_root / config["corpus"]["root"]
     import_policy = config["corpus"]["import_policy"]
     exclude_policy = config["corpus"].get("exclude_policy")

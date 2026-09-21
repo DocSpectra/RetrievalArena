@@ -106,9 +106,9 @@ launch record and the receipt carry `corpus_faq_patterns`.
 `scripts/run-verification.ps1` / `.sh` run the immutable verification image
 (`containers/verification/`), repository mounted read-only, network none.
 Parameters, by name: `-Command` (`focused`, `all`, `evaluate-profile`,
-`review-packet`, `score-bertscore`, `candidate-retrieve`), `-InputRoot`,
+`review-packet`, `score-bertscore`, `candidate-retrieve`, `measure-docstyle`), `-InputRoot`,
 `-OutputRoot` (fresh, containing only `.retrieval-arena-output-owner`),
-`-CandidateRoot` (candidate-retrieve only), `-Receipt`. PowerShell 7 is
+`-CandidateRoot` (candidate-retrieve and measure-docstyle), `-Receipt`. PowerShell 7 is
 required. Since S024 the `.ps1` binds by name only (`PositionalBinding =
 $false`; `Command` is the sole positional), so `-InputRoot -OutputRoot
 [-CandidateRoot] -Receipt` must be spelled out; the `.sh` accepts the
@@ -123,7 +123,9 @@ the closed profile table in `retrieval_arena/candidate_retrieval.py`
 (`rag_lexical_topk` only at `d00b38d`; `rag_graph_ranked_expand` added in
 S025; `rag_llm_guided_search` added in S026, `rag_repo_search_agent` and its `_nolinks` variant in S046, each pinned by `image@sha256`) and requires a standalone candidate
 repository whose corpus sits under a subdirectory (`corpus.root`, e.g.
-`docs`). A `requires_graph` provider gets the candidate's own link graph
+`docs`); `measure-docstyle` (S052) shares that admission but also admits
+`corpus.root: "."`, a whole repository, because it reads documents and
+ranks nothing. A `requires_graph` provider gets the candidate's own link graph
 (`graph_edges.csv`, `write_markdown_link_graph`'s resolver over the corpus
 tree with flat ids) extracted at prepare, hashed into the launch and the
 receipt (`graph_edges_sha256`), and published beside the predictions. The provider container runs as uid/gid
@@ -135,7 +137,13 @@ operator runs it on Docker's default bridge with `--add-host
 host.docker.internal:host-gateway` (the direct lane's relay posture, S031 D4),
 the runner's own client enforces the relay rules (private upstream only,
 `GET /api/tags` and `POST /api/chat`, model digest observed per call), and
-the receipt's `isolation.network` records the exception. The navigator's
+the receipt's `isolation.network` records the exception. `measure-docstyle`
+(S052) is the one single-phase command with the candidate mounted: the
+DocEng 2026 Appendix B per-document metrics with spaCy `en_core_web_sm`
+3.8.0 (rows of the dependency lock, installed in the provisioned base) over
+the request's corpus and policy, a summary, the four-signal Spearman matrix
+and support-page percentile ranks; `docs/evaluations/measure_docstyle.md`.
+The navigator's
 `traces/` directory and `navigation.json` are published beside the
 predictions and inventoried in the receipt (`traces_inventory_sha256`,
 `navigation_sha256`); the operator-side projection validates every trace

@@ -54,6 +54,10 @@ Knobs are the `config.get(...)` keys of each runner, listed per row under
   (`retrieval_arena/dual_profile.py`, [dual_profile_evaluation.md](dual_profile_evaluation.md)).
 - Answers → `score-bertscore` (`dual_profile.py::run_bertscore_offline`):
   provider-pinned offline BERTScore over answer pairs the caller composes.
+- The corpus's documents → `measure-docstyle`
+  (`retrieval_arena/docstyle_measurement.py`, S052): the DocEng 2026
+  Appendix B per-document metrics with spaCy, a summary and the focal-signal
+  Spearman matrix per corpus — [evaluations/measure_docstyle.md](evaluations/measure_docstyle.md).
 - Navigator traces → `scripts/navigation_metrics.py`
   (`e007b.action_trace.v1`) and `scripts/search_navigation_metrics.py`
   (`e007c.action_trace.v1`), read with the judge's support file.

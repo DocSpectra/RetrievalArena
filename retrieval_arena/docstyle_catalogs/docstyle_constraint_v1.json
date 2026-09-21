@@ -1,0 +1,53 @@
+{
+  "catalog_name": "docstyle_constraint_markers",
+  "catalog_version": "1.0.0",
+  "entries": [
+    "must",
+    "shall",
+    "will",
+    "need",
+    "needs",
+    "needed",
+    "require",
+    "requires",
+    "required",
+    "necessary",
+    "never",
+    "avoid",
+    "prohibited",
+    "forbidden",
+    "do not",
+    "don’t",
+    "must not",
+    "mustn’t",
+    "shall not",
+    "shan’t",
+    "cannot",
+    "can’t",
+    "need to",
+    "have to",
+    "has to",
+    "had to",
+    "required to",
+    "necessary to",
+    "only if",
+    "unless",
+    "provided that",
+    "if and only if"
+  ],
+  "metadata": {
+    "source_basis": "paper_appendix_b",
+    "source": {
+      "doi": "10.1145/3820755.3821485",
+      "citation": "D'Antonio, Xie, Guo. Operational Runbooks as Living Documents: A Longitudinal Study of Document Evolution under Assisted Post-Incident Revision. DocEng '26.",
+      "location": "Appendix B, Vagueness & Constraint, constraint_density"
+    },
+    "paper_definition": "Lexical markers of obligation, prohibition, and conditional constraint, computed as occurrences per 1,000 words.",
+    "paper_stated_entry_count": 28,
+    "printed_entry_count": 32,
+    "discrepancy": "The paper states 28 constraint markers; the printed list transcribed here has 32 distinct entries (the S051 prompt reviews counted 31). The catalog holds the printed list; entry_count is asserted against this transcription, not against the stated 28.",
+    "apostrophes": "printed with typographic apostrophes (U+2019); the matcher normalizes U+2019 to U+0027 in text and entries",
+    "transcription": "verbatim from the PDF text layer (S051, 2026-09-19); entry order is the printed order",
+    "matching": "case-insensitive, word-boundary, longest-match-first non-overlapping over visible Markdown text"
+  }
+}
