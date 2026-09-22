@@ -142,7 +142,7 @@ the receipt's `isolation.network` records the exception. `measure-docstyle`
 DocEng 2026 Appendix B per-document metrics with spaCy `en_core_web_sm`
 3.8.0 (rows of the dependency lock, installed in the provisioned base) over
 the request's corpus and policy, a summary, the four-signal Spearman matrix
-and support-page percentile ranks; `docs/evaluations/measure_docstyle.md`.
+and support-page percentile ranks, and (S055) the identifier columns: a rule-based identifier counter over an identifier view that keeps inline code, and mentions of a repository-grounded lexicon harvested from the candidate when the config carries a `lexicon` block (written as `repo_lexicon.v1.json`) or read through `lexicon_path`; `docs/evaluations/measure_docstyle.md`.
 The navigator's
 `traces/` directory and `navigation.json` are published beside the
 predictions and inventoried in the receipt (`traces_inventory_sha256`,

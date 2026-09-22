@@ -30,7 +30,8 @@ The input root holds exactly `operator-request.json`
 (`retrieval_arena.docstyle_measurement_request.v1`: `command`
 `measure-docstyle`, `config_path` `config.json`, `input_inventory` and its
 sha256 over every other file — the `candidate-retrieve` request shape),
-`config.json`, and — only when the config names it — the support file.
+`config.json`, and — only when the config names them — the support file
+and the lexicon file (`lexicon_path`, S055).
 
 `config.json` (`retrieval_arena.docstyle_measurement_config.v1`):
 
@@ -43,6 +44,8 @@ sha256 over every other file — the `candidate-retrieve` request shape),
 | `corpus.import_policy` | `cikm_flat_path_sha1_v1` or `cikm_flat_path_sha1_lower_v1`; the row's `doc_id` is the policy's id, so it joins the retrieval requests' ids |
 | `corpus.exclude_policy` | absent or `null` (no exclusion), `cikm_faq_pattern_v1`, or `cikm_faq_pattern_v2` with `corpus.faq_patterns` (required under v2, refused otherwise) |
 | `support_path` | optional; input-relative; a campaign's `support.json` byte-copied into the input root (`{"records": [...], "targets": [{"corpus_id", "target_id"}]}`); RA takes the sorted unique `target_id`s |
+| `lexicon` | optional (S055); `{"policy": "repo_lexicon_v1", "source_root": ".", "exclude_root": "<corpus root or null>"}`: the repository lexicon is harvested from the candidate under `source_root` outside `exclude_root` (see "Identifier columns"), written to the output root as `repo_lexicon.v1.json`, and used for this run's lexicon columns; exclusive with `lexicon_path` |
+| `lexicon_path` | optional (S055); input-relative; a `repo_lexicon.v1.json` a previous run wrote; refused when its `commit` differs from `candidate.commit` unless `lexicon_commit_policy` is `"frozen_snapshot"` (a one-file candidate measured against its snapshot's lexicon); without either field the four lexicon columns are `null` and the manifest says `lexicon.origin: absent` |
 
 The document inventory is `candidate_retrieval`'s own rule: sorted
 `rglob("*.md")` under the corpus root (a symlink aborts), the import
@@ -53,10 +56,11 @@ the receipt and the manifest, never measured.
 
 | File | Content |
 | --- | --- |
-| `docstyle_metrics.v1.jsonl` | one canonical-JSON row per admitted document: `doc_id`, `doc_path` (corpus-relative), `corpus_id`, `commit`, `error`, the export's 31 metric columns under the export's names, then `chars`, `sentence_count_basic`, `entity_type_counts`, `top_entities`; rows in path order |
-| `docstyle_summary.v1.json` | per numeric column: `count`, `mean`, `median`, `p25`, `p75`, `min`, `max`, `stdev`; `spearman_rho` over the four focal signals (`imperative_verb_ratio`, `constraint_density`, `vagueness_density`, `entity_density`); when a support file was named, `support`: per support row its values and percentile ranks per column, and the unmatched ids |
-| `docstyle_metrics_manifest.json` | `retrieval_arena.docstyle_metrics.v1`: the config, `python_version`, `spacy` (`spacy_version`, `meta` `lang`/`name`/`version`/`spacy_version`, `pipeline`, `model_directory_inventory_sha256`), the two catalogs' names, versions, sha256 and entry counts, `algorithm_choices`, row / error / excluded counts and ids, the support file's sha256 and id count, `table_sha256` |
-| `operator_receipt.v1.json` | `retrieval_arena.docstyle_measurement_operator_receipt.v1`: status, candidate, policy and patterns, request and config hashes, excluded count and ids, row and error counts, the three outputs' sha256, the image identity, isolation, timestamps, self-hash |
+| `docstyle_metrics.v1.jsonl` | one canonical-JSON row per admitted document: `doc_id`, `doc_path` (corpus-relative), `corpus_id`, `commit`, `error`, the export's 31 metric columns under the export's names, then `chars`, `sentence_count_basic`, `entity_type_counts`, `top_entities`, `identifier_class_counts`, then the eight identifier columns (S055; schema `retrieval_arena.docstyle_metrics.v2`, file name unchanged — consumers read columns by name); rows in path order |
+| `repo_lexicon.v1.json` | only when the config carries `lexicon`: `schema_version`, `policy`, `commit`, `tree`, `file_count`, `skipped_count`, `rule_counts`, `entry_count`, `stop_catalogs`, `entries` (`[{token, file_count, occurrences}]`, sorted by token), `lexicon_sha256` over the entries |
+| `docstyle_summary.v1.json` | `retrieval_arena.docstyle_summary.v2`; per numeric column over its non-null values (`count` = non-null rows): `count`, `mean`, `median`, `p25`, `p75`, `min`, `max`, `stdev`; `spearman_rho` over the four focal signals (`imperative_verb_ratio`, `constraint_density`, `vagueness_density`, `entity_density`); when a support file was named, `support`: per support row its values and percentile ranks per column, and the unmatched ids |
+| `docstyle_metrics_manifest.json` | `retrieval_arena.docstyle_metrics.v2`: the config, `python_version`, `spacy` (`spacy_version`, `meta` `lang`/`name`/`version`/`spacy_version`, `pipeline`, `model_directory_inventory_sha256`), the two catalogs' names, versions, sha256 and entry counts, `algorithm_choices`, row / error / excluded counts and ids, the support file's sha256 and id count, `lexicon` (`policy`, `origin` built / loaded / absent, `commit`, `entry_count`, `lexicon_sha256`, `commit_policy`), the two stop catalogs' identities, `table_sha256` |
+| `operator_receipt.v1.json` | `retrieval_arena.docstyle_measurement_operator_receipt.v1`: status, candidate, policy and patterns, request and config hashes, excluded count and ids, row and error counts, the outputs' sha256 (the three files, and `repo_lexicon.v1.json` when built, else `null`), the image identity, isolation, timestamps, self-hash |
 
 No timestamp enters the table, the summary or the manifest; two runs over
 the same candidate and request are byte-identical (asserted by the unit
@@ -146,6 +150,75 @@ authoritative list):
 | stdev | sample (n − 1); `null` when n < 2 |
 | percentile rank | (count strictly below + ½ count equal) / n over the measured rows |
 | Spearman ρ | mid-rank ties over rows with `token_count > 0` — a declared departure from the paper's `verify_stats.py`, which keeps every row; `null` with `reason` `constant_column` or `insufficient_rows` |
+
+## Identifier columns (S055)
+
+Generic NER sees none of the technical identifiers a maintainer's fix
+names: on the E-EXP6 natural pairs the fixes added zero to three
+`en_core_web_sm` entities to their pages because every identifier sat in
+backticks that the text view strips (`identifier_rules_v1`, the S055
+prompt). Two column sets, both over the **identifier view** — the source
+with fenced blocks removed (the text view's fence state) but inline code
+kept; Markdown link targets `](…)`, autolinks `<http…>`, image targets and
+HTML tags removed; front matter and Liquid tags stay — tokenised on
+whitespace and stripped of surrounding `` .,;:!?()[]{}"'*~<>|` ``;
+`identifier_view_word_count` is the number of non-empty tokens.
+
+**Counter 1** (`identifier_count`, `unique_identifier_count`,
+`identifier_density` per 100 view words, `identifier_class_counts`): a token
+is an identifier by the first matching class (fullmatch): (a) any token
+inside an inline code span of ≤ 6 tokens (a longer span is a code fragment
+and contributes nothing); outside spans: (b) `--[a-z0-9][a-z0-9-]*(=\S+)?`;
+(c) `[A-Za-z_][\w-]*(\.[A-Za-z_][\w-]*)+` with ≥ 2 letters in every
+segment (`helm.sh`, not `e.g`); (d) `[\w.-]+(/[\w.-]+)+` not starting
+with `http` and containing `.`, `-` or `_` (`argocd.argoproj.io/hook-delete-policy`,
+not `apps/v1`); (e) `snake_case`; (f) CamelCase `[A-Za-z]*[a-z][A-Z][A-Za-z0-9]*`
+(`ServiceAccount`, `GitHub`; not `Argo`, `API`); (g) `v?\d+(\.\d+){1,3}`
+with a `v` prefix or ≥ 3 numeric segments (`v2.3`, `10.0.0.1`, not `1.5`);
+(h) `[A-Z0-9_-]{3,}` with ≥ 1 letter and (≥ 1 `_` or digit) (`HS256`,
+`UTF-8`; never `CD`, `TLS` or a bare number). Hyphenated lowercase prose
+(`well-known`, `pre-sync`) never qualifies outside code. Declared
+false positives / negatives: `GitHub`, `GitLab`, `OpenShift` count under
+(f); `(argocd app list)`, `Argo CD 3.0`, `apps/v1`, `ArgoCD's` count under
+nothing; `**ServiceAccount**` strips to `ServiceAccount`.
+
+**Counter 2** (`lexicon_mention_count`, `unique_lexicon_mention_count`,
+`lexicon_mention_density` per 100 view words, `identifier_resolution_ratio`
+= unique Counter 1 identifiers that are exact entries / unique identifiers,
+`null` without identifiers): mentions of the repository's own lexicon
+(`retrieval_arena/repo_lexicon.py`, `repo_lexicon_v1`). The harvest reads
+every file under `source_root` outside `exclude_root` with extension
+`.go .py .ts .tsx .js .yaml .yml .json .proto .sh .toml .ini .cfg` or name
+ending `.env.example`, ≤ 2 MB, UTF-8 with errors replaced; directories
+`vendor`, `node_modules`, `dist`, `.git`, `hack/testdata` and file names
+`*.lock *.min.* *.pb.go *.gen.go *_generated* *_test.go *.test.ts` are
+excluded; Markdown outside the corpus is not harvested. Rules, each counted
+in `rule_counts`: **r1** tokens of classes (b)–(h) anywhere in the text;
+**r2** Go exported declarations (`type`/`func` names starting with a
+capital, single-line `const`/`var`, and `Name =` lines inside
+`const (`/`var (` blocks — never a function-body assignment); **r3**
+single-line string literals whose content is one token of ≥ 3 characters
+matching `[A-Za-z0-9_./-]+` and containing `.`, `-`, `_`, a digit or a
+class (f) case change (annotation keys, flag names; `Use: "app"` does not
+enter); **r4** YAML mapping keys outside fences and JSON object keys of ≥ 3
+characters (a file that is not valid JSON skips r4 and is counted in
+`skipped_count` and `r4_invalid_json_skipped`). Entries are ≥ 3
+characters, case-preserving, not purely numeric and not in either stop
+catalog, compared casefolded: `docstyle_english_stop_v1.json` (the top
+1 000 of `first20hours/google-10000-english`, frequency-ordered, web tokens
+such as `http`/`www` included) and `docstyle_schema_stop_v1.json` (OpenAPI /
+JSON-schema keywords and Kubernetes manifest field names). So `Application`,
+`Name` and `description` are never entries. A mention is an identifier-view
+token (inside or outside a span) equal to an entry exactly, or equal
+casefolded when the entry has ≥ 6 characters and is in neither stop
+catalog. Expected size for a Go/YAML project of ~1 000 source files: tens of
+thousands of entries, a few MB.
+
+The pre-existing columns are unchanged in definition and value; the
+identifier columns are their own tuple (`IDENTIFIER_COLUMNS`), never part of
+the export's 31, and join `NUMERIC_COLUMNS` for the summary. `unit_tests/test_repo_lexicon.py`
+holds one fixture per class and exclusion, the synthetic repository and its
+expected lexicon.
 
 ## The model
 

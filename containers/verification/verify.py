@@ -28,6 +28,7 @@ COMMANDS = {
         "unit_tests.test_rag_repo_search_agent_runner",
         "unit_tests.test_reachability_surface",
         "unit_tests.test_docstyle_measurement",
+        "unit_tests.test_repo_lexicon",
     ),
     "all": None,
     "evaluate-profile": (),

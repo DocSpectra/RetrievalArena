@@ -22,6 +22,16 @@ The export README's "code blocks ... are parsed structurally, not stripped"
 is read as: code is structure (counted by the code metrics), not text. The
 file and Markdown-structure metrics still read the raw source, fence-aware.
 
+S055 (2026-09-22): two identifier column sets beside the spaCy ones, because generic
+NER sees none of the technical identifiers a maintainer's fix names (E-EXP6). The
+*identifier view* keeps inline code (fenced blocks, link targets, autolinks, images
+and HTML tags removed); Counter 1 (``identifier_rules_v1``) classifies bare tokens
+by eight rules; Counter 2 (``repo_lexicon_v1``, ``repo_lexicon.py``) counts mentions
+of the repository's own identifiers, harvested from the mounted checkout when the
+config carries a ``lexicon`` block or read from ``lexicon_path``. The pre-existing
+columns are unchanged in definition and value; the table schema is ``.v2`` because
+rows gained columns (file names unchanged).
+
 No retrieval, no question, no generative model: a measurement.
 """
 
@@ -41,11 +51,15 @@ from .candidate_retrieval import (
     imported_document_name, sha256_bytes, sha256_file, validate_faq_patterns,
 )
 from .errors import ValidationError
+from .repo_lexicon import (
+    IDENTIFIER_CLASSES, LEXICON_POLICY, classify_identifier, load_lexicon, load_stop_catalogs, mention_index,
+)
 
 CONFIG_SCHEMA = "retrieval_arena.docstyle_measurement_config.v1"
 REQUEST_SCHEMA = "retrieval_arena.docstyle_measurement_request.v1"
-TABLE_SCHEMA = "retrieval_arena.docstyle_metrics.v1"
-SUMMARY_SCHEMA = "retrieval_arena.docstyle_summary.v1"
+TABLE_SCHEMA = "retrieval_arena.docstyle_metrics.v2"
+SUMMARY_SCHEMA = "retrieval_arena.docstyle_summary.v2"
+LEXICON_COMMIT_POLICIES = ("same_commit", "frozen_snapshot")
 SPACY_MODEL = "en_core_web_sm"
 SPACY_MODEL_VERSION = "3.8.0"
 CATALOG_DIR = Path(__file__).resolve().parent / "docstyle_catalogs"
@@ -64,10 +78,14 @@ EXPORT_METRIC_COLUMNS = (
     "header_h4_count", "header_h5_count", "header_h6_count", "paragraph_count", "bullet_list_count",
     "numbered_list_count", "checklist_count",
 )
-EXTRA_COLUMNS = ("chars", "sentence_count_basic", "entity_type_counts", "top_entities")
-NUMERIC_COLUMNS = EXPORT_METRIC_COLUMNS + ("chars", "sentence_count_basic")
+EXTRA_COLUMNS = ("chars", "sentence_count_basic", "entity_type_counts", "top_entities", "identifier_class_counts")
+# S055: the identifier columns, their own tuple (never part of the export's 31).
+IDENTIFIER_COLUMNS = ("identifier_view_word_count", "identifier_count", "unique_identifier_count", "identifier_density",
+                      "lexicon_mention_count", "unique_lexicon_mention_count", "lexicon_mention_density",
+                      "identifier_resolution_ratio")
+NUMERIC_COLUMNS = EXPORT_METRIC_COLUMNS + ("chars", "sentence_count_basic") + IDENTIFIER_COLUMNS
 IDENTITY_COLUMNS = ("doc_id", "doc_path", "corpus_id", "commit", "error")
-ROW_COLUMNS = IDENTITY_COLUMNS + EXPORT_METRIC_COLUMNS + EXTRA_COLUMNS
+ROW_COLUMNS = IDENTITY_COLUMNS + EXPORT_METRIC_COLUMNS + EXTRA_COLUMNS + IDENTIFIER_COLUMNS
 
 # Every algorithmic choice the paper's text leaves open, stated before any calibration run.
 ALGORITHM_CHOICES = {
@@ -103,6 +121,12 @@ ALGORITHM_CHOICES = {
     "percentile_rank": "(count strictly below + 0.5 * count equal) / n over the corpus's measured rows",
     "spearman": "mid-rank Spearman rho over rows with token_count > 0 (a declared departure from the paper's verify_stats.py, which keeps every row); null with a reason when a column is constant or fewer than 3 rows remain",
     "error_policy": "a document whose measurement raises keeps its row with error set and every metric null",
+    # S055 identifier columns
+    "identifier_view": "the source with fenced blocks removed (the same fence state as text_view) but inline code kept; then Markdown link targets ](...), autolinks <http...>/<https...>, image targets and HTML tags <[a-zA-Z/][^>]*> removed; front matter and Liquid tags stay (as text_view)",
+    "identifier_token": "whitespace-split tokens of the identifier view, stripped of surrounding .,;:!?()[]{}\"'*~<>|` ; empty tokens dropped; identifier_view_word_count = the number of non-empty tokens",
+    "identifier_classes": "fullmatch, first class wins, in order: (a) any token inside an inline code span of <= 6 whitespace tokens (a longer span contributes nothing); outside spans: (b) --[a-z0-9][a-z0-9-]*(=\\S+)? ; (c) [A-Za-z_][\\w-]*(\\.[A-Za-z_][\\w-]*)+ with >= 2 letters in every segment; (d) [\\w.-]+(/[\\w.-]+)+ not starting with http and containing . - or _ ; (e) [A-Za-z0-9]+(_[A-Za-z0-9]+)+ ; (f) [A-Za-z]*[a-z][A-Z][A-Za-z0-9]* ; (g) v?\\d+(\\.\\d+){1,3} with a v prefix or >= 3 numeric segments; (h) [A-Z0-9_-]{3,} with >= 1 letter and (>= 1 _ or >= 1 digit); hyphenated lowercase prose never qualifies -- identifier_rules_v1 (S055)",
+    "identifier_count": "the number of classified tokens; unique_identifier_count = distinct token text (case-sensitive); identifier_density = identifier_count / identifier_view_word_count * 100; identifier_class_counts = Counter of classes a..h",
+    "lexicon_mention": "repo_lexicon_v1 (repo_lexicon.py): an identifier-view token (inside or outside spans) that equals a lexicon entry exactly, or equals it casefolded when the entry has >= 6 characters and is in neither stop catalog; lexicon_mention_density = count / identifier_view_word_count * 100; identifier_resolution_ratio = unique identifiers that are exact entries / unique identifiers (null when no identifier); all four columns null without a lexicon",
 }
 
 _APOSTROPHES = str.maketrans({"’": "'", "‘": "'"})
@@ -169,6 +193,96 @@ def text_view(text: str) -> str:
             continue
         kept.append(line)
     return _INLINE_CODE.sub("", "\n".join(kept))
+
+
+# --- S055: the identifier view and the two identifier counters (no model) -------------------------------
+
+_LINK_TARGET = re.compile(r"\]\([^)]*\)")
+_AUTOLINK = re.compile(r"<https?://[^>]*>")
+_IMAGE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
+_HTML_TAG = re.compile(r"<[a-zA-Z/][^>]*>")
+_STRIP_CHARS = ".,;:!?()[]{}\"'*~<>|`"
+MAX_SPAN_TOKENS = 6
+
+
+def identifier_view(text: str) -> str:
+    """The source without fenced blocks, images, link targets, autolinks and HTML tags; inline code kept."""
+    kept = []
+    in_fence = False
+    fence_char = ""
+    for line in text.splitlines():
+        fence = _FENCE.match(line)
+        if in_fence:
+            if fence and fence.group(1)[0] == fence_char:
+                in_fence = False
+            continue
+        if fence:
+            in_fence = True
+            fence_char = fence.group(1)[0]
+            continue
+        kept.append(line)
+    view = "\n".join(kept)
+    view = _IMAGE.sub("", view)
+    view = _LINK_TARGET.sub("]", view)
+    view = _AUTOLINK.sub("", view)
+    return _HTML_TAG.sub("", view)
+
+
+def identifier_tokens(view: str) -> list[tuple[str, bool]]:
+    """(bare token, inside an inline code span) for every non-empty token of the identifier view, in order."""
+    tokens: list[tuple[str, bool]] = []
+    position = 0
+    for match in _INLINE_CODE.finditer(view):
+        for raw in view[position:match.start()].split():
+            tokens.append((raw.strip(_STRIP_CHARS), False))
+        span = match.group(0)[1:-1].split()
+        short = len(span) <= MAX_SPAN_TOKENS
+        for raw in span:
+            tokens.append((raw.strip(_STRIP_CHARS), short))
+        position = match.end()
+    for raw in view[position:].split():
+        tokens.append((raw.strip(_STRIP_CHARS), False))
+    return [(token, in_span) for token, in_span in tokens if token]
+
+
+def identifier_metrics(text: str, lexicon_index: tuple[frozenset[str], dict[str, str]] | None) -> dict[str, Any]:
+    """Counter 1 over the identifier view; Counter 2 when a lexicon index is given, else null columns."""
+    view = identifier_view(text)
+    tokens = identifier_tokens(view)
+    classes: Counter = Counter()
+    identifiers: list[str] = []
+    for token, in_span in tokens:
+        if in_span:
+            classes["a_code_span"] += 1
+            identifiers.append(token)
+            continue
+        name = classify_identifier(token)
+        if name is not None:
+            classes[name] += 1
+            identifiers.append(token)
+    unique = set(identifiers)
+    values: dict[str, Any] = {
+        "identifier_view_word_count": len(tokens), "identifier_count": len(identifiers),
+        "unique_identifier_count": len(unique),
+        "identifier_density": _per(len(identifiers), len(tokens), 100.0),
+        "identifier_class_counts": dict(sorted(classes.items())),
+        "lexicon_mention_count": None, "unique_lexicon_mention_count": None, "lexicon_mention_density": None,
+        "identifier_resolution_ratio": None,
+    }
+    if lexicon_index is not None:
+        exact, folded = lexicon_index
+        mentions = []
+        for token, _ in tokens:
+            if token in exact:
+                mentions.append(token)
+            elif token.casefold() in folded:
+                mentions.append(folded[token.casefold()])
+        values.update({
+            "lexicon_mention_count": len(mentions), "unique_lexicon_mention_count": len(set(mentions)),
+            "lexicon_mention_density": _per(len(mentions), len(tokens), 100.0),
+            "identifier_resolution_ratio": (sum(1 for item in unique if item in exact) / len(unique)) if unique else None,
+        })
+    return values
 
 
 def structure_metrics(text: str, raw: bytes) -> dict[str, Any]:
@@ -301,8 +415,28 @@ def _relative_or_dot(value: Any, code: str) -> str:
 
 def validate_config(value: Any) -> dict[str, Any]:
     fields = {"schema_version", "corpus_id", "candidate", "corpus"}
-    if not isinstance(value, dict) or set(value) not in (fields, fields | {"support_path"}):
+    optional = {"support_path", "lexicon", "lexicon_path", "lexicon_commit_policy"}
+    if not isinstance(value, dict) or not fields <= set(value) or not set(value) <= fields | optional:
         raise ValidationError("docstyle-config-fields")
+    if "lexicon" in value and "lexicon_path" in value:
+        raise ValidationError("docstyle-lexicon-exclusive")
+    if "lexicon_commit_policy" in value and (
+            "lexicon_path" not in value or value["lexicon_commit_policy"] not in LEXICON_COMMIT_POLICIES):
+        raise ValidationError("docstyle-lexicon-commit-policy")
+    if "lexicon" in value:
+        block = value["lexicon"]
+        if (not isinstance(block, dict) or set(block) != {"policy", "source_root", "exclude_root"}
+                or block["policy"] != LEXICON_POLICY):
+            raise ValidationError("docstyle-lexicon-block")
+        _relative_or_dot(block["source_root"], "docstyle-lexicon-source-root")
+        if block["exclude_root"] is not None:
+            _relative_or_dot(block["exclude_root"], "docstyle-lexicon-exclude-root")
+            if block["exclude_root"] == ".":
+                raise ValidationError("docstyle-lexicon-exclude-root")
+    if "lexicon_path" in value:
+        _relative_or_dot(value["lexicon_path"], "docstyle-lexicon-path")
+        if value["lexicon_path"] == ".":
+            raise ValidationError("docstyle-lexicon-path")
     if value["schema_version"] != CONFIG_SCHEMA:
         raise ValidationError("docstyle-config-schema")
     if not isinstance(value["corpus_id"], str) or not re.fullmatch(r"[a-z0-9][a-z0-9_-]*", value["corpus_id"]):
@@ -374,30 +508,58 @@ def inventory_corpus(corpus_root: Path, corpus: dict[str, Any]) -> tuple[list[di
 
 # --- the table ------------------------------------------------------------------------------------
 
-def measure_document(source: Path, nlp: Any, catalogs: dict[str, dict[str, Any]]) -> dict[str, Any]:
+def measure_document(source: Path, nlp: Any, catalogs: dict[str, dict[str, Any]],
+                     lexicon_index: tuple[frozenset[str], dict[str, str]] | None = None) -> dict[str, Any]:
     raw = source.read_bytes()
     text = raw.decode("utf-8")
     values = structure_metrics(text, raw)
     view = text_view(text)
     values.update(marker_metrics(view, values["word_count"], catalogs))
     values.update(nlp_metrics(nlp(view)))
+    values.update(identifier_metrics(text, lexicon_index))
     return values
 
 
 def measure_rows(rows: list[dict[str, Any]], corpus_id: str, commit: str, nlp: Any,
-                 catalogs: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+                 catalogs: dict[str, dict[str, Any]],
+                 lexicon_index: tuple[frozenset[str], dict[str, str]] | None = None) -> list[dict[str, Any]]:
     table = []
     for row in rows:
         record: dict[str, Any] = {"doc_id": row["doc_id"], "doc_path": row["path"], "corpus_id": corpus_id,
                                   "commit": commit, "error": None}
         try:
-            record.update(measure_document(row["source"], nlp, catalogs))
+            record.update(measure_document(row["source"], nlp, catalogs, lexicon_index))
         except Exception as error:  # the per-document failure policy: the row stays, every metric null
             record["error"] = f"{type(error).__name__}: {error}"
-            for column in EXPORT_METRIC_COLUMNS + EXTRA_COLUMNS:
+            for column in EXPORT_METRIC_COLUMNS + EXTRA_COLUMNS + IDENTIFIER_COLUMNS:
                 record[column] = None
         table.append({column: record[column] for column in ROW_COLUMNS})
     return table
+
+
+def lexicon_for_config(config: dict[str, Any], candidate_root: Path, input_root: Path,
+                       stops: dict[str, dict[str, Any]] | None = None) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """The lexicon a config asks for -- built from the candidate or loaded from the input root -- and its manifest entry."""
+    from .repo_lexicon import build_lexicon
+
+    stops = stops if stops is not None else load_stop_catalogs()
+    if "lexicon" in config:
+        block = config["lexicon"]
+        source_root = candidate_root if block["source_root"] == "." else candidate_root / block["source_root"]
+        exclude_root = None if block["exclude_root"] is None else candidate_root / block["exclude_root"]
+        lexicon = build_lexicon(source_root, exclude_root, config["candidate"], stops)
+        return lexicon, {"policy": LEXICON_POLICY, "origin": "built", "commit": lexicon["commit"],
+                         "entry_count": lexicon["entry_count"], "lexicon_sha256": lexicon["lexicon_sha256"],
+                         "commit_policy": "same_commit"}
+    if "lexicon_path" in config:
+        lexicon = load_lexicon(input_root / config["lexicon_path"])
+        policy = config.get("lexicon_commit_policy", "same_commit")
+        if policy == "same_commit" and lexicon["commit"] != config["candidate"]["commit"]:
+            raise ValidationError("docstyle-lexicon-commit-mismatch")
+        return lexicon, {"policy": LEXICON_POLICY, "origin": "loaded", "path": config["lexicon_path"],
+                         "commit": lexicon["commit"], "entry_count": lexicon["entry_count"],
+                         "lexicon_sha256": lexicon["lexicon_sha256"], "commit_policy": policy}
+    return None, {"policy": None, "origin": "absent"}
 
 
 # --- summary conventions -------------------------------------------------------------------------
@@ -450,7 +612,9 @@ def spearman(x: list[float], y: list[float]) -> dict[str, Any]:
 
 def summarize(table: list[dict[str, Any]], support_ids: list[str] | None) -> dict[str, Any]:
     measured = [row for row in table if row["error"] is None]
-    columns = {column: column_summary([row[column] for row in measured]) for column in NUMERIC_COLUMNS}
+    # S055: every column over its non-null values (the lexicon columns are null without a lexicon)
+    columns = {column: column_summary([row[column] for row in measured if row[column] is not None])
+               for column in NUMERIC_COLUMNS}
     correlated = [row for row in measured if row["token_count"] > 0]
     rho = {left: {right: spearman([row[left] for row in correlated], [row[right] for row in correlated])
                   for right in FOCAL_SIGNALS} for left in FOCAL_SIGNALS}
@@ -469,7 +633,8 @@ def summarize(table: list[dict[str, Any]], support_ids: list[str] | None) -> dic
             row = by_id[doc_id]
             support_rows[doc_id] = {"doc_path": row["doc_path"], "columns": {
                 column: {"value": row[column],
-                         "percentile_rank": percentile_rank([item[column] for item in measured], row[column])}
+                         "percentile_rank": (None if row[column] is None else percentile_rank(
+                             [item[column] for item in measured if item[column] is not None], row[column]))}
                 for column in NUMERIC_COLUMNS}}
         summary["support"] = {"support_id_count": len(support_ids), "matched_count": len(matched),
                               "unmatched_ids": [doc_id for doc_id in support_ids if doc_id not in by_id],
@@ -479,7 +644,8 @@ def summarize(table: list[dict[str, Any]], support_ids: list[str] | None) -> dic
 
 def manifest(config: dict[str, Any], spacy_identity: dict[str, Any], catalogs: dict[str, dict[str, Any]],
              table_bytes: bytes, table: list[dict[str, Any]], excluded: list[dict[str, Any]],
-             support: tuple[list[str], str] | None, python_version: str) -> dict[str, Any]:
+             support: tuple[list[str], str] | None, python_version: str,
+             lexicon: dict[str, Any] | None = None, stops: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
     return {
         "schema_version": TABLE_SCHEMA, "corpus_id": config["corpus_id"], "candidate": config["candidate"],
         "corpus": config["corpus"], "python_version": python_version, "spacy": spacy_identity,
@@ -492,6 +658,9 @@ def manifest(config: dict[str, Any], spacy_identity: dict[str, Any], catalogs: d
         "excluded_document_count": len(excluded), "excluded_document_ids": sorted(row["doc_id"] for row in excluded),
         "support": ({"path": config.get("support_path"), "sha256": support[1], "id_count": len(support[0])}
                     if support is not None else None),
+        "lexicon": lexicon if lexicon is not None else {"policy": None, "origin": "absent"},
+        "stop_catalogs": ({key: {name: catalog[name] for name in ("name", "version", "sha256", "entry_count")}
+                           for key, catalog in stops.items()} if stops else None),
         "table_sha256": sha256_bytes(table_bytes),
     }
 

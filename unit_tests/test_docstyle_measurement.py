@@ -1,6 +1,7 @@
 """S052: the DocEng Appendix B measurement -- hand-computed structure / volume / marker values
 on a thirteen-file fixture, shape checks for the spaCy columns, the summary conventions, the
-request admission, and the operator entry end to end (twice, byte-identical)."""
+request admission, and the operator entry end to end (twice, byte-identical).
+S055: the lexicon config fields, and the operator building then consuming a lexicon."""
 
 from __future__ import annotations
 
@@ -15,8 +16,8 @@ from unittest import mock
 
 from retrieval_arena.candidate_retrieval import canonical, imported_document_name, regular_inventory, sha256_bytes
 from retrieval_arena.docstyle_measurement import (
-    ALGORITHM_CHOICES, CATALOG_DIR, CONFIG_SCHEMA, EXPORT_METRIC_COLUMNS, EXTRA_COLUMNS, NUMERIC_COLUMNS,
-    REQUEST_SCHEMA, ROW_COLUMNS, column_summary, count_markers, load_catalogs, load_spacy, load_support_ids,
+    ALGORITHM_CHOICES, CATALOG_DIR, CONFIG_SCHEMA, EXPORT_METRIC_COLUMNS, EXTRA_COLUMNS, IDENTIFIER_COLUMNS,
+    NUMERIC_COLUMNS, REQUEST_SCHEMA, ROW_COLUMNS, SUMMARY_SCHEMA, TABLE_SCHEMA, column_summary, count_markers, load_catalogs, load_spacy, load_support_ids,
     marker_metrics, measure_rows, nlp_metrics, order_statistic, percentile_rank, spearman, structure_metrics,
     summarize, text_view, validate_config,
 )
@@ -259,6 +260,23 @@ class DocstyleRequestTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             validate_config({**self.config(), "schema_version": "other"})
 
+    def test_lexicon_fields_are_exclusive_relative_and_closed(self):
+        block = {"policy": "repo_lexicon_v1", "source_root": ".", "exclude_root": "docs"}
+        validate_config({**self.config(), "lexicon": block})
+        validate_config({**self.config(), "lexicon": {**block, "exclude_root": None}})
+        validate_config({**self.config(), "lexicon_path": "repo_lexicon.v1.json"})
+        validate_config({**self.config(), "lexicon_path": "repo_lexicon.v1.json", "lexicon_commit_policy": "frozen_snapshot"})
+        for bad in ({"lexicon": block, "lexicon_path": "x.json"},
+                    {"lexicon": {**block, "policy": "other"}},
+                    {"lexicon": {**block, "exclude_root": "."}},
+                    {"lexicon": {**block, "source_root": "../x"}},
+                    {"lexicon_path": "."},
+                    {"lexicon_path": "../x.json"},
+                    {"lexicon_commit_policy": "frozen_snapshot"},
+                    {"lexicon_path": "x.json", "lexicon_commit_policy": "other"}):
+            with self.assertRaises(ValidationError, msg=str(bad)):
+                validate_config({**self.config(), **bad})
+
     def test_support_file_is_read_as_it_is(self):
         with tempfile.TemporaryDirectory(dir=ROOT / ".tmp_unit_tests") as temp:
             path = Path(temp) / "support.json"
@@ -310,10 +328,14 @@ class DocstyleOperatorTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def write_input(self, config, support=None):
+    def write_input(self, config, support=None, lexicon=None):
+        for stray in self.input.iterdir():
+            stray.unlink()
         (self.input / "config.json").write_bytes(canonical(config) + b"\n")
         if support is not None:
             (self.input / "support.json").write_bytes(canonical(support) + b"\n")
+        if lexicon is not None:
+            (self.input / "repo_lexicon.v1.json").write_bytes(lexicon)
         inventory = [row for row in regular_inventory(self.input) if row["path"] != "operator-request.json"]
         request = {"schema_version": REQUEST_SCHEMA, "command": "measure-docstyle", "config_path": "config.json",
                    "input_inventory": inventory, "input_inventory_sha256": sha256_bytes(canonical(inventory))}
@@ -375,6 +397,65 @@ class DocstyleOperatorTests(unittest.TestCase):
         self.assertEqual(code, 0)
         for name in ("docstyle_metrics.v1.jsonl", "docstyle_summary.v1.json", "docstyle_metrics_manifest.json"):
             self.assertEqual((first / name).read_bytes(), (second / name).read_bytes(), name)
+
+    def test_lexicon_is_built_then_consumed_and_absent_gives_nulls(self):
+        # absent: the identifier columns are present, the lexicon columns null, the manifest says absent
+        self.write_input(self.config())
+        code, absent = self.run_operator()
+        self.assertEqual(code, 0, (absent / "operator_receipt.v1.json").read_text(encoding="utf-8"))
+        rows = [json.loads(line) for line in (absent / "docstyle_metrics.v1.jsonl").read_bytes().splitlines()]
+        self.assertEqual(list(rows[0]), list(ROW_COLUMNS))
+        self.assertTrue(all(row["lexicon_mention_count"] is None and row["identifier_count"] is not None
+                            for row in rows if row["error"] is None))
+        manifest = json.loads((absent / "docstyle_metrics_manifest.json").read_bytes())
+        self.assertEqual(manifest["schema_version"], TABLE_SCHEMA)
+        self.assertEqual(manifest["lexicon"], {"policy": None, "origin": "absent"})
+        summary = json.loads((absent / "docstyle_summary.v1.json").read_bytes())
+        self.assertEqual(summary["schema_version"], SUMMARY_SCHEMA)
+        self.assertEqual(summary["columns"]["lexicon_mention_count"]["count"], 0)
+        self.assertGreater(summary["columns"]["identifier_count"]["count"], 0)
+        self.assertIsNone(json.loads((absent / "operator_receipt.v1.json").read_bytes())["outputs"]["repo_lexicon.v1.json"])
+        # built: a source file outside the corpus root is harvested and the lexicon is written and hashed
+        (self.candidate / "pkg").mkdir()
+        (self.candidate / "pkg" / "app.go").write_text(
+            'package pkg\n\ntype SyncPolicy struct{}\n\nconst Key = "argocd.argoproj.io/hook-delete-policy"\n', encoding="utf-8")
+        _git("-C", str(self.candidate), "add", "-A")
+        _git("-C", str(self.candidate), "commit", "-qm", "source")
+        self.commit = subprocess.run(["git", "-C", str(self.candidate), "rev-parse", "HEAD"], check=True,
+                                     capture_output=True, text=True).stdout.strip()
+        self.tree = subprocess.run(["git", "-C", str(self.candidate), "rev-parse", "HEAD^{tree}"], check=True,
+                                   capture_output=True, text=True).stdout.strip()
+        self.write_input(self.config(lexicon={"policy": "repo_lexicon_v1", "source_root": ".", "exclude_root": "docs"}))
+        code, built = self.run_operator()
+        self.assertEqual(code, 0, (built / "operator_receipt.v1.json").read_text(encoding="utf-8"))
+        lexicon = json.loads((built / "repo_lexicon.v1.json").read_bytes())
+        self.assertEqual([row["token"] for row in lexicon["entries"]], ["SyncPolicy", "argocd.argoproj.io/hook-delete-policy"])
+        self.assertEqual(lexicon["commit"], self.commit)
+        receipt = json.loads((built / "operator_receipt.v1.json").read_bytes())
+        self.assertEqual(receipt["outputs"]["repo_lexicon.v1.json"], sha256_bytes((built / "repo_lexicon.v1.json").read_bytes()))
+        manifest = json.loads((built / "docstyle_metrics_manifest.json").read_bytes())
+        self.assertEqual((manifest["lexicon"]["origin"], manifest["lexicon"]["entry_count"]), ("built", 2))
+        rows = [json.loads(line) for line in (built / "docstyle_metrics.v1.jsonl").read_bytes().splitlines()]
+        self.assertTrue(all(row["lexicon_mention_count"] is not None for row in rows if row["error"] is None))
+        # consumed: the same lexicon through lexicon_path gives the same lexicon columns; a foreign commit is refused
+        # unless frozen_snapshot
+        self.write_input(self.config(lexicon_path="repo_lexicon.v1.json"), lexicon=(built / "repo_lexicon.v1.json").read_bytes())
+        code, consumed = self.run_operator()
+        self.assertEqual(code, 0, (consumed / "operator_receipt.v1.json").read_text(encoding="utf-8"))
+        self.assertEqual((consumed / "docstyle_metrics.v1.jsonl").read_bytes(), (built / "docstyle_metrics.v1.jsonl").read_bytes())
+        self.assertFalse((consumed / "repo_lexicon.v1.json").exists())
+        foreign = dict(lexicon, commit="f" * 40)
+        self.write_input(self.config(lexicon_path="repo_lexicon.v1.json"), lexicon=canonical(foreign) + b"\n")
+        code, refused = self.run_operator()
+        self.assertEqual(code, 1)
+        self.assertEqual(json.loads((refused / "operator_receipt.v1.json").read_bytes())["error_code"],
+                         "docstyle-lexicon-commit-mismatch")
+        self.write_input(self.config(lexicon_path="repo_lexicon.v1.json", lexicon_commit_policy="frozen_snapshot"),
+                         lexicon=canonical(foreign) + b"\n")
+        code, frozen = self.run_operator()
+        self.assertEqual(code, 0, (frozen / "operator_receipt.v1.json").read_text(encoding="utf-8"))
+        self.assertEqual(json.loads((frozen / "docstyle_metrics_manifest.json").read_bytes())["lexicon"]["commit_policy"],
+                         "frozen_snapshot")
 
     def test_root_dot_measures_the_repository_and_v2_needs_patterns(self):
         config = self.config()

@@ -1,0 +1,1 @@
+{"properties": {"syncOptions": {"type": "array", "items": {"type": "string"}}}, "required": ["syncOptions"], "description": "x"}
