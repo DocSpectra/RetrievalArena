@@ -245,7 +245,7 @@ def mention_index(lexicon: dict[str, Any], stops: dict[str, dict[str, Any]]) -> 
     """Exact entries, and the casefolded index of entries of >= 6 characters that are not stop words."""
     exact = frozenset(row["token"] for row in lexicon["entries"])
     folded = {}
-    for token in exact:
+    for token in sorted(exact):  # deterministic: the lexicographically first entry owns a shared casefold
         if len(token) >= 6 and not stopped(token, stops):
             folded.setdefault(token.casefold(), token)
     return exact, folded

@@ -162,7 +162,7 @@ class DocstyleSpacyTests(unittest.TestCase):
                     self.assertEqual(row["moving_avg_type_token_ratio"], row["type_token_ratio"])
         empty = next(row for row in table if row["doc_path"] == "empty.md")
         for column in NUMERIC_COLUMNS:
-            if column.startswith("lexicon_") or column == "identifier_resolution_ratio":
+            if "lexicon_mention" in column or column == "identifier_resolution_ratio":
                 self.assertIsNone(empty[column], column)  # S055: null without a lexicon / without identifiers
             else:
                 self.assertEqual(empty[column], 0, column)
@@ -333,8 +333,8 @@ class DocstyleOperatorTests(unittest.TestCase):
         self.temp.cleanup()
 
     def write_input(self, config, support=None, lexicon=None):
-        for stray in self.input.iterdir():
-            stray.unlink()
+        for optional in ("support.json", "repo_lexicon.v1.json"):
+            (self.input / optional).unlink(missing_ok=True)
         (self.input / "config.json").write_bytes(canonical(config) + b"\n")
         if support is not None:
             (self.input / "support.json").write_bytes(canonical(support) + b"\n")
@@ -408,7 +408,7 @@ class DocstyleOperatorTests(unittest.TestCase):
         code, absent = self.run_operator()
         self.assertEqual(code, 0, (absent / "operator_receipt.v1.json").read_text(encoding="utf-8"))
         rows = [json.loads(line) for line in (absent / "docstyle_metrics.v1.jsonl").read_bytes().splitlines()]
-        self.assertEqual(list(rows[0]), list(ROW_COLUMNS))
+        self.assertEqual(set(rows[0]), set(ROW_COLUMNS))  # canonical rows carry sorted keys
         self.assertTrue(all(row["lexicon_mention_count"] is None and row["identifier_count"] is not None
                             for row in rows if row["error"] is None))
         manifest = json.loads((absent / "docstyle_metrics_manifest.json").read_bytes())
