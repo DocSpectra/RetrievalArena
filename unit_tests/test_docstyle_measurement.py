@@ -162,8 +162,12 @@ class DocstyleSpacyTests(unittest.TestCase):
                     self.assertEqual(row["moving_avg_type_token_ratio"], row["type_token_ratio"])
         empty = next(row for row in table if row["doc_path"] == "empty.md")
         for column in NUMERIC_COLUMNS:
-            self.assertEqual(empty[column], 0, column)
+            if column.startswith("lexicon_") or column == "identifier_resolution_ratio":
+                self.assertIsNone(empty[column], column)  # S055: null without a lexicon / without identifiers
+            else:
+                self.assertEqual(empty[column], 0, column)
         self.assertEqual(empty["entity_type_counts"], {})
+        self.assertEqual(empty["identifier_class_counts"], {})
         self.assertEqual(empty["top_entities"], [])
         self.assertEqual((empty["doc_id"], empty["corpus_id"], empty["commit"]), ("empty", "fixture", "0" * 40))
 
