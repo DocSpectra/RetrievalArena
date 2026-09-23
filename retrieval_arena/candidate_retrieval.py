@@ -416,7 +416,8 @@ def _validate_link_profiles(corpus: dict[str, Any]) -> None:
     if "link_profiles" not in corpus:
         return
     profiles = corpus["link_profiles"]
-    if (not isinstance(profiles, list) or not profiles or len(set(profiles)) != len(profiles)
+    if (not isinstance(profiles, list) or not profiles or any(not isinstance(profile, str) for profile in profiles)
+            or len(set(profiles)) != len(profiles)
             or any(profile not in LINK_PROFILES for profile in profiles)):
         raise ValidationError("candidate-retrieval-link-profiles")
     params = corpus.get("link_profile_params", {})

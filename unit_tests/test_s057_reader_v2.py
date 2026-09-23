@@ -210,6 +210,7 @@ class ReaderV2Tests(unittest.TestCase):
                            len((self.root / "plain" / "graph_edges.csv").read_text(encoding="utf-8").splitlines()))
         for corpus, code in (({"link_profiles": ["hugo_site_url_v1"]}, "link-profile-params"),
                              ({"link_profiles": ["sphinx_rst_v2"]}, "link-profiles"),
+                             ({"link_profiles": [["markdown_relative_v1"]]}, "link-profiles"),
                              ({"link_profile_params": {"hugo_site_url_v1": HUGO}}, "link-profiles"),
                              ({"link_profiles": ["hugo_site_url_v1"], "link_profile_params": {"hugo_site_url_v1": {**HUGO, "extra": 1}}},
                               "link-profile-params")):
