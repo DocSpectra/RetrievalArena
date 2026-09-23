@@ -55,6 +55,58 @@ def extract_markdown_link_edges(corpus_dir: Path, *, doc_id_for: Callable[[str],
     return sorted(_extract_edges(corpus_dir, path_to_doc))
 
 
+MARKDOWN_PROFILE = "markdown_relative_v1"
+LINK_PROFILES = (MARKDOWN_PROFILE, "hugo_site_url_v1")
+
+
+def extract_profile_link_edges(corpus_dir: Path, *, profiles: Iterable[str], params: dict[str, Any] | None = None,
+                               doc_id_for: Callable[[str], str] = corpus_doc_id,
+                               extensions: Iterable[str] | None = None,
+                               include: Callable[[str], bool] | None = None,
+                               ) -> tuple[list[tuple[str, str]], dict[str, dict[str, dict[str, int]]]]:
+    """S057: the sorted union of the declared link profiles' edges, and per-profile, per-kind counts.
+
+    ``markdown_relative_v1`` is ``extract_markdown_link_edges`` unchanged, so a request declaring only it
+    (or nothing) gets today's graph byte for byte; ``hugo_site_url_v1`` is ``graph/hugo.py``. The node set
+    (``extensions``, ``include``) is the same for every profile.
+    """
+    from .hugo import PROFILE as HUGO_PROFILE, hugo_edges
+
+    path_to_doc = _path_to_doc_id(corpus_dir, doc_id_for=doc_id_for, extensions=extensions, include=include)
+    edges: set[tuple[str, str]] = set()
+    stats: dict[str, dict[str, dict[str, int]]] = {}
+    for profile in profiles:
+        if profile == MARKDOWN_PROFILE:
+            edges |= _extract_edges(corpus_dir, path_to_doc)
+            stats[profile] = {"markdown": _markdown_counts(corpus_dir, path_to_doc)}
+        elif profile == HUGO_PROFILE:
+            found, counts = hugo_edges(corpus_dir, path_to_doc, (params or {})[HUGO_PROFILE],
+                                       lambda text: [*_inline_hrefs(text), *_reference_hrefs(text)])
+            edges |= found
+            stats[profile] = counts
+        else:
+            raise ValueError(f"unknown link profile: {profile}")
+    return sorted(edges), stats
+
+
+def _markdown_counts(corpus_dir: Path, path_to_doc: dict[str, str]) -> dict[str, int]:
+    counts = {"found": 0, "resolved": 0, "external": 0, "unresolved": 0}
+    for path_key in sorted(path_to_doc):
+        text = (corpus_dir / path_key).read_text(encoding="utf-8", errors="replace")
+        for href in [*_inline_hrefs(text), *_reference_hrefs(text)]:
+            parsed = urlparse(href)
+            if href.startswith("#"):
+                continue
+            counts["found"] += 1
+            if parsed.scheme or parsed.netloc or href.startswith(("mailto:", "tel:")):
+                counts["external"] += 1
+            elif _resolve_link(href, Path(path_key).parent, path_to_doc):
+                counts["resolved"] += 1
+            else:
+                counts["unresolved"] += 1
+    return counts
+
+
 def write_edges_csv(edges: Iterable[tuple[str, str]], edge_path: Path) -> None:
     with edge_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=["source", "target"])

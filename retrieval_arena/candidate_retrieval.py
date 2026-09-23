@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from .errors import ValidationError
-from .graph.links import extract_markdown_link_edges, write_edges_csv
+from .graph.links import LINK_PROFILES, extract_markdown_link_edges, extract_profile_link_edges, write_edges_csv
 
 CONFIG_SCHEMA = "retrieval_arena.candidate_retrieval_config.v1"
 PREDICTION_SCHEMA = "retrieval_arena.ranked_prediction.v2"
@@ -50,6 +50,10 @@ LANDING_QUESTION_TEXT = "search_question_text"
 LANDING_TOKENISED = "tokenised_content_words_v1"
 LANDING_POLICIES = (LANDING_QUESTION_TEXT, LANDING_TOKENISED)
 SEARCH_PROMPT_VERSIONS = {LANDING_QUESTION_TEXT: "e007d_repo_search_prompt_v1", LANDING_TOKENISED: "e007d_repo_search_prompt_v2"}
+# S057: the repo-search reader's recovery from a refused open (``page_not_offered``) -- optional, closed;
+# absent is today's controller (the first refusal ends the run).
+INVALID_ACTION_RECOVERY_VALUES = (0, 2)
+HUGO_PARAM_FIELDS = frozenset({"product_url_prefix", "site_prefixes", "content_root"})
 STOP_WORDS_NAME = "STOP_WORDS_EN_V1"
 STOP_WORDS_EN_V1 = (
     "a an the and or but if of to in on at by for from with without into onto over under about as is are was "
@@ -304,11 +308,13 @@ def validate_config(value: Any) -> dict[str, Any]:
            for name in ("commit", "tree")):
         raise ValidationError("candidate-retrieval-candidate-identity")
     corpus_fields = {"root", "extensions", "import_policy"}
+    link_fields = {"link_profiles", "link_profile_params"}
     if (not isinstance(config["corpus"], dict)
-            or set(config["corpus"]) not in (corpus_fields, corpus_fields | {"exclude_policy"},
-                                             corpus_fields | {"exclude_policy", "faq_patterns"})):
+            or set(config["corpus"]) - link_fields not in (corpus_fields, corpus_fields | {"exclude_policy"},
+                                                           corpus_fields | {"exclude_policy", "faq_patterns"})):
         raise ValidationError("candidate-retrieval-corpus-fields")
     corpus = config["corpus"]
+    _validate_link_profiles(corpus)
     _relative(corpus["root"], "candidate-retrieval-corpus-root")
     if corpus["extensions"] != [".md"] or corpus["import_policy"] not in IMPORT_POLICIES:
         raise ValidationError("candidate-retrieval-import-policy")
@@ -330,7 +336,8 @@ def validate_config(value: Any) -> dict[str, Any]:
     if profile.repo_search and "landing_policy" not in config["provider"]:
         raise ValidationError("candidate-retrieval-provider-landing-policy")
     provider_fields = BASE_PROVIDER_FIELDS | profile.config_fields
-    if set(config["provider"]) not in (provider_fields, provider_fields | {"answer_policy"}):
+    optional_fields = {"answer_policy"} | ({"invalid_action_recovery"} if profile.repo_search else set())
+    if not provider_fields <= set(config["provider"]) <= provider_fields | optional_fields:
         raise ValidationError("candidate-retrieval-provider-fields")
     # Legacy requests carry no answer_policy; the effective policy is always recorded.
     provider = {**config["provider"],
@@ -396,6 +403,34 @@ def _validate_repo_search_policy(provider: dict[str, Any], profile: ProviderProf
         raise ValidationError("candidate-retrieval-provider-search-policy")
     if provider["landing_policy"] not in LANDING_POLICIES:
         raise ValidationError("candidate-retrieval-provider-landing-policy")
+    if "invalid_action_recovery" in provider and (
+            isinstance(provider["invalid_action_recovery"], bool)
+            or provider["invalid_action_recovery"] not in INVALID_ACTION_RECOVERY_VALUES):
+        raise ValidationError("candidate-retrieval-provider-invalid-action-recovery")
+
+
+def _validate_link_profiles(corpus: dict[str, Any]) -> None:
+    """S057: ``link_profiles`` is a closed, duplicate-free list; the Hugo profile carries exactly its parameters."""
+    if "link_profile_params" in corpus and "link_profiles" not in corpus:
+        raise ValidationError("candidate-retrieval-link-profiles")
+    if "link_profiles" not in corpus:
+        return
+    profiles = corpus["link_profiles"]
+    if (not isinstance(profiles, list) or not profiles or len(set(profiles)) != len(profiles)
+            or any(profile not in LINK_PROFILES for profile in profiles)):
+        raise ValidationError("candidate-retrieval-link-profiles")
+    params = corpus.get("link_profile_params", {})
+    needs = {"hugo_site_url_v1"} & set(profiles)
+    if not isinstance(params, dict) or set(params) != needs:
+        raise ValidationError("candidate-retrieval-link-profile-params")
+    if needs:
+        hugo = params["hugo_site_url_v1"]
+        if (not isinstance(hugo, dict) or set(hugo) != HUGO_PARAM_FIELDS
+                or not isinstance(hugo["product_url_prefix"], str) or not hugo["product_url_prefix"].startswith("/")
+                or not isinstance(hugo["site_prefixes"], list) or not hugo["site_prefixes"]
+                or any(not isinstance(p, str) or not p.startswith("/") or not p.endswith("/") for p in hugo["site_prefixes"])
+                or not isinstance(hugo["content_root"], str) or ".." in hugo["content_root"].split("/")):
+            raise ValidationError("candidate-retrieval-link-profile-params")
 
 
 def _git(repo: Path, *arguments: str) -> str:
@@ -477,17 +512,27 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
     provider_config = {"top_k": config["provider"]["top_k"],
                        "max_context_chars_per_doc": config["provider"]["max_context_chars_per_doc"],
                        "answer_policy": config["provider"]["answer_policy"],
-                       **{name: config["provider"][name] for name in sorted(profile.config_fields)}}
+                       **{name: config["provider"][name] for name in sorted(profile.config_fields)},
+                       **({"invalid_action_recovery": config["provider"]["invalid_action_recovery"]}
+                          if "invalid_action_recovery" in config["provider"] else {})}
     (provider_input / "config.yaml").write_bytes(canonical(provider_config) + b"\n")
     graph_edges_sha256 = None
+    link_resolution = None
     if profile.requires_graph:
         # Per-candidate link graph: the resolver of write_markdown_link_graph
         # over the candidate's own docs tree, nodes = imported .md documents.
         # S047: an excluded page is not a node, so a link to it resolves to nothing.
-        edges = extract_markdown_link_edges(
-            corpus_root, doc_id_for=lambda relative: imported_document_name(relative, import_policy)[1],
-            extensions=config["corpus"]["extensions"],
-            include=lambda relative: not excluded_by_policy(relative, exclude_policy, faq_patterns))
+        doc_id_for = lambda relative: imported_document_name(relative, import_policy)[1]  # noqa: E731
+        include = lambda relative: not excluded_by_policy(relative, exclude_policy, faq_patterns)  # noqa: E731
+        if "link_profiles" in config["corpus"]:
+            # S057: the declared profiles' union; the counts go to the launch record and the receipt.
+            edges, link_resolution = extract_profile_link_edges(
+                corpus_root, profiles=config["corpus"]["link_profiles"],
+                params=config["corpus"].get("link_profile_params"), doc_id_for=doc_id_for,
+                extensions=config["corpus"]["extensions"], include=include)
+        else:
+            edges = extract_markdown_link_edges(corpus_root, doc_id_for=doc_id_for,
+                                                extensions=config["corpus"]["extensions"], include=include)
         write_edges_csv(edges, provider_input / GRAPH_EDGES_FILE)
         graph_edges_sha256 = sha256_file(provider_input / GRAPH_EDGES_FILE)
     inventory_rows = document_rows + excluded_rows
@@ -506,7 +551,9 @@ def prepare_provider_input(config: dict[str, Any], input_root: Path, candidate_r
             "graph_edges_sha256": graph_edges_sha256,
             "document_inventory_sha256": sha256_bytes(canonical(inventory_rows)),
             "provider_input_inventory": regular_inventory(provider_input),
-            "provider_input_inventory_sha256": sha256_bytes(canonical(regular_inventory(provider_input)))}
+            "provider_input_inventory_sha256": sha256_bytes(canonical(regular_inventory(provider_input))),
+            **({"link_profiles": list(config["corpus"]["link_profiles"]), "link_resolution": link_resolution}
+               if "link_profiles" in config["corpus"] else {})}
 
 
 def expected_provider_metadata(provider: dict[str, Any]) -> dict[str, Any]:
@@ -524,7 +571,9 @@ def expected_provider_metadata(provider: dict[str, Any]) -> dict[str, Any]:
                 "prompt_version": SEARCH_PROMPT_VERSIONS[provider["landing_policy"]],
                 "landing": provider["landing_policy"],
                 **({"stop_words": list(STOP_WORDS_EN_V1), "stop_word_list": STOP_WORDS_NAME}
-                   if provider["landing_policy"] == LANDING_TOKENISED else {})}
+                   if provider["landing_policy"] == LANDING_TOKENISED else {}),
+                **({"invalid_action_recovery": provider["invalid_action_recovery"]}
+                   if "invalid_action_recovery" in provider else {})}
     if profile.navigator:
         return {**common, "deterministic": False,
                 "page_visit_budget": provider["page_visit_budget"],
@@ -831,5 +880,12 @@ def validate_search_traces(traces_dir: Path, question_ids: list[str], doc_ids: s
                 or not isinstance(terminal.get("answer"), dict)
                 or any(c not in visits for c in terminal["answer"].get("cited_pages", []))):
             raise ValidationError("candidate-retrieval-provider-trace-budget")
+        # S057: the recovery record is present exactly when the request declared recovery, within its bound.
+        recovered = terminal.get("invalid_actions_recovered")
+        if ("invalid_action_recovery" in provider) != (recovered is not None) or recovered is not None and (
+                not isinstance(recovered, dict) or not isinstance(recovered.get("steps"), list)
+                or recovered.get("count") != len(recovered["steps"])
+                or recovered["count"] > provider["invalid_action_recovery"]):
+            raise ValidationError("candidate-retrieval-provider-trace-recovery")
         terminals[query_id] = terminal
     return terminals

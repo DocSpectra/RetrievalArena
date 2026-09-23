@@ -197,6 +197,9 @@ def finalize() -> int:
             "excluded_document_ids": launch["excluded_document_ids"],
             # S023: the per-request FAQ pattern list of cikm_faq_pattern_v2 (None under v1).
             "corpus_faq_patterns": launch.get("corpus_faq_patterns"),
+            # S057: the declared link profiles and their per-kind resolution counts (only when declared).
+            **({"link_profiles": launch["link_profiles"], "link_resolution": launch["link_resolution"]}
+               if "link_profiles" in launch else {}),
             # S046b: the reader's landing policy (None for every other provider).
             "landing_policy": launch.get("landing_policy"),
             "identity": _identity(),

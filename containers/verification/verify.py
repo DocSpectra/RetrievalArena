@@ -26,6 +26,7 @@ COMMANDS = {
         "unit_tests.test_rag_graph_ranked_expand_runner",
         "unit_tests.test_rag_llm_guided_search_runner",
         "unit_tests.test_rag_repo_search_agent_runner",
+        "unit_tests.test_s057_reader_v2",
         "unit_tests.test_reachability_surface",
         "unit_tests.test_docstyle_measurement",
         "unit_tests.test_repo_lexicon",

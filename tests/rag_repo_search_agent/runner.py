@@ -77,6 +77,9 @@ MIN_TOKEN_CHARS = 2
 ACTIONS = ("search", "open", "back", "answer")
 ROUTES = ("landing", "search", "link")
 TERMINALS = ("answer", "budget_exhausted", "invalid_action", "provider_error")
+# S057: the one line a recovered refusal adds to the next observation (``last_action_feedback``).
+RECOVERY_FEEDBACK = ("That page is already open or was not offered. Answer from the open page, search, "
+                     "open a page listed as offered, or go back.")
 ALLOWED_REQUESTS = {("GET", "/api/tags"), ("POST", "/api/chat")}
 DIGEST_RE = re.compile(r"^(sha256:)?[0-9a-f]{64}$")
 HIT_TEXT_CHARS = 200
@@ -121,6 +124,12 @@ class ReaderConfig:
     follow_links: bool
     landing_policy: str
     model_policy: ModelPolicy
+    # S057: None when the request does not declare it (today's controller); 0 or 2 when declared.
+    invalid_action_recovery: int | None = None
+
+    @property
+    def recoveries_allowed(self) -> int:
+        return self.invalid_action_recovery or 0
 
     @property
     def provider_name(self) -> str:
@@ -166,6 +175,16 @@ def parse_model_policy(raw: Any) -> ModelPolicy:
     return policy
 
 
+def _recovery(raw: dict[str, Any]) -> int | None:
+    """S057: absent -> None (today's controller); declared -> 0 or 2, nothing else."""
+    if "invalid_action_recovery" not in raw:
+        return None
+    value = raw["invalid_action_recovery"]
+    if isinstance(value, bool) or value not in (0, 2):
+        raise NavigatorError("invalid_action_recovery")
+    return int(value)
+
+
 def parse_config(raw: dict[str, Any]) -> ReaderConfig:
     if raw.get("answer_policy", ANSWER_POLICY) != ANSWER_POLICY:
         raise NavigatorError("answer_policy_unsupported")
@@ -187,7 +206,8 @@ def parse_config(raw: dict[str, Any]) -> ReaderConfig:
         page_char_limit=max(1, int(raw.get("page_char_limit", 12000))),
         follow_links=raw["follow_links"],
         landing_policy=raw["landing_policy"],
-        model_policy=parse_model_policy(raw.get("model_policy")))
+        model_policy=parse_model_policy(raw.get("model_policy")),
+        invalid_action_recovery=_recovery(raw))
 
 
 def answer_text(text: str, *, max_chars: int) -> str:
@@ -453,7 +473,8 @@ def build_messages(observation: dict[str, Any], *, follow_links: bool, tokenised
 def build_observation(question: dict[str, str], *, page: dict[str, Any] | None, links: list[str],
                       searches: list[dict[str, Any]], offered_hits: list[str], history: list[str],
                       searches_remaining: int, opens_remaining: int, calls_remaining: int,
-                      follow_links: bool, landing_terms: list[str] | None = None) -> dict[str, Any]:
+                      follow_links: bool, landing_terms: list[str] | None = None,
+                      feedback: str | None = None) -> dict[str, Any]:
     # The page already open is not offered again (re-opening it reads nothing new;
     # the probe showed a six-fold re-open loop on one page); earlier pages stay openable.
     current = page["doc_id"] if page else None
@@ -489,6 +510,10 @@ def build_observation(question: dict[str, str], *, page: dict[str, Any] | None, 
         observation["links"] = links
     if landing_terms is not None:
         observation["landing_terms"] = list(landing_terms)
+    if feedback is not None:
+        # S057: only in the observation right after a recovered refusal; absent otherwise, so a run
+        # that is never refused sends the model exactly today's observation.
+        observation["last_action_feedback"] = feedback
     return observation
 
 
@@ -518,6 +543,8 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
     offered_by_search: dict[str, int] = {}
     terminal: dict[str, Any] | None = None
     answer: dict[str, Any] = {"cited_pages": [], "text": ""}
+    recovered_steps: list[int] = []
+    feedback: str | None = None
 
     def admissible(doc_id: str) -> list[str]:
         return sorted(edges.get(doc_id, set()) & set(corpus))
@@ -563,7 +590,9 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
             question, page=page,
             links=links, searches=search_views, offered_hits=list(offered_by_search), history=stack,
             searches_remaining=config.search_budget - searches, opens_remaining=config.page_visit_budget - opens,
-            calls_remaining=config.model_call_budget - calls, follow_links=config.follow_links, landing_terms=terms)
+            calls_remaining=config.model_call_budget - calls, follow_links=config.follow_links, landing_terms=terms,
+            feedback=feedback)
+        feedback = None
         call_index = calls + 1
         try:
             requested, usage = client.chat(build_messages(observation, follow_links=config.follow_links,
@@ -601,6 +630,13 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
             via_search = isinstance(doc_id, str) and doc_id in offered_by_search
             via_link = isinstance(doc_id, str) and doc_id in links
             if not (via_search or via_link) or doc_id == current:
+                # S057: a refused open is recovered up to the declared number of times -- the refusal
+                # stands (S046's loop guard), the next observation says why, the call already counted.
+                if len(recovered_steps) < config.recoveries_allowed:
+                    recovered_steps.append(call_index)
+                    provider_calls[-1].update({"recovered": True, "validation_error": "page_not_offered"})
+                    feedback = RECOVERY_FEEDBACK
+                    continue
                 terminal = {"reason": "invalid_action", "validation_error": "page_not_offered", "requested": requested}
                 break
             # Route precedence: a page any search has offered is a search
@@ -685,6 +721,9 @@ def navigate(question: dict[str, str], corpus: dict[str, str], edges: dict[str, 
         "answer": answer,
         "paper_facing_evidence": False,
     }
+    if config.invalid_action_recovery is not None:
+        trace["controller"]["invalid_action_recovery"] = config.invalid_action_recovery
+        trace["invalid_actions_recovered"] = {"count": len(recovered_steps), "steps": recovered_steps}
     return prediction, trace
 
 
@@ -700,7 +739,9 @@ def write_trace(path: Path, trace: dict[str, Any]) -> None:
                  "opens": trace["opens"], "searches": trace["searches"], "zero_hit_searches": trace["zero_hit_searches"],
                  "model_calls": trace["model_calls"], "dead_ends": trace["dead_ends"],
                  "answer": trace["answer"], "final_context_doc_ids": trace["final_context_doc_ids"],
-                 "provider_calls": trace["provider_calls"], "paper_facing_evidence": False})
+                 "provider_calls": trace["provider_calls"], "paper_facing_evidence": False,
+                 **({"invalid_actions_recovered": trace["invalid_actions_recovered"]}
+                    if "invalid_actions_recovered" in trace else {})})
     with path.open("w", encoding="utf-8", newline="\n") as handle:
         for row in rows:
             handle.write(json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n")
@@ -724,6 +765,8 @@ def metadata(config: ReaderConfig) -> dict[str, Any]:
         "trace_schema_version": TRACE_SCHEMA_VERSION, "provider_policy": PROVIDER_POLICY_NAME,
         "prompt_version": config.prompt_version, "landing": config.landing_policy,
         **({"stop_words": list(STOP_WORDS_EN_V1), "stop_word_list": STOP_WORDS_NAME} if config.tokenised_landing else {}),
+        **({"invalid_action_recovery": config.invalid_action_recovery}
+           if config.invalid_action_recovery is not None else {}),
     }
 
 
@@ -749,7 +792,7 @@ def run(input_dir: Path, output_dir: Path, *, client_factory=ModelClient) -> int
     traces_dir.mkdir()
     predictions = []
     terminals: dict[str, int] = {name: 0 for name in TERMINALS}
-    total_calls = total_opens = total_searches = 0
+    total_calls = total_opens = total_searches = total_recovered = 0
     started = time.monotonic()
     for question in questions:
         prediction, trace = navigate(question, corpus, edges, config, client)
@@ -759,10 +802,13 @@ def run(input_dir: Path, output_dir: Path, *, client_factory=ModelClient) -> int
         total_calls += trace["model_calls"]
         total_opens += trace["opens"]
         total_searches += trace["searches"]
+        total_recovered += trace.get("invalid_actions_recovered", {}).get("count", 0)
     summary["model_digest_after"] = client.observe_identity()
     summary.update({"status": "completed", "terminals": terminals, "model_calls": total_calls,
                     "page_opens": total_opens, "searches": total_searches,
                     "wall_seconds": round(time.monotonic() - started, 1)})
+    if config.invalid_action_recovery is not None:
+        summary["invalid_actions_recovered"] = total_recovered
     with (output_dir / "predictions.jsonl").open("w", encoding="utf-8", newline="\n") as handle:
         for row in predictions:
             handle.write(json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n")
