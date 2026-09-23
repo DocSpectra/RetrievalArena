@@ -9,7 +9,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from retrieval_arena.docstyle_measurement import identifier_metrics, identifier_tokens, identifier_view
+from retrieval_arena.docstyle_measurement import identifier_metrics, identifier_tokens, identifier_view, token_sets, validate_config
+from retrieval_arena.errors import ValidationError
 from retrieval_arena.errors import ValidationError
 from retrieval_arena.repo_lexicon import (
     CATALOG_DIR, STOP_CATALOGS, build_lexicon, classify_identifier, load_lexicon, load_stop_catalogs, mention_index,
@@ -137,6 +138,23 @@ class RepoLexiconTests(unittest.TestCase):
         self.assertAlmostEqual(values["lexicon_mention_density"], 3 / values["identifier_view_word_count"] * 100)
         self.assertAlmostEqual(values["identifier_resolution_ratio"], 2 / 3)
         self.assertIsNone(identifier_metrics("no identifiers here\n", index)["identifier_resolution_ratio"])
+
+    def test_token_sets_agree_with_the_unique_counts_and_the_flag_is_closed(self):
+        # S056: the set-difference table reads these sets; they come from the same pass as the counts
+        index = mention_index(self.lexicon, self.stops)
+        for path in sorted(IDENTIFIERS.glob("*.md")):
+            text = path.read_text(encoding="utf-8")
+            values, sets = identifier_metrics(text, index), token_sets(text, index)
+            self.assertEqual(len(sets["identifier_set"]), values["unique_identifier_count"], path.name)
+            self.assertEqual(len(sets["lexicon_mention_set"]), values["unique_lexicon_mention_count"], path.name)
+            self.assertEqual(sets["identifier_set"], sorted(sets["identifier_set"]))
+        self.assertIsNone(token_sets("x\n", None)["lexicon_mention_set"])
+        base = {"schema_version": "retrieval_arena.docstyle_measurement_config.v1", "corpus_id": "c",
+                "candidate": {"commit": "a" * 40, "tree": "b" * 40},
+                "corpus": {"root": "docs", "extensions": [".md"], "import_policy": "cikm_flat_path_sha1_lower_v1"}}
+        validate_config({**base, "emit_token_sets": True})
+        with self.assertRaises(ValidationError):
+            validate_config({**base, "emit_token_sets": False})
 
 
 if __name__ == "__main__":

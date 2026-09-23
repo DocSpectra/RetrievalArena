@@ -27,7 +27,7 @@ from pathlib import Path
 from retrieval_arena.candidate_retrieval import admit_candidate, canonical, regular_inventory, sha256_bytes, sha256_file
 from retrieval_arena.docstyle_measurement import (
     REQUEST_SCHEMA, inventory_corpus, lexicon_for_config, load_catalogs, load_spacy, load_support_ids, manifest,
-    measure_rows, summarize, table_bytes, validate_config,
+    measure_rows, summarize, table_bytes, validate_config, token_set_rows,
 )
 from retrieval_arena.repo_lexicon import LEXICON_FILE, load_stop_catalogs, mention_index
 
@@ -41,6 +41,7 @@ SUMMARY = "docstyle_summary.v1.json"
 MANIFEST = "docstyle_metrics_manifest.json"
 OUTPUTS = (TABLE, SUMMARY, MANIFEST)
 LEXICON = LEXICON_FILE
+TOKEN_SETS = "docstyle_token_sets.v1.jsonl"  # S056, only when the config asks (emit_token_sets)
 
 
 def _now() -> str:
@@ -130,6 +131,8 @@ def main() -> int:
         pending = {TABLE: table_data, SUMMARY: canonical(summary) + b"\n", MANIFEST: canonical(manifest_value) + b"\n"}
         if lexicon_entry["origin"] == "built":
             pending[LEXICON] = canonical(lexicon) + b"\n"
+        if config.get("emit_token_sets"):
+            pending[TOKEN_SETS] = b"".join(canonical(row) + b"\n" for row in token_set_rows(rows, lexicon_index))
         for name, data in pending.items():
             (OUTPUT / (name + ".pending")).write_bytes(data)
         extra = {"excluded_document_count": len(excluded),
@@ -145,7 +148,7 @@ def main() -> int:
     except Exception as error:
         for path in OUTPUT.glob("*.pending"):
             path.unlink(missing_ok=True)
-        for name in OUTPUTS + (LEXICON,):
+        for name in OUTPUTS + (LEXICON, TOKEN_SETS):
             (OUTPUT / name).unlink(missing_ok=True)
         if (OUTPUT.is_dir() and (OUTPUT / OWNER).is_file()
                 and (OUTPUT / OWNER).read_text(encoding="utf-8") == "retrieval_arena.output_root.v1\n"):

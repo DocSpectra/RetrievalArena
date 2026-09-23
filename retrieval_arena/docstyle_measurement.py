@@ -253,10 +253,9 @@ def identifier_tokens(view: str) -> list[tuple[str, str]]:
     return [(token, kind) for token, kind in tokens if token]
 
 
-def identifier_metrics(text: str, lexicon_index: tuple[frozenset[str], dict[str, str]] | None) -> dict[str, Any]:
-    """Counter 1 over the identifier view; Counter 2 when a lexicon index is given, else null columns."""
-    view = identifier_view(text)
-    tokens = identifier_tokens(view)
+def _identifier_matches(text: str, lexicon_index: tuple[frozenset[str], dict[str, str]] | None):
+    """(tokens, class counts, Counter 1 identifiers, Counter 2 mentions or None) -- one pass both outputs share."""
+    tokens = identifier_tokens(identifier_view(text))
     classes: Counter = Counter()
     identifiers: list[str] = []
     for token, kind in tokens:
@@ -270,6 +269,27 @@ def identifier_metrics(text: str, lexicon_index: tuple[frozenset[str], dict[str,
         if name is not None:
             classes[name] += 1
             identifiers.append(token)
+    mentions = None
+    if lexicon_index is not None:
+        exact, folded = lexicon_index
+        mentions = []
+        for token, _ in tokens:
+            if token in exact:
+                mentions.append(token)
+            elif token.casefold() in folded:
+                mentions.append(folded[token.casefold()])
+    return tokens, classes, identifiers, mentions
+
+
+def token_sets(text: str, lexicon_index: tuple[frozenset[str], dict[str, str]] | None) -> dict[str, Any]:
+    """S056: the sorted unique Counter 1 identifiers and Counter 2 mentions of one document (the set-difference table)."""
+    _tokens, _classes, identifiers, mentions = _identifier_matches(text, lexicon_index)
+    return {"identifier_set": sorted(set(identifiers)), "lexicon_mention_set": sorted(set(mentions)) if mentions is not None else None}
+
+
+def identifier_metrics(text: str, lexicon_index: tuple[frozenset[str], dict[str, str]] | None) -> dict[str, Any]:
+    """Counter 1 over the identifier view; Counter 2 when a lexicon index is given, else null columns."""
+    tokens, classes, identifiers, mentions = _identifier_matches(text, lexicon_index)
     unique = set(identifiers)
     values: dict[str, Any] = {
         "identifier_view_word_count": len(tokens), "identifier_count": len(identifiers),
@@ -280,13 +300,7 @@ def identifier_metrics(text: str, lexicon_index: tuple[frozenset[str], dict[str,
         "identifier_resolution_ratio": None,
     }
     if lexicon_index is not None:
-        exact, folded = lexicon_index
-        mentions = []
-        for token, _ in tokens:
-            if token in exact:
-                mentions.append(token)
-            elif token.casefold() in folded:
-                mentions.append(folded[token.casefold()])
+        exact, _folded = lexicon_index
         values.update({
             "lexicon_mention_count": len(mentions), "unique_lexicon_mention_count": len(set(mentions)),
             "lexicon_mention_density": _per(len(mentions), len(tokens), 100.0),
@@ -425,9 +439,11 @@ def _relative_or_dot(value: Any, code: str) -> str:
 
 def validate_config(value: Any) -> dict[str, Any]:
     fields = {"schema_version", "corpus_id", "candidate", "corpus"}
-    optional = {"support_path", "lexicon", "lexicon_path", "lexicon_commit_policy"}
+    optional = {"support_path", "lexicon", "lexicon_path", "lexicon_commit_policy", "emit_token_sets"}
     if not isinstance(value, dict) or not fields <= set(value) or not set(value) <= fields | optional:
         raise ValidationError("docstyle-config-fields")
+    if "emit_token_sets" in value and value["emit_token_sets"] is not True:
+        raise ValidationError("docstyle-emit-token-sets")
     if "lexicon" in value and "lexicon_path" in value:
         raise ValidationError("docstyle-lexicon-exclusive")
     if "lexicon_commit_policy" in value and (
@@ -544,6 +560,18 @@ def measure_rows(rows: list[dict[str, Any]], corpus_id: str, commit: str, nlp: A
             for column in EXPORT_METRIC_COLUMNS + EXTRA_COLUMNS + IDENTIFIER_COLUMNS:
                 record[column] = None
         table.append({column: record[column] for column in ROW_COLUMNS})
+    return table
+
+
+def token_set_rows(rows: list[dict[str, Any]], lexicon_index: tuple[frozenset[str], dict[str, str]] | None) -> list[dict[str, Any]]:
+    """S056: one ``{doc_id, doc_path, identifier_set, lexicon_mention_set}`` row per document (``emit_token_sets``)."""
+    table = []
+    for row in rows:
+        try:
+            sets = token_sets(row["source"].read_bytes().decode("utf-8"), lexicon_index)
+        except Exception:  # the per-document failure policy of measure_rows: the row stays, the sets null
+            sets = {"identifier_set": None, "lexicon_mention_set": None}
+        table.append({"doc_id": row["doc_id"], "doc_path": row["path"], **sets})
     return table
 
 
