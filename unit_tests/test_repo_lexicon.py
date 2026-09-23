@@ -34,6 +34,7 @@ CLASS_EXPECTED = {
     "exclusions.md": (26, 0, 0, {}),
     "fenced.md": (7, 0, 0, {}),
     "bold_span.md": (8, 2, 1, {"a_code_span": 1, "f_camel": 1}),
+    "long_span.md": (11, 0, 0, {}),  # S056: a span of > 6 tokens is a view word, never an identifier
 }
 CLASS_CASES = {
     "--server=foo": "b_flag", "--insecure": "b_flag", "e.g": None, "i.e": None, "helm.sh": "c_dotted",
@@ -75,7 +76,7 @@ class IdentifierClassTests(unittest.TestCase):
         fenced = identifier_view((IDENTIFIERS / "fenced.md").read_text(encoding="utf-8"))
         self.assertNotIn("argocd app sync", fenced)
         tokens = identifier_tokens(view)
-        self.assertTrue(all(not in_span for token, in_span in tokens if token == "seven"))
+        self.assertTrue(all(kind == "long_code_span" for token, kind in tokens if token == "seven"))
 
 
 class RepoLexiconTests(unittest.TestCase):
@@ -100,7 +101,7 @@ class RepoLexiconTests(unittest.TestCase):
         self.assertEqual(self.lexicon["rule_counts"],
                          {"r1_identifier_class": 11, "r2_go_declaration": 3, "r3_string_literal": 3,
                           "r4_invalid_json_skipped": 1, "r4_mapping_key": 2})
-        self.assertEqual((self.lexicon["file_count"], self.lexicon["skipped_count"]), (4, 1))
+        self.assertEqual((self.lexicon["file_count"], self.lexicon["skipped_count"]), (4, 0))  # S056: invalid JSON skips r4 only
         self.assertTrue(all(isinstance(row["file_count"], int) and isinstance(row["occurrences"], int)
                             for row in self.lexicon["entries"]))
         tokens = {row["token"] for row in self.lexicon["entries"]}

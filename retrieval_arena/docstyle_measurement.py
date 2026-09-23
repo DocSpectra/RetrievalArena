@@ -228,21 +228,29 @@ def identifier_view(text: str) -> str:
     return _HTML_TAG.sub("", view)
 
 
-def identifier_tokens(view: str) -> list[tuple[str, bool]]:
-    """(bare token, inside an inline code span) for every non-empty token of the identifier view, in order."""
-    tokens: list[tuple[str, bool]] = []
+PROSE, CODE_SPAN, LONG_CODE_SPAN = "prose", "code_span", "long_code_span"
+
+
+def identifier_tokens(view: str) -> list[tuple[str, str]]:
+    """(bare token, where it sits) for every non-empty token of the identifier view, in order.
+
+    ``code_span``: inside an inline code span of <= 6 tokens; ``long_code_span``: inside a longer span
+    (a code fragment: a view word and a possible lexicon mention, never a Counter 1 identifier -- S056
+    aligns the code with the rule as written, gate FIX-3 of S055); ``prose``: outside any span.
+    """
+    tokens: list[tuple[str, str]] = []
     position = 0
     for match in _INLINE_CODE.finditer(view):
         for raw in view[position:match.start()].split():
-            tokens.append((raw.strip(_STRIP_CHARS), False))
+            tokens.append((raw.strip(_STRIP_CHARS), PROSE))
         span = match.group(0)[1:-1].split()
-        short = len(span) <= MAX_SPAN_TOKENS
+        kind = CODE_SPAN if len(span) <= MAX_SPAN_TOKENS else LONG_CODE_SPAN
         for raw in span:
-            tokens.append((raw.strip(_STRIP_CHARS), short))
+            tokens.append((raw.strip(_STRIP_CHARS), kind))
         position = match.end()
     for raw in view[position:].split():
-        tokens.append((raw.strip(_STRIP_CHARS), False))
-    return [(token, in_span) for token, in_span in tokens if token]
+        tokens.append((raw.strip(_STRIP_CHARS), PROSE))
+    return [(token, kind) for token, kind in tokens if token]
 
 
 def identifier_metrics(text: str, lexicon_index: tuple[frozenset[str], dict[str, str]] | None) -> dict[str, Any]:
@@ -251,8 +259,10 @@ def identifier_metrics(text: str, lexicon_index: tuple[frozenset[str], dict[str,
     tokens = identifier_tokens(view)
     classes: Counter = Counter()
     identifiers: list[str] = []
-    for token, in_span in tokens:
-        if in_span:
+    for token, kind in tokens:
+        if kind == LONG_CODE_SPAN:
+            continue
+        if kind == CODE_SPAN:
             classes["a_code_span"] += 1
             identifiers.append(token)
             continue

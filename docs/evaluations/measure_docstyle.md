@@ -168,7 +168,8 @@ whitespace and stripped of surrounding `` .,;:!?()[]{}"'*~<>|` ``;
 `identifier_density` per 100 view words, `identifier_class_counts`): a token
 is an identifier by the first matching class (fullmatch): (a) any token
 inside an inline code span of ≤ 6 tokens (a longer span is a code fragment
-and contributes nothing); outside spans: (b) `--[a-z0-9][a-z0-9-]*(=\S+)?`;
+and contributes nothing to Counter 1; its tokens stay view words and can be
+lexicon mentions -- the code follows this since S056); outside spans: (b) `--[a-z0-9][a-z0-9-]*(=\S+)?`;
 (c) `[A-Za-z_][\w-]*(\.[A-Za-z_][\w-]*)+` with ≥ 2 letters in every
 segment (`helm.sh`, not `e.g`); (d) `[\w.-]+(/[\w.-]+)+` not starting
 with `http` and containing `.`, `-` or `_` (`argocd.argoproj.io/hook-delete-policy`,
@@ -201,8 +202,10 @@ single-line string literals whose content is one token of ≥ 3 characters
 matching `[A-Za-z0-9_./-]+` and containing `.`, `-`, `_`, a digit or a
 class (f) case change (annotation keys, flag names; `Use: "app"` does not
 enter); **r4** YAML mapping keys outside fences and JSON object keys of ≥ 3
-characters (a file that is not valid JSON skips r4 and is counted in
-`skipped_count` and `r4_invalid_json_skipped`). Entries are ≥ 3
+characters (a file that is not valid JSON skips only r4: its r1/r3
+tokens still enter, it counts in `file_count`, and it increments
+`r4_invalid_json_skipped`, never `skipped_count`, which counts only
+files over the size limit; S056). Entries are ≥ 3
 characters, case-preserving, not purely numeric and not in either stop
 catalog, compared casefolded: `docstyle_english_stop_v1.json` (the top
 1 000 of `first20hours/google-10000-english`, frequency-ordered, web tokens

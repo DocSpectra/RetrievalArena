@@ -210,7 +210,8 @@ def build_lexicon(source_root: Path, exclude_root: Path | None, candidate: dict[
             try:
                 _json_keys(json.loads(text), found, file_rules, stops)
             except ValueError:
-                skipped += 1
+                # only the key harvest (r4) is skipped: the file's r1/r3 tokens still enter and it counts
+                # in file_count, never in skipped_count (S056, gate NOTE-3 of S055)
                 rules["r4_invalid_json_skipped"] += 1
         file_count += 1
         rules.update(file_rules)
