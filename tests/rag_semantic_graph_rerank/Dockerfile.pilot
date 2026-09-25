@@ -1,6 +1,7 @@
 # Rebind the exact local E009 runtime after source changes without resolving
 # floating sentence-transformers dependencies during a development pilot.
-# Pass an immutable local image ID as BASE_IMAGE and record it with the output.
-ARG BASE_IMAGE
+# Verify the local tag's immutable image ID before building and retain that ID
+# with the output; BuildKit resolves this tag from the local image store.
+ARG BASE_IMAGE=retrieval-arena/rag-semantic-graph-rerank:latest
 FROM ${BASE_IMAGE}
 COPY runner.py /app/runner.py
