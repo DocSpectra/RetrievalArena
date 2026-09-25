@@ -64,6 +64,15 @@ def build_parser() -> argparse.ArgumentParser:
     ranked.add_argument("--predictions", required=True)
     ranked.add_argument("--policy", required=True)
     ranked.add_argument("--out-dir", required=True)
+    ragas = subparsers.add_parser("score-ragas", help="Validate and reaggregate stored Ragas judgments offline (no judge network).")
+    ragas.add_argument("--batch", required=True)
+    ragas.add_argument("--rubrics", required=True)
+    ragas.add_argument("--recorded", required=True)
+    ragas.add_argument("--out", required=True)
+    ragas_export = subparsers.add_parser("export-ragas", help="Map exported legacy predictions to explicit judge-side contexts.")
+    ragas_export.add_argument("--predictions", required=True)
+    ragas_export.add_argument("--manifest", required=True)
+    ragas_export.add_argument("--out", required=True)
     profile = subparsers.add_parser("evaluate-profile", help="Evaluate strict automatic or calibration profile artifacts.")
     profile.add_argument("--config", required=True, help="Path to strict dual-profile JSON config.")
     profile.add_argument("--out-dir", required=True, help="Directory for the isolated result family.")
@@ -221,6 +230,18 @@ def main(argv: list[str] | None = None) -> int:
                 print(run_experiment(args.config)["summary"])
         elif args.command == "validate":
             print(validate_experiment(args.config)["summary"])
+        elif args.command == "export-ragas":
+            from .ragas_scoring import export_legacy_predictions, require, write_json
+            require(Path(args.out).resolve() not in {Path(args.predictions).resolve(), Path(args.manifest).resolve()}, "output-overwrites-input")
+            result = export_legacy_predictions(Path(args.predictions).read_bytes(), json.loads(Path(args.manifest).read_text(encoding="utf-8")))
+            write_json(args.out, result)
+            print(json.dumps({"units": len(result["units"])}))
+        elif args.command == "score-ragas":
+            from .ragas_scoring import score_recorded_files
+            result = score_recorded_files(args.batch, args.rubrics, args.recorded, args.out)
+            print(json.dumps({"sha256": result["sha256"], "summary": result["summary"]}, sort_keys=True))
+            if any(r["status"] != "ok" or r["faithfulness"]["status"] in {"judge_error", "parse_error", "unavailable"} for r in result["records"]):
+                return 1
         elif args.command == "score-ranked":
             result = score_ranked_files(Path(args.dataset), Path(args.qrels), Path(args.predictions), Path(args.policy), Path(args.out_dir))
             print(json.dumps(result["aggregate"], sort_keys=True))

@@ -1,5 +1,11 @@
 # The operator and the verification image
 
+Optional Ragas judging uses a [separate pinned image and operator](evaluations/score_ragas.md)
+(`scripts/build-ragas.ps1`, `scripts/run-ragas.ps1`), with committed source baked
+into the image. It does not extend this verification image's command admission or
+give retrieval providers judge access. Its dependency-free contract tests are in
+this image's `focused` suite; actual Ragas compatibility checks run in its own image.
+
 Canonical runs use the repository-owned Linux verification image
 (`containers/verification/`), not host Python. The image is immutable: the
 Dockerfile copies exactly five tracked files (`requirements.lock`,
