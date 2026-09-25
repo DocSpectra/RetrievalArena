@@ -1,0 +1,6 @@
+# Rebind the exact local E009 runtime after source changes without resolving
+# floating sentence-transformers dependencies during a development pilot.
+# Pass an immutable local image ID as BASE_IMAGE and record it with the output.
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+COPY runner.py /app/runner.py

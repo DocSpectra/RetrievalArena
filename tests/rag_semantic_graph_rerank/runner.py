@@ -13,6 +13,7 @@ from typing import Any
 
 TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
 POLICY_NAME = "semantic_seeded_graph_rerank_v1"
+PILOT_POLICY_NAME = "semantic_seeded_directional_pilot_v1"
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -125,7 +126,7 @@ def sentence_transformer_vectors(texts: list[str], *, model_path: Path, batch_si
     return vectors, len(vectors[0]) if vectors else 0
 
 
-def read_edges(input_dir: Path, nodes: set[str], *, directed: bool) -> dict[str, set[str]]:
+def read_edges(input_dir: Path, nodes: set[str], *, directed: bool, reverse: bool = False) -> dict[str, set[str]]:
     edges: dict[str, set[str]] = defaultdict(set)
     edge_path = input_dir / "graph_edges.csv"
     if not edge_path.exists():
@@ -135,6 +136,8 @@ def read_edges(input_dir: Path, nodes: set[str], *, directed: bool) -> dict[str,
             source = row.get("source", "")
             target = row.get("target", "")
             if source in nodes and target in nodes and source != target:
+                if reverse:
+                    source, target = target, source
                 edges[source].add(target)
                 if not directed:
                     edges[target].add(source)
@@ -161,6 +164,49 @@ def graph_distances(seeds: list[str], edges: dict[str, set[str]], *, hop_budget:
             distances[neighbor] = distance + 1
             queue.append((neighbor, distance + 1))
     return distances
+
+
+PILOT_DIRECTIONS = ("semantic_only", "outgoing", "undirected", "reversed")
+
+
+def pilot_selection(semantic_ranked: list[tuple[str, float]], edges: dict[str, set[str]], *,
+                    direction: str, seed_top_k: int, hop_budget: int, neighbor_budget: int,
+                    candidate_budget: int, final_top_k: int, distance_penalty: float) -> dict[str, Any]:
+    """One fixed-seed directional comparison, with declared global fallback.
+
+    Seeds are retained in semantic order; nonseeds use semantic score minus
+    distance penalty, tie-broken by distance then ID. Fallback is used only to
+    fill an exhausted graph candidate set, and is explicitly recorded.
+    """
+    if direction not in PILOT_DIRECTIONS:
+        raise ValueError("pilot-direction")
+    if not (1 <= seed_top_k <= final_top_k <= candidate_budget):
+        raise ValueError("pilot-budgets")
+    if hop_budget < 0 or neighbor_budget < 0 or distance_penalty < 0:
+        raise ValueError("pilot-graph-policy")
+    seeds = [doc_id for doc_id, _ in semantic_ranked[:seed_top_k]]
+    scores = dict(semantic_ranked)
+    distances = ({doc_id: 0 for doc_id, _ in semantic_ranked[:candidate_budget]}
+                 if direction == "semantic_only" else
+                 graph_distances(seeds, edges, hop_budget=hop_budget, neighbor_budget=neighbor_budget))
+    candidates = set(distances)
+    seed_set = set(seeds)
+    expanded = sorted(candidates - seed_set, key=lambda doc_id: (-scores[doc_id], distances[doc_id], doc_id))
+    candidates = seed_set | set(expanded[:candidate_budget - len(seeds)])
+    ranked_nonseed = sorted(candidates - seed_set, key=lambda doc_id: (
+        -(scores[doc_id] - distance_penalty * distances[doc_id]), distances[doc_id], doc_id))
+    selected = seeds + ranked_nonseed[:max(0, final_top_k - len(seeds))]
+    fallback = []
+    if len(selected) < final_top_k:
+        for doc_id, _ in semantic_ranked:
+            if doc_id not in candidates:
+                selected.append(doc_id)
+                fallback.append(doc_id)
+                if len(selected) == final_top_k:
+                    break
+    return {"seeds": seeds, "distances": distances, "candidates": candidates,
+            "selected": selected, "fallback": fallback,
+            "expanded": sorted(doc_id for doc_id, distance in distances.items() if distance > 0)}
 
 
 def normalize(values: dict[str, float]) -> dict[str, float]:
@@ -241,6 +287,9 @@ def run(input_dir: Path, output_dir: Path) -> None:
     max_context_chars = max(0, int(config.get("max_context_chars_per_doc", 1200)))
     distance_penalty = float(config.get("distance_penalty", 0.02))
     directed = bool(config.get("directed", False))
+    pilot_direction = str(config.get("pilot_direction", ""))
+    if pilot_direction and pilot_direction not in PILOT_DIRECTIONS:
+        raise ValueError("pilot-direction")
     use_pagerank_prior = bool(config.get("use_pagerank_prior", False))
     pagerank_weight = float(config.get("pagerank_weight", 0.0))
     pagerank_iterations = max(1, int(config.get("pagerank_iterations", 30)))
@@ -257,7 +306,8 @@ def run(input_dir: Path, output_dir: Path) -> None:
     questions = read_jsonl(input_dir / "questions.jsonl")
     corpus = {path.stem: path.read_text(encoding="utf-8") for path in (input_dir / "corpus").glob("*.md")}
     nodes = set(corpus)
-    edges = read_edges(input_dir, nodes, directed=directed)
+    edges = read_edges(input_dir, nodes, directed=directed if not pilot_direction else pilot_direction != "undirected",
+                       reverse=pilot_direction == "reversed")
     doc_vectors, question_vectors, dimensions, model_provenance = build_vectors(
         questions,
         corpus,
@@ -276,32 +326,46 @@ def run(input_dir: Path, output_dir: Path) -> None:
             query_vector = question_vectors[question["question_id"]]
             semantic_scores = {doc_id: cosine(query_vector, doc_vector) for doc_id, doc_vector in doc_vectors.items()}
             semantic_ranked = sorted(semantic_scores.items(), key=lambda item: (-item[1], item[0]))
-            seed_ids = [doc_id for doc_id, _ in semantic_ranked[:seed_top_k]]
-            distances = graph_distances(seed_ids, edges, hop_budget=hop_budget, neighbor_budget=neighbor_budget)
-            candidates = set(distances) & nodes
-            if len(candidates) > candidate_budget:
-                seed_set = set(seed_ids)
-                ranked_expanded = [
-                    doc_id
-                    for doc_id in sorted(
-                        candidates - seed_set,
-                        key=lambda doc_id: (-semantic_scores.get(doc_id, 0.0), distances.get(doc_id, hop_budget + 1), doc_id),
-                    )
-                ]
-                candidates = seed_set | set(ranked_expanded[: max(0, candidate_budget - len(seed_set))])
-            ranked = sorted(
-                candidates,
-                key=lambda doc_id: (
-                    -(
-                        semantic_scores.get(doc_id, 0.0)
-                        - distance_penalty * distances.get(doc_id, hop_budget + 1)
-                        + pagerank_weight * pagerank_scores.get(doc_id, 0.0)
+            fallback_ids: list[str] = []
+            if pilot_direction:
+                if use_pagerank_prior or pagerank_weight:
+                    raise ValueError("pilot-pagerank-disabled")
+                selection = pilot_selection(semantic_ranked, edges, direction=pilot_direction,
+                                            seed_top_k=seed_top_k, hop_budget=hop_budget,
+                                            neighbor_budget=neighbor_budget, candidate_budget=candidate_budget,
+                                            final_top_k=final_top_k, distance_penalty=distance_penalty)
+                seed_ids = selection["seeds"]
+                distances = selection["distances"]
+                candidates = selection["candidates"]
+                selected = selection["selected"]
+                fallback_ids = selection["fallback"]
+            else:
+                seed_ids = [doc_id for doc_id, _ in semantic_ranked[:seed_top_k]]
+                distances = graph_distances(seed_ids, edges, hop_budget=hop_budget, neighbor_budget=neighbor_budget)
+                candidates = set(distances) & nodes
+                if len(candidates) > candidate_budget:
+                    seed_set = set(seed_ids)
+                    ranked_expanded = [
+                        doc_id
+                        for doc_id in sorted(
+                            candidates - seed_set,
+                            key=lambda doc_id: (-semantic_scores.get(doc_id, 0.0), distances.get(doc_id, hop_budget + 1), doc_id),
+                        )
+                    ]
+                    candidates = seed_set | set(ranked_expanded[: max(0, candidate_budget - len(seed_set))])
+                ranked = sorted(
+                    candidates,
+                    key=lambda doc_id: (
+                        -(
+                            semantic_scores.get(doc_id, 0.0)
+                            - distance_penalty * distances.get(doc_id, hop_budget + 1)
+                            + pagerank_weight * pagerank_scores.get(doc_id, 0.0)
+                        ),
+                        distances.get(doc_id, hop_budget + 1),
+                        doc_id,
                     ),
-                    distances.get(doc_id, hop_budget + 1),
-                    doc_id,
-                ),
-            )
-            selected = ranked[:final_top_k]
+                )
+                selected = ranked[:final_top_k]
             context = []
             for rank, doc_id in enumerate(selected, start=1):
                 final_score = (
@@ -316,7 +380,7 @@ def run(input_dir: Path, output_dir: Path) -> None:
                         "score": float(final_score),
                         "semantic_score": float(semantic_scores.get(doc_id, 0.0)),
                         "source": "semantic_graph_rerank",
-                        "selection_role": "seed" if doc_id in seed_ids else "expanded_neighbor",
+                        "selection_role": "seed" if doc_id in seed_ids else ("semantic_fallback" if doc_id in fallback_ids else "expanded_neighbor"),
                         "graph_distance": distances.get(doc_id),
                         "pagerank": float(pagerank_scores.get(doc_id, 0.0)),
                         "rank": rank,
@@ -332,7 +396,7 @@ def run(input_dir: Path, output_dir: Path) -> None:
                         "retrieved_context": context,
                         "semantic_graph_rerank": {
                             "seed_ranker": "minilm_embedding",
-                            "expansion_policy": POLICY_NAME,
+                            "expansion_policy": PILOT_POLICY_NAME if pilot_direction else POLICY_NAME,
                             "final_ranker": "minilm_embedding_plus_graph_distance",
                             "seed_doc_ids": seed_ids,
                             "expanded_candidate_doc_ids": expanded_ids,
@@ -341,6 +405,9 @@ def run(input_dir: Path, output_dir: Path) -> None:
                             "final_context_doc_ids": selected,
                             "graph_distances": {doc_id: distances[doc_id] for doc_id in sorted(distances) if doc_id in nodes},
                             "dropped_candidate_count": max(0, len(candidates) - len(selected)),
+                            "pilot_direction": pilot_direction,
+                            "fallback_doc_ids": fallback_ids,
+                            "candidate_doc_ids": sorted(candidates),
                             "pagerank_prior_enabled": use_pagerank_prior,
                             "variant_id": variant_id,
                         },
@@ -357,11 +424,11 @@ def run(input_dir: Path, output_dir: Path) -> None:
                 "experiment_id": "E009",
                 "variant_id": variant_id,
                 "deterministic": True,
-                "policy": POLICY_NAME,
+                "policy": PILOT_POLICY_NAME if pilot_direction else POLICY_NAME,
                 "uses_llm": False,
                 "provider": "none",
                 "seed_ranker": "minilm_embedding",
-                "expansion_policy": POLICY_NAME,
+                "expansion_policy": PILOT_POLICY_NAME if pilot_direction else POLICY_NAME,
                 "final_ranker": "minilm_embedding_plus_graph_distance",
                 "embedding_backend": embedding_backend,
                 "model_id": model_id,
@@ -376,7 +443,10 @@ def run(input_dir: Path, output_dir: Path) -> None:
                 "candidate_budget": candidate_budget,
                 "final_top_k": final_top_k,
                 "distance_penalty": distance_penalty,
-                "directed": directed,
+                "directed": directed if not pilot_direction else pilot_direction in ("outgoing", "reversed"),
+                "pilot_direction": pilot_direction,
+                "pilot_seed_retention": bool(pilot_direction),
+                "pilot_fallback": "global_semantic_when_graph_exhausted_v1" if pilot_direction else "none",
                 "pagerank_prior_enabled": use_pagerank_prior,
                 "pagerank_weight": pagerank_weight if use_pagerank_prior else 0.0,
                 "pagerank_iterations": pagerank_iterations if use_pagerank_prior else 0,

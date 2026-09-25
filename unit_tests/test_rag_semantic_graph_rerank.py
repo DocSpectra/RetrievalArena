@@ -170,6 +170,58 @@ class SemanticGraphRerankTests(unittest.TestCase):
             self.assertIn("pagerank_prior_enabled", audit)
             self.assertEqual(audit["variant_id"], "E009b")
 
+    def test_pilot_directional_pools_shared_seed_and_fallback(self):
+        runner = load_runner()
+        ranked = [("a", 1.0), ("b", .9), ("c", .8), ("d", .7)]
+        forward = {"a": {"b"}}
+        reverse = {"a": {"c"}}
+        undirected = {"a": {"b", "c"}}
+        results = {
+            "semantic_only": runner.pilot_selection(ranked, {}, direction="semantic_only", seed_top_k=1,
+                                                     hop_budget=1, neighbor_budget=2, candidate_budget=4,
+                                                     final_top_k=3, distance_penalty=.02),
+            "outgoing": runner.pilot_selection(ranked, forward, direction="outgoing", seed_top_k=1,
+                                                hop_budget=1, neighbor_budget=2, candidate_budget=4,
+                                                final_top_k=3, distance_penalty=.02),
+            "undirected": runner.pilot_selection(ranked, undirected, direction="undirected", seed_top_k=1,
+                                                  hop_budget=1, neighbor_budget=2, candidate_budget=4,
+                                                  final_top_k=3, distance_penalty=.02),
+            "reversed": runner.pilot_selection(ranked, reverse, direction="reversed", seed_top_k=1,
+                                                hop_budget=1, neighbor_budget=2, candidate_budget=4,
+                                                final_top_k=3, distance_penalty=.02),
+        }
+        self.assertEqual({name: row["seeds"] for name, row in results.items()},
+                         {name: ["a"] for name in results})
+        self.assertEqual(results["semantic_only"]["selected"], ["a", "b", "c"])
+        self.assertEqual(results["outgoing"]["selected"], ["a", "b", "c"])
+        self.assertEqual(results["outgoing"]["fallback"], ["c"])
+        self.assertEqual(results["undirected"]["fallback"], [])
+        self.assertEqual(results["reversed"]["selected"], ["a", "c", "b"])
+        self.assertEqual(results["reversed"]["fallback"], ["b"])
+        with self.assertRaises(ValueError):
+            runner.pilot_selection(ranked, {}, direction="outgoing", seed_top_k=2,
+                                   hop_budget=1, neighbor_budget=2, candidate_budget=2,
+                                   final_top_k=1, distance_penalty=.02)
+
+    def test_pilot_reverse_mode_without_reference_file(self):
+        runner = load_runner()
+        with self.workspace_tempdir() as root:
+            input_dir, output_dir = self.write_input(root)
+            (input_dir / "answers.jsonl").unlink()
+            config = json.loads((input_dir / "config.yaml").read_text(encoding="utf-8"))
+            config.update(pilot_direction="reversed", seed_top_k=1, final_top_k=2,
+                          directed=True, graph_hops=1)
+            (input_dir / "config.yaml").write_text(json.dumps(config), encoding="utf-8")
+            runner.run(input_dir, output_dir)
+            row = self.read_jsonl(output_dir / "predictions.jsonl")[0]
+            audit = row["semantic_graph_rerank"]
+            metadata = json.loads((output_dir / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(audit["pilot_direction"], "reversed")
+            self.assertEqual(audit["final_context_doc_ids"][0], audit["seed_doc_ids"][0])
+            self.assertEqual(len(audit["final_context_doc_ids"]), 2)
+            self.assertTrue(metadata["pilot_seed_retention"])
+            self.assertEqual(metadata["pilot_fallback"], "global_semantic_when_graph_exhausted_v1")
+
 
 if __name__ == "__main__":
     unittest.main()
