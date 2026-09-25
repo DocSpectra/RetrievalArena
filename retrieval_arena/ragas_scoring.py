@@ -41,6 +41,23 @@ PROMPTS = {
     ),
 }
 
+# Ragas DiscreteMetric fixes the outer response to {value, reason: string}.
+# The v1 instruction to put evidence JSON in reason was too weak for local
+# structured-output models: they returned ordinary prose in that field.
+# Preserve v1 for replay and make the nested encoding explicit in v2.
+NESTED_REASON_INSTRUCTION = (
+    'The outer JSON response has exactly value and reason. The reason value MUST '
+    'be a serialized JSON object STRING, not prose. Fictional format example: '
+    '{"value":"satisfied","reason":"{\\"reason\\":\\"The requirement is stated.\\",'
+    '\\"evidence\\":[{\\"start\\":0,\\"end\\":5,\\"text\\":\\"Alpha\\"}]}"}. '
+    'Replace this fictional example with your own explanation and exact substrings '
+    'of the supplied text. For each evidence span, end equals start plus the '
+    'number of Unicode characters in its text. '
+)
+NESTED_REASON_INSTRUCTION = NESTED_REASON_INSTRUCTION.replace("{", "{{").replace("}", "}}")
+PROMPTS["answer_satisfaction.v2"] = NESTED_REASON_INSTRUCTION + PROMPTS["answer_satisfaction.v1"]
+PROMPTS["context_support.v2"] = NESTED_REASON_INSTRUCTION + PROMPTS["context_support.v1"]
+
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8")
@@ -94,8 +111,9 @@ def validate_config(config):
     for key in ("seed", "retries", "timeout_seconds", "max_output_tokens", "max_input_tokens"):
         require(type(config[key]) is int and config[key] >= (0 if key in {"seed", "retries"} else 1), key)
     require(config["retries"] <= 10, "retry-limit")
-    require(config["answer_prompt"] == "answer_satisfaction.v1", "answer-prompt")
-    require(config["context_prompt"] == "context_support.v1", "context-prompt")
+    require(config["answer_prompt"] in ("answer_satisfaction.v1", "answer_satisfaction.v2"), "answer-prompt")
+    require(config["context_prompt"] in ("context_support.v1", "context_support.v2"), "context-prompt")
+    require(config["answer_prompt"][-2:] == config["context_prompt"][-2:], "prompt-version-pair")
     require(type(config["faithfulness"]) is bool, "faithfulness-flag")
 
 

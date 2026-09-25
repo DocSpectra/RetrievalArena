@@ -87,6 +87,22 @@ class RagasScoringTests(unittest.TestCase):
         self.assertNotIn("rubric-source-sentinel", prompt)
         self.assertNotEqual(PROMPTS["answer_satisfaction.v1"], PROMPTS["context_support.v1"])
 
+    def test_v2_nested_reason_prompt_is_versioned_and_keeps_answer_isolation(self):
+        self.config["answer_prompt"] = "answer_satisfaction.v2"
+        self.config["context_prompt"] = "context_support.v2"
+        validate_config(self.config)
+        row = copy.deepcopy(self.batch["predictions"][1])
+        row["contexts"] = [{"secret": "context-sentinel"}]
+        element = copy.deepcopy(self.rubrics["questions"][0]["elements"][0])
+        element["sources"] = [{"secret": "source-sentinel"}]
+        prompt = prompt_for(row, element, self.config)
+        self.assertIn("serialized JSON object STRING", prompt)
+        self.assertNotIn("context-sentinel", prompt)
+        self.assertNotIn("source-sentinel", prompt)
+        self.config["context_prompt"] = "context_support.v1"
+        with self.assertRaises(ValidationError):
+            validate_config(self.config)
+
     def test_excessive_input_is_failure_and_never_calls_judge(self):
         self.config["max_input_tokens"] = 1
         judge = FakeJudge()

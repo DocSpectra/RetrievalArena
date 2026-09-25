@@ -15,6 +15,14 @@ not use the rubric to supply missing answer content. Both prompts require handli
 conflicts, valid equivalents, negation, prerequisites, arguments and versions.
 Evidence spans are validated exact substrings with Unicode character offsets.
 
+The initial live local-model technical probe found that both tested models put
+ordinary prose in Ragas `DiscreteMetric`'s outer `reason` string under the v1
+prompts. This yields explicit `parse_error`, not a score. The optional paired
+`answer_satisfaction.v2` / `context_support.v2` prompts spell out the nested
+serialized JSON string and evidence-offset rule. Prompt versions cannot be
+mixed; v1 remains accepted for replay. A v2 software check is not judge
+calibration, and source spans remain strictly checked rather than repaired.
+
 Ragas's built-in `Faithfulness` (collections API, v0.4.3) is an independent optional
 output over answer and retrieved context. It does not establish completeness or
 truth. Ranked retrieval, lexical scores and offline BERTScore remain separate;
