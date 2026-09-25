@@ -29,6 +29,28 @@ class ParseFailure(Exception):
     pass
 
 
+def resolve_quoted_evidence(detail, supplied_text):
+    """Project v2 exact quotes to deterministic first-occurrence Unicode spans.
+
+    Quotes are model judgments and remain in raw attempts. Offsets are derived
+    locally because local structured-output models miscounted them in the pilot.
+    An absent/nonmatching quote is a parse failure, never a measured zero.
+    """
+    evidence = detail.get("evidence")
+    if not isinstance(evidence, list):
+        raise ParseFailure("evidence-list-required")
+    spans = []
+    for item in evidence:
+        if not isinstance(item, dict) or set(item) != {"text"} or not isinstance(item["text"], str) or not item["text"]:
+            raise ParseFailure("evidence-quote-required")
+        quote = item["text"]
+        start = supplied_text.find(quote)
+        if start < 0:
+            raise ParseFailure("evidence-quote-not-found")
+        spans.append({"start": start, "end": start + len(quote), "text": quote})
+    return {**detail, "evidence": spans}
+
+
 def engine_identity(lock_path):
     """Fail if the optional environment drifts from the full distribution lock."""
     lock = Path(lock_path).read_bytes()
@@ -123,6 +145,8 @@ class RagasJudge:
                 try:
                     detail = json.loads(scored.reason)
                     fields(detail, "reason evidence")
+                    if config["answer_prompt"].endswith(".v2"):
+                        detail = resolve_quoted_evidence(detail, row["text"])
                     verdicts.append({"schema_version": PREFIX + "element_verdict.v1", "element_id": element["element_id"],
                                      "verdict": scored.value, **detail})
                 except Exception as exc:

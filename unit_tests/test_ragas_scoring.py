@@ -97,11 +97,22 @@ class RagasScoringTests(unittest.TestCase):
         element["sources"] = [{"secret": "source-sentinel"}]
         prompt = prompt_for(row, element, self.config)
         self.assertIn("serialized JSON object STRING", prompt)
+        self.assertIn("Each evidence object has ONLY text", prompt)
         self.assertNotIn("context-sentinel", prompt)
         self.assertNotIn("source-sentinel", prompt)
         self.config["context_prompt"] = "context_support.v1"
         with self.assertRaises(ValidationError):
             validate_config(self.config)
+
+    def test_v2_exact_quote_offsets_are_derived_and_bad_quotes_fail(self):
+        from retrieval_arena.ragas_judge import ParseFailure, resolve_quoted_evidence
+        detail = {"reason": "quoted", "evidence": [{"text": "éx"}]}
+        self.assertEqual(resolve_quoted_evidence(detail, "aéxéx")["evidence"],
+                         [{"start": 1, "end": 3, "text": "éx"}])
+        with self.assertRaises(ParseFailure):
+            resolve_quoted_evidence({"reason": "wrong", "evidence": [{"text": "missing"}]}, "aéxéx")
+        with self.assertRaises(ParseFailure):
+            resolve_quoted_evidence({"reason": "wrong", "evidence": [{"text": "éx", "end": 3}]}, "aéxéx")
 
     def test_excessive_input_is_failure_and_never_calls_judge(self):
         self.config["max_input_tokens"] = 1
