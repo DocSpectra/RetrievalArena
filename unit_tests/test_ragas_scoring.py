@@ -104,6 +104,24 @@ class RagasScoringTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             validate_config(self.config)
 
+    def test_v3_prompt_requires_all_clauses_and_preserves_answer_isolation(self):
+        self.config["answer_prompt"] = "answer_satisfaction.v3"
+        self.config["context_prompt"] = "context_support.v3"
+        validate_config(self.config)
+        row = copy.deepcopy(self.batch["predictions"][1])
+        row["contexts"] = [{"secret": "context-sentinel"}]
+        element = copy.deepcopy(self.rubrics["questions"][0]["elements"][0])
+        element["sources"] = [{"secret": "source-sentinel"}]
+        prompt = prompt_for(row, element, self.config)
+        self.assertIn("EVERY mandatory fact", prompt)
+        self.assertIn("silence is missing, not contradiction", prompt)
+        self.assertIn("serialized JSON object STRING", prompt)
+        self.assertNotIn("context-sentinel", prompt)
+        self.assertNotIn("source-sentinel", prompt)
+        self.config["context_prompt"] = "context_support.v2"
+        with self.assertRaises(ValidationError):
+            validate_config(self.config)
+
     def test_v2_exact_quote_offsets_are_derived_and_bad_quotes_fail(self):
         from retrieval_arena.ragas_judge import ParseFailure, resolve_quoted_evidence
         detail = {"reason": "quoted", "evidence": [{"text": "éx"}]}

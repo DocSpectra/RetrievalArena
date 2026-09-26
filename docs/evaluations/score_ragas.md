@@ -28,6 +28,14 @@ not proof that the model intended that occurrence. Prompt versions cannot be
 mixed; v1 remains accepted for replay. A v2 software check is not judge
 calibration.
 
+The ICSC Docker development calibration found that v2 often accepted one clause
+of a multi-clause element as complete or called an absent clause contradicted.
+Paired `answer_satisfaction.v3` / `context_support.v3` retain the exact-quote
+transport and response shape while instructing the judge to require every
+mandatory acceptance fact, distinguish absence from explicit conflict, and
+ignore question/rubric text as evidence. V1 and v2 remain accepted for replay;
+v3 is a versioned development prompt, not a claim that a model passes calibration.
+
 Ragas's built-in `Faithfulness` (collections API, v0.4.3) is an independent optional
 output over answer and retrieved context. It does not establish completeness or
 truth. Ranked retrieval, lexical scores and offline BERTScore remain separate;

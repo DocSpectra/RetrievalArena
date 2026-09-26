@@ -145,7 +145,7 @@ class RagasJudge:
                 try:
                     detail = json.loads(scored.reason)
                     fields(detail, "reason evidence")
-                    if config["answer_prompt"].endswith(".v2"):
+                    if config["answer_prompt"].endswith((".v2", ".v3")):
                         detail = resolve_quoted_evidence(detail, row["text"])
                     verdicts.append({"schema_version": PREFIX + "element_verdict.v1", "element_id": element["element_id"],
                                      "verdict": scored.value, **detail})
