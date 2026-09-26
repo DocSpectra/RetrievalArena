@@ -51,6 +51,14 @@ def resolve_quoted_evidence(detail, supplied_text):
     return {**detail, "evidence": spans}
 
 
+def resolve_string_evidence(detail, supplied_text):
+    """Project v4's exact quote strings through the same checked span mapper."""
+    evidence = detail.get("evidence")
+    if not isinstance(evidence, list) or any(not isinstance(item, str) or not item for item in evidence):
+        raise ParseFailure("evidence-string-list-required")
+    return resolve_quoted_evidence({**detail, "evidence": [{"text": item} for item in evidence]}, supplied_text)
+
+
 def engine_identity(lock_path):
     """Fail if the optional environment drifts from the full distribution lock."""
     lock = Path(lock_path).read_bytes()
@@ -145,7 +153,9 @@ class RagasJudge:
                 try:
                     detail = json.loads(scored.reason)
                     fields(detail, "reason evidence")
-                    if config["answer_prompt"].endswith((".v2", ".v3")):
+                    if config["answer_prompt"].endswith(".v4"):
+                        detail = resolve_string_evidence(detail, row["text"])
+                    elif config["answer_prompt"].endswith((".v2", ".v3")):
                         detail = resolve_quoted_evidence(detail, row["text"])
                     verdicts.append({"schema_version": PREFIX + "element_verdict.v1", "element_id": element["element_id"],
                                      "verdict": scored.value, **detail})

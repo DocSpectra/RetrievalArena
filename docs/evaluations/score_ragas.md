@@ -35,6 +35,11 @@ transport and response shape while instructing the judge to require every
 mandatory acceptance fact, distinguish absence from explicit conflict, and
 ignore question/rubric text as evidence. V1 and v2 remain accepted for replay;
 v3 is a versioned development prompt, not a claim that a model passes calibration.
+The first live v3 Docker attempt exposed a response-shape failure: the model
+returned quote strings where v3 required `{text: quote}` objects. Paired
+`answer_satisfaction.v4` / `context_support.v4` keep v3's all-clause rule but
+request a list of exact quote strings; the adapter validates each substring and
+derives its Unicode span. V3 remains replayable with its original object shape.
 
 Ragas's built-in `Faithfulness` (collections API, v0.4.3) is an independent optional
 output over answer and retrieved context. It does not establish completeness or

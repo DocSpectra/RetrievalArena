@@ -122,6 +122,27 @@ class RagasScoringTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             validate_config(self.config)
 
+    def test_v4_string_quote_prompt_and_span_projection(self):
+        from retrieval_arena.ragas_judge import ParseFailure, resolve_string_evidence
+        self.config["answer_prompt"] = "answer_satisfaction.v4"
+        self.config["context_prompt"] = "context_support.v4"
+        validate_config(self.config)
+        row = copy.deepcopy(self.batch["predictions"][1])
+        row["contexts"] = [{"secret": "context-sentinel"}]
+        element = copy.deepcopy(self.rubrics["questions"][0]["elements"][0])
+        element["sources"] = [{"secret": "source-sentinel"}]
+        prompt = prompt_for(row, element, self.config)
+        self.assertIn("EVERY mandatory fact", prompt)
+        self.assertIn("list of exact quote STRINGS", prompt)
+        self.assertNotIn("context-sentinel", prompt)
+        self.assertNotIn("source-sentinel", prompt)
+        self.assertEqual(resolve_string_evidence({"reason": "quoted", "evidence": ["éx"]}, "aéxéx")["evidence"],
+                         [{"start": 1, "end": 3, "text": "éx"}])
+        with self.assertRaises(ParseFailure):
+            resolve_string_evidence({"reason": "bad", "evidence": [{"text": "éx"}]}, "aéx")
+        with self.assertRaises(ParseFailure):
+            resolve_string_evidence({"reason": "bad", "evidence": ["absent"]}, "aéx")
+
     def test_v2_exact_quote_offsets_are_derived_and_bad_quotes_fail(self):
         from retrieval_arena.ragas_judge import ParseFailure, resolve_quoted_evidence
         detail = {"reason": "quoted", "evidence": [{"text": "éx"}]}
