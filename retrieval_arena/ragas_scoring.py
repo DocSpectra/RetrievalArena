@@ -194,8 +194,12 @@ def unit_id(row):
 
 
 def validate_config(config):
-    fields(config, "schema_version provider model revision temperature seed retries timeout_seconds max_output_tokens max_input_tokens answer_prompt context_prompt faithfulness")
-    require(config["schema_version"] == PREFIX + "judge_config.v1", "config-version")
+    version = config.get("schema_version")
+    require(version in (PREFIX + "judge_config.v1", PREFIX + "judge_config.v2"), "config-version")
+    common = "schema_version provider model revision temperature seed retries timeout_seconds max_output_tokens max_input_tokens answer_prompt context_prompt faithfulness"
+    fields(config, common + (" thinking" if version == PREFIX + "judge_config.v2" else ""))
+    if version == PREFIX + "judge_config.v2":
+        require(config["thinking"] in (False, "low", "medium", "high") and type(config["thinking"]) in (bool, str), "thinking")
     for key in ("provider", "model", "revision"):
         string(config[key])
         require(config[key].lower() not in {"unknown", "latest", "unavailable"}, "model-identity-required")

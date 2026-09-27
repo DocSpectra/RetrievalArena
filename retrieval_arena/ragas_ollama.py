@@ -50,7 +50,7 @@ class OllamaTransport:
         require(re.fullmatch(r"(?:sha256:)?[0-9a-f]{64}", config["revision"]) is not None, "judge-digest-required")
         await self.observe(config)
         response = await self.request("/api/chat", config, {
-            "model": config["model"], "stream": False, "think": False, "format": schema,
+            "model": config["model"], "stream": False, "think": config.get("thinking", False), "format": schema,
             "messages": [{"role": "user", "content": prompt}],
             # Conservative byte admission plus schema fits without context truncation.
             "options": {"temperature": config["temperature"], "seed": config["seed"], "top_p": 1.0, "top_k": 1, "repeat_penalty": 1.0,

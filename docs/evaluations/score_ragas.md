@@ -163,8 +163,11 @@ failure does not overwrite successful completeness.
 Input admission conservatively counts UTF-8 bytes (including the response schema)
 against `max_input_tokens`; no tokenizer download or hidden truncation. The
 Ollama call uses an additional 1,024-token envelope allowance and the output cap.
-Temperature/seed are configured; top-k=1, top-p=1, repeat penalty=1 and thinking
-disabled are fixed in this version. The entire asynchronous transport call has
+Temperature/seed are configured; top-k=1, top-p=1 and repeat penalty=1 are fixed.
+Judge config v1 fixes thinking as disabled. Judge config v2 adds an explicit `thinking`
+value (`false`, `low`, `medium` or `high`) for models that require reasoning to
+return structured content; v1 remains replayable with thinking disabled. The
+entire asynchronous transport call has
 the configured timeout. Transport failures retry at most `retries` additional
 times; malformed verdicts fail immediately. Raw attempts retain observed model
 identity, usage/cost when supplied, and latency. Missing measurements are labeled

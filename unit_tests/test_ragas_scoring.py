@@ -230,6 +230,15 @@ class RagasScoringTests(unittest.TestCase):
         result = asyncio.run(client("prompt", {}, config))
         self.assertEqual(result["revision"], "a" * 64)
         self.assertEqual([c.args[0] for c in client.request.call_args_list], ["/api/tags", "/api/chat", "/api/tags"])
+        self.assertIs(client.request.call_args_list[1].args[2]["think"], False)
+        config = {**config, "schema_version": "retrieval_arena.ragas_judge_config.v2", "thinking": "low"}
+        validate_config(config)
+        client.request = AsyncMock(side_effect=[tags, response, tags])
+        asyncio.run(client("prompt", {}, config))
+        self.assertEqual(client.request.call_args_list[1].args[2]["think"], "low")
+        for invalid in (True, "xhigh", 0):
+            with self.assertRaises(ValidationError):
+                validate_config({**config, "thinking": invalid})
         client.request = AsyncMock(return_value={"models": [{"name": "model:v1", "digest": "b" * 64}]})
         with self.assertRaises(ValidationError):
             asyncio.run(client("prompt", {}, config))
