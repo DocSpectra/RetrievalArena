@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable
@@ -19,6 +20,14 @@ def canonical(value: Any) -> bytes:
 
 def digest(value: Any) -> str:
     return hashlib.sha256(canonical(value)).hexdigest()
+
+
+def redact_error(value: str) -> str:
+    """Remove complete or provider-masked API key fragments from diagnostics."""
+    secret = os.environ.get("OPENAI_API_KEY")
+    if secret:
+        value = value.replace(secret, "[REDACTED_API_KEY]")
+    return re.sub(r"sk-[A-Za-z0-9_*.-]{8,}", "[REDACTED_API_KEY]", value)
 
 
 FIELDS = {
@@ -141,10 +150,7 @@ class ResponseTurn:
             self.emit({"event": "response", **metadata, "action": action})
             return action, metadata
         except Exception as exc:
-            error_text = str(exc)
-            secret = os.environ.get("OPENAI_API_KEY")
-            if secret:
-                error_text = error_text.replace(secret, "[REDACTED]")
+            error_text = redact_error(str(exc))
             self.emit({"event": "failure_after_request", "request_sha256": request_hash,
                        "response_sha256": response_hash, "raw_response_ref": raw_ref,
                        "error_type": type(exc).__name__, "error": error_text,

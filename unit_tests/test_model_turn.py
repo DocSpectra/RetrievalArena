@@ -2,7 +2,7 @@
 import json
 import unittest
 
-from retrieval_arena.model_turn import ResponseTurn, TurnRequest
+from retrieval_arena.model_turn import ResponseTurn, TurnRequest, redact_error
 
 
 def fixture(*, calls=1, model="gpt-6-luna", status="completed", name="search", args=None, usage=True):
@@ -63,6 +63,10 @@ class ModelTurnTest(unittest.TestCase):
             ResponseTurn(fail, self.events.append, self.raws.append).complete(self.request)
         self.assertEqual(len(calls), 1)
         self.assertTrue(self.events[-1]["possible_billable"])
+
+    def test_masked_key_fragment_redacted_from_error(self):
+        value = "Incorrect API key provided: sk-proj-********abcd. invalid_api_key"
+        self.assertEqual(redact_error(value), "Incorrect API key provided: [REDACTED_API_KEY] invalid_api_key")
 
     def test_ollama_does_not_claim_forced_tool_enforcement(self):
         request = TurnRequest(self.request.history, ["search"], "ollama", "qwen3:14b",
