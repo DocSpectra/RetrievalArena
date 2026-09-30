@@ -2,7 +2,7 @@
 import json
 import unittest
 
-from retrieval_arena.model_turn import ResponseTurn, TurnRequest, redact_error, request_payload
+from retrieval_arena.model_turn import ResponseTurn, TurnRequest, redact_error, request_payload, tools_for, validate_action
 
 
 def fixture(*, calls=1, model="gpt-6-luna", status="completed", name="search", args=None, usage=True):
@@ -43,6 +43,18 @@ class ModelTurnTest(unittest.TestCase):
         ResponseTurn(lambda **payload: seen.append(payload) or fixture(), self.events.append,
                      lambda raw: "raw:1").complete(self.request)
         self.assertEqual(seen, [expected])
+
+    def test_read_and_follow_bounds_are_in_schema_and_local_validation(self):
+        for action in ("read", "follow"):
+            fields = tools_for([action])[0]["parameters"]["properties"]
+            self.assertEqual(fields["start_line"]["minimum"], 1)
+            self.assertEqual(fields["line_count"]["maximum"], 80)
+            args = {"doc_id": "page", "start_line": 1, "line_count": 80}
+            if action == "follow":
+                args["source_doc_id"] = "source"
+            self.assertEqual(validate_action(action, args, [action])["action"], action)
+            with self.assertRaisesRegex(ValueError, "action-field-range"):
+                validate_action(action, {**args, "line_count": 81}, [action])
 
     def test_multiple_zero_malformed_wrong_model_and_incomplete_rejected(self):
         for response in (fixture(calls=0), fixture(calls=2), fixture(args={"wrong": 1}),

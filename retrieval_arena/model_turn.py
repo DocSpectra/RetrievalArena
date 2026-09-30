@@ -32,9 +32,11 @@ def redact_error(value: str) -> str:
 
 FIELDS = {
     "search": {"query": {"type": "string"}},
-    "read": {"doc_id": {"type": "string"}, "start_line": {"type": "integer"}, "line_count": {"type": "integer"}},
+    "read": {"doc_id": {"type": "string"}, "start_line": {"type": "integer", "minimum": 1},
+             "line_count": {"type": "integer", "minimum": 1, "maximum": 80}},
     "follow": {"source_doc_id": {"type": "string"}, "doc_id": {"type": "string"},
-               "start_line": {"type": "integer"}, "line_count": {"type": "integer"}},
+               "start_line": {"type": "integer", "minimum": 1},
+               "line_count": {"type": "integer", "minimum": 1, "maximum": 80}},
     "note": {"text": {"type": "string"}, "citations": {"type": "array", "items": {
         "type": "object", "properties": {"doc_id": {"type": "string"},
         "start_line": {"type": "integer"}, "end_line": {"type": "integer"}},
@@ -75,6 +77,9 @@ def validate_action(name: str, args: Any, allowed: list[str]) -> dict[str, Any]:
             typ == "integer" and type(args[key]) is not int or
             typ == "array" and not isinstance(args[key], list)):
             raise ValueError("action-field-type")
+        if typ == "integer" and (args[key] < schema.get("minimum", args[key]) or
+                                 args[key] > schema.get("maximum", args[key])):
+            raise ValueError("action-field-range")
     if name in {"note", "answer"}:
         if not args["text"].strip() or not args["citations"]:
             raise ValueError("action-empty-answer")
