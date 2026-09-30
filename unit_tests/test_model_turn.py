@@ -2,7 +2,7 @@
 import json
 import unittest
 
-from retrieval_arena.model_turn import ResponseTurn, TurnRequest, redact_error
+from retrieval_arena.model_turn import ResponseTurn, TurnRequest, redact_error, request_payload
 
 
 def fixture(*, calls=1, model="gpt-6-luna", status="completed", name="search", args=None, usage=True):
@@ -36,6 +36,13 @@ class ModelTurnTest(unittest.TestCase):
         self.assertIsNone(meta["usage"]["cached_input"])
         self.assertIsNone(meta["usage"]["input"])
         self.assertEqual(self.events[-1]["event"], "response")
+
+    def test_preflight_and_generation_share_request_body(self):
+        expected = request_payload(self.request)
+        seen = []
+        ResponseTurn(lambda **payload: seen.append(payload) or fixture(), self.events.append,
+                     lambda raw: "raw:1").complete(self.request)
+        self.assertEqual(seen, [expected])
 
     def test_multiple_zero_malformed_wrong_model_and_incomplete_rejected(self):
         for response in (fixture(calls=0), fixture(calls=2), fixture(args={"wrong": 1}),

@@ -86,6 +86,26 @@ def validate_action(name: str, args: Any, allowed: list[str]) -> dict[str, Any]:
     return {"action": name, **args}
 
 
+def request_payload(turn: TurnRequest) -> dict[str, Any]:
+    """Build the one request body shared by token admission and generation."""
+    if turn.provider not in {"openai", "ollama"} or turn.max_output_tokens < 1:
+        raise ValueError("invalid-turn-provider-or-cap")
+    if any(set(m) != {"role", "content"} or m["role"] not in {"system", "user", "assistant"}
+           or not isinstance(m["content"], str) for m in turn.history):
+        raise ValueError("invalid-visible-history")
+    payload: dict[str, Any] = {"model": turn.model, "input": turn.history,
+        "tools": tools_for(turn.allowed_actions), "max_output_tokens": turn.max_output_tokens}
+    if turn.provider == "openai":
+        payload.update({"store": False, "service_tier": "default", "reasoning": {"effort": "medium"},
+                        "parallel_tool_calls": False, "tool_choice": "required"})
+    else:
+        payload["think"] = False
+    payload.update(turn.generation)
+    if turn.provider == "openai" and any(k in payload for k in ("seed", "num_ctx", "top_k", "repeat_penalty", "think")):
+        raise ValueError("ollama-setting-on-openai")
+    return payload
+
+
 class ResponseTurn:
     """Invoke a supplied Responses transport exactly once; append credential-free events."""
 
@@ -94,21 +114,7 @@ class ResponseTurn:
         self.create, self.emit, self.raw = create, emit, raw
 
     def complete(self, turn: TurnRequest) -> tuple[dict[str, Any], dict[str, Any]]:
-        if turn.provider not in {"openai", "ollama"} or turn.max_output_tokens < 1:
-            raise ValueError("invalid-turn-provider-or-cap")
-        if any(set(m) != {"role", "content"} or m["role"] not in {"system", "user", "assistant"}
-               or not isinstance(m["content"], str) for m in turn.history):
-            raise ValueError("invalid-visible-history")
-        payload: dict[str, Any] = {"model": turn.model, "input": turn.history,
-            "tools": tools_for(turn.allowed_actions), "max_output_tokens": turn.max_output_tokens}
-        if turn.provider == "openai":
-            payload.update({"store": False, "service_tier": "default", "reasoning": {"effort": "medium"},
-                            "parallel_tool_calls": False, "tool_choice": "required"})
-        else:
-            payload["think"] = False
-        payload.update(turn.generation)
-        if turn.provider == "openai" and any(k in payload for k in ("seed", "num_ctx", "top_k", "repeat_penalty", "think")):
-            raise ValueError("ollama-setting-on-openai")
+        payload = request_payload(turn)
         request_hash = digest(payload)
         self.emit({"event": "request", "provider": turn.provider, "model": turn.model,
                    "endpoint": turn.endpoint, "request_sha256": request_hash})
