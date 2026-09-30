@@ -31,7 +31,7 @@ def redact_error(value: str) -> str:
 
 
 FIELDS = {
-    "search": {"query": {"type": "string"}},
+    "search": {"query": {"type": "string", "minLength": 1, "maxLength": 160}},
     "read": {"doc_id": {"type": "string"}, "start_line": {"type": "integer", "minimum": 1},
              "line_count": {"type": "integer", "minimum": 1, "maximum": 80}},
     "follow": {"source_doc_id": {"type": "string"}, "doc_id": {"type": "string"},
@@ -80,6 +80,9 @@ def validate_action(name: str, args: Any, allowed: list[str]) -> dict[str, Any]:
         if typ == "integer" and (args[key] < schema.get("minimum", args[key]) or
                                  args[key] > schema.get("maximum", args[key])):
             raise ValueError("action-field-range")
+        if typ == "string" and (len(args[key]) < schema.get("minLength", len(args[key])) or
+                                len(args[key]) > schema.get("maxLength", len(args[key]))):
+            raise ValueError("action-field-length")
     if name in {"note", "answer"}:
         if not args["text"].strip() or not args["citations"]:
             raise ValueError("action-empty-answer")

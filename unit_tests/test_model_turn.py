@@ -56,6 +56,13 @@ class ModelTurnTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "action-field-range"):
                 validate_action(action, {**args, "line_count": 81}, [action])
 
+    def test_search_query_length_matches_consumer(self):
+        query = tools_for(["search"])[0]["parameters"]["properties"]["query"]
+        self.assertEqual(query["maxLength"], 160)
+        self.assertEqual(validate_action("search", {"query": "x" * 160}, ["search"])["query"], "x" * 160)
+        with self.assertRaisesRegex(ValueError, "action-field-length"):
+            validate_action("search", {"query": "x" * 161}, ["search"])
+
     def test_multiple_zero_malformed_wrong_model_and_incomplete_rejected(self):
         for response in (fixture(calls=0), fixture(calls=2), fixture(args={"wrong": 1}),
                          fixture(model="other"), fixture(status="incomplete")):
