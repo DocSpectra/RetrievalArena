@@ -44,3 +44,28 @@ isolated-mode edge-relative v2 candidate is also blocked after tolerance
 sensitivity. The subspace statistic requires a frozen corpus audit and
 does not establish utility or admit any editor run. Full receipts remain
 private; filtered session tools belong to the separately planned Sprint 10.
+
+## Sprint 10 run contracts (consumer side)
+
+The consuming workspace's `git/context/scripts/restructuring_runs.py` composes
+these RA pieces without changing them. RA code is unchanged in Sprint 10.
+
+- **C admission.** `structural_target.connectivity_admission` runs host-side
+  on each terminal R0/L checkpoint. The consumer refuses to run it if the
+  pinned source hash (`08658f1b…`), the config hash (`7aad8fba…`) or the
+  recomputed baseline (graph hash, λ₂, |M|) has drifted.
+- **Merge/move mapping.** The consumer supplies `mapping` by its own rule,
+  `moved_content_majority_v1`. A removed baseline ID maps to the surviving
+  page that holds the largest share of its normalized content lines, and
+  that share must be at least 0.5. An unmapped removal is a preservation flag
+  for human review, never a silent admission.
+- **Spectral profile.** The receipt reuses `magnetic_phase.magnetic_matrix`,
+  `canonical_edges` and `measure_subspace` with the 09c config, plus
+  `structural_target.anchored_reachability` as a descriptor. It is private and
+  never returned to an editor.
+- **Editor surface.** Editors get file tools on their own tree only. There is
+  no metric tool, and the C and spectral results never enter an
+  editor-visible channel.
+
+Sprint 11 still has to qualify real sandbox isolation. Until then, this
+in-process contract is not an access-control boundary.
