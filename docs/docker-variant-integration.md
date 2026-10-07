@@ -69,3 +69,22 @@ these RA pieces without changing them. RA code is unchanged in Sprint 10.
 
 Sprint 11 still has to qualify real sandbox isolation. Until then, this
 in-process contract is not an access-control boundary.
+
+## Sprint 10b documentation scope (consumer side)
+
+The consumer's variant manifest v6 sets `source_policy.scope = docs_scope_v1`.
+The editor tree, analysis, review and provider export are limited to product
+and contributor documentation (1,218 pages at commit `274681c`). Files written
+to steer AI agents (`AGENTS.md`, `CLAUDE.md`, `.agents/**`,
+`.github/prompts/**`) and the site-build tree (`layouts/**`, `static/**`) are
+excluded. The 45 excluded document IDs are frozen in the manifest, and a source
+whose excluded set differs is refused. A candidate tree that contains an
+excluded-class path, including one an editor creates, is refused. The file tool
+also refuses such writes with the generic refusal.
+
+Document IDs are unchanged because the docs root stays the repository root.
+Manifests v1–v5 keep the historical `repository_root` scope and replay
+unchanged. No RA code changed. C's baseline graph hash is re-pinned, while λ₂
+and |M| are bit-identical. The spectral F reference now applies on the LWCC
+graph digest. An unedited docs-scope export equals the in-scope subset of the
+recovered CIKM export, not the whole export.
