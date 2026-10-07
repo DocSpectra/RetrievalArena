@@ -34,3 +34,13 @@ effect was run in Sprint 08.
 Any later RA candidate-operator admission would require a separate source,
 image and receipt pin. This local export does not make an edited corpus an
 admitted RA candidate, and the offline preflight does not qualify a model run.
+
+Sprint 09 adds the optional standalone [magnetic phase diagnostics](evaluations/magnetic_phase.md).
+The consuming workspace's new manifest may explicitly pin
+`magnetic_subspace_edge_polarization.v1`, its source hash and complete config.
+The analyzer adds a separately named receipt; old manifests omit this field
+and retain historical replay. Historical phase counts remain blocked. The
+isolated-mode edge-relative v2 candidate is also blocked after tolerance
+sensitivity. The subspace statistic requires a frozen corpus audit and
+does not establish utility or admit any editor run. Full receipts remain
+private; filtered session tools belong to the separately planned Sprint 10.
