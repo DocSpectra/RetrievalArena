@@ -111,6 +111,59 @@ spectral correlation in the canonical adjacency gauge, not transported
 energy or a quantity invariant to arbitrary node-local gauge transforms.
 
 The same Hermitian/residual/orthogonality checks apply. Optimization
-admission stays false in every primitive receipt. A numerically qualified
-frozen corpus may be nominated for a later target freeze, with its precise
-name and semantics; no scientific quality objective is established here.
+admission stays false in every primitive receipt. Numerical qualification
+alone cannot nominate this descriptor as a directional target.
+
+### Orientation validity boundary (Sprint 09b, October 6, 2026)
+
+Preserve the v1 identifier, implementation and historical receipts. The
+scalar fails listed-link source/sink consistency: every orientation of a
+fixed forest with a fixed reciprocity pattern gives the same value, for
+matched complete spectral subspaces. It cannot distinguish a consistently
+directed path from an alternating path, or an inward star from a mixed star.
+This is a construct limitation, separate from numerical correctness.
+
+Let theta=2*pi*q. On a forest L=D L0 D*, with L0 the real Laplacian of
+the **same W**, and P=D P0 D*. For each listed nonreciprocal edge s→t,
+P_ts=exp(-i*theta)*P0_ts. Reciprocal phases are zero. Thus
+
+    S = abs(sin(theta)*sum_nonreciprocal_skeleton P0_ts) /
+        (sum_nonreciprocal_skeleton sqrt(P0_ss*P0_tt)
+         + 2*sum_reciprocal_skeleton sqrt(P0_ss*P0_tt)).
+
+Reciprocal paired imaginary terms cancel on every graph by Hermiticity;
+they still add denominator weight and change W. Duplicate input listings
+do not add weight. A multiplicity-valued/weighted adjacency would need a
+separate phase and aggregation policy; the common sine reduction does not
+apply to arbitrary unequal phase magnitudes.
+
+For cycles the gauge reduction holds exactly when every closed-walk phase
+sum is zero modulo 2*pi. Gauge equivalence of spectra does not establish
+gauge invariance of this untransported projector aggregation. A directed
+four-cycle at q=.25 is balanced, whereas an acyclic triangle is frustrated;
+cycle flux is not procedural ordering or directed acyclicity. Sparse cycles
+alone give no universal response bound; the spectral cutoff gap matters.
+
+Selecting exactly all zero modes of balanced nonisolated components gives
+componentwise rank-one projectors. For exclusively nonreciprocal binary
+edges at q=.25 the scalar then saturates at one. A zero cluster larger
+than K is included in full. Disconnectedness alone does not imply this:
+positive selected modes, reciprocal edges, frustrated components and
+full-spectrum selection invalidate that implication. Saturation requires
+every positive-weight edge correlation to be pure quadrature of maximal
+magnitude with a common imaginary sign. Full-spectrum selection gives zero.
+
+The frozen ICSC audit uses one BLAS/OMP thread, exact dense complex128
+eigensystems and the unchanged complete-cluster rule; default threading is
+checked separately. Its graph-only orientation perturbations retain reciprocal
+pairs and independently orient each remaining skeleton edge. They change
+degrees and reachability too, so they are not isolated causal flow tests.
+Orientation sensitivity on cyclic graphs and an extreme null percentile
+cannot repair the failed necessary forest fixtures or establish answer utility.
+
+**Directional target admission is blocked for v1.** It remains an explicitly
+limited spectral-correlation diagnostic. No replacement direction scalar
+is qualified. A different nondirectional experimental target requires an
+explicit new construct/namespace and experimental decision, numerical and
+edited-graph checks, and independent utility evidence. Never rename old
+receipts or treat X+/X− scalar signs as navigation directions.

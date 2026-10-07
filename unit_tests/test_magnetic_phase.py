@@ -1,4 +1,5 @@
 import unittest
+import itertools
 from dataclasses import replace
 import numpy as np
 from retrieval_arena.graph.magnetic_phase import PhaseConfig, magnetic_matrix, measure, measure_subspace, relative_phase_counts
@@ -103,5 +104,47 @@ class MagneticPhaseTests(unittest.TestCase):
         self.assertLess(measure_subspace(ns,es)['value'],1e-14)
         e,v=np.linalg.eigh(magnetic_matrix(ns,es))
         self.assertIsNone(measure_subspace(ns,es,eigenpairs=(e+1,v))['value'])
+
+    def test_subspace_forest_orientation_blindness_is_a_limitation(self):
+        # Required directional counterexample: consistency vs alternating links.
+        # Complete boundary clusters, fixed binary skeleton/reciprocity and q.
+        ns=list('abcde')
+        for skeleton in (list(zip(ns,ns[1:])), [('a',n) for n in ns[1:]]):
+            for q in (.13,.25):
+                for reciprocal in (False,True):
+                    baseline=None
+                    for bits in itertools.product((0,1),repeat=len(skeleton)):
+                        es=[e if b else e[::-1] for e,b in zip(skeleton,bits)]
+                        if reciprocal: es.append(es[0][::-1])
+                        r=measure_subspace(ns,es,PhaseConfig(q=q,modes=2))
+                        self.assertEqual(r['status'],'computed')
+                        if baseline is None: baseline=r['value']
+                        self.assertAlmostEqual(r['value'],baseline,places=12)
+                        self.assertFalse(r['optimization_admitted'])
+
+    def test_subspace_complete_zero_cluster_saturates_only_conditionally(self):
+        ns=[str(i) for i in range(36)]
+        es=[(ns[3*c+j],ns[3*c+j+1]) for c in range(12) for j in range(2)]
+        r=measure_subspace(ns,es)
+        self.assertEqual(r['actual_modes'],12)  # K=10 expands all zero modes.
+        self.assertAlmostEqual(r['value'],1,places=12)
+        self.assertAlmostEqual(measure_subspace(ns,es,PhaseConfig(q=.13))['value'],abs(np.sin(2*np.pi*.13)),places=12)
+        reciprocal=es+[es[0][::-1]]
+        self.assertLess(measure_subspace(ns,reciprocal)['value'],1)
+        positive=measure_subspace(ns,es,PhaseConfig(modes=13))
+        self.assertGreater(positive['actual_modes'],12)
+        self.assertLess(positive['value'],1)
+        full=measure_subspace(ns,es,PhaseConfig(modes=len(ns)))
+        self.assertTrue(full['full_spectrum_selected'])
+        self.assertLess(full['value'],1e-12)
+
+    def test_cycle_flux_does_not_identify_directed_acyclicity(self):
+        # An acyclic triangle is frustrated; a directed 4-cycle is balanced.
+        triangle=[('a','b'),('b','c'),('a','c')]
+        square=[('a','b'),('b','c'),('c','d'),('d','a')]
+        self.assertGreater(np.linalg.eigvalsh(magnetic_matrix(list('abc'),triangle))[0],1e-8)
+        e=np.linalg.eigvalsh(magnetic_matrix(list('abcd'),square))
+        e0=np.linalg.eigvalsh(magnetic_matrix(list('abcd'),square,q=0))
+        np.testing.assert_allclose(e,e0,atol=1e-12)
 
 if __name__=='__main__': unittest.main()
