@@ -16,7 +16,7 @@ import re
 import time
 
 from .ragas_scoring import (
-    PREFIX, VERDICTS, aggregate, canonical, fields, new_record, require,
+    PREFIX, VERDICTS, aggregate, canonical, fields, new_record, pending, require,
     unavailable, validate_config, validate_verdicts,
 )
 
@@ -27,6 +27,10 @@ class JudgeFailure(Exception):
 
 class ParseFailure(Exception):
     pass
+
+
+class _Skip(Exception):
+    """Internal: no element prompts to judge."""
 
 
 def resolve_quoted_evidence(detail, supplied_text):
@@ -86,11 +90,13 @@ class RagasJudge:
         os.environ["RAGAS_DO_NOT_TRACK"] = "true"
         from ragas.llms.base import InstructorBaseRagasLLM
         from ragas.metrics import DiscreteMetric
-        from ragas.metrics.collections import Faithfulness
+        from ragas.metrics.collections import ContextRecall, FactualCorrectness, Faithfulness
 
         self.transport = transport
         self.discrete_type = DiscreteMetric
         self.faithfulness_type = Faithfulness
+        self.context_recall_type = ContextRecall
+        self.factual_correctness_type = FactualCorrectness
         owner = self
 
         class CapturingLLM(InstructorBaseRagasLLM):
@@ -139,6 +145,20 @@ class RagasJudge:
             finally:
                 trace["latency_seconds"] = time.monotonic() - started
 
+    async def published(self, name, row, rubric, contexts, config):
+        """Unmodified Ragas 0.4.3 collections metrics with their published prompts."""
+        if name == "faithfulness":
+            return await self.faithfulness_type(llm=self.llm).ascore(
+                user_input=row["question"], response=row["text"], retrieved_contexts=contexts)
+        if name == "context_recall":
+            return await self.context_recall_type(llm=self.llm).ascore(
+                user_input=row["question"], retrieved_contexts=contexts, reference=rubric["reference"])
+        options = config["factual_correctness"]
+        return await self.factual_correctness_type(
+            llm=self.llm, mode=options["mode"], beta=float(options["beta"]),
+            atomicity=options["atomicity"], coverage=options["coverage"]).ascore(
+                response=row["text"], reference=rubric["reference"])
+
     async def score(self, row, rubric, corpus, config, prompts):
         validate_config(config)
         self.config = dict(config)
@@ -146,6 +166,10 @@ class RagasJudge:
         record = new_record(row, rubric, corpus, config, self.engine)
         started = time.monotonic()
         try:
+            if prompts is None:
+                # Config v3 with the element metric disabled: published metrics only.
+                require(record["status"] == "disabled", "element-prompts-required")
+                raise _Skip()
             verdicts = []
             for element, prompt in zip(rubric["elements"], prompts):
                 metric = self.discrete_type(name="required_element_completeness_v1", prompt="{input}", allowed_values=list(VERDICTS))
@@ -167,20 +191,21 @@ class RagasJudge:
                 raise ParseFailure(type(exc).__name__) from exc
             record["verdicts"] = verdicts
             record["aggregate"] = aggregate(verdicts, row, rubric["elements"])
+        except _Skip:
+            pass
         except (JudgeFailure, ParseFailure) as exc:
             record.update(status="parse_error" if isinstance(exc, ParseFailure) else "judge_error", error=str(exc))
-        # Separate availability: failure here never overwrites completeness.
-        if record["faithfulness"]["status"] == "unavailable":
+        # Separate availability: failure here never overwrites completeness or another metric.
+        chunks = {(c["document_id"], c["chunk_id"]): c["text"] for c in corpus["chunks"]}
+        contexts = [chunks[(c["document_id"], c["chunk_id"])] for c in row["contexts"]]
+        for name in pending(record):
             try:
-                chunks = {(c["document_id"], c["chunk_id"]): c["text"] for c in corpus["chunks"]}
-                contexts = [chunks[(c["document_id"], c["chunk_id"])] for c in row["contexts"]]
-                result = await self.faithfulness_type(llm=self.llm).ascore(
-                    user_input=row["question"], response=row["text"], retrieved_contexts=contexts)
-                record["faithfulness"] = {"status": "ok", "value": float(result.value)} if math.isfinite(result.value) else unavailable("no_statements")
+                result = await self.published(name, row, rubric, contexts, config)
+                record[name] = {"status": "ok", "value": float(result.value)} if math.isfinite(result.value) else unavailable("no_statements")
             except ParseFailure:
-                record["faithfulness"] = unavailable("parse_error")
+                record[name] = unavailable("parse_error")
             except Exception:
-                record["faithfulness"] = unavailable("judge_error")
+                record[name] = unavailable("judge_error")
         record["raw"] = self.raw
         record["measurements"]["latency_seconds"] = {"status": "available", "value": time.monotonic() - started}
         for field in ("usage", "cost"):

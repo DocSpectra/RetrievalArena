@@ -193,12 +193,32 @@ def unit_id(row):
     return [row[k] for k in ("question_id", "condition_id", "run_id", "stage")]
 
 
+BUILTINS = ("context_recall", "factual_correctness")
+FACTUAL_CORRECTNESS_OPTIONS = {"mode": ("precision", "recall", "f1"), "atomicity": ("low", "high"), "coverage": ("low", "high")}
+
+
+def is_v3(config):
+    # Config v3 adds the published ContextRecall/FactualCorrectness and an optional
+    # element metric. It emits judgment.v2/scores.v2; v1/v2 bundles replay unchanged.
+    return config.get("schema_version") == PREFIX + "judge_config.v3"
+
+
 def validate_config(config):
     version = config.get("schema_version")
-    require(version in (PREFIX + "judge_config.v1", PREFIX + "judge_config.v2"), "config-version")
+    require(version in (PREFIX + "judge_config.v1", PREFIX + "judge_config.v2", PREFIX + "judge_config.v3"), "config-version")
     common = "schema_version provider model revision temperature seed retries timeout_seconds max_output_tokens max_input_tokens answer_prompt context_prompt faithfulness"
-    fields(config, common + (" thinking" if version == PREFIX + "judge_config.v2" else ""))
-    if version == PREFIX + "judge_config.v2":
+    extra = {PREFIX + "judge_config.v2": " thinking",
+             PREFIX + "judge_config.v3": " thinking element_completeness context_recall factual_correctness"}.get(version, "")
+    fields(config, common + extra)
+    if is_v3(config):
+        require(type(config["element_completeness"]) is bool and type(config["context_recall"]) is bool, "builtin-flags")
+        fc = config["factual_correctness"]
+        if fc is not None:
+            fields(fc, "mode beta atomicity coverage")
+            for key, allowed in FACTUAL_CORRECTNESS_OPTIONS.items():
+                require(fc[key] in allowed, "factual-correctness-" + key)
+            require(type(fc["beta"]) in (int, float) and fc["beta"] > 0, "factual-correctness-beta")
+    if version in (PREFIX + "judge_config.v2", PREFIX + "judge_config.v3"):
         require(config["thinking"] in (False, "low", "medium", "high") and type(config["thinking"]) in (bool, str), "thinking")
     for key in ("provider", "model", "revision"):
         string(config[key])
@@ -244,7 +264,10 @@ def validate_inputs(batch, rubrics):
         unique(refs, lambda r: (r["document_id"], r["chunk_id"]))
 
     fields(rubrics, "schema_version corpus_sha256 provenance questions")
-    require(rubrics["schema_version"] == PREFIX + "rubrics.v1", "rubrics-version")
+    require(rubrics["schema_version"] in (PREFIX + "rubrics.v1", PREFIX + "rubrics.v2"), "rubrics-version")
+    # Rubrics v2 adds a nullable free-text reference (ContextRecall/FactualCorrectness)
+    # and allows an empty element list; the judge config decides which is required.
+    v2 = rubrics["schema_version"] == PREFIX + "rubrics.v2"
     require(rubrics["corpus_sha256"] == corpus["sha256"], "rubric-corpus-mismatch")
     fields(rubrics["provenance"], "authoring_method reviewer_id frozen_at independent_of_predictions")
     for key in ("authoring_method", "reviewer_id", "frozen_at"):
@@ -253,12 +276,14 @@ def validate_inputs(batch, rubrics):
     sequence(rubrics["questions"], nonempty=True)
     questions = {}
     for question in rubrics["questions"]:
-        fields(question, "question_id question elements")
+        fields(question, "question_id question elements" + (" reference" if v2 else ""))
         string(question["question_id"])
         string(question["question"])
+        if v2 and question["reference"] is not None:
+            string(question["reference"])
         require(question["question_id"] not in questions, "duplicate-question")
         questions[question["question_id"]] = question
-        sequence(question["elements"], nonempty=True)
+        sequence(question["elements"], nonempty=not v2)
         for element in question["elements"]:
             fields(element, "element_id requirement acceptance alternatives sources")
             for key in ("element_id", "requirement", "acceptance"):
@@ -369,6 +394,39 @@ def faithfulness_status(row, config):
     return None
 
 
+def builtin_status(row, config, metric):
+    """Fixed, judge-free states of a published v3 metric; None means it must be judged."""
+    enabled = config["context_recall"] if metric == "context_recall" else config["factual_correctness"] is not None
+    if not enabled:
+        return unavailable("disabled")
+    if row["stage"] != "answer":
+        return unavailable("not_applicable")
+    if row["text"] is None:
+        return unavailable("missing_output")
+    if not row["text"].strip():
+        return unavailable("empty_answer")
+    if metric == "context_recall" and not row["contexts"]:
+        return unavailable("empty_context")
+    return None
+
+
+def validate_pairing(questions, config):
+    """Each enabled metric needs its rubric input; missing rubric input is invalid, never a zero."""
+    completeness = config["element_completeness"] if is_v3(config) else True
+    if completeness:
+        require(all(q["elements"] for q in questions.values()), "elements-required")
+    if is_v3(config) and (config["context_recall"] or config["factual_correctness"] is not None):
+        require(all(q.get("reference") for q in questions.values()), "reference-required")
+
+
+PENDING_FAILURES = {"judge_error", "parse_error", "unavailable"}
+
+
+def metric_results(record):
+    names = ("faithfulness",) + tuple(name for name in BUILTINS if name in record)
+    return {name: record[name] for name in names}
+
+
 def validate_faithfulness(result):
     fields(result, "status value")
     require(result["status"] in {"ok", "disabled", "not_applicable", "missing_output", "empty_answer", "empty_context", "no_statements", "judge_error", "parse_error", "unavailable"}, "faithfulness-status")
@@ -389,18 +447,32 @@ def validate_engine(engine):
 
 
 def validate_record(record, row, rubric, corpus, config, engine):
-    fields(record, "schema_version identity unit status verdicts aggregate faithfulness raw measurements error")
-    require(record["schema_version"] == PREFIX + "judgment.v1", "judgment-version")
+    v3 = is_v3(config)
+    fields(record, "schema_version identity unit status verdicts aggregate faithfulness raw measurements error"
+           + (" " + " ".join(BUILTINS) if v3 else ""))
+    require(record["schema_version"] == PREFIX + ("judgment.v2" if v3 else "judgment.v1"), "judgment-version")
     require(record["identity"] == scoring_identity(row, rubric, corpus, config, engine), "identity-mismatch")
     require(record["unit"] == unit_id(row), "unit-mismatch")
-    require(record["status"] in {"ok", "missing_output", "parse_error", "judge_error", "input_too_large"}, "judgment-status")
+    if v3:
+        for name in BUILTINS:
+            validate_faithfulness(record[name])
+            fixed = builtin_status(row, config, name)
+            if fixed is not None:
+                require(record[name] == fixed, name + "-policy-mismatch")
+        if not config["element_completeness"]:
+            require(record["status"] == "disabled" and record["verdicts"] == [] and record["aggregate"] is None
+                    and record["error"] is None, "disabled-completeness")
+    require(record["status"] in {"ok", "missing_output", "parse_error", "judge_error", "input_too_large"}
+            or (v3 and record["status"] == "disabled"), "judgment-status")
     sequence(record["raw"])
     fields(record["measurements"], "usage cost latency_seconds")
     for value in record["measurements"].values():
         require(isinstance(value, dict) and set(value) == {"status", "value"}, "measurement-shape")
         require(value["status"] in {"available", "unavailable"}, "measurement-status")
         require((value["value"] is None) == (value["status"] == "unavailable"), "measurement-availability")
-    if record["status"] == "ok":
+    if record["status"] == "disabled":
+        pass
+    elif record["status"] == "ok":
         require(row["text"] is not None, "missing-output-scored")
         expected = aggregate(record["verdicts"], row, rubric["elements"])
         require(record["aggregate"] == expected, "aggregate-mismatch")
@@ -418,42 +490,76 @@ def validate_record(record, row, rubric, corpus, config, engine):
 
 
 def new_record(row, rubric, corpus, config, engine):
-    return {"schema_version": PREFIX + "judgment.v1", "identity": scoring_identity(row, rubric, corpus, config, engine),
-            "unit": unit_id(row), "status": "ok", "verdicts": [], "aggregate": None,
-            "faithfulness": faithfulness_status(row, config) or unavailable("unavailable"),
-            "raw": [], "measurements": {k: unavailable("unavailable") for k in ("usage", "cost", "latency_seconds")}, "error": None}
+    record = {"schema_version": PREFIX + "judgment.v1", "identity": scoring_identity(row, rubric, corpus, config, engine),
+              "unit": unit_id(row), "status": "ok", "verdicts": [], "aggregate": None,
+              "faithfulness": faithfulness_status(row, config) or unavailable("unavailable"),
+              "raw": [], "measurements": {k: unavailable("unavailable") for k in ("usage", "cost", "latency_seconds")}, "error": None}
+    if is_v3(config):
+        record["schema_version"] = PREFIX + "judgment.v2"
+        for name in BUILTINS:
+            record[name] = builtin_status(row, config, name) or unavailable("unavailable")
+        if not config["element_completeness"]:
+            record["status"] = "disabled"
+    return record
 
 
-def summarize(records):
+def pending(record):
+    """Published metrics still to judge: new records mark them unavailable until scored."""
+    return [name for name, result in metric_results(record).items() if result["status"] == "unavailable"]
+
+
+def summarize_metrics(records):
+    # Each published metric separately; never pooled or combined with another.
+    out = {}
+    for name in ("faithfulness",) + BUILTINS:
+        results = [r[name] for r in records]
+        values = [r["value"] for r in results if r["status"] == "ok"]
+        statuses = {}
+        for result in results:
+            statuses[result["status"]] = statuses.get(result["status"], 0) + 1
+        out[name] = {"scored": len(values), "statuses": statuses,
+                     "macro_observed": sum(values) / len(values) if values else None}
+    return out
+
+
+def summarize(records, config=None):
     # Never pool runs/stages/conditions or silently discard failed questions.
     groups = {}
+    members = {}
     for record in records:
         key = tuple(record["unit"][1:])
         group = groups.setdefault(key, {"condition_id": key[0], "run_id": key[1], "stage": key[2], "total": 0, "scored": 0, "failures": {}, "values": []})
+        members.setdefault(key, []).append(record)
         group["total"] += 1
         if record["status"] == "ok":
             group["scored"] += 1
             group["values"].append(record["aggregate"]["completeness"])
-        else:
+        elif record["status"] != "disabled":
             group["failures"][record["status"]] = group["failures"].get(record["status"], 0) + 1
-    for group in groups.values():
+    for key, group in groups.items():
         values = group.pop("values")
         group["macro_completeness_observed"] = sum(values) / len(values) if values else None
         group["complete_coverage"] = group["scored"] == group["total"]
+        if config is not None and is_v3(config):
+            if not config["element_completeness"]:
+                group["complete_coverage"] = None
+            group["metrics"] = summarize_metrics(members[key])
     return list(groups.values())
 
 
 def result_bundle(batch, rubrics, config, engine, records):
     questions = validate_inputs(batch, rubrics)
     validate_config(config)
+    validate_pairing(questions, config)
     validate_engine(engine)
     require(len(records) == len(batch["predictions"]), "missing-record")
     for record, row in zip(records, batch["predictions"]):
         rubric = {**questions[row["question_id"]], "provenance": rubrics["provenance"]}
         validate_record(record, row, rubric, batch["corpus"], config, engine)
-    result = {"schema_version": PREFIX + "scores.v1", "batch_sha256": digest(batch), "rubrics_sha256": digest(rubrics),
+    result = {"schema_version": PREFIX + ("scores.v2" if is_v3(config) else "scores.v1"),
+              "batch_sha256": digest(batch), "rubrics_sha256": digest(rubrics),
               "config": config, "engine": engine, "prompt_hashes": {k: text_hash(v) for k, v in PROMPTS.items()},
-              "records": copy.deepcopy(records), "summary": summarize(records)}
+              "records": copy.deepcopy(records), "summary": summarize(records, config)}
     result["sha256"] = digest(result)
     return result
 
@@ -495,6 +601,7 @@ async def score_batch(batch, rubrics, config, judge, *, cache_dir=None, use_cach
     """
     questions = validate_inputs(batch, rubrics)
     validate_config(config)
+    validate_pairing(questions, config)
     engine = judge.engine
     validate_engine(engine)
     records = []
@@ -508,8 +615,12 @@ async def score_batch(batch, rubrics, config, judge, *, cache_dir=None, use_cach
             except (OSError, ValueError) as exc:
                 raise ValidationError("ragas-cache-read-failed") from exc
             validate_record(cached, row, rubric, batch["corpus"], config, engine)
-            require(cached["status"] == "ok", "failed-cache-entry")
+            require(cached["status"] in {"ok", "disabled"}, "failed-cache-entry")
             record = cached
+        elif record["status"] == "disabled":
+            # Element metric off (config v3): judge only the published metrics still pending.
+            if pending(record):
+                record = await judge.score(row, rubric, batch["corpus"], config, None)
         elif row["text"] is None:
             record.update(status="missing_output", error="prediction-text-absent")
         elif not row["text"].strip():
@@ -525,8 +636,9 @@ async def score_batch(batch, rubrics, config, judge, *, cache_dir=None, use_cach
             else:
                 record = await judge.score(row, rubric, batch["corpus"], config, prompts)
         validate_record(record, row, rubric, batch["corpus"], config, engine)
-        # A faithfulness failure must remain retryable too.
-        if use_cache and cache is not None and record["status"] == "ok" and record["faithfulness"]["status"] not in {"judge_error", "parse_error", "unavailable"}:
+        # A published-metric failure must remain retryable too.
+        if use_cache and cache is not None and record["status"] in {"ok", "disabled"} and all(
+                result["status"] not in PENDING_FAILURES for result in metric_results(record).values()):
             write_json(cache, record)
         records.append(record)
         if checkpoint is not None:

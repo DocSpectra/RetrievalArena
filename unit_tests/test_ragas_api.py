@@ -41,6 +41,29 @@ class RagasAPITests(unittest.TestCase):
         self.assertEqual(result["records"][2]["faithfulness"]["status"], "empty_answer")
         self.assertEqual(result["records"][7]["faithfulness"]["status"], "not_applicable")
 
+    def test_real_context_recall_and_factual_correctness_apis(self):
+        from unit_tests.ragas_fixture import inputs_v3
+        self.batch, self.rubrics, self.config = inputs_v3()
+        result = self.score()
+        first = result["records"][0]
+        self.assertEqual(first["status"], "disabled")
+        # Hand-coded fake responses: 1 of 2 reference statements attributed; all claims verified.
+        self.assertEqual(first["context_recall"], {"status": "ok", "value": 0.5})
+        self.assertEqual(first["factual_correctness"], {"status": "ok", "value": 1.0})
+        self.assertEqual(first["faithfulness"], {"status": "ok", "value": 1.0})
+        self.assertEqual(replay(self.batch, self.rubrics, result), result)
+
+        async def broken(prompt, schema, config):
+            response = await transport(prompt, schema, config)
+            if set(schema["properties"]) == {"claims"}:
+                response["text"] = "not json"
+            return response
+        self.judge.transport = broken
+        result = self.score()
+        first = result["records"][0]
+        self.assertEqual(first["factual_correctness"]["status"], "parse_error")
+        self.assertEqual(first["context_recall"]["status"], "ok")
+
     def test_parse_and_identity_failures(self):
         for failure, expected in [("parse", "parse_error"), ("identity", "judge_error")]:
             async def broken(prompt, schema, config):

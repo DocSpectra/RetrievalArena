@@ -2,7 +2,7 @@
 import copy
 import json
 
-from retrieval_arena.ragas_scoring import PREFIX, aggregate, digest, new_record, text_hash
+from retrieval_arena.ragas_scoring import PREFIX, aggregate, digest, new_record, pending, text_hash
 
 
 def inputs():
@@ -58,6 +58,11 @@ class FakeJudge:
     async def score(self, row, rubric, corpus, config, prompts):
         self.calls += 1
         record = new_record(row, rubric, corpus, config, self.engine)
+        for name in pending(record):
+            # Fixed hand-coded published-metric values; v1/v2 fixtures leave none pending.
+            record[name] = {"status": "ok", "value": 0.5}
+        if prompts is None:
+            return record
         for element in rubric["elements"]:
             raw = oracle(row["text"], element["element_id"])
             record["raw"].append(raw)
@@ -72,6 +77,12 @@ async def transport(prompt, schema, config):
     if set(schema["properties"]) == {"reason", "value"}:
         payload = json.loads(prompt.split("\n", 1)[1])
         response = oracle(payload["text"], payload["element"]["element_id"])
+    elif set(schema["properties"]) == {"classifications"}:
+        # ContextRecall: one attributed and one unattributed reference statement.
+        response = {"classifications": [{"statement": "Enable feature.", "reason": "Fixture support.", "attributed": 1},
+                                        {"statement": "Restart the host.", "reason": "Fixture absence.", "attributed": 0}]}
+    elif set(schema["properties"]) == {"claims"}:
+        response = {"claims": ["Enable feature.", "Check status."]}
     elif set(schema["properties"]) == {"statements"}:
         # Faithfulness statement generation and NLI have distinct item types.
         if schema["properties"]["statements"].get("items", {}).get("type") == "string":
@@ -82,3 +93,17 @@ async def transport(prompt, schema, config):
     else:
         raise AssertionError("Unexpected Ragas response schema")
     return {"text": json.dumps(response), "model": config["model"], "revision": config["revision"], "usage": None, "cost": None}
+
+
+def inputs_v3(element_completeness=False):
+    """Config v3 / rubrics v2 over the same synthetic rows: published metrics on."""
+    batch, rubrics, config = inputs()
+    rubrics["schema_version"] = PREFIX + "rubrics.v2"
+    for question in rubrics["questions"]:
+        question["reference"] = "Enable feature. Check status."
+        if not element_completeness:
+            question["elements"] = []
+    config.update(schema_version=PREFIX + "judge_config.v3", thinking=False, faithfulness=True,
+                  element_completeness=element_completeness, context_recall=True,
+                  factual_correctness={"mode": "f1", "beta": 1.0, "atomicity": "low", "coverage": "low"})
+    return batch, rubrics, config

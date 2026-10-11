@@ -11,7 +11,7 @@ from retrieval_arena.ragas_scoring import (
     PROMPTS, aggregate, digest, prompt_for, replay, score_batch, scoring_identity,
     export_legacy_predictions, validate_config, validate_inputs, validate_verdicts,
 )
-from unit_tests.ragas_fixture import FakeJudge, inputs
+from unit_tests.ragas_fixture import FakeJudge, inputs, inputs_v3
 
 
 class RagasScoringTests(unittest.TestCase):
@@ -243,6 +243,70 @@ class RagasScoringTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             asyncio.run(client("prompt", {}, config))
         self.assertEqual(client.request.call_count, 1)
+
+    def test_v3_published_metrics_policy_and_replay(self):
+        batch, rubrics, config = inputs_v3()
+        judge = FakeJudge()
+        result = asyncio.run(score_batch(batch, rubrics, config, judge))
+        self.assertEqual(result["schema_version"], "retrieval_arena.ragas_scores.v2")
+        records = {(r["unit"][1], r["unit"][3]): r for r in result["records"]}
+        complete = records[("complete", "answer")]
+        self.assertEqual((complete["schema_version"], complete["status"], complete["aggregate"]),
+                         ("retrieval_arena.ragas_judgment.v2", "disabled", None))
+        for name in ("faithfulness", "context_recall", "factual_correctness"):
+            self.assertEqual(complete[name], {"status": "ok", "value": 0.5})
+            self.assertEqual(records[("empty", "answer")][name]["status"], "empty_answer")
+            self.assertEqual(records[("absent", "answer")][name]["status"], "missing_output")
+            self.assertEqual(records[("contexts", "final_context")][name]["status"], "not_applicable")
+        # Five non-empty answers are judged; empty, absent and context stages are not.
+        self.assertEqual(judge.calls, 5)
+        group = next(g for g in result["summary"] if g["condition_id"] == "complete")
+        self.assertIsNone(group["complete_coverage"])
+        self.assertEqual(group["failures"], {})
+        self.assertEqual(group["metrics"]["context_recall"], {"scored": 1, "statuses": {"ok": 1}, "macro_observed": 0.5})
+        self.assertEqual(replay(batch, rubrics, result), result)
+        tampered = copy.deepcopy(result)
+        tampered["records"][0]["context_recall"]["value"] = 0.9
+        tampered["sha256"] = digest({k: v for k, v in tampered.items() if k != "sha256"})
+        with self.assertRaises(ValidationError):
+            replay(batch, rubrics, tampered)
+
+    def test_v3_config_and_pairing_refusals(self):
+        batch, rubrics, config = inputs_v3()
+        validate_config(config)
+        for key, value in [("mode", "accuracy"), ("atomicity", "medium"), ("coverage", 1), ("beta", 0)]:
+            with self.assertRaises(ValidationError):
+                validate_config({**config, "factual_correctness": {**config["factual_correctness"], key: value}})
+        with self.assertRaises(ValidationError):
+            validate_config({**config, "context_recall": 1})
+        bad = copy.deepcopy(rubrics)
+        bad["questions"][0]["reference"] = None
+        with self.assertRaises(ValidationError):
+            asyncio.run(score_batch(batch, bad, config, FakeJudge()))
+        # The element metric still needs elements when it is on.
+        with self.assertRaises(ValidationError):
+            asyncio.run(score_batch(batch, rubrics, {**config, "element_completeness": True}, FakeJudge()))
+        # A v1 config never accepts a rubric without elements.
+        v1 = inputs()[2]
+        with self.assertRaises(ValidationError):
+            asyncio.run(score_batch(batch, rubrics, v1, FakeJudge()))
+
+    def test_v3_with_elements_keeps_completeness(self):
+        batch, rubrics, config = inputs_v3(element_completeness=True)
+        result = asyncio.run(score_batch(batch, rubrics, config, FakeJudge()))
+        first = result["records"][0]
+        self.assertEqual((first["status"], first["aggregate"]["completeness"]), ("ok", 1))
+        self.assertEqual(first["factual_correctness"], {"status": "ok", "value": 0.5})
+        self.assertEqual(replay(batch, rubrics, result), result)
+
+    def test_v3_cache_skips_only_complete_metrics(self):
+        batch, rubrics, config = inputs_v3()
+        with tempfile.TemporaryDirectory() as temp:
+            judge = FakeJudge()
+            first = asyncio.run(score_batch(batch, rubrics, config, judge, cache_dir=temp))
+            second = asyncio.run(score_batch(batch, rubrics, config, judge, cache_dir=temp))
+            self.assertEqual(first, second)
+            self.assertEqual(judge.calls, 5)
 
     def test_ollama_network_gate(self):
         from retrieval_arena.ragas_ollama import OllamaTransport

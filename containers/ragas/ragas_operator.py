@@ -10,7 +10,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from retrieval_arena.ragas_scoring import (  # noqa: E402
-    canonical, digest, fields, replay, require, score_batch, write_json,
+    PENDING_FAILURES, canonical, digest, fields, metric_results, replay, require, score_batch, write_json,
 )
 
 
@@ -77,7 +77,7 @@ def main():
                 result = asyncio.run(score_batch(batch, rubrics, config, judge, cache_dir=cache,
                                     use_cache=request["use_cache"], checkpoint=lambda rows: write_json(output / "checkpoint.json", rows)))
         write_json(output / "scores.json", result)
-        receipt["status"] = "completed_with_failures" if any(r["status"] != "ok" or r["faithfulness"]["status"] in {"judge_error", "parse_error", "unavailable"} for r in result["records"]) else "completed"
+        receipt["status"] = "completed_with_failures" if any(r["status"] not in {"ok", "disabled"} or any(m["status"] in PENDING_FAILURES for m in metric_results(r).values()) for r in result["records"]) else "completed"
         # The fixture deliberately includes one missing prediction.
         return 0 if command == "fixture" or receipt["status"] == "completed" else 1
     except Exception as exc:

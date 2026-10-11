@@ -46,6 +46,52 @@ output over answer and retrieved context. It does not establish completeness or
 truth. Ranked retrieval, lexical scores and offline BERTScore remain separate;
 there is no composite score or change to existing profile results.
 
+## Published ContextRecall and FactualCorrectness (judge config v3)
+
+`judge_config.v3` adds two more published 0.4.3 collections metrics beside
+`Faithfulness`, each a separate, optional, named output with the same
+`{status, value}` shape: `context_recall` and `factual_correctness`. They run
+unmodified, with Ragas's own prompts; RA adds no prompt text, so `PROMPTS` and
+its hashes are unchanged. The element metric becomes optional
+(`element_completeness`); when it is off, the record's completeness status is
+`disabled` with no verdicts, and rubric elements may be empty.
+
+| Metric | Ragas inputs | Calls per unit |
+| --- | --- | --- |
+| `faithfulness` | question, answer, retrieved contexts | 2 |
+| `context_recall` | question, retrieved contexts (joined by Ragas with `\n`), reference | 1 |
+| `factual_correctness` | answer, reference; `mode`, `beta`, `atomicity`, `coverage` from config | 2 (precision) or 4 (recall, F1) |
+
+The reference is the question's `reference` in `rubrics.v2` (a nullable free
+string). When either reference metric is on, every question must carry one;
+a missing reference refuses the batch rather than scoring zero.
+
+Fixed, judge-free states for each published metric: `disabled`, `not_applicable`
+(context stages), `missing_output`, `empty_answer`, and `empty_context`
+(Faithfulness and ContextRecall). Ragas's ContextRecall raises an error on empty
+contexts, so this state keeps that case explicit. A Ragas NaN is `no_statements`.
+Parse and transport failures are `parse_error` and `judge_error`; one metric's
+failure never overwrites another metric or the element score.
+
+Known limits, from the 0.4.3 source:
+- `FactualCorrectness` rounds to two decimals. Its recall mode counts supported
+  **response** claims as TP and unsupported **reference** claims as FN; the two
+  sides come from separate decompositions. It is not a fixed-denominator
+  completeness measure.
+- `fbeta_score` returns 0.0 when nothing matched or nothing was extracted, so a
+  zero does not by itself say that no claims were extracted. The raw attempts
+  keep the claim lists.
+- `ContextRecall` re-extracts reference statements on every call, so its
+  denominator can differ between repeats.
+
+Outputs: `judgment.v2` records (v1 fields plus `context_recall` and
+`factual_correctness`) and a `scores.v2` bundle whose per-group summary adds
+`metrics`: for each published metric, its scored count, status counts and
+macro mean of available values. It never pools groups or combines metrics.
+Judge configs v1 and v2 still emit `judgment.v1` and `scores.v1`; their stored
+bundles replay byte-identically. The cache stores a record only when every
+enabled metric succeeded. See `configs/ragas_judge.v3.example.json`.
+
 ## Runtime and operator boundary
 
 Use the **dedicated Docker image**, not a host Python environment or a retriever
@@ -223,5 +269,7 @@ replay, with fake responses below the framework API. Standard suite discovery
 skips it unless `RA_RAGAS_SMOKE=1`.
 
 Versioned upstream sources: [DiscreteMetric](https://github.com/vibrantlabsai/ragas/blob/v0.4.3/src/ragas/metrics/discrete.py),
-[Faithfulness](https://github.com/vibrantlabsai/ragas/blob/v0.4.3/src/ragas/metrics/collections/faithfulness/metric.py).
+[Faithfulness](https://github.com/vibrantlabsai/ragas/blob/v0.4.3/src/ragas/metrics/collections/faithfulness/metric.py),
+[ContextRecall](https://github.com/vibrantlabsai/ragas/blob/v0.4.3/src/ragas/metrics/collections/context_recall/metric.py),
+[FactualCorrectness](https://github.com/vibrantlabsai/ragas/blob/v0.4.3/src/ragas/metrics/collections/factual_correctness/metric.py).
 Software compatibility is not domain calibration or evidence of answer quality.
