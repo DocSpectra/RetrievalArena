@@ -1,5 +1,9 @@
 # Corpus import and dataset preparation
 
+For adding a source or transform, read the [dataset extension workflow](extension-datasets.md).
+Preparation currently copies documents without cleaning or chunking; question
+sourcing and independent judgment are separate inputs.
+
 How a documentation corpus becomes a dataset a provider can read. The
 **experiment lane** (`retrieval_arena/corpus/*.py`, `retrieval_arena/support/*.py`)
 imports an upstream revision and prepares a dataset with questions, answers,

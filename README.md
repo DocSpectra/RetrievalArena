@@ -25,6 +25,8 @@ before/after Retrieval Arena runs.
 
 ## Development
 
+- Extension entry point: [experiments, evaluations and dataset workflows](docs/extending.md).
+
 - Install: `pip install -e .`
 - Unit tests: `python -m unittest discover -s unit_tests`
 - Agent policy and the provider reference: [AGENTS.md](AGENTS.md)

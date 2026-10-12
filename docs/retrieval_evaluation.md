@@ -1,5 +1,7 @@
 # Retrieval evaluation
 
+For implementation changes, start with [Extending RA](extending.md).
+
 How a retrieval provider is run and how its output is scored. The table of
 every evaluation is [evaluations/README.md](evaluations/README.md); each row
 links its own page. The provider reference is the table in
@@ -45,6 +47,12 @@ Knobs are the `config.get(...)` keys of each runner, listed per row under
    ranked-v2 predictions with a receipt — see [operator.md](operator.md).
 
 ## The scoring chain
+
+The YAML harness itself calls legacy `lexical_baseline` scoring and stages
+answers/support with provider inputs. It does not automatically emit strict
+ranked-v2 artifacts or enforce judgment isolation. See the
+[experiment workflow](extension-experiments.md) before using that path for
+a new scientific comparison.
 
 - Predictions → `score-ranked` (`retrieval_arena/ranked_scoring.py`): strict
   qrels, run and policy artifacts, arithmetic delegated to

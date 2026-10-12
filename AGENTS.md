@@ -6,6 +6,23 @@ driven by declarative configuration: providers are containerized tests under
 verification image exposes a small operator command set. Workspace policy
 lives in `../../AGENTS.md`; this file is RA-specific.
 
+## Progressive loading for extensions
+
+Before adding experiments, evaluations, providers or dataset processing, read
+[docs/extending.md](docs/extending.md), then only the relevant workflow page
+and its linked contracts/source. It distinguishes YAML execution from the
+candidate operator, legacy scoring from ranked evaluation, and acquisition
+from preprocessing and independent judgments. Keep reusable RA knowledge in
+these docs; keep paper-specific protocol and evidence decisions in the
+consuming workspace's context. Update the relevant page when implementation
+changes a documented contract.
+
+Use [architecture conventions](docs/architecture-conventions.md) for names
+and execution/artifact distinctions. Reference its RA-D follow-up IDs when
+a change crosses those boundaries; record a decision before changing shared
+semantics. Do not treat deferred architecture work as a prerequisite unless
+the chosen experiment needs that specific boundary resolved.
+
 ## Providers
 
 One directory per provider under `tests/<name>/` (`runner.py`, container
@@ -157,7 +174,7 @@ image rebuild, was judged too invasive for S024 and remains open.
 
 ## Checkouts
 
-One checkout: `git/RetrievalArena` on `capstone/retrieval-metrics-v2` is the
+For Capstone, `git/RetrievalArena` on `capstone/retrieval-metrics-v2` is the
 only working tree of this object store that outlives a sprint. A pin is a
 tag, never a directory (`e-exp1-evaluator-pin` names the 33V evaluator
 source `d412e87`; the BigData freeze is `bigdata2026-evidence-freeze-2026-05-31`);
@@ -169,6 +186,11 @@ sprint's close (S048, 2026-09-16). Because the operator's identity is the
 whole repository, an RA scoring command after a docs-only commit still
 runs from a transient worktree at the receipt's `source_commit` until the
 next image rebuild rebinds the receipt.
+
+A consuming workspace may explicitly authorize a longer-lived worktree.
+The ICSC workspace has authorized `icsc2027/downstream-case` for its paper
+work; its root guide controls that worktree's lifetime. Do not apply
+Capstone sprint cleanup to it or switch Capstone's checkout for ICSC work.
 
 ## Adding A Provider
 

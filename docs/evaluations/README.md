@@ -1,5 +1,7 @@
 # Evaluations
 
+To add a metric or judging surface, follow the [evaluation extension workflow](../extension-evaluations.md).
+
 Every evaluation Retrieval Arena can apply, one row each. Name is the
 provider's `tests/<name>/` directory (or the scoring surface's id) and links
 its page; "(admitted)" marks the five profiles `candidate-retrieve` admits
