@@ -30,8 +30,9 @@ $info = (& docker image inspect $value.image | ConvertFrom-Json)[0]
 if ($LASTEXITCODE -ne 0 -or $info.Id -ne $value.image -or $info.Os -ne 'linux' -or $info.Architecture -ne 'amd64') { throw 'ragas-image-platform' }
 $labels = $info.Config.Labels
 if ($labels.'org.opencontainers.image.revision' -ne $value.source_commit -or $labels.'io.retrieval-arena.source.tree' -ne $value.source_tree -or $labels.'io.retrieval-arena.ragas.dependency-lock-sha256' -ne $value.dependency_lock_sha256 -or $labels.'io.retrieval-arena.ragas.contract' -ne 'retrieval_arena.ragas_image.v1') { throw 'ragas-image-labels' }
-$network = if ($Command -in @('judge','probe')) { $Network } else { 'none' }
-$networkArgs = switch ($network) {
+# PowerShell names are case-insensitive: this local must not shadow the -Network parameter.
+$mode = if ($Command -in @('judge','probe')) { $Network } else { 'none' }
+$networkArgs = switch ($mode) {
     'host_model_alias' { @('--network','bridge','--add-host','host.docker.internal:host-gateway') }
     'external_api' { if (-not $CredentialEnv) { throw 'ragas-credential-env-required' }; @('--network','bridge','--env',$CredentialEnv) }
     default { @('--network','none') }
@@ -50,6 +51,6 @@ if ($Command -ne 'smoke') {
 & docker run --rm --platform linux/amd64 @networkArgs --read-only --user 65532:65532 `
     --security-opt no-new-privileges --cap-drop ALL --pids-limit 256 --memory 4g --cpus 2 `
     --tmpfs '/tmp:rw,nosuid,nodev,size=256m,uid=65532,gid=65532' @mounts `
-    --env "RA_RAGAS_NETWORK=$network" --env "RA_IMAGE_REFERENCE=$($value.image)" `
+    --env "RA_RAGAS_NETWORK=$mode" --env "RA_IMAGE_REFERENCE=$($value.image)" `
     --env "RA_SOURCE_COMMIT=$($value.source_commit)" --env "RA_SOURCE_TREE=$($value.source_tree)" $value.image $Command
 exit $LASTEXITCODE
