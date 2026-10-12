@@ -1,9 +1,13 @@
 #requires -Version 7.0
 [CmdletBinding(PositionalBinding = $false)]
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('smoke','fixture','replay','judge')][string]$Command,
+    [Parameter(Mandatory = $true)][ValidateSet('smoke','fixture','replay','judge','probe')][string]$Command,
     [string]$InputRoot,
     [string]$OutputRoot,
+    # judge/probe only. external_api: the operator admits one provider host (RA-D07);
+    # the credential is passed by name, its value never on a command line.
+    [ValidateSet('host_model_alias','external_api')][string]$Network = 'host_model_alias',
+    [ValidateSet('ANTHROPIC_API_KEY','OPENAI_API_KEY')][string]$CredentialEnv,
     [string]$Receipt = '.tmp/ragas-image.json'
 )
 $ErrorActionPreference = 'Stop'
@@ -26,14 +30,18 @@ $info = (& docker image inspect $value.image | ConvertFrom-Json)[0]
 if ($LASTEXITCODE -ne 0 -or $info.Id -ne $value.image -or $info.Os -ne 'linux' -or $info.Architecture -ne 'amd64') { throw 'ragas-image-platform' }
 $labels = $info.Config.Labels
 if ($labels.'org.opencontainers.image.revision' -ne $value.source_commit -or $labels.'io.retrieval-arena.source.tree' -ne $value.source_tree -or $labels.'io.retrieval-arena.ragas.dependency-lock-sha256' -ne $value.dependency_lock_sha256 -or $labels.'io.retrieval-arena.ragas.contract' -ne 'retrieval_arena.ragas_image.v1') { throw 'ragas-image-labels' }
-$network = if ($Command -eq 'judge') { 'host_model_alias' } else { 'none' }
-$networkArgs = if ($Command -eq 'judge') { @('--network','bridge','--add-host','host.docker.internal:host-gateway') } else { @('--network','none') }
+$network = if ($Command -in @('judge','probe')) { $Network } else { 'none' }
+$networkArgs = switch ($network) {
+    'host_model_alias' { @('--network','bridge','--add-host','host.docker.internal:host-gateway') }
+    'external_api' { if (-not $CredentialEnv) { throw 'ragas-credential-env-required' }; @('--network','bridge','--env',$CredentialEnv) }
+    default { @('--network','none') }
+}
 $mounts = @()
 if ($Command -ne 'smoke') {
     $out = (Resolve-Path -LiteralPath $OutputRoot).Path
     if ((Get-ChildItem -Force -LiteralPath $out).Count -ne 1 -or -not (Test-Path -LiteralPath (Join-Path $out '.retrieval-arena-output-owner') -PathType Leaf)) { throw 'ragas-output-not-fresh' }
     $mounts += @('--mount', "type=bind,src=$out,dst=/output")
-    if ($Command -in @('replay','judge')) {
+    if ($Command -in @('replay','judge','probe')) {
         $inputPath = (Resolve-Path -LiteralPath $InputRoot).Path
         if ($out -eq $inputPath -or $out.StartsWith($inputPath.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase) -or $inputPath.StartsWith($out.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'ragas-input-output-overlap' }
         $mounts += @('--mount', "type=bind,src=$inputPath,dst=/input,readonly")

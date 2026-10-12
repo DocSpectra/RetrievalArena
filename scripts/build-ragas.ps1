@@ -8,7 +8,7 @@ $tree = (& git -C $repo rev-parse 'HEAD^{tree}').Trim()
 if ($LASTEXITCODE -ne 0 -or $commit -notmatch '^[a-f0-9]{40}$' -or $tree -notmatch '^[a-f0-9]{40}$') { throw 'ragas-source-identity' }
 # Build only a committed snapshot. Existing unrelated working-tree notes are neither
 # modified nor copied into the image; the image never mounts the working tree.
-$owned = @('retrieval_arena', 'containers/ragas', 'unit_tests/ragas_fixture.py', 'unit_tests/test_ragas_scoring.py', 'unit_tests/test_ragas_api.py', 'scripts/build-ragas.ps1', 'scripts/run-ragas.ps1')
+$owned = @('retrieval_arena', 'containers/ragas', 'unit_tests/ragas_fixture.py', 'unit_tests/test_ragas_scoring.py', 'unit_tests/test_ragas_api.py', 'unit_tests/test_model_providers.py', 'scripts/build-ragas.ps1', 'scripts/run-ragas.ps1')
 $dirty = & git -C $repo status --porcelain -- @owned
 if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'ragas-implementation-not-committed' }
 $build = Join-Path $repo ('.tmp/ragas-build-' + [Guid]::NewGuid().ToString('N'))

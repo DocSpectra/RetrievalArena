@@ -1,9 +1,10 @@
 #requires -Version 7.0
 [CmdletBinding(PositionalBinding = $false)]
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('replay','judge')][string]$Command,
-    [Parameter(Mandatory = $true)][string]$Batch,
-    [Parameter(Mandatory = $true)][string]$Rubrics,
+    [Parameter(Mandatory = $true)][ValidateSet('replay','judge','probe')][string]$Command,
+    # Not used by probe (config only).
+    [string]$Batch,
+    [string]$Rubrics,
     [Parameter(Mandatory = $true)][string]$Artifact,
     [Parameter(Mandatory = $true)][string]$InputRoot,
     [string]$CacheRoot,
@@ -11,12 +12,15 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 if (Test-Path -LiteralPath $InputRoot) { throw 'ragas-input-root-must-be-new' }
-$sources = @((Resolve-Path -LiteralPath $Batch).Path, (Resolve-Path -LiteralPath $Rubrics).Path, (Resolve-Path -LiteralPath $Artifact).Path)
+if (($Command -eq 'probe') -ne (-not $Batch -and -not $Rubrics)) { throw 'ragas-probe-takes-config-only' }
+$artifactPath = (Resolve-Path -LiteralPath $Artifact).Path
 New-Item -ItemType Directory -Path $InputRoot | Out-Null
-Copy-Item -LiteralPath $sources[0] -Destination (Join-Path $InputRoot 'batch.json')
-Copy-Item -LiteralPath $sources[1] -Destination (Join-Path $InputRoot 'rubrics.json')
+if ($Command -ne 'probe') {
+    Copy-Item -LiteralPath (Resolve-Path -LiteralPath $Batch).Path -Destination (Join-Path $InputRoot 'batch.json')
+    Copy-Item -LiteralPath (Resolve-Path -LiteralPath $Rubrics).Path -Destination (Join-Path $InputRoot 'rubrics.json')
+}
 $artifactName = if ($Command -eq 'replay') { 'scores.json' } else { 'config.json' }
-Copy-Item -LiteralPath $sources[2] -Destination (Join-Path $InputRoot $artifactName)
+Copy-Item -LiteralPath $artifactPath -Destination (Join-Path $InputRoot $artifactName)
 if ($CacheRoot) {
     if ($Command -ne 'judge') { throw 'ragas-cache-only-for-judge' }
     $cache = Join-Path $InputRoot 'cache'

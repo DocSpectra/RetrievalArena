@@ -13,7 +13,7 @@ COPY containers/ragas/requirements.lock /opt/ra/containers/ragas/requirements.lo
 RUN python -m pip install --disable-pip-version-check --no-cache-dir --only-binary=:all: \
     --require-hashes -r /opt/ra/containers/ragas/requirements.lock && python -m pip check
 COPY retrieval_arena /opt/ra/retrieval_arena
-COPY unit_tests/ragas_fixture.py unit_tests/test_ragas_scoring.py unit_tests/test_ragas_api.py /opt/ra/unit_tests/
+COPY unit_tests/ragas_fixture.py unit_tests/test_ragas_scoring.py unit_tests/test_ragas_api.py unit_tests/test_model_providers.py /opt/ra/unit_tests/
 COPY containers/ragas/ragas_operator.py /opt/ra/containers/ragas/ragas_operator.py
 WORKDIR /opt/ra
 USER 65532:65532
