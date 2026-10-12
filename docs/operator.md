@@ -40,7 +40,7 @@ its positional form. The seven `-Command` values:
 
 | Command | What it does |
 | --- | --- |
-| `focused` | the fixed module list in `containers/verification/verify.py` (18 modules since S052); on green, the last stdout line is the self-hashed `retrieval_arena.focused_verification_witness.v1` binding commit/tree/image/lock, `focused_suite_success`, the exact `focused_tests_run` count and case ids; consumers read the witness, never unittest prose |
+| `focused` | the fixed module list in `containers/verification/verify.py` (22 modules since C1, which added `test_model_providers`); on green, the last stdout line is the self-hashed `retrieval_arena.focused_verification_witness.v1` binding commit/tree/image/lock, `focused_suite_success`, the exact `focused_tests_run` count and case ids; consumers read the witness, never unittest prose |
 | `all` | `unittest discover` over `unit_tests/` |
 | `evaluate-profile` | the dual-profile evaluation over an input root holding `operator-request.json` (`retrieval_arena.profile_evaluation_request.v1`: `config_path`, `input_inventory`, `input_inventory_sha256`) — [dual_profile_evaluation.md](dual_profile_evaluation.md) |
 | `score-bertscore` | offline BERTScore over composed answer pairs (`retrieval_arena.bertscore_scoring_request.v1`; container memory raised to 8 GB) — [evaluations/score_bertscore.md](evaluations/score_bertscore.md) |

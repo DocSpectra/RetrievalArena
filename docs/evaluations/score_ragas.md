@@ -194,6 +194,7 @@ Every `schema_version` below starts with `retrieval_arena.ragas_`.
 | `rubrics.v1` | `corpus_sha256`, `provenance`, `questions`. Provenance: nonempty `authoring_method`, `reviewer_id`, `frozen_at`, `independent_of_predictions: true`. This is a declared provenance claim, not proof of independent review. |
 | Rubric question/element | Question: `question_id`, `question`, nonempty `elements`. Element: unique `element_id`, `requirement`, `acceptance`, list of `alternatives`, nonempty `sources` (same exact context-reference shape). Question sets/text and corpus joins must match. |
 | `judge_config.v1` | See `configs/ragas_judge.example.json`: provider, explicit model/revision, temperature, seed, retry count, timeout, input/output token caps, separate prompt versions and faithfulness flag. No blank/unknown/latest identity. The Docker provider requires an observed SHA-256 revision. |
+| `judge_config.v4` | C1. v3 fields and metric semantics plus `generation`, `pricing`, `spend_cap_usd`; the only version admitting a hosted provider (`anthropic`, `openai`): revision equals the model id, `temperature`/`seed` null, thinking/effort in `generation`. See `configs/ragas_judge_anthropic.example.json` and [model providers](../model_providers.md). v1–v3 validate and replay unchanged. |
 | `element_verdict.v1` | `element_id`, `verdict`, nonempty `reason`, `evidence`. Each evidence entry: `start`, `end` (exclusive), exact `text`. Satisfied/contradicted require spans. Missing/duplicate/unknown element verdicts fail the whole question. Unit identity is inherited from the enclosing judgment. |
 | `question_score.v1` | `metric`, `unit`, exact `counts` for all three verdicts, `denominator`, `completeness`. No score is emitted for a failed question. |
 | `judgment.v1` | Complete scoring `identity`, `unit`, `status`, `verdicts`, nullable `aggregate`, separate `faithfulness`, raw per-attempt responses/schemas/prompts, `measurements` and nullable `error`. |
@@ -244,11 +245,15 @@ New-Item -ItemType File .tmp/ragas-judge-output/.retrieval-arena-output-owner
 .\scripts\run-ragas.ps1 -Command judge -InputRoot .tmp/ragas-judge-input -OutputRoot .tmp/ragas-judge-output
 ```
 
+For a hosted judge (config v4), add `-Network external_api -CredentialEnv ANTHROPIC_API_KEY` to `run-ragas.ps1` (the launching shell must have the variable; its value is never on a command line), and qualify the config first with `-Command probe` (input: `prepare-ragas-input.ps1 -Command probe -Artifact config.json`). The run writes `cost-ledger.jsonl` beside `scores.json`; the receipt records `network: external_api`.
+
 The reusable async surface is `score_batch(batch, rubrics, config, RagasJudge(...))`.
 An alternative admitted caller can inject an async transport taking prompt,
 response JSON schema and config and returning exactly `text`, observed `model`,
 observed `revision`, `usage`, `cost`. It must enforce the caller's network and
 identity rules. This is not permission to use an arbitrary host executor.
+`model_providers.transport_for(config, network, output_dir)` returns RA's admitted
+transport for a validated config (Ollama, Anthropic, OpenAI).
 
 Cache keys include the full prediction/context, rubric/provenance, corpus, prompt
 text/version, model/config, Ragas version, dependency lock and adapter source hash.

@@ -13,6 +13,7 @@ Read the workspace guide and [RA agent guide](../AGENTS.md), then choose a path 
 | New experiment using existing retrieval methods | [Experiment workflow](extension-experiments.md) | `config.py`, `harness.py`, `docker.py`, `configs/` |
 | New retrieval method | [Experiment workflow](extension-experiments.md), then its nearest [provider reference](evaluations/README.md) | `tests/<provider>/`; optionally `candidate_retrieval.py` |
 | New metric, diagnostic or judging procedure | [Evaluation workflow](extension-evaluations.md) | scorer/validator, profile integration and result consumers |
+| New model provider, or a model call from a judge/scorer | [Model providers](model_providers.md) | `model_providers/` (transport, pricing, `external_api` admission), its caller's versioned config |
 | New corpus, preprocessing or question set | [Dataset workflow](extension-datasets.md) | `corpus/`, `support/`, `graph/`, dataset contracts |
 | Run through the immutable operator | [Operator contract](operator.md) | `scripts/run-verification.*`, `containers/verification/` |
 
