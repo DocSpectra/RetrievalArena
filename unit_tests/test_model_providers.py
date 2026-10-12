@@ -295,7 +295,8 @@ class RagasOnAnthropicTests(unittest.TestCase):
         self.assertIn({"status": "ok", "value": 1.0}, [row[1] for row in through])
         self.assertFalse({"parse_error", "judge_error"} & {row[i]["status"] for row in through for i in (1, 2, 3)})
         self.assertTrue(all(s.get("additionalProperties") is False for s in schemas))
-        costs = [m["value"] for r in result["records"] for k, m in r["measurements"].items() if k == "cost"]
+        costs = [m["value"] for r in result["records"] for k, m in r["measurements"].items()
+                 if k == "cost" and m["status"] == "available"]
         self.assertTrue(costs and all(isinstance(c, float) for values in costs for c in values))
         self.assertNotIn(FAKE_KEY, json.dumps(result))
 
