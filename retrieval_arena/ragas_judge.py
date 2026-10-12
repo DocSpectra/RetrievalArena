@@ -71,7 +71,11 @@ def engine_identity(lock_path):
     for name, pinned, _ in rows:
         require(version(name.decode()) == pinned.decode(), "dependency-version-mismatch:" + name.decode())
     require(version("ragas") == "0.4.3", "ragas-version")
-    source = b"".join((Path(__file__).with_name(name)).read_bytes() for name in ("ragas_scoring.py", "ragas_judge.py", "ragas_ollama.py"))
+    # Since C1 the adapter includes every provider transport (model_providers/).
+    here = Path(__file__).parent
+    names = ["ragas_scoring.py", "ragas_judge.py", "ragas_ollama.py"] + sorted(
+        "model_providers/" + p.name for p in (here / "model_providers").glob("*.py"))
+    source = b"".join((here / name).read_bytes() for name in names)
     return {"name": "ragas", "version": "0.4.3", "dependency_lock_sha256": hashlib.sha256(lock).hexdigest(),
             "adapter_sha256": hashlib.sha256(source).hexdigest()}
 
@@ -80,7 +84,8 @@ class RagasJudge:
     """Use DiscreteMetric per frozen element and optional built-in Faithfulness.
 
     transport(prompt, response_schema, settings) must be async, enforce admission,
-    and return text/model/revision/usage/cost. No automatic provider selection.
+    and return text/model/revision/usage/cost. No automatic provider selection;
+    model_providers.transport_for maps a validated config to its admitted transport.
     The batch API is sequential; instantiate a separate judge per concurrent batch.
     """
 

@@ -11,6 +11,7 @@ OPERATOR_ROOT = Path(__file__).resolve().parent
 COMMANDS = {
     "focused": (
         "unit_tests.test_ragas_scoring",
+        "unit_tests.test_model_providers",
         "unit_tests.test_dual_profile",
         "unit_tests.test_review_packets",
         "unit_tests.test_profile_evaluation",

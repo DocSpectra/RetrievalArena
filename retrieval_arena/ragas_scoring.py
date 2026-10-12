@@ -200,15 +200,21 @@ FACTUAL_CORRECTNESS_OPTIONS = {"mode": ("precision", "recall", "f1"), "atomicity
 def is_v3(config):
     # Config v3 adds the published ContextRecall/FactualCorrectness and an optional
     # element metric. It emits judgment.v2/scores.v2; v1/v2 bundles replay unchanged.
-    return config.get("schema_version") == PREFIX + "judge_config.v3"
+    # Config v4 (C1) keeps v3 metric semantics and adds provider settings.
+    return config.get("schema_version") in (PREFIX + "judge_config.v3", PREFIX + "judge_config.v4")
+
+
+def is_v4(config):
+    return config.get("schema_version") == PREFIX + "judge_config.v4"
 
 
 def validate_config(config):
     version = config.get("schema_version")
-    require(version in (PREFIX + "judge_config.v1", PREFIX + "judge_config.v2", PREFIX + "judge_config.v3"), "config-version")
+    require(version in (PREFIX + "judge_config.v1", PREFIX + "judge_config.v2", PREFIX + "judge_config.v3", PREFIX + "judge_config.v4"), "config-version")
     common = "schema_version provider model revision temperature seed retries timeout_seconds max_output_tokens max_input_tokens answer_prompt context_prompt faithfulness"
     extra = {PREFIX + "judge_config.v2": " thinking",
-             PREFIX + "judge_config.v3": " thinking element_completeness context_recall factual_correctness"}.get(version, "")
+             PREFIX + "judge_config.v3": " thinking element_completeness context_recall factual_correctness",
+             PREFIX + "judge_config.v4": " thinking element_completeness context_recall factual_correctness generation pricing spend_cap_usd"}.get(version, "")
     fields(config, common + extra)
     if is_v3(config):
         require(type(config["element_completeness"]) is bool and type(config["context_recall"]) is bool, "builtin-flags")
@@ -218,13 +224,22 @@ def validate_config(config):
             for key, allowed in FACTUAL_CORRECTNESS_OPTIONS.items():
                 require(fc[key] in allowed, "factual-correctness-" + key)
             require(type(fc["beta"]) in (int, float) and fc["beta"] > 0, "factual-correctness-beta")
-    if version in (PREFIX + "judge_config.v2", PREFIX + "judge_config.v3"):
+    if version in (PREFIX + "judge_config.v2", PREFIX + "judge_config.v3", PREFIX + "judge_config.v4"):
         require(config["thinking"] in (False, "low", "medium", "high") and type(config["thinking"]) in (bool, str), "thinking")
     for key in ("provider", "model", "revision"):
         string(config[key])
         require(config[key].lower() not in {"unknown", "latest", "unavailable"}, "model-identity-required")
-    require(type(config["temperature"]) in (int, float) and 0 <= config["temperature"] <= 2, "temperature")
-    for key in ("seed", "retries", "timeout_seconds", "max_output_tokens", "max_input_tokens"):
+    if is_v4(config):
+        # Provider-specific decoding, identity pin, prices and spend cap.
+        from .model_providers.base import validate_settings
+        validate_settings(config)
+        hosted = config["provider"] != "ollama"
+    else:
+        hosted = False
+    if not hosted:
+        require(type(config["temperature"]) in (int, float) and 0 <= config["temperature"] <= 2, "temperature")
+    for key in (("retries", "timeout_seconds", "max_output_tokens", "max_input_tokens") if hosted
+                else ("seed", "retries", "timeout_seconds", "max_output_tokens", "max_input_tokens")):
         require(type(config[key]) is int and config[key] >= (0 if key in {"seed", "retries"} else 1), key)
     require(config["retries"] <= 10, "retry-limit")
     require(config["answer_prompt"] in ("answer_satisfaction.v1", "answer_satisfaction.v2", "answer_satisfaction.v3", "answer_satisfaction.v4"), "answer-prompt")
