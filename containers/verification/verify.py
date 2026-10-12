@@ -32,6 +32,7 @@ COMMANDS = {
         "unit_tests.test_reachability_surface",
         "unit_tests.test_docstyle_measurement",
         "unit_tests.test_repo_lexicon",
+        "unit_tests.test_pooled_support",
     ),
     "all": None,
     "evaluate-profile": (),

@@ -173,6 +173,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     corpus_reachability.add_argument("--dataset", required=True, help="Prepared dataset directory (corpus/, graph_edges.csv, questions.jsonl, faq_support_audit.jsonl).")
     corpus_reachability.add_argument("--query-set-id", help="Optional query set identifier recorded in the manifest.")
+    support = subparsers.add_parser("support", help="Pooled, LLM-verified support (docs/evaluations/pooled_support.md).")
+    support_subparsers = support.add_subparsers(dest="support_command", required=True)
+    support_pool = support_subparsers.add_parser("pool", help="Build the candidate pool (passage generators plus evaluated runs).")
+    for name in ("--config", "--corpus", "--queries", "--run-root", "--out"):
+        support_pool.add_argument(name, required=True)
+    support_pool.add_argument("--model-dir", required=True, help="Local sentence-transformers model directory (offline).")
+    support_verify = support_subparsers.add_parser(
+        "verify", help="Verify pooled pages with the frozen prompt and write qrels (container only: external_api).")
+    for name in ("--config", "--pool", "--queries", "--out"):
+        support_verify.add_argument(name, required=True)
+    support_verify.add_argument("--prior", help="Prior qrels version to extend (incremental; same prompt and settings).")
+    support_verify.add_argument("--query-ids", help="JSON list of query ids to judge (default: every pooled query).")
+    support_verify.add_argument("--limit", type=int, help="Judge at most this many windows (pilot).")
+    support_packet = support_subparsers.add_parser("review-packet", help="Write a stratified, blinded spot-check packet and its key.")
+    for name in ("--qrels", "--pool", "--queries", "--out", "--seed", "--packet-id"):
+        support_packet.add_argument(name, required=True)
+    support_packet.add_argument("--per-stratum", type=int, required=True)
+    support_import = support_subparsers.add_parser("import-review", help="Import reviewer responses; precision and miss rate.")
+    for name in ("--packet", "--key", "--responses", "--out"):
+        support_import.add_argument(name, required=True)
     snapshot = subparsers.add_parser("snapshot", help="Generate snapshot observability artifacts.")
     snapshot_subparsers = snapshot.add_subparsers(dest="snapshot_command", required=True)
     manifest = snapshot_subparsers.add_parser("manifest", help="Write snapshot manifests for a prepared dataset.")
@@ -390,6 +410,28 @@ def main(argv: list[str] | None = None) -> int:
             result = import_corpus_source(descriptor, acquisition_capability=args.transport)
             print(json.dumps({"status": "success", "receipt": str(result["receipt_path"]),
                 "receipt_hash": result["receipt"]["manifest_hash"], "reused": result["reused"]}, sort_keys=True))
+        elif args.command == "support":
+            from .support import pooling, review, verification
+            if args.support_command == "pool":
+                result = pooling.pool_files(Path(args.config), Path(args.corpus), Path(args.queries), Path(args.run_root),
+                                            args.model_dir, Path(args.out))
+                print(json.dumps(result["summary"], sort_keys=True))
+            elif args.support_command == "verify":
+                import asyncio
+                from .model_providers import transport_for
+                config = verification.validate_verifier_config(json.loads(Path(args.config).read_text(encoding="utf-8")))
+                query_ids = json.loads(Path(args.query_ids).read_text(encoding="utf-8")) if args.query_ids else None
+                run = verification.VerifyRun(Path(args.pool), pooling.read_jsonl(Path(args.queries)), config, Path(args.out),
+                                             transport_for(config, "external_api", args.out),
+                                             prior_dir=Path(args.prior) if args.prior else None, query_ids=query_ids)
+                stats = asyncio.run(run.run(limit=args.limit))
+                print(json.dumps({"run": stats, "counts": verification.write_qrels(run)["counts"]}, sort_keys=True))
+            elif args.support_command == "review-packet":
+                print(json.dumps(review.packet_files(Path(args.qrels), Path(args.pool), Path(args.queries), Path(args.out),
+                                                     args.per_stratum, args.seed, args.packet_id), sort_keys=True))
+            else:
+                result = review.import_files(Path(args.packet), Path(args.key), Path(args.responses), Path(args.out))
+                print(json.dumps({"precision": result["precision"], "miss_rate": result["miss_rate"]}, sort_keys=True))
         elif args.command == "corpus" and args.corpus_command == "compare-snapshots":
             result = run_corpus_snapshot_comparison(Path(args.plan))
             print(result["summary"])
