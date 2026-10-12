@@ -286,8 +286,14 @@ class RagasOnAnthropicTests(unittest.TestCase):
             transport = AnthropicTransport(ledger, "external_api", client=fake, require_container=False, transform=transform_schema)
             judge = RagasJudge(transport, Path(__file__).resolve().parents[1] / "containers/ragas/requirements.lock")
             result = asyncio.run(score_batch(batch, rubrics, config, judge))
-        statuses = {r["faithfulness"]["status"] for r in result["records"] if r["status"] == "disabled"}
-        self.assertEqual(statuses, {"ok"})
+            # Provider-neutral: the same oracle behind the bare fixture transport scores identically.
+            direct = asyncio.run(score_batch(batch, rubrics, config, RagasJudge(
+                fixture, Path(__file__).resolve().parents[1] / "containers/ragas/requirements.lock")))
+        metrics = ("faithfulness", "context_recall", "factual_correctness")
+        through = [[r["status"]] + [r[m] for m in metrics] for r in result["records"]]
+        self.assertEqual(through, [[r["status"]] + [r[m] for m in metrics] for r in direct["records"]])
+        self.assertIn({"status": "ok", "value": 1.0}, [row[1] for row in through])
+        self.assertFalse({"parse_error", "judge_error"} & {row[i]["status"] for row in through for i in (1, 2, 3)})
         self.assertTrue(all(s.get("additionalProperties") is False for s in schemas))
         costs = [m["value"] for r in result["records"] for k, m in r["measurements"].items() if k == "cost"]
         self.assertTrue(costs and all(isinstance(c, float) for values in costs for c in values))
