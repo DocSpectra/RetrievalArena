@@ -192,6 +192,37 @@ The ICSC workspace has authorized `icsc2027/downstream-case` for its paper
 work; its root guide controls that worktree's lifetime. Do not apply
 Capstone sprint cleanup to it or switch Capstone's checkout for ICSC work.
 
+## Collaboration
+
+Added October 12, 2026 (ICSC C3). `main` on `origin`
+(`DocSpectra/RetrievalArena`, private) is the integration branch for every
+workspace (Capstone, BigData, JCDL, CIKM, ICSC).
+
+- **Branch per workspace sprint** from `origin/main`
+  (`git fetch origin && git switch -c <workspace>/<topic> origin/main`).
+  Workspace protocol, configs and evidence stay in that workspace's own
+  context repository.
+- **Land back by pull request or fast-forward** only. Fast-forward `main`
+  when `origin/main` is an ancestor of the branch; otherwise open a pull
+  request. Tag consolidation points (for example `ra-consolidation-2026-10`).
+- **Never rewrite pushed history.** No force-push, rebase, squash or amend of
+  pushed commits: consuming workspaces pin RA commit SHAs in their evidence.
+- **Document what is reusable** in the same branch: a page under `docs/`, a
+  catalog row in `docs/evaluations/README.md` for an evaluation, and offline
+  unit tests in the `focused` suite (`containers/verification/verify.py`).
+- **Corpus-independent.** RA code and defaults name no corpus; corpus ids,
+  paths, study parameters and dataset-specific prompts live in the consuming
+  workspace's configuration.
+- **Container-first and portable.** New stages run as pinned-image operator
+  commands with receipts; host scripts are thin shims, preferably Python.
+  Targets include DGX Spark (linux/arm64), macOS and HPC (Apptainer): record
+  any new amd64-only, Windows-only, CUDA-required or Docker-daemon-only
+  assumption as an RA-D row in `docs/architecture-conventions.md`.
+- **Model calls and credentials.** Hosted model calls go through
+  `retrieval_arena/model_providers/` with a priced config and a spend ledger,
+  in `external_api` containers that receive credentials by name only. Never
+  commit or print keys.
+
 ## Adding A Provider
 
 Create `tests/<name>/runner.py` and build context, read the standard
