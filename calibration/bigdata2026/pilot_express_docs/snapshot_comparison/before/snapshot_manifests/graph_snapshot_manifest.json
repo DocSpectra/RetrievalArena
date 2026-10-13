@@ -1,0 +1,639 @@
+{
+  "corpus_id": "express_docs",
+  "corpus_snapshot_id": "2025-09-20",
+  "created_at": "2026-05-26T10:51:02+00:00",
+  "edge_count": 30,
+  "edge_file": "graph_edges.csv",
+  "edge_file_hash": "da7e108ea0cffa3db0ec6b1a1041a4234c4168da45b0386886910b7d4f659a7a",
+  "edge_inventory": [
+    {
+      "source": "advanced/security-updates",
+      "target": "resources/contributing"
+    },
+    {
+      "source": "changelog/index",
+      "target": "guide/migrating-5"
+    },
+    {
+      "source": "guide/overriding-express-api",
+      "target": "4x/api"
+    },
+    {
+      "source": "guide/using-middleware",
+      "target": "resources/middleware"
+    },
+    {
+      "source": "guide/writing-middleware",
+      "target": "resources/middleware/cookie-parser"
+    },
+    {
+      "source": "resources/contributing",
+      "target": "resources/community"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/body-parser"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/compression"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/connect-rid"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/cookie-parser"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/cookie-session"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/cors"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/errorhandler"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/method-override"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/morgan"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/multer"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/response-time"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/serve-favicon"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/serve-index"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/serve-static"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/session"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/timeout"
+    },
+    {
+      "source": "resources/middleware",
+      "target": "resources/middleware/vhost"
+    },
+    {
+      "source": "starter/faq",
+      "target": "guide/using-template-engines"
+    },
+    {
+      "source": "starter/static-files",
+      "target": "5x/api"
+    },
+    {
+      "source": "starter/static-files",
+      "target": "advanced/best-practice-performance"
+    },
+    {
+      "source": "starter/static-files",
+      "target": "resources/middleware/serve-static"
+    },
+    {
+      "source": "support/index",
+      "target": "3x/api"
+    },
+    {
+      "source": "support/index",
+      "target": "4x/api"
+    },
+    {
+      "source": "support/index",
+      "target": "5x/api"
+    }
+  ],
+  "graph_extraction_version": "markdown-links-v1",
+  "graph_hash": "751c26818bdd671669ea5cd26ec4d30d3b3d1ba67548c7872fa17fec15699893",
+  "graph_metrics": {
+    "edge_count": 30,
+    "isolated_node_count": 19,
+    "largest_component_size": 27,
+    "max_in_degree": 2,
+    "max_out_degree": 17,
+    "node_count": 53,
+    "strong_component_count": 53,
+    "strong_components": [
+      {
+        "nodes": [
+          "3x/api"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "4x/api"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "5x/api"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "advanced/best-practice-performance"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "advanced/best-practice-security"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "advanced/developing-template-engines"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "advanced/healthcheck-graceful-shutdown"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "advanced/security-updates"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "api"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "blog/posts"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "blog/write-post"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "changelog/index"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/behind-proxies"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/database-integration"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/debugging"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/error-handling"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/migrating-4"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/migrating-5"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/overriding-express-api"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/routing"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/using-middleware"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/using-template-engines"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/writing-middleware"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/community"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/contributing"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/glossary"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/body-parser"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/compression"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/connect-rid"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/cookie-parser"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/cookie-session"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/cors"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/errorhandler"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/method-override"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/morgan"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/multer"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/response-time"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/serve-favicon"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/serve-index"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/serve-static"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/session"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/timeout"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/middleware/vhost"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/utils"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "starter/basic-routing"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "starter/examples"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "starter/faq"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "starter/generator"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "starter/hello-world"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "starter/installing"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "starter/static-files"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "support/index"
+        ],
+        "size": 1
+      }
+    ],
+    "weak_component_count": 23,
+    "weak_components": [
+      {
+        "nodes": [
+          "3x/api",
+          "4x/api",
+          "5x/api",
+          "advanced/best-practice-performance",
+          "guide/overriding-express-api",
+          "guide/using-middleware",
+          "guide/writing-middleware",
+          "resources/middleware",
+          "resources/middleware/body-parser",
+          "resources/middleware/compression",
+          "resources/middleware/connect-rid",
+          "resources/middleware/cookie-parser",
+          "resources/middleware/cookie-session",
+          "resources/middleware/cors",
+          "resources/middleware/errorhandler",
+          "resources/middleware/method-override",
+          "resources/middleware/morgan",
+          "resources/middleware/multer",
+          "resources/middleware/response-time",
+          "resources/middleware/serve-favicon",
+          "resources/middleware/serve-index",
+          "resources/middleware/serve-static",
+          "resources/middleware/session",
+          "resources/middleware/timeout",
+          "resources/middleware/vhost",
+          "starter/static-files",
+          "support/index"
+        ],
+        "size": 27
+      },
+      {
+        "nodes": [
+          "advanced/security-updates",
+          "resources/community",
+          "resources/contributing"
+        ],
+        "size": 3
+      },
+      {
+        "nodes": [
+          "changelog/index",
+          "guide/migrating-5"
+        ],
+        "size": 2
+      },
+      {
+        "nodes": [
+          "guide/using-template-engines",
+          "starter/faq"
+        ],
+        "size": 2
+      },
+      {
+        "nodes": [
+          "advanced/best-practice-security"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "advanced/developing-template-engines"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "advanced/healthcheck-graceful-shutdown"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "api"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "blog/posts"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "blog/write-post"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/behind-proxies"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/database-integration"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/debugging"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/error-handling"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/migrating-4"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "guide/routing"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/glossary"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "resources/utils"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "starter/basic-routing"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "starter/examples"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "starter/generator"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "starter/hello-world"
+        ],
+        "size": 1
+      },
+      {
+        "nodes": [
+          "starter/installing"
+        ],
+        "size": 1
+      }
+    ]
+  },
+  "graph_metrics_file": "graph_metrics.json",
+  "graph_metrics_file_hash": "3f000881c4af6fea6a3b091ea22bfa27cf2fe7a54bf84463ab44d77aa5eec07c",
+  "manifest_hash": "ea63a75e843a1603fdd09b5fc73cfc07d1211128b7e7016b965a2883a3069e56",
+  "manifest_type": "graph_snapshot",
+  "node_count": 53,
+  "schema_version": "retrieval_arena.snapshot_manifest.v1",
+  "snapshot_id": "2025-09-20"
+}

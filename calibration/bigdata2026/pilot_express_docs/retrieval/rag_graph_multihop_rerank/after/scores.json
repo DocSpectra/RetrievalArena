@@ -1,0 +1,40 @@
+{
+  "build_context": "tests\\rag_graph_multihop_rerank",
+  "completed_at": "2026-05-26T10:51:30.976406+00:00",
+  "config_path": "configs\\bigdata2026\\retrieval_express_docs_after.yaml",
+  "container_metadata": {
+    "candidate_budget": 60,
+    "deterministic": true,
+    "directed": false,
+    "distance_penalty": 0.15,
+    "final_ranker": "bm25_minus_distance_penalty",
+    "final_top_k": 5,
+    "frontier_budget_per_node": 12,
+    "max_context_chars_per_doc": 1200,
+    "max_hops": 3,
+    "name": "rag_graph_multihop_rerank",
+    "reserved_deep_slots": 2,
+    "reserved_min_graph_distance": 2,
+    "seed_ranker": "bm25",
+    "seed_top_k": 5
+  },
+  "dataset": "express_docs",
+  "diagnostic_overlay": {
+    "diagnostic_trace_available": true,
+    "distance_overlay_available": true,
+    "graph_node_count": 32,
+    "support_question_count": 8
+  },
+  "git_commit": "77dbb3d777f3d3a4ea463ea0b6b36df75c820a5c",
+  "image": "retrieval-arena/rag-graph-multihop-rerank:latest",
+  "match_percent": 0.0,
+  "mean_f1": 0.11275700200615527,
+  "mean_lexical_overlap": 0.08890828157309984,
+  "mean_precision": 0.09027777777777778,
+  "mean_recall": 0.17871389632664472,
+  "num_questions": 8,
+  "retrieval_arena_version": "0.1.0",
+  "run_id": "4d2d590171",
+  "started_at": "2026-05-26T10:51:30.377324+00:00",
+  "test": "rag_graph_multihop_rerank"
+}

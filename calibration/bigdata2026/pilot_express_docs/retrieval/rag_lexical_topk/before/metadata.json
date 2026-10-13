@@ -1,0 +1,7 @@
+{
+  "deterministic": true,
+  "max_context_chars_per_doc": 1500,
+  "name": "rag_lexical_topk",
+  "ranker": "bm25",
+  "top_k": 5
+}

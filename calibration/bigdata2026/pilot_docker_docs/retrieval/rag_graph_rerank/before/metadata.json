@@ -1,0 +1,9 @@
+{
+  "deterministic": true,
+  "final_ranker": "bm25",
+  "final_top_k": 5,
+  "max_context_chars_per_doc": 1200,
+  "name": "rag_graph_rerank",
+  "seed_ranker": "bm25",
+  "seed_top_k": 5
+}

@@ -1,0 +1,3201 @@
+{
+  "after": {
+    "base_dir": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\snapshot_manifests",
+    "corpus_id": "docker_docs",
+    "corpus_manifest_hash": "822c736431dc0d63a9167a00d6ee05cb5a62761fbbd5759085e6b2c7081fdb88",
+    "corpus_manifest_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
+    "input_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\snapshot_manifests",
+    "snapshot_id": "2026-05-26"
+  },
+  "before": {
+    "base_dir": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\before\\snapshot_manifests",
+    "corpus_id": "docker_docs",
+    "corpus_manifest_hash": "bfde268acd4fcea296de1f971750ee3b7d893b44a345bf59265d33f608d879a4",
+    "corpus_manifest_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
+    "input_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\before\\snapshot_manifests",
+    "snapshot_id": "2026-05-01"
+  },
+  "comparison_type": "snapshot_diff",
+  "corpus_result": {
+    "added_file_count": 5,
+    "added_files": [
+      {
+        "doc_id": "guides/claude-code-sandbox-model-runner",
+        "path": "guides/claude-code-sandbox-model-runner.md",
+        "sha256": "965c2862f129adab5f3ee1e747f8a38fc52b1ca6f162c370d6829c17b2514df4",
+        "size_bytes": 7709
+      },
+      {
+        "doc_id": "guides/grafana-mcp-server-gemini",
+        "path": "guides/grafana-mcp-server-gemini.md",
+        "sha256": "7dcceebf3937c6cf6a69c9d3b9d1e4c99949579c5ad61f131e7588dd5da47a41",
+        "size_bytes": 5303
+      },
+      {
+        "doc_id": "manuals/ai/gordon/usage-limits",
+        "path": "manuals/ai/gordon/usage-limits.md",
+        "sha256": "ade0ea976d487e81a8f4c92dcdfd588794aca5d4ffaabf9294621084d5abdc38",
+        "size_bytes": 1538
+      },
+      {
+        "doc_id": "manuals/ai/sandboxes/release-notes",
+        "path": "manuals/ai/sandboxes/release-notes.md",
+        "sha256": "dbb4348fcfa6c2954c79872fe06cd60ce174f5d0615fc29d9d91542595b11713",
+        "size_bytes": 6762
+      },
+      {
+        "doc_id": "manuals/ai/sandboxes/security/governance",
+        "path": "manuals/ai/sandboxes/security/governance.md",
+        "sha256": "93e234e82e2c79d7241f1054343d0a555840bc3a59cbe0da6ff8c0d65fee1f37",
+        "size_bytes": 7054
+      }
+    ],
+    "after_content_hash": "0eac210c032885014eb68a014df8c6b7288afd630b8c41260b23ab5744329ca3",
+    "after_corpus_size_bytes": 8207556,
+    "after_page_count": 1242,
+    "after_snapshot_id": "2026-05-26",
+    "available": true,
+    "before_content_hash": "74b8de7c6806ab70346794e24e502b8265ab276f75a8fd19ce5a941fe575c2ef",
+    "before_corpus_size_bytes": 8109347,
+    "before_page_count": 1238,
+    "before_snapshot_id": "2026-05-01",
+    "changed_file_count": 185,
+    "changed_files": [
+      {
+        "after_doc_id": "get-started/_index",
+        "after_sha256": "b886f0651538cb43d4ea4dc15506c381ef82d67a88f864cf589d66111e1a6df9",
+        "after_size_bytes": 1627,
+        "before_doc_id": "get-started/_index",
+        "before_sha256": "73b53111bf4100a25b3a796cb2c6ca17920843dd451e2d93231ef926fbc76c80",
+        "before_size_bytes": 1596,
+        "doc_id": "get-started/_index",
+        "path": "get-started/_index.md",
+        "size_delta_bytes": 31
+      },
+      {
+        "after_doc_id": "get-started/docker-concepts/building-images/writing-a-dockerfile",
+        "after_sha256": "a6efa2d64ffd4206e824d8483a78bb63953f3555dba83a29880001ddd746dc59",
+        "after_size_bytes": 6380,
+        "before_doc_id": "get-started/docker-concepts/building-images/writing-a-dockerfile",
+        "before_sha256": "7afb958dbd9f9d1ca42bc1cc703b2d202f958edd6e076c15de9a20062818de6b",
+        "before_size_bytes": 6623,
+        "doc_id": "get-started/docker-concepts/building-images/writing-a-dockerfile",
+        "path": "get-started/docker-concepts/building-images/writing-a-dockerfile.md",
+        "size_delta_bytes": -243
+      },
+      {
+        "after_doc_id": "get-started/resources",
+        "after_sha256": "493bf4683c64cc3a9ddbf836a9688f5c258604079c8f759c88786667f596497b",
+        "after_size_bytes": 3508,
+        "before_doc_id": "get-started/resources",
+        "before_sha256": "7be63741aa472d8afa0c2fe5aeb7692edaeeb3eba13827d7602b3f2b23aaf5fe",
+        "before_size_bytes": 3350,
+        "doc_id": "get-started/resources",
+        "path": "get-started/resources.md",
+        "size_delta_bytes": 158
+      },
+      {
+        "after_doc_id": "guides/_index",
+        "after_sha256": "5476e410519ef60d8935a43041c7d240c454fb3af6dd163648688b46d18cc665",
+        "after_size_bytes": 508,
+        "before_doc_id": "guides/_index",
+        "before_sha256": "a6aca1dd32b459da1c40ffa8a89f5df1292230e49aadee9567d9ab326a28f0fb",
+        "before_size_bytes": 514,
+        "doc_id": "guides/_index",
+        "path": "guides/_index.md",
+        "size_delta_bytes": -6
+      },
+      {
+        "after_doc_id": "guides/angular/containerize",
+        "after_sha256": "f56c4a1f008502e606d8a62f791f4ca798f4fac7b487907008674bb3fcfcb140",
+        "after_size_bytes": 17720,
+        "before_doc_id": "guides/angular/containerize",
+        "before_sha256": "151f43cec3cca3e6638a583033b2cb1a66a79e61b30f3a57c99e56f0e295e461",
+        "before_size_bytes": 20354,
+        "doc_id": "guides/angular/containerize",
+        "path": "guides/angular/containerize.md",
+        "size_delta_bytes": -2634
+      },
+      {
+        "after_doc_id": "guides/angular/develop",
+        "after_sha256": "ec1c7e0ac4f709b2cd63d88cbaa57f29b84d80bd8ef619833b61b1d4d4f0a4fe",
+        "after_size_bytes": 6042,
+        "before_doc_id": "guides/angular/develop",
+        "before_sha256": "b73a394ca2b68b5a701d3a0b2cbbfcf0db32a57ba2e2d89b16e2b4d724ba9c30",
+        "before_size_bytes": 6073,
+        "doc_id": "guides/angular/develop",
+        "path": "guides/angular/develop.md",
+        "size_delta_bytes": -31
+      },
+      {
+        "after_doc_id": "guides/angular/run-tests",
+        "after_sha256": "98b20a32d93e5d6aa3b339c9a792c11f4fbbab4a5f43f92a6e01572ac2ab4259",
+        "after_size_bytes": 4526,
+        "before_doc_id": "guides/angular/run-tests",
+        "before_sha256": "b8b9eef33e759ca009b506e1e394f706fc7b1f3392c76e80de413a7c582c51c7",
+        "before_size_bytes": 4557,
+        "doc_id": "guides/angular/run-tests",
+        "path": "guides/angular/run-tests.md",
+        "size_delta_bytes": -31
+      },
+      {
+        "after_doc_id": "guides/cpp/security",
+        "after_sha256": "fedc7588b061dc373b7ed5f8c32f9e998e3689d1b0f878ac18746a0ea2388f0a",
+        "after_size_bytes": 3373,
+        "before_doc_id": "guides/cpp/security",
+        "before_sha256": "0078c5d50b2102e58573ed561f47c4b2bf8500d042fda3c8d3a73f9110a77e2d",
+        "before_size_bytes": 3588,
+        "doc_id": "guides/cpp/security",
+        "path": "guides/cpp/security.md",
+        "size_delta_bytes": -215
+      },
+      {
+        "after_doc_id": "guides/dotnet/containerize",
+        "after_sha256": "773aed97d5b2a68748f9fb932b47a838f5981d704261de087bdb4d88f367e99d",
+        "after_size_bytes": 10993,
+        "before_doc_id": "guides/dotnet/containerize",
+        "before_sha256": "2f84e987b122346ac0455562877c85aa7f2e81af7ce1523524a4d0050b3e2f90",
+        "before_size_bytes": 7660,
+        "doc_id": "guides/dotnet/containerize",
+        "path": "guides/dotnet/containerize.md",
+        "size_delta_bytes": 3333
+      },
+      {
+        "after_doc_id": "guides/dotnet/develop",
+        "after_sha256": "cc52db7d2c7fbc42299baeee2cc4acf877e0cc46311c52171cdbbbec24f7ef51",
+        "after_size_bytes": 13429,
+        "before_doc_id": "guides/dotnet/develop",
+        "before_sha256": "0ba48d975957584c937a4dc7aa8e190311b7186cf48183a476b5cb31852f234e",
+        "before_size_bytes": 13491,
+        "doc_id": "guides/dotnet/develop",
+        "path": "guides/dotnet/develop.md",
+        "size_delta_bytes": -62
+      },
+      {
+        "after_doc_id": "guides/genai-pdf-bot/containerize",
+        "after_sha256": "8617f9ab78434d5c18d004cde623aeacc7bf7af29ca629834491572fd300fcc5",
+        "after_size_bytes": 9047,
+        "before_doc_id": "guides/genai-pdf-bot/containerize",
+        "before_sha256": "9766589d3d9a156ebb7d227a4608ffc0ae7cdc5a4401351bf5649c89cbf1c5b8",
+        "before_size_bytes": 5812,
+        "doc_id": "guides/genai-pdf-bot/containerize",
+        "path": "guides/genai-pdf-bot/containerize.md",
+        "size_delta_bytes": 3235
+      },
+      {
+        "after_doc_id": "guides/java/containerize",
+        "after_sha256": "ccea76d971733ecc1549443f2fea9bf9334d4cd7530d1c659b15668912a2b8b0",
+        "after_size_bytes": 9882,
+        "before_doc_id": "guides/java/containerize",
+        "before_sha256": "0e9b7c196821c94641d0a116b16bfa654fd9ceb3464dfe54e6af77934d95baae",
+        "before_size_bytes": 11596,
+        "doc_id": "guides/java/containerize",
+        "path": "guides/java/containerize.md",
+        "size_delta_bytes": -1714
+      },
+      {
+        "after_doc_id": "guides/nextjs/containerize",
+        "after_sha256": "d9574b8cebf279b6d94e03938bdd14fc64efb94532134c9b36cedd5f6c5d27df",
+        "after_size_bytes": 34097,
+        "before_doc_id": "guides/nextjs/containerize",
+        "before_sha256": "c1a57bcfba1c1387d31096917b6d81b7a88a41cd5355ad6c81e15cf536ac8869",
+        "before_size_bytes": 36620,
+        "doc_id": "guides/nextjs/containerize",
+        "path": "guides/nextjs/containerize.md",
+        "size_delta_bytes": -2523
+      },
+      {
+        "after_doc_id": "guides/nextjs/develop",
+        "after_sha256": "06597c5c74991ca1c2fd95315550503211dddbc24562a589a2b3c78eaf32b2d4",
+        "after_size_bytes": 7682,
+        "before_doc_id": "guides/nextjs/develop",
+        "before_sha256": "b17efd9de44c9c2e3131317df09de9dfdc425ec74911854aaa8db0fb90a677bc",
+        "before_size_bytes": 7713,
+        "doc_id": "guides/nextjs/develop",
+        "path": "guides/nextjs/develop.md",
+        "size_delta_bytes": -31
+      },
+      {
+        "after_doc_id": "guides/nextjs/run-tests",
+        "after_sha256": "aa177753aa5b8449765c80138ce2c1de42388951e57056b138cd35fa3d118128",
+        "after_size_bytes": 9492,
+        "before_doc_id": "guides/nextjs/run-tests",
+        "before_sha256": "602eba60f865b1219662432493b60bb3229480935dda83130c8d23806586a9a6",
+        "before_size_bytes": 9523,
+        "doc_id": "guides/nextjs/run-tests",
+        "path": "guides/nextjs/run-tests.md",
+        "size_delta_bytes": -31
+      },
+      {
+        "after_doc_id": "guides/nodejs/containerize",
+        "after_sha256": "10d6375265e19f692c24bf06d89e7b76a035906bfc35b395450ca7a7b77d2cb5",
+        "after_size_bytes": 25713,
+        "before_doc_id": "guides/nodejs/containerize",
+        "before_sha256": "bcb834c09260a30c2cc1a0b6b894591f38108c3c13659c383bc335d4547d05e3",
+        "before_size_bytes": 28425,
+        "doc_id": "guides/nodejs/containerize",
+        "path": "guides/nodejs/containerize.md",
+        "size_delta_bytes": -2712
+      },
+      {
+        "after_doc_id": "guides/php/containerize",
+        "after_sha256": "e815663d187048e5d0821530f271b2a97f4e92033e0c433026fecf03cba5cd78",
+        "after_size_bytes": 9521,
+        "before_doc_id": "guides/php/containerize",
+        "before_sha256": "a14e5115695ab9425874edfd4d74c7c6aaf26c69b0f0d8bb089afaa85650ea82",
+        "before_size_bytes": 4188,
+        "doc_id": "guides/php/containerize",
+        "path": "guides/php/containerize.md",
+        "size_delta_bytes": 5333
+      },
+      {
+        "after_doc_id": "guides/php/develop",
+        "after_sha256": "d78b3786db669dec2dd3ae4f85bde58a7eb4d32fec7ca0a0c644646300b5c671",
+        "after_size_bytes": 14214,
+        "before_doc_id": "guides/php/develop",
+        "before_sha256": "dac4a9404f33648859a638e2cadecf7a85813df9a1da9a54f5110d36a90f31e2",
+        "before_size_bytes": 14245,
+        "doc_id": "guides/php/develop",
+        "path": "guides/php/develop.md",
+        "size_delta_bytes": -31
+      },
+      {
+        "after_doc_id": "guides/python/containerize",
+        "after_sha256": "947a87d9259f3dc69345e87b059268f99be85f5e438dca11b205f6d63bf747ed",
+        "after_size_bytes": 12753,
+        "before_doc_id": "guides/python/containerize",
+        "before_sha256": "f21cdaad4a17777709fcc6fd90a6548d85f8147edb7d8ce93e9d430a38d4536a",
+        "before_size_bytes": 14640,
+        "doc_id": "guides/python/containerize",
+        "path": "guides/python/containerize.md",
+        "size_delta_bytes": -1887
+      },
+      {
+        "after_doc_id": "guides/python/develop",
+        "after_sha256": "bc105a37817abfe0b0acdd08774d71085330e2e47265c8853bd2810e969a05a0",
+        "after_size_bytes": 12837,
+        "before_doc_id": "guides/python/develop",
+        "before_sha256": "ba4ff3ecdf39cee69c78c9a790414a4a1f0bad07dc3c5f2728d310eacbb4c77d",
+        "before_size_bytes": 14930,
+        "doc_id": "guides/python/develop",
+        "path": "guides/python/develop.md",
+        "size_delta_bytes": -2093
+      },
+      {
+        "after_doc_id": "guides/r/develop",
+        "after_sha256": "5b92b3face36b4b08a57a4fd6e3e520c4a8632a715e420186466f05e5ad9855f",
+        "after_size_bytes": 6007,
+        "before_doc_id": "guides/r/develop",
+        "before_sha256": "77d6b20c41c5ee8f08812b390752350e15b32fdcdfc0a46eff5546941ab75181",
+        "before_size_bytes": 6038,
+        "doc_id": "guides/r/develop",
+        "path": "guides/r/develop.md",
+        "size_delta_bytes": -31
+      },
+      {
+        "after_doc_id": "guides/reactjs/containerize",
+        "after_sha256": "d0f066ac07d4f487d3b86c1964fb2140b6f29b774dd290a7486dab7fa4f425dc",
+        "after_size_bytes": 17549,
+        "before_doc_id": "guides/reactjs/containerize",
+        "before_sha256": "d97b62a5fa707a2329380253f64fad427668de9a2c276852cdc8d6994a592c28",
+        "before_size_bytes": 20198,
+        "doc_id": "guides/reactjs/containerize",
+        "path": "guides/reactjs/containerize.md",
+        "size_delta_bytes": -2649
+      },
+      {
+        "after_doc_id": "guides/reactjs/develop",
+        "after_sha256": "deab1d6915ddb03bc5c89de5b54ed2f8a3e8cc798ac041d2163ce1980d8fe89a",
+        "after_size_bytes": 6845,
+        "before_doc_id": "guides/reactjs/develop",
+        "before_sha256": "7b3706a18699968fd0674c2060544ea397453e30c6ab482362e8ac0e099fb3ba",
+        "before_size_bytes": 6876,
+        "doc_id": "guides/reactjs/develop",
+        "path": "guides/reactjs/develop.md",
+        "size_delta_bytes": -31
+      },
+      {
+        "after_doc_id": "guides/reactjs/run-tests",
+        "after_sha256": "0d913d717245ac0d88e0f395abf25f677a59df9ca8d8dcd2826402bd3837ecaa",
+        "after_size_bytes": 5853,
+        "before_doc_id": "guides/reactjs/run-tests",
+        "before_sha256": "aeb17d90341487e69b1ef4a5019a2eeb0a7775969ede919b4d3a759d4b8335e1",
+        "before_size_bytes": 5884,
+        "doc_id": "guides/reactjs/run-tests",
+        "path": "guides/reactjs/run-tests.md",
+        "size_delta_bytes": -31
+      },
+      {
+        "after_doc_id": "guides/ruby/containerize",
+        "after_sha256": "929251938c509fa5b4c1b80dc47f5cb0634af6a0ba935c62e9cfa7ffb5ab964c",
+        "after_size_bytes": 13391,
+        "before_doc_id": "guides/ruby/containerize",
+        "before_sha256": "415b4e125348c9c7b3e62d91db12f5ab29f2bfaf646900a8e3a0f3e731bcc27b",
+        "before_size_bytes": 13376,
+        "doc_id": "guides/ruby/containerize",
+        "path": "guides/ruby/containerize.md",
+        "size_delta_bytes": 15
+      },
+      {
+        "after_doc_id": "guides/rust/build-images",
+        "after_sha256": "9ff4db41d5202b11ce7aab97672d440067fe85061f56935841b176549e75ad8a",
+        "after_size_bytes": 15605,
+        "before_doc_id": "guides/rust/build-images",
+        "before_sha256": "a7124073b24758e68394c51697e2b9a1a95d863c3011e483555cb6e4d748d2fa",
+        "before_size_bytes": 16682,
+        "doc_id": "guides/rust/build-images",
+        "path": "guides/rust/build-images.md",
+        "size_delta_bytes": -1077
+      },
+      {
+        "after_doc_id": "guides/rust/develop",
+        "after_sha256": "4cca857579172872135e900ba3c0851e7114d73c24d4db6b4147c01551e90ba3",
+        "after_size_bytes": 11541,
+        "before_doc_id": "guides/rust/develop",
+        "before_sha256": "d653ac2bd3359417ae0b77debf1a874112a4faf727c2ece7774b3f71f4c336bf",
+        "before_size_bytes": 12669,
+        "doc_id": "guides/rust/develop",
+        "path": "guides/rust/develop.md",
+        "size_delta_bytes": -1128
+      },
+      {
+        "after_doc_id": "guides/vuejs/containerize",
+        "after_sha256": "5c8a401b303454ef65237bc3df515c0aae066069b1879fe0e1b8819a6c211ac7",
+        "after_size_bytes": 18020,
+        "before_doc_id": "guides/vuejs/containerize",
+        "before_sha256": "62077efd4284fe8445135cc020836ae7710e007c186ab95ccc5ebd5a8de1538d",
+        "before_size_bytes": 20852,
+        "doc_id": "guides/vuejs/containerize",
+        "path": "guides/vuejs/containerize.md",
+        "size_delta_bytes": -2832
+      },
+      {
+        "after_doc_id": "guides/vuejs/develop",
+        "after_sha256": "8ef1f5e6026e02f24a93412408fcb876737aa713ad28d5fca60ee35273c86f04",
+        "after_size_bytes": 6660,
+        "before_doc_id": "guides/vuejs/develop",
+        "before_sha256": "2ba9ea2620a0bb2087a20bfda572890677935adadfa34cbb05e0eb8454847769",
+        "before_size_bytes": 6691,
+        "doc_id": "guides/vuejs/develop",
+        "path": "guides/vuejs/develop.md",
+        "size_delta_bytes": -31
+      },
+      {
+        "after_doc_id": "guides/vuejs/run-tests",
+        "after_sha256": "fbfa71cf2f1cb0ee4b5ddb83a3a63304fad7ac318974da7160a741bdd5bc8430",
+        "after_size_bytes": 4728,
+        "before_doc_id": "guides/vuejs/run-tests",
+        "before_sha256": "71914712849517b253b0d7f90562eade45cfb8596b70d7445490a8a012f1f353",
+        "before_size_bytes": 4759,
+        "doc_id": "guides/vuejs/run-tests",
+        "path": "guides/vuejs/run-tests.md",
+        "size_delta_bytes": -31
+      },
+      {
+        "after_doc_id": "manuals/_index",
+        "after_sha256": "263c1b9954c1554a6e4137581b0920df938a713c732c69986ca466ebf99a1c98",
+        "after_size_bytes": 4306,
+        "before_doc_id": "manuals/_index",
+        "before_sha256": "c70beddb2c8c6c612d51d350100dd4e8fcb0a9cb24b10e214007c650c70c518f",
+        "before_size_bytes": 4289,
+        "doc_id": "manuals/_index",
+        "path": "manuals/_index.md",
+        "size_delta_bytes": 17
+      },
+      {
+        "after_doc_id": "manuals/accounts/_index",
+        "after_sha256": "9f25d2a3ddd12af2538b9721c58ef17f83f1839c784399a54113af0b4ce23afa",
+        "after_size_bytes": 1533,
+        "before_doc_id": "manuals/accounts/_index",
+        "before_sha256": "bed91bb3af4cc178393a5062cc3326534ca78e9cded8baad7e64d22727ae4105",
+        "before_size_bytes": 1536,
+        "doc_id": "manuals/accounts/_index",
+        "path": "manuals/accounts/_index.md",
+        "size_delta_bytes": -3
+      },
+      {
+        "after_doc_id": "manuals/admin/_index",
+        "after_sha256": "2af76418273c171464b7093ab195156f64dde08a4d004877ad70cc6a1eac4c5c",
+        "after_size_bytes": 3784,
+        "before_doc_id": "manuals/admin/_index",
+        "before_sha256": "bf6d1b9b6c951297265e18577b41bc5eeb24d6adc923b67ef0c08d21879c4c1e",
+        "before_size_bytes": 3717,
+        "doc_id": "manuals/admin/_index",
+        "path": "manuals/admin/_index.md",
+        "size_delta_bytes": 67
+      },
+      {
+        "after_doc_id": "manuals/admin/company/_index",
+        "after_sha256": "442a4b44c56bbea7deb9ffd4f499c29307a8f84f2cc6b1e01d2243aecab39466",
+        "after_size_bytes": 2715,
+        "before_doc_id": "manuals/admin/company/_index",
+        "before_sha256": "bd961ae3e6479b664002e26044777693f14bedf8a50e65df2c1c4bd2300c9693",
+        "before_size_bytes": 2682,
+        "doc_id": "manuals/admin/company/_index",
+        "path": "manuals/admin/company/_index.md",
+        "size_delta_bytes": 33
+      },
+      {
+        "after_doc_id": "manuals/admin/company/manage/organizations",
+        "after_sha256": "321d8d003020cf0579ee99ae3db461aaa5adb262d99aa1a75e37d28e61e659d0",
+        "after_size_bytes": 2390,
+        "before_doc_id": "manuals/admin/company/manage/organizations",
+        "before_sha256": "5b14271e5df517b558659a051dc94ea90f3cb2cb39d40faeb221604732035dfa",
+        "before_size_bytes": 2416,
+        "doc_id": "manuals/admin/company/manage/organizations",
+        "path": "manuals/admin/company/manage/organizations.md",
+        "size_delta_bytes": -26
+      },
+      {
+        "after_doc_id": "manuals/admin/organization/_index",
+        "after_sha256": "6fe6bdde0c49c7c7d8e61b72961204834b27751dfacad1cc7cfdd9760790928e",
+        "after_size_bytes": 2566,
+        "before_doc_id": "manuals/admin/organization/_index",
+        "before_sha256": "3bcc71e784f07eebf9a7ebae78a1b029e6cecd13d5662659b2dbe8898bde63fd",
+        "before_size_bytes": 2554,
+        "doc_id": "manuals/admin/organization/_index",
+        "path": "manuals/admin/organization/_index.md",
+        "size_delta_bytes": 12
+      },
+      {
+        "after_doc_id": "manuals/admin/organization/manage/manage-a-team",
+        "after_sha256": "70d5e45d103c34fe6ce9039b2f376c87b1e6d0b27120c14276e12d49c89f3646",
+        "after_size_bytes": 5543,
+        "before_doc_id": "manuals/admin/organization/manage/manage-a-team",
+        "before_sha256": "c48d1dd5db10d989815eccf144289eb61c0cd243e4da22ead81717dc94ac65fe",
+        "before_size_bytes": 5457,
+        "doc_id": "manuals/admin/organization/manage/manage-a-team",
+        "path": "manuals/admin/organization/manage/manage-a-team.md",
+        "size_delta_bytes": 86
+      },
+      {
+        "after_doc_id": "manuals/admin/organization/setup/convert-account",
+        "after_sha256": "6c1adfd7b836214fa9640b3f8de0f4a12b2302e0f0983af36843688292178c59",
+        "after_size_bytes": 4101,
+        "before_doc_id": "manuals/admin/organization/setup/convert-account",
+        "before_sha256": "86e6d8a93ed883f2868a75b892e4c2d61f8e4aa069a711db5cfdac5c4c85af26",
+        "before_size_bytes": 4065,
+        "doc_id": "manuals/admin/organization/setup/convert-account",
+        "path": "manuals/admin/organization/setup/convert-account.md",
+        "size_delta_bytes": 36
+      },
+      {
+        "after_doc_id": "manuals/admin/organization/setup/onboard",
+        "after_sha256": "a29cc49ff81c44dbeebd570f6e030677a67849702c31b83aef8d5d46eb8c1906",
+        "after_size_bytes": 8763,
+        "before_doc_id": "manuals/admin/organization/setup/onboard",
+        "before_sha256": "f1a9f80b0f7f2b69c6dc525639aa5c332698afd0b164fae02981ec54b6702bc5",
+        "before_size_bytes": 8671,
+        "doc_id": "manuals/admin/organization/setup/onboard",
+        "path": "manuals/admin/organization/setup/onboard.md",
+        "size_delta_bytes": 92
+      },
+      {
+        "after_doc_id": "manuals/ai-overview",
+        "after_sha256": "f0d89c47e1a4f1434a4ceed970b8996668c796ced2282c422c53c8e9923f4363",
+        "after_size_bytes": 2558,
+        "before_doc_id": "manuals/ai-overview",
+        "before_sha256": "66a323a628f2d2cfd9660112cf753bdac3beee44bccaa129a5559dd2c6526b0c",
+        "before_size_bytes": 2547,
+        "doc_id": "manuals/ai-overview",
+        "path": "manuals/ai-overview.md",
+        "size_delta_bytes": 11
+      },
+      {
+        "after_doc_id": "manuals/ai/compose/_index",
+        "after_sha256": "858b409f63bf52e82a3a896a9c40338df4d2d2a6bd25eef4e790945170829f91",
+        "after_size_bytes": 115,
+        "before_doc_id": "manuals/ai/compose/_index",
+        "before_sha256": "5ce207620776f9783dd8cb639cd9624d6a31ab1fefb5ee57c54a22e1b9e7c92d",
+        "before_size_bytes": 104,
+        "doc_id": "manuals/ai/compose/_index",
+        "path": "manuals/ai/compose/_index.md",
+        "size_delta_bytes": 11
+      },
+      {
+        "after_doc_id": "manuals/ai/docker-agent/_index",
+        "after_sha256": "890783b0eaf58fe4ef2d21e95c940419f41bc9be6a6ed92da93a37e99ef5591b",
+        "after_size_bytes": 5625,
+        "before_doc_id": "manuals/ai/docker-agent/_index",
+        "before_sha256": "56760636cdb41555b4ecde4161db3365c84e77afab0f43d78a7eec60dd5931d8",
+        "before_size_bytes": 5728,
+        "doc_id": "manuals/ai/docker-agent/_index",
+        "path": "manuals/ai/docker-agent/_index.md",
+        "size_delta_bytes": -103
+      },
+      {
+        "after_doc_id": "manuals/ai/gordon/_index",
+        "after_sha256": "b24afd87e3d0ac5461d7e2ef7ae746214666156e5f64b5818046968bd10393f9",
+        "after_size_bytes": 4035,
+        "before_doc_id": "manuals/ai/gordon/_index",
+        "before_sha256": "0a964d581e7026017b1d7cf41dfd2123fbaa92fb5b2f74b6d61f57f522d99c5b",
+        "before_size_bytes": 3149,
+        "doc_id": "manuals/ai/gordon/_index",
+        "path": "manuals/ai/gordon/_index.md",
+        "size_delta_bytes": 886
+      },
+      {
+        "after_doc_id": "manuals/ai/gordon/concepts/data-privacy",
+        "after_sha256": "3f71184e0bffecdb599d9abef4ce0b38003c65891d758574dd8bfd0140e9ef71",
+        "after_size_bytes": 3196,
+        "before_doc_id": "manuals/ai/gordon/concepts/data-privacy",
+        "before_sha256": "7d79f5090bd32fc8c5795699a6cca3676cf6d28eb90f4b638f2bee9204a45399",
+        "before_size_bytes": 3196,
+        "doc_id": "manuals/ai/gordon/concepts/data-privacy",
+        "path": "manuals/ai/gordon/concepts/data-privacy.md",
+        "size_delta_bytes": 0
+      },
+      {
+        "after_doc_id": "manuals/ai/gordon/how-to/cli",
+        "after_sha256": "01f5774ddf0935909c9f984589596cabd135e3704f2043780bff1dac4f0c47fa",
+        "after_size_bytes": 1655,
+        "before_doc_id": "manuals/ai/gordon/how-to/cli",
+        "before_sha256": "8240876dd420fcb24e339f232de8fddcdb7b0744add2a1f4bd84731aeb6eea0d",
+        "before_size_bytes": 1666,
+        "doc_id": "manuals/ai/gordon/how-to/cli",
+        "path": "manuals/ai/gordon/how-to/cli.md",
+        "size_delta_bytes": -11
+      },
+      {
+        "after_doc_id": "manuals/ai/gordon/how-to/configure-tools",
+        "after_sha256": "b11b958a3280c2b9695a548f2a6c27c2d04c12436d56ba0bfe5245aaad468853",
+        "after_size_bytes": 2414,
+        "before_doc_id": "manuals/ai/gordon/how-to/configure-tools",
+        "before_sha256": "7edde5275452d348ee2a1cb20ebc5868d8c46287119e5c8fcbcba0c5ae22b24b",
+        "before_size_bytes": 2433,
+        "doc_id": "manuals/ai/gordon/how-to/configure-tools",
+        "path": "manuals/ai/gordon/how-to/configure-tools.md",
+        "size_delta_bytes": -19
+      },
+      {
+        "after_doc_id": "manuals/ai/gordon/how-to/docker-desktop",
+        "after_sha256": "4a725e6ccfacc6c167916eb34cb71d074f4b71c75805a64371c47d401fca1afa",
+        "after_size_bytes": 1664,
+        "before_doc_id": "manuals/ai/gordon/how-to/docker-desktop",
+        "before_sha256": "72d05bb7645becce4cabce27b850d10c27be3d3c9f7a80fe06aeaa9d34ac8cdb",
+        "before_size_bytes": 1301,
+        "doc_id": "manuals/ai/gordon/how-to/docker-desktop",
+        "path": "manuals/ai/gordon/how-to/docker-desktop.md",
+        "size_delta_bytes": 363
+      },
+      {
+        "after_doc_id": "manuals/ai/gordon/how-to/permissions",
+        "after_sha256": "0d4347c6d9193d294c14eeb355846ac22bbe0b8f9d1cbfc2307f02a3d964bd39",
+        "after_size_bytes": 3477,
+        "before_doc_id": "manuals/ai/gordon/how-to/permissions",
+        "before_sha256": "73bd904dae65f35b91ed247d8259288eb7c049b498b705137dd5a1f06a65d614",
+        "before_size_bytes": 3464,
+        "doc_id": "manuals/ai/gordon/how-to/permissions",
+        "path": "manuals/ai/gordon/how-to/permissions.md",
+        "size_delta_bytes": 13
+      },
+      {
+        "after_doc_id": "manuals/ai/gordon/use-cases",
+        "after_sha256": "ea28848a1d14b3534ee39aab6ecd9c174deeb1d816550aacb23f771a5e55b8c6",
+        "after_size_bytes": 4578,
+        "before_doc_id": "manuals/ai/gordon/use-cases",
+        "before_sha256": "60d7202a3b86b0005f993eba38ca813fccdd1474de692241d7ff5ce6a1bc53fb",
+        "before_size_bytes": 3371,
+        "doc_id": "manuals/ai/gordon/use-cases",
+        "path": "manuals/ai/gordon/use-cases.md",
+        "size_delta_bytes": 1207
+      },
+      {
+        "after_doc_id": "manuals/ai/mcp-catalog-and-toolkit/_index",
+        "after_sha256": "22c5ba640afa3ae4082d9b7b03b976ccf9cf619073ea70b98351432fb3272a6c",
+        "after_size_bytes": 4273,
+        "before_doc_id": "manuals/ai/mcp-catalog-and-toolkit/_index",
+        "before_sha256": "80a62dc87ba86e4c3279f7008cfb8c54d338dc43b8f0716da377386d62ca87b3",
+        "before_size_bytes": 4233,
+        "doc_id": "manuals/ai/mcp-catalog-and-toolkit/_index",
+        "path": "manuals/ai/mcp-catalog-and-toolkit/_index.md",
+        "size_delta_bytes": 40
+      },
+      {
+        "after_doc_id": "manuals/ai/model-runner/_index",
+        "after_sha256": "f4dba46691c52af13557ba1b7bf06c55debbca70a401393643ce8fe89bbc806a",
+        "after_size_bytes": 7144,
+        "before_doc_id": "manuals/ai/model-runner/_index",
+        "before_sha256": "1b973f5c7cb29cdb02a1143e690010e6f50e5eb5454f3c2e3b4ff64611bc4491",
+        "before_size_bytes": 7133,
+        "doc_id": "manuals/ai/model-runner/_index",
+        "path": "manuals/ai/model-runner/_index.md",
+        "size_delta_bytes": 11
+      },
+      {
+        "after_doc_id": "manuals/ai/model-runner/ide-integrations",
+        "after_sha256": "b06472254e58322eb55426540cee8765519c37dd9f98be217b33a424d216553e",
+        "after_size_bytes": 11096,
+        "before_doc_id": "manuals/ai/model-runner/ide-integrations",
+        "before_sha256": "1a56da0a352a63286b21c5c38731c4a47d67cacb862337741dfe6bc95cf75a8a",
+        "before_size_bytes": 10713,
+        "doc_id": "manuals/ai/model-runner/ide-integrations",
+        "path": "manuals/ai/model-runner/ide-integrations.md",
+        "size_delta_bytes": 383
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/_index",
+        "after_sha256": "e698f166909839515100096be84869b050d8f53b4449e8d693a30c580fa4f318",
+        "after_size_bytes": 2337,
+        "before_doc_id": "manuals/ai/sandboxes/_index",
+        "before_sha256": "69964133332986e75ba07b3ed0a7fb4a5e7282f22df5d76bf194daf7f581882f",
+        "before_size_bytes": 2085,
+        "doc_id": "manuals/ai/sandboxes/_index",
+        "path": "manuals/ai/sandboxes/_index.md",
+        "size_delta_bytes": 252
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/agents/_index",
+        "after_sha256": "03d614b086ea938703e6258176807b2a7dc11468224ebb1972e018723f6d58fb",
+        "after_size_bytes": 622,
+        "before_doc_id": "manuals/ai/sandboxes/agents/_index",
+        "before_sha256": "92201fcc4875cae057e64178276342597fd2d435f70d6662b89c3ac1a8c7eef6",
+        "before_size_bytes": 679,
+        "doc_id": "manuals/ai/sandboxes/agents/_index",
+        "path": "manuals/ai/sandboxes/agents/_index.md",
+        "size_delta_bytes": -57
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/agents/claude-code",
+        "after_sha256": "f2f17602719978b2d4d0d15e5776e70fc0a656e2556e93c8b425b42461620a32",
+        "after_size_bytes": 2745,
+        "before_doc_id": "manuals/ai/sandboxes/agents/claude-code",
+        "before_sha256": "ef16535cbfa15cb241609cd1b8eb4d07d2fb797cac090c2f1829981c6b99cce5",
+        "before_size_bytes": 2332,
+        "doc_id": "manuals/ai/sandboxes/agents/claude-code",
+        "path": "manuals/ai/sandboxes/agents/claude-code.md",
+        "size_delta_bytes": 413
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/agents/codex",
+        "after_sha256": "3de10c8248c7479dda2b7e261ddd5e9ae851a3d7558710ab1ee63472f16c171b",
+        "after_size_bytes": 2215,
+        "before_doc_id": "manuals/ai/sandboxes/agents/codex",
+        "before_sha256": "de9fde2375852703c31b972a32d805dc77902150036537b4484facfdc409412f",
+        "before_size_bytes": 2169,
+        "doc_id": "manuals/ai/sandboxes/agents/codex",
+        "path": "manuals/ai/sandboxes/agents/codex.md",
+        "size_delta_bytes": 46
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/agents/copilot",
+        "after_sha256": "59276c34e61a1cb4e2441a77e25fe9ce8f55610df7da269966be522f35c6e87f",
+        "after_size_bytes": 2038,
+        "before_doc_id": "manuals/ai/sandboxes/agents/copilot",
+        "before_sha256": "69973f5ac36cc6bc7ea14fe5218899417c64dbba474211fdb729ff7acaecd989",
+        "before_size_bytes": 2005,
+        "doc_id": "manuals/ai/sandboxes/agents/copilot",
+        "path": "manuals/ai/sandboxes/agents/copilot.md",
+        "size_delta_bytes": 33
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/agents/cursor",
+        "after_sha256": "c9a1f57c7289cf2f0ce99a36a110d3ccbd9a620b4573af6f9110c08052864160",
+        "after_size_bytes": 2294,
+        "before_doc_id": "manuals/ai/sandboxes/agents/cursor",
+        "before_sha256": "daf0b4b4769895b1a94978018889a34955fafb28751a095d8fbcf87d030002fa",
+        "before_size_bytes": 2331,
+        "doc_id": "manuals/ai/sandboxes/agents/cursor",
+        "path": "manuals/ai/sandboxes/agents/cursor.md",
+        "size_delta_bytes": -37
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/agents/docker-agent",
+        "after_sha256": "b076736b6fdb8eff910056116101673c28ba2d47041c59aa3fa24dcc9feff714",
+        "after_size_bytes": 2126,
+        "before_doc_id": "manuals/ai/sandboxes/agents/docker-agent",
+        "before_sha256": "761beb1003e8e47c3386b91c3c3ec839a3af370923c3266a16e16d41344d9e59",
+        "before_size_bytes": 2260,
+        "doc_id": "manuals/ai/sandboxes/agents/docker-agent",
+        "path": "manuals/ai/sandboxes/agents/docker-agent.md",
+        "size_delta_bytes": -134
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/agents/droid",
+        "after_sha256": "fa76c9c8ad0ad64c14f1e9e6b1fbf527e08647a383ff08d221dd66e7c4e6c000",
+        "after_size_bytes": 2162,
+        "before_doc_id": "manuals/ai/sandboxes/agents/droid",
+        "before_sha256": "ed94bcf9e939e0127b885ef0e13990453802af952c9382a36c80a7f851e33968",
+        "before_size_bytes": 2221,
+        "doc_id": "manuals/ai/sandboxes/agents/droid",
+        "path": "manuals/ai/sandboxes/agents/droid.md",
+        "size_delta_bytes": -59
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/agents/gemini",
+        "after_sha256": "490404a2619811e516115eae1fd8fd22dbb152ffbf118db9f8c5cdaa2aec314a",
+        "after_size_bytes": 2253,
+        "before_doc_id": "manuals/ai/sandboxes/agents/gemini",
+        "before_sha256": "dbb7890d2d1b7867f16f9dfb86e815141c334a5e95039c4919df09742d69f749",
+        "before_size_bytes": 2268,
+        "doc_id": "manuals/ai/sandboxes/agents/gemini",
+        "path": "manuals/ai/sandboxes/agents/gemini.md",
+        "size_delta_bytes": -15
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/agents/kiro",
+        "after_sha256": "4fa31debb731ef4c357bdd27dfeebc4ef1d922939ba59a0b45cf368aa848a6cb",
+        "after_size_bytes": 2910,
+        "before_doc_id": "manuals/ai/sandboxes/agents/kiro",
+        "before_sha256": "8b46051b1857ee5fac0bbb3d5a1a61608709f8d6e14bca4078f998b2857c1c68",
+        "before_size_bytes": 2739,
+        "doc_id": "manuals/ai/sandboxes/agents/kiro",
+        "path": "manuals/ai/sandboxes/agents/kiro.md",
+        "size_delta_bytes": 171
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/agents/opencode",
+        "after_sha256": "bdaf048b6a833671edceb8b553a9c72be0a1726b78bd3631d0f75d6ecd9b1720",
+        "after_size_bytes": 2780,
+        "before_doc_id": "manuals/ai/sandboxes/agents/opencode",
+        "before_sha256": "e3e3b910174737c4df0a4e2d5d88e990230201b58de8c372d8a38af2e22c58bd",
+        "before_size_bytes": 2883,
+        "doc_id": "manuals/ai/sandboxes/agents/opencode",
+        "path": "manuals/ai/sandboxes/agents/opencode.md",
+        "size_delta_bytes": -103
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/agents/shell",
+        "after_sha256": "10a132d9f5c13ac27d2296415eea4a1f69ed376fc12376859b9344da72c39b9e",
+        "after_size_bytes": 1586,
+        "before_doc_id": "manuals/ai/sandboxes/agents/shell",
+        "before_sha256": "e1da6f928afe682e60f78a33d0fe3f3d54d5bf8743c6e7111f46d82e2fc9b080",
+        "before_size_bytes": 1400,
+        "doc_id": "manuals/ai/sandboxes/agents/shell",
+        "path": "manuals/ai/sandboxes/agents/shell.md",
+        "size_delta_bytes": 186
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/architecture",
+        "after_sha256": "5bf0080ae5a62e4bfdcd7ad1e483c5819e749cb3bbf1a4bdfb1846cceda186d2",
+        "after_size_bytes": 3841,
+        "before_doc_id": "manuals/ai/sandboxes/architecture",
+        "before_sha256": "1fde6a960ec2fbf6d377bb5b41d2e528a29b2d7b71b5015d454cf630bdbde338",
+        "before_size_bytes": 3587,
+        "doc_id": "manuals/ai/sandboxes/architecture",
+        "path": "manuals/ai/sandboxes/architecture.md",
+        "size_delta_bytes": 254
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/customize/_index",
+        "after_sha256": "5766e6cb70588514fd0d0b5a501c2e5ec8d2cb5240382a6b10508c43fec0e813",
+        "after_size_bytes": 3409,
+        "before_doc_id": "manuals/ai/sandboxes/customize/_index",
+        "before_sha256": "2233a090fc0504e93936bfc98fc89d242ef9723c054e7718efd65066ad2ea6bb",
+        "before_size_bytes": 2239,
+        "doc_id": "manuals/ai/sandboxes/customize/_index",
+        "path": "manuals/ai/sandboxes/customize/_index.md",
+        "size_delta_bytes": 1170
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/customize/build-an-agent",
+        "after_sha256": "c84a6b4c31e4d016a4aaff947a75becc583cb3816479b1e46e7469fd25ab0edd",
+        "after_size_bytes": 11199,
+        "before_doc_id": "manuals/ai/sandboxes/customize/build-an-agent",
+        "before_sha256": "fc14af80ac6229784dafa7d4340b26f8ca5c9cf326e024524dbc9d148535995d",
+        "before_size_bytes": 10458,
+        "doc_id": "manuals/ai/sandboxes/customize/build-an-agent",
+        "path": "manuals/ai/sandboxes/customize/build-an-agent.md",
+        "size_delta_bytes": 741
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/customize/kit-examples",
+        "after_sha256": "db57b5aabc08ce2d90a17a7512e5ecc49bd26f0d0f8f676ab3ae52d6b454836b",
+        "after_size_bytes": 7554,
+        "before_doc_id": "manuals/ai/sandboxes/customize/kit-examples",
+        "before_sha256": "1a3c6e8cd413c6cb0d2f4e9da26e489648104ad82bd2e3e5ecd85abb1b44f7f7",
+        "before_size_bytes": 6955,
+        "doc_id": "manuals/ai/sandboxes/customize/kit-examples",
+        "path": "manuals/ai/sandboxes/customize/kit-examples.md",
+        "size_delta_bytes": 599
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/customize/kits",
+        "after_sha256": "1661fc75d06e981c170feee52b73692c67274457dedb480d6bdd0188302145e0",
+        "after_size_bytes": 23587,
+        "before_doc_id": "manuals/ai/sandboxes/customize/kits",
+        "before_sha256": "6cd91b22b5c9ca16942c1a2d24b354b3cc81be96c0164354a05a9a9500d8e598",
+        "before_size_bytes": 19519,
+        "doc_id": "manuals/ai/sandboxes/customize/kits",
+        "path": "manuals/ai/sandboxes/customize/kits.md",
+        "size_delta_bytes": 4068
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/customize/templates",
+        "after_sha256": "1f46cfc515be81f27179b3a8ea8ca735329541bf75f9460d6bb41a5e23f2ff1a",
+        "after_size_bytes": 9126,
+        "before_doc_id": "manuals/ai/sandboxes/customize/templates",
+        "before_sha256": "43bdcfee9deb1a9999bc74cbe2e5690da744c1d88292af3d9daa9081e8a9d299",
+        "before_size_bytes": 8268,
+        "doc_id": "manuals/ai/sandboxes/customize/templates",
+        "path": "manuals/ai/sandboxes/customize/templates.md",
+        "size_delta_bytes": 858
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/faq",
+        "after_sha256": "10060132b2764accc5b1d9af8f379136c98698460e0b21df20c3bb39487a73af",
+        "after_size_bytes": 6100,
+        "before_doc_id": "manuals/ai/sandboxes/faq",
+        "before_sha256": "1838b6ea7a49cc0eb2421c4a95da3b00f5a0edf58b08c6b8d2d4044694950ac8",
+        "before_size_bytes": 4956,
+        "doc_id": "manuals/ai/sandboxes/faq",
+        "path": "manuals/ai/sandboxes/faq.md",
+        "size_delta_bytes": 1144
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/get-started",
+        "after_sha256": "5af5e617dfe7fd3b25b39545b2fc87e4cc65f64bdb49443289e608dc9a3acd2c",
+        "after_size_bytes": 8256,
+        "before_doc_id": "manuals/ai/sandboxes/get-started",
+        "before_sha256": "aa9a2babf6d393eea60ebf5353f82bc8a23ecbc6e6e461ead39d22669ff2f00e",
+        "before_size_bytes": 8079,
+        "doc_id": "manuals/ai/sandboxes/get-started",
+        "path": "manuals/ai/sandboxes/get-started.md",
+        "size_delta_bytes": 177
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/security/_index",
+        "after_sha256": "45b7186f96fad6d36f1728df5b3cae2a053828e0af9b65a28d3197dd1782f664",
+        "after_size_bytes": 5019,
+        "before_doc_id": "manuals/ai/sandboxes/security/_index",
+        "before_sha256": "a499d6f85d569d508691cfda9dd12164d5776ffff35b84e72628fee10bce6175",
+        "before_size_bytes": 4429,
+        "doc_id": "manuals/ai/sandboxes/security/_index",
+        "path": "manuals/ai/sandboxes/security/_index.md",
+        "size_delta_bytes": 590
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/security/credentials",
+        "after_sha256": "f6597c0d8393ecb3fb8ad95e597dc0a16af4874c4a1f8c00c38f81c5f7c829a9",
+        "after_size_bytes": 10065,
+        "before_doc_id": "manuals/ai/sandboxes/security/credentials",
+        "before_sha256": "a83d6664ae39b66769f622c96d9c31a3ad363c98847fd927e7562605ecb709c3",
+        "before_size_bytes": 6820,
+        "doc_id": "manuals/ai/sandboxes/security/credentials",
+        "path": "manuals/ai/sandboxes/security/credentials.md",
+        "size_delta_bytes": 3245
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/security/defaults",
+        "after_sha256": "5afeeffa47230a165bdbead49b2e6dccbe89cf83807895904e84c483bf8aa21f",
+        "after_size_bytes": 2814,
+        "before_doc_id": "manuals/ai/sandboxes/security/defaults",
+        "before_sha256": "6e3db36a1132973074362745c19dc07c74bd6446756507d5139e15c9bfbd1f94",
+        "before_size_bytes": 2709,
+        "doc_id": "manuals/ai/sandboxes/security/defaults",
+        "path": "manuals/ai/sandboxes/security/defaults.md",
+        "size_delta_bytes": 105
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/security/isolation",
+        "after_sha256": "a1a7c771376acdee007fc5b889cd663592d873c5aaa2bdfe44520709cfe4327f",
+        "after_size_bytes": 3776,
+        "before_doc_id": "manuals/ai/sandboxes/security/isolation",
+        "before_sha256": "dbab5c2cb378aaa6afb4bb7d95dee3052e867f139da7c25cb19139ba29a3dbe6",
+        "before_size_bytes": 3833,
+        "doc_id": "manuals/ai/sandboxes/security/isolation",
+        "path": "manuals/ai/sandboxes/security/isolation.md",
+        "size_delta_bytes": -57
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/security/policy",
+        "after_sha256": "b2740af391bac853aa45ea717cc02321701716ee8bbdd564af54964e7d3ae6ec",
+        "after_size_bytes": 10917,
+        "before_doc_id": "manuals/ai/sandboxes/security/policy",
+        "before_sha256": "413b009b5e1106ce7ce89e57cea4f7ea8dc655817da95a230261325053f99691",
+        "before_size_bytes": 8880,
+        "doc_id": "manuals/ai/sandboxes/security/policy",
+        "path": "manuals/ai/sandboxes/security/policy.md",
+        "size_delta_bytes": 2037
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/security/workspace",
+        "after_sha256": "a6234f018cf8565d5b4a961ae5cfe27c0f5d1a74ec81316e420ae8cd8eea2c10",
+        "after_size_bytes": 2600,
+        "before_doc_id": "manuals/ai/sandboxes/security/workspace",
+        "before_sha256": "3fcbd14c85f3325a8c7ebdd7da8d1a3721ebb61227bcef66945e0cf31e2776d8",
+        "before_size_bytes": 2657,
+        "doc_id": "manuals/ai/sandboxes/security/workspace",
+        "path": "manuals/ai/sandboxes/security/workspace.md",
+        "size_delta_bytes": -57
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/troubleshooting",
+        "after_sha256": "b9b67a30b53651a3fdb07524ee79843f4da8521bae6c81559da2af5f2f4d97e6",
+        "after_size_bytes": 9129,
+        "before_doc_id": "manuals/ai/sandboxes/troubleshooting",
+        "before_sha256": "ae18c13d76511cea475afcb62f0df793f1651dea4e3983ee5432ac34fe7d132e",
+        "before_size_bytes": 8705,
+        "doc_id": "manuals/ai/sandboxes/troubleshooting",
+        "path": "manuals/ai/sandboxes/troubleshooting.md",
+        "size_delta_bytes": 424
+      },
+      {
+        "after_doc_id": "manuals/ai/sandboxes/usage",
+        "after_sha256": "3db054927726cd18c613923ac5ab158a9ca46f6bf8d0046754fc571a5f70a4e5",
+        "after_size_bytes": 13629,
+        "before_doc_id": "manuals/ai/sandboxes/usage",
+        "before_sha256": "5ad07da09bd4c4ca912c88dc9f098d697ee160e8ce588de254f4e141edb4dba2",
+        "before_size_bytes": 12503,
+        "doc_id": "manuals/ai/sandboxes/usage",
+        "path": "manuals/ai/sandboxes/usage.md",
+        "size_delta_bytes": 1126
+      },
+      {
+        "after_doc_id": "manuals/billing/_index",
+        "after_sha256": "2df715b85479d2089d1d6d5709de10bc2fcc1cbb0e5a4d68288889d58958da25",
+        "after_size_bytes": 1550,
+        "before_doc_id": "manuals/billing/_index",
+        "before_sha256": "d652f16c1096af47154a2d25995397d1c213e5b08638a612f31c9a7f7bebbafb",
+        "before_size_bytes": 1538,
+        "doc_id": "manuals/billing/_index",
+        "path": "manuals/billing/_index.md",
+        "size_delta_bytes": 12
+      },
+      {
+        "after_doc_id": "manuals/build-cloud/_index",
+        "after_sha256": "03d4d0e19a53a383e115137516019879e148d0a1f2fa6fdbc0e6c9a5f07c8c3a",
+        "after_size_bytes": 3003,
+        "before_doc_id": "manuals/build-cloud/_index",
+        "before_sha256": "ca30c9defe831f449ec5c5be14ddabba1ef27c356e7ecb0cbfe55e3e2e8113d7",
+        "before_size_bytes": 2988,
+        "doc_id": "manuals/build-cloud/_index",
+        "path": "manuals/build-cloud/_index.md",
+        "size_delta_bytes": 15
+      },
+      {
+        "after_doc_id": "manuals/build-cloud/setup",
+        "after_sha256": "18502750d5c24e6be77d3fd7f2b90a2130fa66cf9b67ca1e5485648b36cccee3",
+        "after_size_bytes": 3351,
+        "before_doc_id": "manuals/build-cloud/setup",
+        "before_sha256": "9ad5621213747356b7655762c3731ef4c4dffc207b6f4c5ae1a30a7def2c00a8",
+        "before_size_bytes": 3099,
+        "doc_id": "manuals/build-cloud/setup",
+        "path": "manuals/build-cloud/setup.md",
+        "size_delta_bytes": 252
+      },
+      {
+        "after_doc_id": "manuals/build/_index",
+        "after_sha256": "8088b2af6d353fd523262501004aef993eac2996778f151bbe330df20e617075",
+        "after_size_bytes": 2070,
+        "before_doc_id": "manuals/build/_index",
+        "before_sha256": "1b8f57195021f93e8333f0ec9be509cd9ac3060563f97a66e782a26e2e5b263f",
+        "before_size_bytes": 2011,
+        "doc_id": "manuals/build/_index",
+        "path": "manuals/build/_index.md",
+        "size_delta_bytes": 59
+      },
+      {
+        "after_doc_id": "manuals/build/building/best-practices",
+        "after_sha256": "ab7cf35eed00dfff783405de1e7787dba99ee50c3912e2042d56c31a288e9bcf",
+        "after_size_bytes": 32912,
+        "before_doc_id": "manuals/build/building/best-practices",
+        "before_sha256": "0aad9a6cecbbfac36959b1848800e8c222ff4c1e7c43fa9fc1f904bd36510f2f",
+        "before_size_bytes": 32892,
+        "doc_id": "manuals/build/building/best-practices",
+        "path": "manuals/build/building/best-practices.md",
+        "size_delta_bytes": 20
+      },
+      {
+        "after_doc_id": "manuals/build/building/multi-platform",
+        "after_sha256": "c4b727cebc6fd9866d20e18a0b391d3fc1b9f897d210953993ce73cbb23afbf4",
+        "after_size_bytes": 17038,
+        "before_doc_id": "manuals/build/building/multi-platform",
+        "before_sha256": "dc2ddf177f5b4c0819a0aa2fc5e67418a96649659371b34a61f20e94da236f55",
+        "before_size_bytes": 16833,
+        "doc_id": "manuals/build/building/multi-platform",
+        "path": "manuals/build/building/multi-platform.md",
+        "size_delta_bytes": 205
+      },
+      {
+        "after_doc_id": "manuals/build/building/secrets",
+        "after_sha256": "562d4a3203159ee6b9193a16643eef54e813feb74b9476014fc2685b0947549e",
+        "after_size_bytes": 9418,
+        "before_doc_id": "manuals/build/building/secrets",
+        "before_sha256": "5dbe070e5bc9bf4c2bbe604f57e05edd079926eb91c863be6fcd8cc3142e11ad",
+        "before_size_bytes": 8961,
+        "doc_id": "manuals/build/building/secrets",
+        "path": "manuals/build/building/secrets.md",
+        "size_delta_bytes": 457
+      },
+      {
+        "after_doc_id": "manuals/build/ci/github-actions/github-builder/architecture",
+        "after_sha256": "a369af42de8539a2667bc5cc6cdce0d6517cdfff78834753237b9615144d77f9",
+        "after_size_bytes": 8530,
+        "before_doc_id": "manuals/build/ci/github-actions/github-builder/architecture",
+        "before_sha256": "2a2e5883f8a4813682f2ac7fa831f20e5d0a915d6adf18d7dd34c1c840cc3978",
+        "before_size_bytes": 7326,
+        "doc_id": "manuals/build/ci/github-actions/github-builder/architecture",
+        "path": "manuals/build/ci/github-actions/github-builder/architecture.md",
+        "size_delta_bytes": 1204
+      },
+      {
+        "after_doc_id": "manuals/build/ci/github-actions/github-builder/bake",
+        "after_sha256": "f38e53357f7451259fb8c7ecbbb355a48a7c1901938033414004108dc5a66a58",
+        "after_size_bytes": 4787,
+        "before_doc_id": "manuals/build/ci/github-actions/github-builder/bake",
+        "before_sha256": "f7111446fbae74e4dd8b481073484f058ca1503ab0c60c04dac887a99dd6e575",
+        "before_size_bytes": 4539,
+        "doc_id": "manuals/build/ci/github-actions/github-builder/bake",
+        "path": "manuals/build/ci/github-actions/github-builder/bake.md",
+        "size_delta_bytes": 248
+      },
+      {
+        "after_doc_id": "manuals/build/ci/github-actions/github-builder/build",
+        "after_sha256": "28e81be4ed115ab0febe795cf05587d2b890753ea35e26692997d22a3c09ca21",
+        "after_size_bytes": 5065,
+        "before_doc_id": "manuals/build/ci/github-actions/github-builder/build",
+        "before_sha256": "96db688b9225703238c8e7bea33a374a41cdef4abe43d40215cd756d4966c7c3",
+        "before_size_bytes": 4882,
+        "doc_id": "manuals/build/ci/github-actions/github-builder/build",
+        "path": "manuals/build/ci/github-actions/github-builder/build.md",
+        "size_delta_bytes": 183
+      },
+      {
+        "after_doc_id": "manuals/build/ci/github-actions/multi-platform",
+        "after_sha256": "b650c3c4734901bbd6218e436d21b769516448cde356536c2e5f666c1a8daf7b",
+        "after_size_bytes": 6528,
+        "before_doc_id": "manuals/build/ci/github-actions/multi-platform",
+        "before_sha256": "b28ab39764319c6e528134ef57d92ec2a5636d09fe1d5f372d7b34932bb7a0f1",
+        "before_size_bytes": 6328,
+        "doc_id": "manuals/build/ci/github-actions/multi-platform",
+        "path": "manuals/build/ci/github-actions/multi-platform.md",
+        "size_delta_bytes": 200
+      },
+      {
+        "after_doc_id": "manuals/compose/_index",
+        "after_sha256": "434cf5462a6aabeb90df11d487d830d0204a2629c86a532f3337348baf5c582e",
+        "after_size_bytes": 2683,
+        "before_doc_id": "manuals/compose/_index",
+        "before_sha256": "75b2a92215e8a2f00a04e2a63987da9af95a49921b0d99e2da096471a68e06cc",
+        "before_size_bytes": 2614,
+        "doc_id": "manuals/compose/_index",
+        "path": "manuals/compose/_index.md",
+        "size_delta_bytes": 69
+      },
+      {
+        "after_doc_id": "manuals/compose/how-tos/lifecycle",
+        "after_sha256": "f16903fa87f74c1a8b00f769fd92824dcd0db22bcb77666d0df6d550af1901d3",
+        "after_size_bytes": 2942,
+        "before_doc_id": "manuals/compose/how-tos/lifecycle",
+        "before_sha256": "287df901a090f577b92f166e3c79c0d34e388ecf8370f386d9b826b73b33ff12",
+        "before_size_bytes": 2562,
+        "doc_id": "manuals/compose/how-tos/lifecycle",
+        "path": "manuals/compose/how-tos/lifecycle.md",
+        "size_delta_bytes": 380
+      },
+      {
+        "after_doc_id": "manuals/compose/how-tos/multiple-compose-files/extends",
+        "after_sha256": "9aaf36bf525c4930c04b05499f9476191d4dab18901db1d86aa9e4f4ac63f896",
+        "after_size_bytes": 5353,
+        "before_doc_id": "manuals/compose/how-tos/multiple-compose-files/extends",
+        "before_sha256": "cefe8e8c32e62d23fc2b7d4c6b9a11a28f7e2fed7ad86fd33c335becbb6966a3",
+        "before_size_bytes": 5130,
+        "doc_id": "manuals/compose/how-tos/multiple-compose-files/extends",
+        "path": "manuals/compose/how-tos/multiple-compose-files/extends.md",
+        "size_delta_bytes": 223
+      },
+      {
+        "after_doc_id": "manuals/compose/how-tos/networking",
+        "after_sha256": "24fec0fbc9190db6e3684bf2050a345b3d93cea081d04a648a002ea5f3e60b00",
+        "after_size_bytes": 14835,
+        "before_doc_id": "manuals/compose/how-tos/networking",
+        "before_sha256": "21cbfd4ee121e146cd14c0d6cb0b0d111e3a255fe411054829ea1d39731cb3ab",
+        "before_size_bytes": 7036,
+        "doc_id": "manuals/compose/how-tos/networking",
+        "path": "manuals/compose/how-tos/networking.md",
+        "size_delta_bytes": 7799
+      },
+      {
+        "after_doc_id": "manuals/compose/trust-model",
+        "after_sha256": "99167b811b67c40dd503b06e6965678a85d1ff081f9fb95d61aee25e9847e346",
+        "after_size_bytes": 5526,
+        "before_doc_id": "manuals/compose/trust-model",
+        "before_sha256": "a7f78595007703384e00d7501716e3096e43e617afebd05fb9153e287eaaa922",
+        "before_size_bytes": 5559,
+        "doc_id": "manuals/compose/trust-model",
+        "path": "manuals/compose/trust-model.md",
+        "size_delta_bytes": -33
+      },
+      {
+        "after_doc_id": "manuals/desktop/_index",
+        "after_sha256": "228bfd9ba27e1c7d5669c6d7d940501bacf56e88990f5053588d52a07b622488",
+        "after_size_bytes": 3706,
+        "before_doc_id": "manuals/desktop/_index",
+        "before_sha256": "bdd5156aa17065b90309d89b650ea6ee96004431b136d0312f987115ca49c03f",
+        "before_size_bytes": 3645,
+        "doc_id": "manuals/desktop/_index",
+        "path": "manuals/desktop/_index.md",
+        "size_delta_bytes": 61
+      },
+      {
+        "after_doc_id": "manuals/desktop/release-notes",
+        "after_sha256": "a771bbe4b89a6e18c36c7387d70e75f95d4d9ee0c3f5bc9496a01bffd203621f",
+        "after_size_bytes": 273762,
+        "before_doc_id": "manuals/desktop/release-notes",
+        "before_sha256": "15ae01170066a49549b3618deb6352c2c9492d234fe3592b4ae91bb1caf6ae51",
+        "before_size_bytes": 267438,
+        "doc_id": "manuals/desktop/release-notes",
+        "path": "manuals/desktop/release-notes.md",
+        "size_delta_bytes": 6324
+      },
+      {
+        "after_doc_id": "manuals/desktop/settings-and-maintenance/backup-and-restore",
+        "after_sha256": "32a53741cf1eec5605683ad74547b6239c3736c7d22f7edac33ce402c5d453b6",
+        "after_size_bytes": 4844,
+        "before_doc_id": "manuals/desktop/settings-and-maintenance/backup-and-restore",
+        "before_sha256": "53c13d0eb72958edbe2b52ea86d022e304f7e1e44e1cad37a89b0ab5f3c0c413",
+        "before_size_bytes": 4589,
+        "doc_id": "manuals/desktop/settings-and-maintenance/backup-and-restore",
+        "path": "manuals/desktop/settings-and-maintenance/backup-and-restore.md",
+        "size_delta_bytes": 255
+      },
+      {
+        "after_doc_id": "manuals/desktop/settings-and-maintenance/settings",
+        "after_sha256": "7d4f208eebf234b1f6fb7bd64165430b7cabf7a3f58b9d8a42df719a3b15a833",
+        "after_size_bytes": 25269,
+        "before_doc_id": "manuals/desktop/settings-and-maintenance/settings",
+        "before_sha256": "a0ceac526b3719c9a4d198355c2ae5eefdd8a490a033c24861ed0ef15e588d66",
+        "before_size_bytes": 24945,
+        "doc_id": "manuals/desktop/settings-and-maintenance/settings",
+        "path": "manuals/desktop/settings-and-maintenance/settings.md",
+        "size_delta_bytes": 324
+      },
+      {
+        "after_doc_id": "manuals/desktop/setup/allow-list",
+        "after_sha256": "8e0f06c592b2ef7543a2bd6af68e3e43a65403f6ba810e62277494a97a6808ee",
+        "after_size_bytes": 3129,
+        "before_doc_id": "manuals/desktop/setup/allow-list",
+        "before_sha256": "087b1ccda3a23de550f3469bd72fd9142715fa0955578629e7ed8c9c130e08aa",
+        "before_size_bytes": 2993,
+        "doc_id": "manuals/desktop/setup/allow-list",
+        "path": "manuals/desktop/setup/allow-list.md",
+        "size_delta_bytes": 136
+      },
+      {
+        "after_doc_id": "manuals/desktop/setup/install/linux/rhel",
+        "after_sha256": "cc5ec524fdebb6f0b5fecc9a7c6f8ef8547f3a016a8e027bf37dcbd31d6a1992",
+        "after_size_bytes": 5894,
+        "before_doc_id": "manuals/desktop/setup/install/linux/rhel",
+        "before_sha256": "9f34cd36d86b8aa7dee048dbd87862b17c027424b72bd6039ee6e3c69b5dd1b1",
+        "before_size_bytes": 6477,
+        "doc_id": "manuals/desktop/setup/install/linux/rhel",
+        "path": "manuals/desktop/setup/install/linux/rhel.md",
+        "size_delta_bytes": -583
+      },
+      {
+        "after_doc_id": "manuals/desktop/setup/install/linux/ubuntu",
+        "after_sha256": "eb78284766cb818170902fd84f188bccec6068644dd60f3a4398a7160ce085e1",
+        "after_size_bytes": 4554,
+        "before_doc_id": "manuals/desktop/setup/install/linux/ubuntu",
+        "before_sha256": "49ee236718910284a4b37f0b9d6599ca4853afbf41269eb879eba74f79e38beb",
+        "before_size_bytes": 4575,
+        "doc_id": "manuals/desktop/setup/install/linux/ubuntu",
+        "path": "manuals/desktop/setup/install/linux/ubuntu.md",
+        "size_delta_bytes": -21
+      },
+      {
+        "after_doc_id": "manuals/desktop/setup/install/windows-install",
+        "after_sha256": "3a523d35ba6f6796dad100afe28117aae6cf691b3a0eaacfac3e6dfbd3db74d9",
+        "after_size_bytes": 23049,
+        "before_doc_id": "manuals/desktop/setup/install/windows-install",
+        "before_sha256": "2b3f4d0f95b31392222219b02da58741c61a84be3560aa2241a0f456c14ad558",
+        "before_size_bytes": 20488,
+        "doc_id": "manuals/desktop/setup/install/windows-install",
+        "path": "manuals/desktop/setup/install/windows-install.md",
+        "size_delta_bytes": 2561
+      },
+      {
+        "after_doc_id": "manuals/desktop/setup/install/windows-permission-requirements",
+        "after_sha256": "dcb88518fb23c76539f5ec42cb510f9ec61422b4e50dd708850c128f9b56ea24",
+        "after_size_bytes": 9947,
+        "before_doc_id": "manuals/desktop/setup/install/windows-permission-requirements",
+        "before_sha256": "6d571e0bc4720cb21fc7e3ab3f5d531e8f28f4fa62f2ab60bcc798c75687ef48",
+        "before_size_bytes": 7513,
+        "doc_id": "manuals/desktop/setup/install/windows-permission-requirements",
+        "path": "manuals/desktop/setup/install/windows-permission-requirements.md",
+        "size_delta_bytes": 2434
+      },
+      {
+        "after_doc_id": "manuals/desktop/troubleshoot-and-support/troubleshoot/_index",
+        "after_sha256": "a2896ac0f5eb22cb01b9524782cb32de56bffc6077d9688a2e55e366a75ee239",
+        "after_size_bytes": 10459,
+        "before_doc_id": "manuals/desktop/troubleshoot-and-support/troubleshoot/_index",
+        "before_sha256": "1259463e7d837f83bdc0c0ec526cea22e2a34af2ca651034f0b23e45eb31965c",
+        "before_size_bytes": 10157,
+        "doc_id": "manuals/desktop/troubleshoot-and-support/troubleshoot/_index",
+        "path": "manuals/desktop/troubleshoot-and-support/troubleshoot/_index.md",
+        "size_delta_bytes": 302
+      },
+      {
+        "after_doc_id": "manuals/desktop/uninstall",
+        "after_sha256": "3fb3659ba66aa4c6fdeb90333b047158459f6b8fb4f14a72f2558926f8584083",
+        "after_size_bytes": 6909,
+        "before_doc_id": "manuals/desktop/uninstall",
+        "before_sha256": "a0c51f080dd0a2a1015f5671197eb834eba1205922a4fd02440406cace36adab",
+        "before_size_bytes": 6775,
+        "doc_id": "manuals/desktop/uninstall",
+        "path": "manuals/desktop/uninstall.md",
+        "size_delta_bytes": 134
+      },
+      {
+        "after_doc_id": "manuals/desktop/use-desktop/kubernetes",
+        "after_sha256": "6959570521b845269f001bce530900dd861288385aab853996c697729a96f2c7",
+        "after_size_bytes": 10940,
+        "before_doc_id": "manuals/desktop/use-desktop/kubernetes",
+        "before_sha256": "5038393a1f2cb56bd7f3b45aac8a46f852b6fb29e65d3e698863493130278c6e",
+        "before_size_bytes": 10822,
+        "doc_id": "manuals/desktop/use-desktop/kubernetes",
+        "path": "manuals/desktop/use-desktop/kubernetes.md",
+        "size_delta_bytes": 118
+      },
+      {
+        "after_doc_id": "manuals/desktop/use-desktop/logs",
+        "after_sha256": "0e03548d21329dd4954f571f32bd4f65495c0234f6bebf720396f1aa516da1f9",
+        "after_size_bytes": 2190,
+        "before_doc_id": "manuals/desktop/use-desktop/logs",
+        "before_sha256": "d568fa595725327d4f68ef9d773f0dd3ba9781babc73b86fc85d7cf36c22526c",
+        "before_size_bytes": 2464,
+        "doc_id": "manuals/desktop/use-desktop/logs",
+        "path": "manuals/desktop/use-desktop/logs.md",
+        "size_delta_bytes": -274
+      },
+      {
+        "after_doc_id": "manuals/dhi/_index",
+        "after_sha256": "fd64b6c55784e11a4c3caf78d8d71f8ccbcd3ffc45cadeeb753f5dc1c1f5f8f0",
+        "after_size_bytes": 3195,
+        "before_doc_id": "manuals/dhi/_index",
+        "before_sha256": "609e826ba0ff3fa3bdb0908281680781e1cd037686d0ca1680d9e9838a13805b",
+        "before_size_bytes": 3276,
+        "doc_id": "manuals/dhi/_index",
+        "path": "manuals/dhi/_index.md",
+        "size_delta_bytes": -81
+      },
+      {
+        "after_doc_id": "manuals/dhi/core-concepts/_index",
+        "after_sha256": "e700073d5250ce30e11ec8842c3796a80e8cd76c53945a7cda720522dde5efd9",
+        "after_size_bytes": 5535,
+        "before_doc_id": "manuals/dhi/core-concepts/_index",
+        "before_sha256": "8b2da5b9d5b2b4a2a457568405c616e7c88c6aa403a5fc66a7b5c594bb185943",
+        "before_size_bytes": 5454,
+        "doc_id": "manuals/dhi/core-concepts/_index",
+        "path": "manuals/dhi/core-concepts/_index.md",
+        "size_delta_bytes": 81
+      },
+      {
+        "after_doc_id": "manuals/dhi/explore/_index",
+        "after_sha256": "913e1b4eefc81797773d16dea5ac4a1d7dc3306d72ff182c26dd1e5e4d17ec6e",
+        "after_size_bytes": 2768,
+        "before_doc_id": "manuals/dhi/explore/_index",
+        "before_sha256": "d9af9f8f3221f140a38335f25ca56302423c6d225a9dd308a9a07fbf87fe4d11",
+        "before_size_bytes": 2733,
+        "doc_id": "manuals/dhi/explore/_index",
+        "path": "manuals/dhi/explore/_index.md",
+        "size_delta_bytes": 35
+      },
+      {
+        "after_doc_id": "manuals/dhi/features",
+        "after_sha256": "f92414e16cb8c98c37e91b09f4a6ba4e3d3aa417712c172d17f11d849ccb09b9",
+        "after_size_bytes": 7878,
+        "before_doc_id": "manuals/dhi/features",
+        "before_sha256": "510408390e25bf50eb3b1a38966db8dfc9f79bdacdea849eba9f6083c2dd9496",
+        "before_size_bytes": 7883,
+        "doc_id": "manuals/dhi/features",
+        "path": "manuals/dhi/features.md",
+        "size_delta_bytes": -5
+      },
+      {
+        "after_doc_id": "manuals/dhi/how-to/_index",
+        "after_sha256": "38e8bc6c163a5bbfab346a8bbe1baf276a6876dcb5393ea1e967706d009fc24f",
+        "after_size_bytes": 3656,
+        "before_doc_id": "manuals/dhi/how-to/_index",
+        "before_sha256": "9f24b36156b4e3ab8b2d5470f4b0a8e0332306917cc72738a9483524bc7cf6c0",
+        "before_size_bytes": 3656,
+        "doc_id": "manuals/dhi/how-to/_index",
+        "path": "manuals/dhi/how-to/_index.md",
+        "size_delta_bytes": 0
+      },
+      {
+        "after_doc_id": "manuals/dhi/how-to/cli",
+        "after_sha256": "b4bd2895c66837c2a61f7b0ecc1cffbf37ac82ad8cebac1cafb058b4995fedcf",
+        "after_size_bytes": 8858,
+        "before_doc_id": "manuals/dhi/how-to/cli",
+        "before_sha256": "1849353d1dc868378ff04c0239a9721c5095c30e594d4c8ab8543b13452de92e",
+        "before_size_bytes": 7289,
+        "doc_id": "manuals/dhi/how-to/cli",
+        "path": "manuals/dhi/how-to/cli.md",
+        "size_delta_bytes": 1569
+      },
+      {
+        "after_doc_id": "manuals/dhi/how-to/customize",
+        "after_sha256": "c19226b4a06ca3bb5a8226104253a94176a29e748d4bac3b62032c52cfb0f416",
+        "after_size_bytes": 26588,
+        "before_doc_id": "manuals/dhi/how-to/customize",
+        "before_sha256": "b09b04395383bfc96a530b035a813cd9762be1206dbc7dd5582611a138943d09",
+        "before_size_bytes": 18456,
+        "doc_id": "manuals/dhi/how-to/customize",
+        "path": "manuals/dhi/how-to/customize.md",
+        "size_delta_bytes": 8132
+      },
+      {
+        "after_doc_id": "manuals/dhi/how-to/hardened-packages",
+        "after_sha256": "329e868c2e213aa41deddb018fe8d4a8ce293070811a87ac0b1fa51c112016b8",
+        "after_size_bytes": 14375,
+        "before_doc_id": "manuals/dhi/how-to/hardened-packages",
+        "before_sha256": "d1f97388f78eb7f3b4c22e92467a036347f25ce6df762355a6336213dd5cf50c",
+        "before_size_bytes": 10335,
+        "doc_id": "manuals/dhi/how-to/hardened-packages",
+        "path": "manuals/dhi/how-to/hardened-packages.md",
+        "size_delta_bytes": 4040
+      },
+      {
+        "after_doc_id": "manuals/dhi/how-to/mirror",
+        "after_sha256": "7439f766774681a71be8a06daf373e7f8d45b1eae97fcc6504e5aefefd1d4987",
+        "after_size_bytes": 16961,
+        "before_doc_id": "manuals/dhi/how-to/mirror",
+        "before_sha256": "cb27e05e24859951893fd470c2a558d08236fa8be04f3da2491c0a73b19146bd",
+        "before_size_bytes": 16973,
+        "doc_id": "manuals/dhi/how-to/mirror",
+        "path": "manuals/dhi/how-to/mirror.md",
+        "size_delta_bytes": -12
+      },
+      {
+        "after_doc_id": "manuals/dhi/how-to/select-enterprise",
+        "after_sha256": "9e2f531acbff35a6ebcd9b50a249541ed5af8366f0e163f31d008889d6ea2785",
+        "after_size_bytes": 8993,
+        "before_doc_id": "manuals/dhi/how-to/select-enterprise",
+        "before_sha256": "0d0b241fb814638e9054b6d3eb0271348abc7960fd01079ad5c9f3abcaa9e209",
+        "before_size_bytes": 8918,
+        "doc_id": "manuals/dhi/how-to/select-enterprise",
+        "path": "manuals/dhi/how-to/select-enterprise.md",
+        "size_delta_bytes": 75
+      },
+      {
+        "after_doc_id": "manuals/dhi/migration/_index",
+        "after_sha256": "23b317b66ee1226956bb7fac67cac8c6a1c17e8c90559b7338e77ae1752315c3",
+        "after_size_bytes": 2080,
+        "before_doc_id": "manuals/dhi/migration/_index",
+        "before_sha256": "b4322743e4dcd00af3ddb77245edb4be3106e19cdecad82ec63ab42ee872ba81",
+        "before_size_bytes": 2053,
+        "doc_id": "manuals/dhi/migration/_index",
+        "path": "manuals/dhi/migration/_index.md",
+        "size_delta_bytes": 27
+      },
+      {
+        "after_doc_id": "manuals/dhi/migration/examples/_index",
+        "after_sha256": "1a565f5ce4ccc259c1c59e76919bc1d672a89937e81c647b32491a5965e9da5e",
+        "after_size_bytes": 1283,
+        "before_doc_id": "manuals/dhi/migration/examples/_index",
+        "before_sha256": "925c846f3267778f05518bb92df2236ca4ed874544a3730d3eb1b3bfd09cd9ab",
+        "before_size_bytes": 1259,
+        "doc_id": "manuals/dhi/migration/examples/_index",
+        "path": "manuals/dhi/migration/examples/_index.md",
+        "size_delta_bytes": 24
+      },
+      {
+        "after_doc_id": "manuals/docker-hub/_index",
+        "after_sha256": "941de790c9c425e75f7550b752da3a19231203bd32b1e48524e3f8b81b9db936",
+        "after_size_bytes": 2173,
+        "before_doc_id": "manuals/docker-hub/_index",
+        "before_sha256": "5faa39590918e1eac464dba7db4d7648d59e5974f07e03aefc44f4d8f8b15e61",
+        "before_size_bytes": 2121,
+        "doc_id": "manuals/docker-hub/_index",
+        "path": "manuals/docker-hub/_index.md",
+        "size_delta_bytes": 52
+      },
+      {
+        "after_doc_id": "manuals/docker-hub/release-notes",
+        "after_sha256": "bc738c93aede6635b619e64ad30ae0dff21b12ff23b9f6181e97987ab644b3d7",
+        "after_size_bytes": 12842,
+        "before_doc_id": "manuals/docker-hub/release-notes",
+        "before_sha256": "4b715cf856cde44e051e56cd2fdc31e0849927d11393117e64d055dbd3facb86",
+        "before_size_bytes": 11627,
+        "doc_id": "manuals/docker-hub/release-notes",
+        "path": "manuals/docker-hub/release-notes.md",
+        "size_delta_bytes": 1215
+      },
+      {
+        "after_doc_id": "manuals/docker-hub/repos/manage/builds/_index",
+        "after_sha256": "965d85076b5d7e7ae46222a3e07d3115c1e27e720d77ba0d9b48a45cf335023c",
+        "after_size_bytes": 2041,
+        "before_doc_id": "manuals/docker-hub/repos/manage/builds/_index",
+        "before_sha256": "0f9627c2aaa8163c06c779ae252e5bba8051079e63c902fb007b3050efb71d0a",
+        "before_size_bytes": 1856,
+        "doc_id": "manuals/docker-hub/repos/manage/builds/_index",
+        "path": "manuals/docker-hub/repos/manage/builds/_index.md",
+        "size_delta_bytes": 185
+      },
+      {
+        "after_doc_id": "manuals/docker-hub/repos/manage/builds/advanced",
+        "after_sha256": "ed5eb5cc17c1782c3077387b37fa7ace4825c2e51d7807ee2dcfcd2d4a454aa0",
+        "after_size_bytes": 6164,
+        "before_doc_id": "manuals/docker-hub/repos/manage/builds/advanced",
+        "before_sha256": "3b6e0c072edc2e7bbf69c8fa763d738f2856838e16ff6271c9c51dac8f9a6e69",
+        "before_size_bytes": 6049,
+        "doc_id": "manuals/docker-hub/repos/manage/builds/advanced",
+        "path": "manuals/docker-hub/repos/manage/builds/advanced.md",
+        "size_delta_bytes": 115
+      },
+      {
+        "after_doc_id": "manuals/docker-hub/repos/manage/builds/automated-testing",
+        "after_sha256": "07a4d4d49f53ac6f5f9bcba955dc2493ec988e5265fb744007239c4a3557e370",
+        "after_size_bytes": 4563,
+        "before_doc_id": "manuals/docker-hub/repos/manage/builds/automated-testing",
+        "before_sha256": "06defd71f90f649b90cdc2bd1f2b46fa2a4e5eb3d705cb79f4802a7dd201f63f",
+        "before_size_bytes": 4449,
+        "doc_id": "manuals/docker-hub/repos/manage/builds/automated-testing",
+        "path": "manuals/docker-hub/repos/manage/builds/automated-testing.md",
+        "size_delta_bytes": 114
+      },
+      {
+        "after_doc_id": "manuals/docker-hub/repos/manage/builds/link-source",
+        "after_sha256": "0473edffbbea58ebb4558b17786e8bfa10039725c068e796186e3983c0708b5b",
+        "after_size_bytes": 5854,
+        "before_doc_id": "manuals/docker-hub/repos/manage/builds/link-source",
+        "before_sha256": "aa1a021d9f36633aa12da0db0a9a5411e92448b71b676438d983c0f86759f548",
+        "before_size_bytes": 5740,
+        "doc_id": "manuals/docker-hub/repos/manage/builds/link-source",
+        "path": "manuals/docker-hub/repos/manage/builds/link-source.md",
+        "size_delta_bytes": 114
+      },
+      {
+        "after_doc_id": "manuals/docker-hub/repos/manage/builds/manage-builds",
+        "after_sha256": "fe8a5cc1e715fdd0dcaecdc92ba4bd6636f4201bd0507bb8d5c549d8dcaad933",
+        "after_size_bytes": 2471,
+        "before_doc_id": "manuals/docker-hub/repos/manage/builds/manage-builds",
+        "before_sha256": "c712d1318af67ad09688d3cb850fcdcbaf4e0852a59c8e1a27f795ff81323a90",
+        "before_size_bytes": 2357,
+        "doc_id": "manuals/docker-hub/repos/manage/builds/manage-builds",
+        "path": "manuals/docker-hub/repos/manage/builds/manage-builds.md",
+        "size_delta_bytes": 114
+      },
+      {
+        "after_doc_id": "manuals/docker-hub/repos/manage/builds/migrate",
+        "after_sha256": "20a716b2783ffaa164b2b2758c8c274fdaab527d8c5559d75e3988e9baae3b6b",
+        "after_size_bytes": 7782,
+        "before_doc_id": "manuals/docker-hub/repos/manage/builds/migrate",
+        "before_sha256": "4817e0b1bd1b4173639196e22e42cc303db7a212661061895fe45c354452b91b",
+        "before_size_bytes": 7668,
+        "doc_id": "manuals/docker-hub/repos/manage/builds/migrate",
+        "path": "manuals/docker-hub/repos/manage/builds/migrate.md",
+        "size_delta_bytes": 114
+      },
+      {
+        "after_doc_id": "manuals/docker-hub/repos/manage/builds/setup",
+        "after_sha256": "d2ca5292fceac0cfd247bb7d51b76a20b7de6135cde45e3029455b6f0ae8e79d",
+        "after_size_bytes": 13420,
+        "before_doc_id": "manuals/docker-hub/repos/manage/builds/setup",
+        "before_sha256": "210f347680c7601f044e5bcf1fbb78227be423ef424892bd666114ed894420bf",
+        "before_size_bytes": 13306,
+        "doc_id": "manuals/docker-hub/repos/manage/builds/setup",
+        "path": "manuals/docker-hub/repos/manage/builds/setup.md",
+        "size_delta_bytes": 114
+      },
+      {
+        "after_doc_id": "manuals/docker-hub/repos/manage/builds/troubleshoot",
+        "after_sha256": "ff88c9f862b9131f94709a8e7274d80d68e689835951c1b03b3c1830c193ec6a",
+        "after_size_bytes": 3269,
+        "before_doc_id": "manuals/docker-hub/repos/manage/builds/troubleshoot",
+        "before_sha256": "70dd7be1221a5b7bdd833511c16750c5884db8a2b757959ea9c9a4969453e496",
+        "before_size_bytes": 3155,
+        "doc_id": "manuals/docker-hub/repos/manage/builds/troubleshoot",
+        "path": "manuals/docker-hub/repos/manage/builds/troubleshoot.md",
+        "size_delta_bytes": 114
+      },
+      {
+        "after_doc_id": "manuals/docker-hub/repos/manage/hub-images/_index",
+        "after_sha256": "75d8267321cf8b9ee8a712d5d15eab92a3ce167fd8d5e556b99a32e9a062a855",
+        "after_size_bytes": 1802,
+        "before_doc_id": "manuals/docker-hub/repos/manage/hub-images/_index",
+        "before_sha256": "e7df12b6319bc4330b80b74b6e3eba8679ef57863fa8a588ef246cd275984ded",
+        "before_size_bytes": 1806,
+        "doc_id": "manuals/docker-hub/repos/manage/hub-images/_index",
+        "path": "manuals/docker-hub/repos/manage/hub-images/_index.md",
+        "size_delta_bytes": -4
+      },
+      {
+        "after_doc_id": "manuals/docker-hub/repos/manage/webhooks",
+        "after_sha256": "6b301a5580a28aef5f12310717030ace29b282ced3527a5204b021898721b059",
+        "after_size_bytes": 2404,
+        "before_doc_id": "manuals/docker-hub/repos/manage/webhooks",
+        "before_sha256": "4a8f21fdfacdcf39ae463a5c973ae132ecccce03ddb9231a746b3a83ddd2f062",
+        "before_size_bytes": 2363,
+        "doc_id": "manuals/docker-hub/repos/manage/webhooks",
+        "path": "manuals/docker-hub/repos/manage/webhooks.md",
+        "size_delta_bytes": 41
+      },
+      {
+        "after_doc_id": "manuals/engine/_index",
+        "after_sha256": "c5e594bb826b946a5f4f98765f364dfd9fedf7b825cce7f36aa43b16147a4f61",
+        "after_size_bytes": 2798,
+        "before_doc_id": "manuals/engine/_index",
+        "before_sha256": "cb04b514134b34a8f4d309e404c339ce519a1263d31b0070a73038c04a2eecd2",
+        "before_size_bytes": 2751,
+        "doc_id": "manuals/engine/_index",
+        "path": "manuals/engine/_index.md",
+        "size_delta_bytes": 47
+      },
+      {
+        "after_doc_id": "manuals/engine/cli/formatting",
+        "after_sha256": "696e7abb7d71df73a764ab9d324a0086261642859603ce7bce30c9b13b8625e6",
+        "after_size_bytes": 3110,
+        "before_doc_id": "manuals/engine/cli/formatting",
+        "before_sha256": "c058ae8e123ebf7f5c6ad26433b3e30cf124ff20d8453b7bd3f05b64ddd95a36",
+        "before_size_bytes": 3108,
+        "doc_id": "manuals/engine/cli/formatting",
+        "path": "manuals/engine/cli/formatting.md",
+        "size_delta_bytes": 2
+      },
+      {
+        "after_doc_id": "manuals/engine/install/debian",
+        "after_sha256": "b1c08419f30a285944dd8569cc6e2ba13add6a6414a694f5bdc05a55ea6d4c59",
+        "after_size_bytes": 9929,
+        "before_doc_id": "manuals/engine/install/debian",
+        "before_sha256": "0cf4913bed9f45e9f2608251619cbc5e84eda901d4a59e6d398533c3832c6475",
+        "before_size_bytes": 9914,
+        "doc_id": "manuals/engine/install/debian",
+        "path": "manuals/engine/install/debian.md",
+        "size_delta_bytes": 15
+      },
+      {
+        "after_doc_id": "manuals/engine/release-notes/29",
+        "after_sha256": "e2159af7ab4f9ec7137ed7c759ca2d4a773366d69af77d0ab334328aac07d1e1",
+        "after_size_bytes": 88727,
+        "before_doc_id": "manuals/engine/release-notes/29",
+        "before_sha256": "696152bc9e87fb68237ded8bd5c76b0fdbf96597268f493ef4ccb5104a6ea2ee",
+        "before_size_bytes": 78032,
+        "doc_id": "manuals/engine/release-notes/29",
+        "path": "manuals/engine/release-notes/29.md",
+        "size_delta_bytes": 10695
+      },
+      {
+        "after_doc_id": "manuals/engine/security/rootless/troubleshoot",
+        "after_sha256": "846276f462925006bc64f9824c0ce502282b4c4fd318d4265f3f08a5074a3b4a",
+        "after_size_bytes": 19544,
+        "before_doc_id": "manuals/engine/security/rootless/troubleshoot",
+        "before_sha256": "58a1ff95cd1abdc0d47e790171228eddf78ae25d72b39fa6af5f2fe1e64d6d70",
+        "before_size_bytes": 17049,
+        "doc_id": "manuals/engine/security/rootless/troubleshoot",
+        "path": "manuals/engine/security/rootless/troubleshoot.md",
+        "size_delta_bytes": 2495
+      },
+      {
+        "after_doc_id": "manuals/engine/security/trust/_index",
+        "after_sha256": "c998c324bc41a33877f456952eba0117b587a81d85cbb1064f25e61bdfa0f91f",
+        "after_size_bytes": 11489,
+        "before_doc_id": "manuals/engine/security/trust/_index",
+        "before_sha256": "096be8f22b565ae9edeb9186b6318803696283fe261787e263d7c43e73809b4b",
+        "before_size_bytes": 11992,
+        "doc_id": "manuals/engine/security/trust/_index",
+        "path": "manuals/engine/security/trust/_index.md",
+        "size_delta_bytes": -503
+      },
+      {
+        "after_doc_id": "manuals/engine/storage/containerd",
+        "after_sha256": "137fe05b079eff44f13d395057af34b0a1f5bb0a5791d9dd1444766d86c32a02",
+        "after_size_bytes": 5784,
+        "before_doc_id": "manuals/engine/storage/containerd",
+        "before_sha256": "3e1975c6ddd4333783a3c91af897e36c69f7370df64ef340e0f539ec4f73be2f",
+        "before_size_bytes": 5726,
+        "doc_id": "manuals/engine/storage/containerd",
+        "path": "manuals/engine/storage/containerd.md",
+        "size_delta_bytes": 58
+      },
+      {
+        "after_doc_id": "manuals/enterprise/enterprise-deployment/faq",
+        "after_sha256": "38d63a049c577d36d83ee72cf338e639cdb3964d854677b9780a1fd26e4bb240",
+        "after_size_bytes": 4431,
+        "before_doc_id": "manuals/enterprise/enterprise-deployment/faq",
+        "before_sha256": "40fc85be69c24ab3a912961d75ba3990221be4b42e7ed58d418cc71415245f1f",
+        "before_size_bytes": 4279,
+        "doc_id": "manuals/enterprise/enterprise-deployment/faq",
+        "path": "manuals/enterprise/enterprise-deployment/faq.md",
+        "size_delta_bytes": 152
+      },
+      {
+        "after_doc_id": "manuals/enterprise/enterprise-deployment/msi-install-and-configure",
+        "after_sha256": "b3064c72fe42ba261d19e410edcbf131de4d1c9de7a11a80bc582e0c8a93a255",
+        "after_size_bytes": 16834,
+        "before_doc_id": "manuals/enterprise/enterprise-deployment/msi-install-and-configure",
+        "before_sha256": "ed8239e3d4863d8c1d16718bb268948b93ecd0920ac167274770ed7f112217f9",
+        "before_size_bytes": 16743,
+        "doc_id": "manuals/enterprise/enterprise-deployment/msi-install-and-configure",
+        "path": "manuals/enterprise/enterprise-deployment/msi-install-and-configure.md",
+        "size_delta_bytes": 91
+      },
+      {
+        "after_doc_id": "manuals/enterprise/security/_index",
+        "after_sha256": "e193cc4b9206421c6eef613ca863700071dc849ba19b8af09a6f97fbdb95e10d",
+        "after_size_bytes": 3376,
+        "before_doc_id": "manuals/enterprise/security/_index",
+        "before_sha256": "f28e36393f285bcf094726f6a6dfd4a2c30ffc45a9423d09413047ccf8eb60f7",
+        "before_size_bytes": 3344,
+        "doc_id": "manuals/enterprise/security/_index",
+        "path": "manuals/enterprise/security/_index.md",
+        "size_delta_bytes": 32
+      },
+      {
+        "after_doc_id": "manuals/enterprise/security/enforce-sign-in/_index",
+        "after_sha256": "a551bf05f6fb1867ab8a75b93d414e2e063391eff8fd89a53a7af23907851a53",
+        "after_size_bytes": 5204,
+        "before_doc_id": "manuals/enterprise/security/enforce-sign-in/_index",
+        "before_sha256": "b3f30e48706f6aabedbe23739bcb4a0e5d6868d4aa4b6754aa1d74dfd12107f3",
+        "before_size_bytes": 4704,
+        "doc_id": "manuals/enterprise/security/enforce-sign-in/_index",
+        "path": "manuals/enterprise/security/enforce-sign-in/_index.md",
+        "size_delta_bytes": 500
+      },
+      {
+        "after_doc_id": "manuals/enterprise/security/enforce-sign-in/methods",
+        "after_sha256": "4b6c65212e195d549b2ba2b9babdcc70956d4a2e5b9c1182cb9eed5310e9bc0b",
+        "after_size_bytes": 11376,
+        "before_doc_id": "manuals/enterprise/security/enforce-sign-in/methods",
+        "before_sha256": "f047e7dbe77d0369738fea849ae46362769cdaae2a0d94e83fd5ca507931bb14",
+        "before_size_bytes": 10669,
+        "doc_id": "manuals/enterprise/security/enforce-sign-in/methods",
+        "path": "manuals/enterprise/security/enforce-sign-in/methods.md",
+        "size_delta_bytes": 707
+      },
+      {
+        "after_doc_id": "manuals/enterprise/security/hardened-desktop/_index",
+        "after_sha256": "98a9396de9c9c9c8ab6736c9550fa8b3a53b37e7395a2ea25755b5f4120af476",
+        "after_size_bytes": 3974,
+        "before_doc_id": "manuals/enterprise/security/hardened-desktop/_index",
+        "before_sha256": "d4cc9cedc6ee8804310e237030530c208b76046087607d77e186cb8e2b6e4ac4",
+        "before_size_bytes": 3995,
+        "doc_id": "manuals/enterprise/security/hardened-desktop/_index",
+        "path": "manuals/enterprise/security/hardened-desktop/_index.md",
+        "size_delta_bytes": -21
+      },
+      {
+        "after_doc_id": "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/faq",
+        "after_sha256": "37e9c193f014192baa240a6b8b9068be017429211d00db4eedd4eef2dd0b62fd",
+        "after_size_bytes": 3826,
+        "before_doc_id": "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/faq",
+        "before_sha256": "9b7d1df0e3bd1dedcf0e1133d198fe37cb6354f287498c18a8b910bbf283bc8a",
+        "before_size_bytes": 3838,
+        "doc_id": "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/faq",
+        "path": "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/faq.md",
+        "size_delta_bytes": -12
+      },
+      {
+        "after_doc_id": "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/limitations",
+        "after_sha256": "60c26244f0d1223f87c9027e3d4076931a819ae32f869e56cadd3dd615ebdd38",
+        "after_size_bytes": 6892,
+        "before_doc_id": "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/limitations",
+        "before_sha256": "e90802b67022883572b1a5045b2873285f9428ba3944e51b662b30f02c3fb08f",
+        "before_size_bytes": 6762,
+        "doc_id": "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/limitations",
+        "path": "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/limitations.md",
+        "size_delta_bytes": 130
+      },
+      {
+        "after_doc_id": "manuals/enterprise/security/hardened-desktop/settings-management/_index",
+        "after_sha256": "9c818b8437b96605f0176f37b573d1f3bfbea39b487bc115703eef15850dbefa",
+        "after_size_bytes": 5629,
+        "before_doc_id": "manuals/enterprise/security/hardened-desktop/settings-management/_index",
+        "before_sha256": "ba0c4355f5e65c632261b6d28cc811099abcb8f3d6eea57f8e6c37bb3b7f4eb4",
+        "before_size_bytes": 5638,
+        "doc_id": "manuals/enterprise/security/hardened-desktop/settings-management/_index",
+        "path": "manuals/enterprise/security/hardened-desktop/settings-management/_index.md",
+        "size_delta_bytes": -9
+      },
+      {
+        "after_doc_id": "manuals/enterprise/security/hardened-desktop/settings-management/configure-admin-console",
+        "after_sha256": "faa53373387b8d021554aa9662ed8f46556619cff7a12723fe37bcc9ee45cf3c",
+        "after_size_bytes": 4338,
+        "before_doc_id": "manuals/enterprise/security/hardened-desktop/settings-management/configure-admin-console",
+        "before_sha256": "f5d3129f52e49cbc610e91509057eeddd032a67c8f54965ca50a1f068baee80f",
+        "before_size_bytes": 3879,
+        "doc_id": "manuals/enterprise/security/hardened-desktop/settings-management/configure-admin-console",
+        "path": "manuals/enterprise/security/hardened-desktop/settings-management/configure-admin-console.md",
+        "size_delta_bytes": 459
+      },
+      {
+        "after_doc_id": "manuals/enterprise/security/hardened-desktop/settings-management/configure-json-file",
+        "after_sha256": "1b367d197fbb77d1f5ebfe8f40f8aa368dfcc9d451f47b223f4450a2405ed683",
+        "after_size_bytes": 34899,
+        "before_doc_id": "manuals/enterprise/security/hardened-desktop/settings-management/configure-json-file",
+        "before_sha256": "80df0b27c44775d4315e9206de95f67a145f8229dd9a2a4fe2d4b94083f74a66",
+        "before_size_bytes": 34900,
+        "doc_id": "manuals/enterprise/security/hardened-desktop/settings-management/configure-json-file",
+        "path": "manuals/enterprise/security/hardened-desktop/settings-management/configure-json-file.md",
+        "size_delta_bytes": -1
+      },
+      {
+        "after_doc_id": "manuals/enterprise/security/provisioning/_index",
+        "after_sha256": "e47f6b462d6b3e569c92f45011965049f77efe750147c1f97be63ec90411288e",
+        "after_size_bytes": 5152,
+        "before_doc_id": "manuals/enterprise/security/provisioning/_index",
+        "before_sha256": "7d2cda281f4fdee297c23e4a4eceaee570f7f302db9a6d0746113e00186419ec",
+        "before_size_bytes": 5150,
+        "doc_id": "manuals/enterprise/security/provisioning/_index",
+        "path": "manuals/enterprise/security/provisioning/_index.md",
+        "size_delta_bytes": 2
+      },
+      {
+        "after_doc_id": "manuals/enterprise/security/provisioning/scim/group-mapping",
+        "after_sha256": "627b30efe477457ca54cf0fd79702d64a056f28d875e9912c5dfa9b9312c18db",
+        "after_size_bytes": 9715,
+        "before_doc_id": "manuals/enterprise/security/provisioning/scim/group-mapping",
+        "before_sha256": "c0fc085000a35f387027ca812688896c30d8596ca573056d44fd6cb0a882963c",
+        "before_size_bytes": 9715,
+        "doc_id": "manuals/enterprise/security/provisioning/scim/group-mapping",
+        "path": "manuals/enterprise/security/provisioning/scim/group-mapping.md",
+        "size_delta_bytes": 0
+      },
+      {
+        "after_doc_id": "manuals/enterprise/security/roles-and-permissions/_index",
+        "after_sha256": "a9d81c25495cb187cddeee1f1a611630392837574a55a3aa9af2a87f3f6fc81e",
+        "after_size_bytes": 3681,
+        "before_doc_id": "manuals/enterprise/security/roles-and-permissions/_index",
+        "before_sha256": "19a9d2e745a5004f1bd1b216d6429b7dc98b9680f2148815af4a67f56939bfea",
+        "before_size_bytes": 3675,
+        "doc_id": "manuals/enterprise/security/roles-and-permissions/_index",
+        "path": "manuals/enterprise/security/roles-and-permissions/_index.md",
+        "size_delta_bytes": 6
+      },
+      {
+        "after_doc_id": "manuals/extensions/_index",
+        "after_sha256": "19f90331f2c3eedd0b4d0053acef2cb4fa660f24df1f131096f3b859f33f7fed",
+        "after_size_bytes": 1671,
+        "before_doc_id": "manuals/extensions/_index",
+        "before_sha256": "bb207edbbd51c6b42925193427739aea1c7b36c9a7dcfa5521058ad70ef97214",
+        "before_size_bytes": 1656,
+        "doc_id": "manuals/extensions/_index",
+        "path": "manuals/extensions/_index.md",
+        "size_delta_bytes": 15
+      },
+      {
+        "after_doc_id": "manuals/extensions/extensions-sdk/_index",
+        "after_sha256": "8e951ffcd23dc51de75d32c3fab22a21ee0a2314f3d40a387469ffe78d9dd8f1",
+        "after_size_bytes": 2346,
+        "before_doc_id": "manuals/extensions/extensions-sdk/_index",
+        "before_sha256": "4191ec0f22e46aaa7bef3fe4b16e302dd0378b025bd6f35ef8d4d8d5df437c11",
+        "before_size_bytes": 2317,
+        "doc_id": "manuals/extensions/extensions-sdk/_index",
+        "path": "manuals/extensions/extensions-sdk/_index.md",
+        "size_delta_bytes": 29
+      },
+      {
+        "after_doc_id": "manuals/extensions/extensions-sdk/dev/api/backend",
+        "after_sha256": "c894587af46c526ba8c2f185b6b0f9a4b319b8e5d291ac0546ae9c51de30e98b",
+        "after_size_bytes": 5592,
+        "before_doc_id": "manuals/extensions/extensions-sdk/dev/api/backend",
+        "before_sha256": "a1c50d83823155e592c416f8d78174489390f2b37e240e15913010121f7d4a3e",
+        "before_size_bytes": 5620,
+        "doc_id": "manuals/extensions/extensions-sdk/dev/api/backend",
+        "path": "manuals/extensions/extensions-sdk/dev/api/backend.md",
+        "size_delta_bytes": -28
+      },
+      {
+        "after_doc_id": "manuals/extensions/extensions-sdk/dev/api/dashboard",
+        "after_sha256": "d769424b9566706ce7105194757fa306e1fa952a3085ee9cdcd1021a826dccdc",
+        "after_size_bytes": 2716,
+        "before_doc_id": "manuals/extensions/extensions-sdk/dev/api/dashboard",
+        "before_sha256": "49b14bded7baf33ffaa1508f0d0e369785f872a34aca4b6d0aa02ac9c091dce1",
+        "before_size_bytes": 2714,
+        "doc_id": "manuals/extensions/extensions-sdk/dev/api/dashboard",
+        "path": "manuals/extensions/extensions-sdk/dev/api/dashboard.md",
+        "size_delta_bytes": 2
+      },
+      {
+        "after_doc_id": "manuals/extensions/extensions-sdk/dev/api/overview",
+        "after_sha256": "5c88250ab2767d3ebab42def907405362b06a06cded9bf602ede1b561a9a36e9",
+        "after_size_bytes": 1451,
+        "before_doc_id": "manuals/extensions/extensions-sdk/dev/api/overview",
+        "before_sha256": "dc361022205e91181b0760d6fcd8362fd4e3cafa4f8baa28f13b7c687266554d",
+        "before_size_bytes": 1450,
+        "doc_id": "manuals/extensions/extensions-sdk/dev/api/overview",
+        "path": "manuals/extensions/extensions-sdk/dev/api/overview.md",
+        "size_delta_bytes": 1
+      },
+      {
+        "after_doc_id": "manuals/extensions/private-marketplace",
+        "after_sha256": "be3d0d4d08fe54d494d450fe61b67ea09ee3d8497a7c3b7dc9dc8ec4ee5f9074",
+        "after_size_bytes": 9493,
+        "before_doc_id": "manuals/extensions/private-marketplace",
+        "before_sha256": "eb9574a02a229f277402da96a282ba1e6a15a91e7c8146d4a3fdc4e331671cee",
+        "before_size_bytes": 9068,
+        "doc_id": "manuals/extensions/private-marketplace",
+        "path": "manuals/extensions/private-marketplace.md",
+        "size_delta_bytes": 425
+      },
+      {
+        "after_doc_id": "manuals/extensions/settings-feedback",
+        "after_sha256": "220a8397e42415b16ea40ecda19b9d1706de20df39b76270eb18e1cb714483df",
+        "after_size_bytes": 3235,
+        "before_doc_id": "manuals/extensions/settings-feedback",
+        "before_sha256": "be96022c57c10123ed4536b37d6cfab3bb472ef0d8cb8c3b7a4da231b01ff430",
+        "before_size_bytes": 3234,
+        "doc_id": "manuals/extensions/settings-feedback",
+        "path": "manuals/extensions/settings-feedback.md",
+        "size_delta_bytes": 1
+      },
+      {
+        "after_doc_id": "manuals/offload/_index",
+        "after_sha256": "d4c89d7de75c9f6b3ae4a40d90623734fcddacfa6fd4266c947a92cd72d08a5b",
+        "after_size_bytes": 1751,
+        "before_doc_id": "manuals/offload/_index",
+        "before_sha256": "51c998eabe2d90213bfd3eea994e2c1e60ea396a9589537e9795a757da130014",
+        "before_size_bytes": 1708,
+        "doc_id": "manuals/offload/_index",
+        "path": "manuals/offload/_index.md",
+        "size_delta_bytes": 43
+      },
+      {
+        "after_doc_id": "manuals/offload/about",
+        "after_sha256": "5f909aee8f04799700a70396ffa664e043112b17ccf9c81d9bd4c0471a969d7a",
+        "after_size_bytes": 5199,
+        "before_doc_id": "manuals/offload/about",
+        "before_sha256": "ea87db0f1357f87643afebc08aa7fde16fd0efd765aa510092229e278bce5c10",
+        "before_size_bytes": 4636,
+        "doc_id": "manuals/offload/about",
+        "path": "manuals/offload/about.md",
+        "size_delta_bytes": 563
+      },
+      {
+        "after_doc_id": "manuals/release-lifecycle",
+        "after_sha256": "fb496d544bac0ea8b3135cd4e063ab46a57f6d59efec36048b58dd7b5b030af2",
+        "after_size_bytes": 7694,
+        "before_doc_id": "manuals/release-lifecycle",
+        "before_sha256": "1bdd5833d8e89316773de7669b1112a4480caf8170b731c036d49c1c3883d5aa",
+        "before_size_bytes": 7679,
+        "doc_id": "manuals/release-lifecycle",
+        "path": "manuals/release-lifecycle.md",
+        "size_delta_bytes": 15
+      },
+      {
+        "after_doc_id": "manuals/retired",
+        "after_sha256": "d06f6d5a45ffb36ef29f5842d1ab4fe2c044c45d17802b9083cd5dcdf8c19915",
+        "after_size_bytes": 10459,
+        "before_doc_id": "manuals/retired",
+        "before_sha256": "80e3a7a4d58bd08859ecf9a16f9d2a0be3860c090a068e2f5d9b2fe3d3199de8",
+        "before_size_bytes": 9702,
+        "doc_id": "manuals/retired",
+        "path": "manuals/retired.md",
+        "size_delta_bytes": 757
+      },
+      {
+        "after_doc_id": "manuals/scout/_index",
+        "after_sha256": "e319db5a6a28fe5166a16c45f40e2473d9bb9917251863d17bd254f2c1e3f0c3",
+        "after_size_bytes": 2234,
+        "before_doc_id": "manuals/scout/_index",
+        "before_sha256": "443003bfa4a6292f961d9e08382bcc5ae4f45bfd333644b069a8ed946af7251c",
+        "before_size_bytes": 2182,
+        "doc_id": "manuals/scout/_index",
+        "path": "manuals/scout/_index.md",
+        "size_delta_bytes": 52
+      },
+      {
+        "after_doc_id": "manuals/security/_index",
+        "after_sha256": "bb7914e5139342d60d3b80a449a427f829fd14f31b3a341d298e9643f12fb1ce",
+        "after_size_bytes": 2428,
+        "before_doc_id": "manuals/security/_index",
+        "before_sha256": "068b5fc368fbddba5eb28b4b226a6446634350137bb130d0ceaf9c21eebc3085",
+        "before_size_bytes": 2403,
+        "doc_id": "manuals/security/_index",
+        "path": "manuals/security/_index.md",
+        "size_delta_bytes": 25
+      },
+      {
+        "after_doc_id": "manuals/security/security-announcements",
+        "after_sha256": "86dcfd69cb8810a10993d73193b0ad6beb4b272c189fb8ff0da88dc99569ec66",
+        "after_size_bytes": 24961,
+        "before_doc_id": "manuals/security/security-announcements",
+        "before_sha256": "2af1571a8451b7f8ae73bd049a95ae24c1d319c129dad539f296b0b2324e92c3",
+        "before_size_bytes": 24275,
+        "doc_id": "manuals/security/security-announcements",
+        "path": "manuals/security/security-announcements.md",
+        "size_delta_bytes": 686
+      },
+      {
+        "after_doc_id": "manuals/subscription/_index",
+        "after_sha256": "b6ec2dda284103350594e4749e918799bfef9700eb7100d1be75ecac3360f8e4",
+        "after_size_bytes": 1842,
+        "before_doc_id": "manuals/subscription/_index",
+        "before_sha256": "492cb656ada584494312ef4c1bd1b1c11e7f83fca01373b3855f16f42e74acf6",
+        "before_size_bytes": 1812,
+        "doc_id": "manuals/subscription/_index",
+        "path": "manuals/subscription/_index.md",
+        "size_delta_bytes": 30
+      },
+      {
+        "after_doc_id": "manuals/subscription/change",
+        "after_sha256": "b79ed27f9c1b278af3231fe584de9fc2703f3740dc356f00fef04d98880894cb",
+        "after_size_bytes": 3657,
+        "before_doc_id": "manuals/subscription/change",
+        "before_sha256": "1343488e0d7e6688a92a5dd98953b58d4d6052ea78fdd16ab2fc6fd656b1ff27",
+        "before_size_bytes": 3423,
+        "doc_id": "manuals/subscription/change",
+        "path": "manuals/subscription/change.md",
+        "size_delta_bytes": 234
+      },
+      {
+        "after_doc_id": "manuals/subscription/desktop-license",
+        "after_sha256": "4c3739417399cfb829d47133ba3bef39a388e9662616938bef6aac6be8bf8f43",
+        "after_size_bytes": 1931,
+        "before_doc_id": "manuals/subscription/desktop-license",
+        "before_sha256": "0d5f24407b0dc2fff29729bbb74cc9f209624e087dc293bd2802819a4ddf7286",
+        "before_size_bytes": 1931,
+        "doc_id": "manuals/subscription/desktop-license",
+        "path": "manuals/subscription/desktop-license.md",
+        "size_delta_bytes": 0
+      },
+      {
+        "after_doc_id": "manuals/subscription/details",
+        "after_sha256": "58190eb3451f377484467030a41d233cfdde3fe82605736aeb58e65001e71775",
+        "after_size_bytes": 171,
+        "before_doc_id": "manuals/subscription/details",
+        "before_sha256": "d8030ed8f1ab5c105bafeeb791d7eee55f2866c087aa4b09a61319e7fbf6b94e",
+        "before_size_bytes": 151,
+        "doc_id": "manuals/subscription/details",
+        "path": "manuals/subscription/details.md",
+        "size_delta_bytes": 20
+      },
+      {
+        "after_doc_id": "manuals/subscription/faq",
+        "after_sha256": "3481054942a8b3ba0568b206949971f5c692ca3d213407a899798a89452a2e4f",
+        "after_size_bytes": 1716,
+        "before_doc_id": "manuals/subscription/faq",
+        "before_sha256": "38914977c12a8351dc94f0087d9e608f96684de333aa3275f587e793509fdcce",
+        "before_size_bytes": 1716,
+        "doc_id": "manuals/subscription/faq",
+        "path": "manuals/subscription/faq.md",
+        "size_delta_bytes": 0
+      },
+      {
+        "after_doc_id": "manuals/subscription/manage-seats",
+        "after_sha256": "b6418438ad26ab1720a04455b9a59e3d2db9c0033bd1e7d0ffe33cd0fda4235e",
+        "after_size_bytes": 2400,
+        "before_doc_id": "manuals/subscription/manage-seats",
+        "before_sha256": "3026a49651c2f367de82dac75bbd824af4aa9650a55b5c3bc9a4b5a4549f3835",
+        "before_size_bytes": 2661,
+        "doc_id": "manuals/subscription/manage-seats",
+        "path": "manuals/subscription/manage-seats.md",
+        "size_delta_bytes": -261
+      },
+      {
+        "after_doc_id": "manuals/subscription/scale",
+        "after_sha256": "f05b4170cc2d8f14211cd19596bc120876b473cdbbbcc6e11002f26dcf3ee478",
+        "after_size_bytes": 3323,
+        "before_doc_id": "manuals/subscription/scale",
+        "before_sha256": "192d9b90753d71ffbbbe1abf618d7adf5c9a3c7951d6a2af6ff6f96b6a21da91",
+        "before_size_bytes": 2542,
+        "doc_id": "manuals/subscription/scale",
+        "path": "manuals/subscription/scale.md",
+        "size_delta_bytes": 781
+      },
+      {
+        "after_doc_id": "manuals/subscription/setup",
+        "after_sha256": "d7ff13991aedfa8fe6ed1632c8fd2feb5d63b05a231c7ef63459e73496c2bc7d",
+        "after_size_bytes": 3382,
+        "before_doc_id": "manuals/subscription/setup",
+        "before_sha256": "6b781fb35da1b7e1917aac8b4af8d87710cda717e11be701df0197728b0fb076",
+        "before_size_bytes": 1834,
+        "doc_id": "manuals/subscription/setup",
+        "path": "manuals/subscription/setup.md",
+        "size_delta_bytes": 1548
+      },
+      {
+        "after_doc_id": "manuals/testcontainers",
+        "after_sha256": "aeff546c1719c2b775980c7690bacc4f20a402918ee107f385060f2daf5de1ef",
+        "after_size_bytes": 4989,
+        "before_doc_id": "manuals/testcontainers",
+        "before_sha256": "6cf5b5ce3b7b9ef5e465b7b24292c73bffad2de78dbc59dad402ce4121303fbb",
+        "before_size_bytes": 4973,
+        "doc_id": "manuals/testcontainers",
+        "path": "manuals/testcontainers.md",
+        "size_delta_bytes": 16
+      },
+      {
+        "after_doc_id": "manuals/unassociated-machines/_index",
+        "after_sha256": "33a915c29b1bd0b4a3b18067a8272a4a1f34a9e20dc2a024a284a746c9f3c00d",
+        "after_size_bytes": 8571,
+        "before_doc_id": "manuals/unassociated-machines/_index",
+        "before_sha256": "dd996cdc5cbb0eaa434e9e25fa4fe07e453f35ab26e45ce6a018f7b5c25b3b0a",
+        "before_size_bytes": 8571,
+        "doc_id": "manuals/unassociated-machines/_index",
+        "path": "manuals/unassociated-machines/_index.md",
+        "size_delta_bytes": 0
+      },
+      {
+        "after_doc_id": "reference/_index",
+        "after_sha256": "f53db9d883e3242ac3af4b91ae0b3a78ebf1a61117d665f54d750040a834a984",
+        "after_size_bytes": 1970,
+        "before_doc_id": "reference/_index",
+        "before_sha256": "f5307c185f725321f86beb6835367559af8c6cb58a8585689026d4877e7b3bf9",
+        "before_size_bytes": 1953,
+        "doc_id": "reference/_index",
+        "path": "reference/_index.md",
+        "size_delta_bytes": 17
+      },
+      {
+        "after_doc_id": "reference/api/engine/_index",
+        "after_sha256": "c9dbc77dc15b25722f63ad4670fa37ba41709cf50dfa991754761c132d87b41e",
+        "after_size_bytes": 17815,
+        "before_doc_id": "reference/api/engine/_index",
+        "before_sha256": "9208e8ef556e99f9c3b3a9ea8731aa2a52357ba1f7739cf999544dc0540345ff",
+        "before_size_bytes": 18026,
+        "doc_id": "reference/api/engine/_index",
+        "path": "reference/api/engine/_index.md",
+        "size_delta_bytes": -211
+      },
+      {
+        "after_doc_id": "reference/compose-file/_index",
+        "after_sha256": "3511836fd54de33158a9bbdb6efa0015c73e9d4f75e10e89eaec91bfe89abd79",
+        "after_size_bytes": 2828,
+        "before_doc_id": "reference/compose-file/_index",
+        "before_sha256": "15653fb5621410505acd2909c2a590d218411e3e744167431c04469f3ede2e61",
+        "before_size_bytes": 2798,
+        "doc_id": "reference/compose-file/_index",
+        "path": "reference/compose-file/_index.md",
+        "size_delta_bytes": 30
+      },
+      {
+        "after_doc_id": "reference/compose-file/secrets",
+        "after_sha256": "041803b52a2f3dc1d90d88c00e8ed7f9e00f1817910a132a04ebc9862e64c39b",
+        "after_size_bytes": 1812,
+        "before_doc_id": "reference/compose-file/secrets",
+        "before_sha256": "d6e418d9dddd597a8d61dbb4968615a0951b323409f578a1d7dbbf4daddf760e",
+        "before_size_bytes": 1511,
+        "doc_id": "reference/compose-file/secrets",
+        "path": "reference/compose-file/secrets.md",
+        "size_delta_bytes": 301
+      },
+      {
+        "after_doc_id": "reference/compose-file/services",
+        "after_sha256": "db0296e4fd09623e60d4246a5c57d176f17d844b71f3957cfbf7e482e3c63e7a",
+        "after_size_bytes": 73523,
+        "before_doc_id": "reference/compose-file/services",
+        "before_sha256": "74a0263e6d33b932fe97bb649d65974ad4b75518e605ab98f57d6e771aca4c41",
+        "before_size_bytes": 73440,
+        "doc_id": "reference/compose-file/services",
+        "path": "reference/compose-file/services.md",
+        "size_delta_bytes": 83
+      },
+      {
+        "after_doc_id": "reference/compose-file/volumes",
+        "after_sha256": "97d31fd562c5c025ea98dcd06bbbc05e5c14af3b34501510bfac87b047793148",
+        "after_size_bytes": 5723,
+        "before_doc_id": "reference/compose-file/volumes",
+        "before_sha256": "e08dc3294da388658c04920ed740d3cdc60846dc2a0fafaa12c66257818d3b13",
+        "before_size_bytes": 5190,
+        "doc_id": "reference/compose-file/volumes",
+        "path": "reference/compose-file/volumes.md",
+        "size_delta_bytes": 533
+      },
+      {
+        "after_doc_id": "reference/glossary",
+        "after_sha256": "8dba7e618b785e52779f503f7749f7908f86c9f24e444827d592f78652a23c31",
+        "after_size_bytes": 337,
+        "before_doc_id": "reference/glossary",
+        "before_sha256": "e304b931f3057122935050e92ed6a12287d5f01781edaf3416e68afd09d6dc20",
+        "before_size_bytes": 509,
+        "doc_id": "reference/glossary",
+        "path": "reference/glossary.md",
+        "size_delta_bytes": -172
+      }
+    ],
+    "corpus_size_delta_bytes": 98209,
+    "page_count_delta": 4,
+    "passed": false,
+    "removed_file_count": 1,
+    "removed_files": [
+      {
+        "doc_id": "tags/labs/_index",
+        "path": "tags/labs/_index.md",
+        "sha256": "ad6cb5be78376ad3e6219a1088df07155bfb77031688925eb024a7b294203810",
+        "size_bytes": 20
+      }
+    ]
+  },
+  "created_at": "2026-05-26T10:15:00+00:00",
+  "graph_result": {
+    "added_edge_count": 46,
+    "added_edges": [
+      {
+        "edge_id": "guides/claude-code-sandbox-model-runner->get-started/get-docker",
+        "source": "guides/claude-code-sandbox-model-runner",
+        "target": "get-started/get-docker"
+      },
+      {
+        "edge_id": "guides/claude-code-sandbox-model-runner->guides/claude-code-model-runner",
+        "source": "guides/claude-code-sandbox-model-runner",
+        "target": "guides/claude-code-model-runner"
+      },
+      {
+        "edge_id": "guides/claude-code-sandbox-model-runner->manuals/ai/model-runner/_index",
+        "source": "guides/claude-code-sandbox-model-runner",
+        "target": "manuals/ai/model-runner/_index"
+      },
+      {
+        "edge_id": "guides/claude-code-sandbox-model-runner->manuals/ai/model-runner/api-reference",
+        "source": "guides/claude-code-sandbox-model-runner",
+        "target": "manuals/ai/model-runner/api-reference"
+      },
+      {
+        "edge_id": "guides/claude-code-sandbox-model-runner->manuals/ai/model-runner/get-started",
+        "source": "guides/claude-code-sandbox-model-runner",
+        "target": "manuals/ai/model-runner/get-started"
+      },
+      {
+        "edge_id": "guides/claude-code-sandbox-model-runner->manuals/ai/sandboxes/agents/claude-code",
+        "source": "guides/claude-code-sandbox-model-runner",
+        "target": "manuals/ai/sandboxes/agents/claude-code"
+      },
+      {
+        "edge_id": "guides/claude-code-sandbox-model-runner->manuals/ai/sandboxes/faq",
+        "source": "guides/claude-code-sandbox-model-runner",
+        "target": "manuals/ai/sandboxes/faq"
+      },
+      {
+        "edge_id": "guides/claude-code-sandbox-model-runner->manuals/ai/sandboxes/get-started",
+        "source": "guides/claude-code-sandbox-model-runner",
+        "target": "manuals/ai/sandboxes/get-started"
+      },
+      {
+        "edge_id": "guides/claude-code-sandbox-model-runner->manuals/ai/sandboxes/security/credentials",
+        "source": "guides/claude-code-sandbox-model-runner",
+        "target": "manuals/ai/sandboxes/security/credentials"
+      },
+      {
+        "edge_id": "guides/claude-code-sandbox-model-runner->manuals/ai/sandboxes/usage",
+        "source": "guides/claude-code-sandbox-model-runner",
+        "target": "manuals/ai/sandboxes/usage"
+      },
+      {
+        "edge_id": "manuals/ai/gordon/_index->manuals/ai/gordon/how-to/cli",
+        "source": "manuals/ai/gordon/_index",
+        "target": "manuals/ai/gordon/how-to/cli"
+      },
+      {
+        "edge_id": "manuals/ai/gordon/_index->manuals/ai/gordon/how-to/docker-desktop",
+        "source": "manuals/ai/gordon/_index",
+        "target": "manuals/ai/gordon/how-to/docker-desktop"
+      },
+      {
+        "edge_id": "manuals/ai/gordon/_index->manuals/ai/gordon/usage-limits",
+        "source": "manuals/ai/gordon/_index",
+        "target": "manuals/ai/gordon/usage-limits"
+      },
+      {
+        "edge_id": "manuals/ai/gordon/how-to/docker-desktop->manuals/ai/gordon/usage-limits",
+        "source": "manuals/ai/gordon/how-to/docker-desktop",
+        "target": "manuals/ai/gordon/usage-limits"
+      },
+      {
+        "edge_id": "manuals/ai/model-runner/ide-integrations->guides/claude-code-model-runner",
+        "source": "manuals/ai/model-runner/ide-integrations",
+        "target": "guides/claude-code-model-runner"
+      },
+      {
+        "edge_id": "manuals/ai/model-runner/ide-integrations->guides/claude-code-sandbox-model-runner",
+        "source": "manuals/ai/model-runner/ide-integrations",
+        "target": "guides/claude-code-sandbox-model-runner"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/_index->manuals/ai/sandboxes/security/governance",
+        "source": "manuals/ai/sandboxes/_index",
+        "target": "manuals/ai/sandboxes/security/governance"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/agents/claude-code->guides/claude-code-model-runner",
+        "source": "manuals/ai/sandboxes/agents/claude-code",
+        "target": "guides/claude-code-model-runner"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/agents/claude-code->guides/claude-code-sandbox-model-runner",
+        "source": "manuals/ai/sandboxes/agents/claude-code",
+        "target": "guides/claude-code-sandbox-model-runner"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/customize/kits->manuals/ai/sandboxes/security/credentials",
+        "source": "manuals/ai/sandboxes/customize/kits",
+        "target": "manuals/ai/sandboxes/security/credentials"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/faq->manuals/ai/sandboxes/customize/kits",
+        "source": "manuals/ai/sandboxes/faq",
+        "target": "manuals/ai/sandboxes/customize/kits"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/faq->manuals/ai/sandboxes/security/governance",
+        "source": "manuals/ai/sandboxes/faq",
+        "target": "manuals/ai/sandboxes/security/governance"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/security/_index->manuals/ai/sandboxes/security/governance",
+        "source": "manuals/ai/sandboxes/security/_index",
+        "target": "manuals/ai/sandboxes/security/governance"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/security/credentials->manuals/ai/sandboxes/customize/kits",
+        "source": "manuals/ai/sandboxes/security/credentials",
+        "target": "manuals/ai/sandboxes/customize/kits"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/security/defaults->manuals/ai/sandboxes/security/governance",
+        "source": "manuals/ai/sandboxes/security/defaults",
+        "target": "manuals/ai/sandboxes/security/governance"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/security/governance->manuals/ai/sandboxes/security/policy",
+        "source": "manuals/ai/sandboxes/security/governance",
+        "target": "manuals/ai/sandboxes/security/policy"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/security/policy->manuals/ai/sandboxes/security/governance",
+        "source": "manuals/ai/sandboxes/security/policy",
+        "target": "manuals/ai/sandboxes/security/governance"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/troubleshooting->manuals/ai/sandboxes/security/governance",
+        "source": "manuals/ai/sandboxes/troubleshooting",
+        "target": "manuals/ai/sandboxes/security/governance"
+      },
+      {
+        "edge_id": "manuals/ai/sandboxes/usage->manuals/ai/sandboxes/security/governance",
+        "source": "manuals/ai/sandboxes/usage",
+        "target": "manuals/ai/sandboxes/security/governance"
+      },
+      {
+        "edge_id": "manuals/build/ci/github-actions/github-builder/bake->manuals/build/ci/github-actions/github-builder/architecture",
+        "source": "manuals/build/ci/github-actions/github-builder/bake",
+        "target": "manuals/build/ci/github-actions/github-builder/architecture"
+      },
+      {
+        "edge_id": "manuals/build/ci/github-actions/github-builder/build->manuals/build/ci/github-actions/github-builder/architecture",
+        "source": "manuals/build/ci/github-actions/github-builder/build",
+        "target": "manuals/build/ci/github-actions/github-builder/architecture"
+      },
+      {
+        "edge_id": "manuals/build/ci/github-actions/multi-platform->manuals/build/ci/github-actions/github-builder/architecture",
+        "source": "manuals/build/ci/github-actions/multi-platform",
+        "target": "manuals/build/ci/github-actions/github-builder/architecture"
+      },
+      {
+        "edge_id": "manuals/desktop/settings-and-maintenance/settings->manuals/ai/gordon/_index",
+        "source": "manuals/desktop/settings-and-maintenance/settings",
+        "target": "manuals/ai/gordon/_index"
+      },
+      {
+        "edge_id": "manuals/desktop/settings-and-maintenance/settings->manuals/ai/model-runner/_index",
+        "source": "manuals/desktop/settings-and-maintenance/settings",
+        "target": "manuals/ai/model-runner/_index"
+      },
+      {
+        "edge_id": "manuals/desktop/setup/install/windows-permission-requirements->manuals/desktop/setup/install/windows-install",
+        "source": "manuals/desktop/setup/install/windows-permission-requirements",
+        "target": "manuals/desktop/setup/install/windows-install"
+      },
+      {
+        "edge_id": "manuals/dhi/how-to/select-enterprise->manuals/subscription/setup",
+        "source": "manuals/dhi/how-to/select-enterprise",
+        "target": "manuals/subscription/setup"
+      },
+      {
+        "edge_id": "manuals/docker-hub/release-notes->manuals/desktop/setup/allow-list",
+        "source": "manuals/docker-hub/release-notes",
+        "target": "manuals/desktop/setup/allow-list"
+      },
+      {
+        "edge_id": "manuals/docker-hub/release-notes->manuals/docker-hub/repos/manage/builds/migrate",
+        "source": "manuals/docker-hub/release-notes",
+        "target": "manuals/docker-hub/repos/manage/builds/migrate"
+      },
+      {
+        "edge_id": "manuals/extensions/extensions-sdk/dev/api/overview->reference/api/extensions-sdk/_index",
+        "source": "manuals/extensions/extensions-sdk/dev/api/overview",
+        "target": "reference/api/extensions-sdk/_index"
+      },
+      {
+        "edge_id": "manuals/subscription/scale->manuals/build-cloud/_index",
+        "source": "manuals/subscription/scale",
+        "target": "manuals/build-cloud/_index"
+      },
+      {
+        "edge_id": "manuals/subscription/scale->manuals/dhi/how-to/select-enterprise",
+        "source": "manuals/subscription/scale",
+        "target": "manuals/dhi/how-to/select-enterprise"
+      },
+      {
+        "edge_id": "manuals/subscription/scale->manuals/testcontainers",
+        "source": "manuals/subscription/scale",
+        "target": "manuals/testcontainers"
+      },
+      {
+        "edge_id": "manuals/subscription/setup->manuals/dhi/how-to/select-enterprise",
+        "source": "manuals/subscription/setup",
+        "target": "manuals/dhi/how-to/select-enterprise"
+      },
+      {
+        "edge_id": "manuals/subscription/setup->manuals/subscription/scale",
+        "source": "manuals/subscription/setup",
+        "target": "manuals/subscription/scale"
+      },
+      {
+        "edge_id": "reference/compose-file/secrets->manuals/engine/swarm/stack-deploy",
+        "source": "reference/compose-file/secrets",
+        "target": "manuals/engine/swarm/stack-deploy"
+      },
+      {
+        "edge_id": "reference/compose-file/volumes->manuals/engine/storage/bind-mounts",
+        "source": "reference/compose-file/volumes",
+        "target": "manuals/engine/storage/bind-mounts"
+      }
+    ],
+    "after_edge_count": 2503,
+    "after_graph_hash": "918440565a60b41b3fe2d14761bdfc8689c63f285bf5842075d2f7f400306d79",
+    "after_node_count": 1242,
+    "after_snapshot_id": "2026-05-26",
+    "available": true,
+    "before_edge_count": 2460,
+    "before_graph_hash": "943c5059509ed8e0921a3400e3c5b29e1aedc64f6f1dae100afc57f02986d8ce",
+    "before_node_count": 1238,
+    "before_snapshot_id": "2026-05-01",
+    "descriptor_delta_count": 10,
+    "descriptor_deltas": [
+      {
+        "after": 2503,
+        "before": 2460,
+        "field": "edge_count"
+      },
+      {
+        "after": 2503,
+        "before": 2460,
+        "field": "graph_metrics.edge_count"
+      },
+      {
+        "after": 889,
+        "before": 881,
+        "field": "graph_metrics.largest_component_size"
+      },
+      {
+        "after": 42,
+        "before": 41,
+        "field": "graph_metrics.max_in_degree"
+      },
+      {
+        "after": 1242,
+        "before": 1238,
+        "field": "graph_metrics.node_count"
+      },
+      {
+        "after": 871,
+        "before": 880,
+        "field": "graph_metrics.strong_component_count"
+      },
+      {
+        "after": {
+          "sha256": "4cb93ab3059bd3b4bfb2b80a466a07f8559ffe19a4887636c1e7b01101cc8538",
+          "type": "list"
+        },
+        "before": {
+          "sha256": "8803f9484ada71c8ca75ea45346c96bc5d4ac01cbad3fe80ffb6fd7a43936555",
+          "type": "list"
+        },
+        "field": "graph_metrics.strong_components"
+      },
+      {
+        "after": 347,
+        "before": 349,
+        "field": "graph_metrics.weak_component_count"
+      },
+      {
+        "after": {
+          "sha256": "a4fd2d6c8d5dadd6bba72a98958a36901d1ddc8541b7ad8e72aedfe020f22932",
+          "type": "list"
+        },
+        "before": {
+          "sha256": "70f64b0855ddb65c8554e16e0a9b0107c66cdc331be04205b484daf2cb515e62",
+          "type": "list"
+        },
+        "field": "graph_metrics.weak_components"
+      },
+      {
+        "after": 1242,
+        "before": 1238,
+        "field": "node_count"
+      }
+    ],
+    "edge_count_delta": 43,
+    "edge_source": "manifest_or_referenced_file",
+    "node_count_delta": 4,
+    "passed": false,
+    "removed_edge_count": 3,
+    "removed_edges": [
+      {
+        "edge_id": "manuals/admin/company/manage/organizations->manuals/subscription/details",
+        "source": "manuals/admin/company/manage/organizations",
+        "target": "manuals/subscription/details"
+      },
+      {
+        "edge_id": "manuals/dhi/how-to/hardened-packages->manuals/dhi/how-to/cli",
+        "source": "manuals/dhi/how-to/hardened-packages",
+        "target": "manuals/dhi/how-to/cli"
+      },
+      {
+        "edge_id": "manuals/subscription/manage-seats->manuals/billing/payment-method",
+        "source": "manuals/subscription/manage-seats",
+        "target": "manuals/billing/payment-method"
+      }
+    ]
+  },
+  "manifest_results": [
+    {
+      "after_manifest_hash": "822c736431dc0d63a9167a00d6ee05cb5a62761fbbd5759085e6b2c7081fdb88",
+      "after_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
+      "available": true,
+      "before_manifest_hash": "bfde268acd4fcea296de1f971750ee3b7d893b44a345bf59265d33f608d879a4",
+      "before_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
+      "field_differences": [
+        {
+          "after": "0eac210c032885014eb68a014df8c6b7288afd630b8c41260b23ab5744329ca3",
+          "before": "74b8de7c6806ab70346794e24e502b8265ab276f75a8fd19ce5a941fe575c2ef",
+          "field": "content_hash"
+        },
+        {
+          "after": 8207556,
+          "before": 8109347,
+          "field": "corpus_size_bytes"
+        },
+        {
+          "after": 1242,
+          "before": 1238,
+          "field": "file_count"
+        },
+        {
+          "after": {
+            "sha256": "3b510327075cfd244676dceaea03ab74785caf21905d460fc53df7d19ad68740",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "a5883ee542550cb12140c54a4181554032c59f976caee0376cd5ab047af18d19",
+            "type": "list"
+          },
+          "field": "file_inventory"
+        },
+        {
+          "after": 1242,
+          "before": 1238,
+          "field": "page_count"
+        },
+        {
+          "after": "2026-05-26",
+          "before": "2026-05-01",
+          "field": "snapshot_id"
+        },
+        {
+          "after": "76547a84dfd051bf751fa1366e2346451c2c8915",
+          "before": "274681c49355bd951ae60c9208e854ff70f12474",
+          "field": "source_commit"
+        }
+      ],
+      "manifest": "corpus",
+      "only_volatile_differences": false,
+      "passed": false,
+      "volatile_differences": [
+        {
+          "after": "2026-05-26T10:14:57+00:00",
+          "before": "2026-05-26T10:14:41+00:00",
+          "field": "created_at"
+        },
+        {
+          "after": "822c736431dc0d63a9167a00d6ee05cb5a62761fbbd5759085e6b2c7081fdb88",
+          "before": "bfde268acd4fcea296de1f971750ee3b7d893b44a345bf59265d33f608d879a4",
+          "field": "manifest_hash"
+        }
+      ],
+      "volatile_fields": [
+        "created_at",
+        "manifest_hash"
+      ]
+    },
+    {
+      "after_manifest_hash": "b22090594523cf6c354495f50e73352e6a311c9c19a885ac554b923fef571354",
+      "after_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\snapshot_manifests\\graph_snapshot_manifest.json",
+      "available": true,
+      "before_manifest_hash": "45b842af68ef7e74ed9f24d5fbf2b2b3da4961ed1749a887825218f9a241b073",
+      "before_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\before\\snapshot_manifests\\graph_snapshot_manifest.json",
+      "field_differences": [
+        {
+          "after": "2026-05-26",
+          "before": "2026-05-01",
+          "field": "corpus_snapshot_id"
+        },
+        {
+          "after": 2503,
+          "before": 2460,
+          "field": "edge_count"
+        },
+        {
+          "after": "0d42e653038a4fe54b14fd57e98dc2798c08abc1b890a0706e12d423530031d1",
+          "before": "8e320bbd4a0ac12582fcddfd236afa5dc03b41123c1f00e95da0d2536c50cec3",
+          "field": "edge_file_hash"
+        },
+        {
+          "after": {
+            "sha256": "53801738975e24f84a4d8ad77205b75ab8e1c550c05d009eb9517cdaafd17887",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "5a93e5e68ca29e5fbb5f86bdb47a2e4646b99fe78014516812447b87fae4200f",
+            "type": "list"
+          },
+          "field": "edge_inventory"
+        },
+        {
+          "after": "918440565a60b41b3fe2d14761bdfc8689c63f285bf5842075d2f7f400306d79",
+          "before": "943c5059509ed8e0921a3400e3c5b29e1aedc64f6f1dae100afc57f02986d8ce",
+          "field": "graph_hash"
+        },
+        {
+          "after": 2503,
+          "before": 2460,
+          "field": "graph_metrics.edge_count"
+        },
+        {
+          "after": 889,
+          "before": 881,
+          "field": "graph_metrics.largest_component_size"
+        },
+        {
+          "after": 42,
+          "before": 41,
+          "field": "graph_metrics.max_in_degree"
+        },
+        {
+          "after": 1242,
+          "before": 1238,
+          "field": "graph_metrics.node_count"
+        },
+        {
+          "after": 871,
+          "before": 880,
+          "field": "graph_metrics.strong_component_count"
+        },
+        {
+          "after": {
+            "sha256": "4cb93ab3059bd3b4bfb2b80a466a07f8559ffe19a4887636c1e7b01101cc8538",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "8803f9484ada71c8ca75ea45346c96bc5d4ac01cbad3fe80ffb6fd7a43936555",
+            "type": "list"
+          },
+          "field": "graph_metrics.strong_components"
+        },
+        {
+          "after": 347,
+          "before": 349,
+          "field": "graph_metrics.weak_component_count"
+        },
+        {
+          "after": {
+            "sha256": "a4fd2d6c8d5dadd6bba72a98958a36901d1ddc8541b7ad8e72aedfe020f22932",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "70f64b0855ddb65c8554e16e0a9b0107c66cdc331be04205b484daf2cb515e62",
+            "type": "list"
+          },
+          "field": "graph_metrics.weak_components"
+        },
+        {
+          "after": "213ea3611bc4d15a02f7b64846f8ff947215efdddae39875a17c4a705bea9ff2",
+          "before": "dde83fb48e250dc3082bde47c0fbc3c87b9bdfd0def35401a9bec49b0346eb9f",
+          "field": "graph_metrics_file_hash"
+        },
+        {
+          "after": 1242,
+          "before": 1238,
+          "field": "node_count"
+        },
+        {
+          "after": "2026-05-26",
+          "before": "2026-05-01",
+          "field": "snapshot_id"
+        }
+      ],
+      "manifest": "graph",
+      "only_volatile_differences": false,
+      "passed": false,
+      "volatile_differences": [
+        {
+          "after": "b22090594523cf6c354495f50e73352e6a311c9c19a885ac554b923fef571354",
+          "before": "45b842af68ef7e74ed9f24d5fbf2b2b3da4961ed1749a887825218f9a241b073",
+          "field": "manifest_hash"
+        }
+      ],
+      "volatile_fields": [
+        "created_at",
+        "manifest_hash"
+      ]
+    },
+    {
+      "after_manifest_hash": "795923dd2c7612eea51a267f2c0118e73d6b603fef88e1208dddc521fe6ea6b1",
+      "after_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\after\\snapshot_manifests\\support_surface_manifest.json",
+      "available": true,
+      "before_manifest_hash": "480486f4b10197c0a20f420dd97bbd4c3198a0e237e03dfb24ccf297665f693e",
+      "before_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\before\\snapshot_manifests\\support_surface_manifest.json",
+      "field_differences": [
+        {
+          "after": "2026-05-26",
+          "before": "2026-05-01",
+          "field": "corpus_snapshot_id"
+        },
+        {
+          "after": "2026-05-26",
+          "before": "2026-05-01",
+          "field": "snapshot_id"
+        },
+        {
+          "after": "e04df62804bf337f6ecb65542133f9eeac6b48cc20322247fa26280cb8d64a76",
+          "before": "47106a65ad6cf91f333e3f70df0f207b4be5b06024a430787f60c25beb21bcb9",
+          "field": "support_audit_file_hash"
+        },
+        {
+          "after": {
+            "sha256": "7aa4c107f17e9aa252f680811005c51ce6401c1da212802b075fe7f4eef75e71",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "2bde29de9fef299492a41c17afa4465100c5ff09a707bf248463d00775a4dfd1",
+            "type": "list"
+          },
+          "field": "support_target_doc_ids"
+        },
+        {
+          "after": {
+            "sha256": "c5e9a24397d61d63ee4672784ec904b8783855d028fd5e5af51613db8b0d42bb",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "718ff3809945ee2dd05085869d9f3175be4c1633ef0380bfa4e229d3ee4ae64c",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0005"
+        },
+        {
+          "after": {
+            "sha256": "2ffb624604494c905dc51e17268a20f6ab10486e1c5f0abd861870486f6a2ef1",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "57a8f1e1512c2eae34e89a9ddae74ae85e84d8d802a41379c10cd7a7257329bf",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0010"
+        },
+        {
+          "after": {
+            "sha256": "9748ca15b336c3e3dbad84c3341b8a459c47c191cc343d52ca416e195998cae1",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "ee91f07d027532a5397f5b53d8a259817078f0a3cad9a939fbe47a10abd8ff64",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0011"
+        },
+        {
+          "after": {
+            "sha256": "9f7bb0eeed7495df31d1f5648f297965fc11fe730618684bff7441cbdabb540d",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "9eda6eb9599ae1326a52ab80b31976cbefb1886cb9c2236883a1bb23b2ea59c7",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0028"
+        },
+        {
+          "after": {
+            "sha256": "e06c1bc77b53ffb50fa7ea25b228a1c24d048d53d1d67e331b93eeb24ad5696b",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "5165200224c6ff4683810c3a11d21da6db14a25f51a16285dffc7f386982f771",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0030"
+        },
+        {
+          "after": {
+            "sha256": "f017515f40b24cfe3be8a4665ae808292c80d116acb6210197ff65c4816e75c6",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "9488f25ba69b69cfc421451e8cb5e006c2703451b47ec5ecdaab4353fb3faf26",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0033"
+        },
+        {
+          "after": {
+            "sha256": "f1c376dc32e8ee058221b5ac86398f0c02d29a6dcd476129e1475d2da0f29452",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "8a4cdf6b38c321affdf8a6773a9295bd093e9142a192891d83886966f2b4f0e4",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0038"
+        },
+        {
+          "after": {
+            "sha256": "d16a6cd2d87d38e0441792f20d2d0d1e74367e3eb0d0476481bd619851a249d4",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "452b353e3eef3b591903451913876c0ff9541bca3d0a5a26d8893f9a2f6c5f31",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0040"
+        },
+        {
+          "after": {
+            "sha256": "8625299689fcb594201ad516a8be566a0d86f601df9fe7ee27099b38e730b118",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "e47ef160557c4e260f5af4c666ee3acffe3bf83112a8b722ed5f5a86bcb60fcb",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0071"
+        },
+        {
+          "after": {
+            "sha256": "5f4ee4f998e96841699ea794e045df9ca950eba19438ab46cc48eeb4c8aa9518",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "09596beb3a4d904d4e8f2aea5d70777326084aac62ec52aacf8be823b76c0d64",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0074"
+        },
+        {
+          "after": {
+            "sha256": "8405551aa7550a4a1c17f5792889b2bcb7e9faf2e98292b1ea18224378eb7fbf",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "5b25486dc4d24e2d05ce5504ee1ef3eca897c8c0d9d0609aadb632ec73fd9120",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0086"
+        },
+        {
+          "after": {
+            "sha256": "40520d598910922f18c0029fbaa75f2fd803a7df1f86a205325fa7df32733fba",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "0b9f070121f6521241ba89ce56bb067c47b4643dd1c5f7a2a75b652dba4a41a7",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0105"
+        },
+        {
+          "after": {
+            "sha256": "de39096ccce261fe57bd4c005404067494599d107d7e5206c4a940c7d89dd426",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "ef44ad9e72f430b8962e8e2f553f99c7184af0c44de5d9f8315bb2db0eb08cbf",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0107"
+        },
+        {
+          "after": {
+            "sha256": "739838f8fef74f19cdf0bb09e94cfef7ce5b486efc9f41c06bd0d4ea5d0eec25",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "0db9543afbf6ea8566e6edaa5e82c0c2edb0946a10bc91c9688cab0b16c09261",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0110"
+        },
+        {
+          "after": {
+            "sha256": "657cabd5c67524dc143c53ec05cdffb250996dcb76a5e3534080a9593d6d6c44",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "2399aecac933a2bc9f396415547291ebcd7c475eea02a1c20a9452d03b170dfe",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0115"
+        },
+        {
+          "after": {
+            "sha256": "90cef77cd2298de1d930e8c28958f13f3b95c43b0e57d8b314e9ac00eb56958d",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "abb9e4a514abee46e67412682ca24aae90095ec8062365e6febdb5c04599ab13",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0116"
+        },
+        {
+          "after": {
+            "sha256": "7eabf832ba4bd676df8bf4b7da57a815b965aee87a1154b33fbc506d99d7914c",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "750208dfff1095d2101b761c28532c1c63602491243544e784522610d4618568",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0124"
+        },
+        {
+          "after": {
+            "sha256": "ec35621afc9b8eb3c46d99666c1643486c9798964516dd8ce5585e52ad471294",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "b3df9a52ce8d230e9776c0558365845e85dd539f9c14dabb10a2bf4da45b7c28",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0138"
+        },
+        {
+          "after": {
+            "sha256": "86f9a8377bcfd00ea1a17cb718bfe7cb3e3b1c103a429409f0bcb8b5314957d2",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "8193ba0af7568a5d6abcd0fa069d0116d4113779b68aed66736a3fb96b83a2aa",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.docker_docs_faq_0143"
+        }
+      ],
+      "manifest": "support_surface",
+      "only_volatile_differences": false,
+      "passed": false,
+      "volatile_differences": [
+        {
+          "after": "795923dd2c7612eea51a267f2c0118e73d6b603fef88e1208dddc521fe6ea6b1",
+          "before": "480486f4b10197c0a20f420dd97bbd4c3198a0e237e03dfb24ccf297665f693e",
+          "field": "manifest_hash"
+        }
+      ],
+      "volatile_fields": [
+        "created_at",
+        "manifest_hash"
+      ]
+    }
+  ],
+  "passed": false,
+  "schema_version": "retrieval_arena.snapshot_diff.v1",
+  "summary": {
+    "added_edge_count": 46,
+    "added_file_count": 5,
+    "added_support_question_count": 0,
+    "changed_file_count": 185,
+    "changed_support_question_count": 11,
+    "corpus_size_delta_bytes": 98209,
+    "graph_available": true,
+    "graph_descriptor_delta_count": 10,
+    "page_count_delta": 4,
+    "removed_edge_count": 3,
+    "removed_file_count": 1,
+    "removed_support_question_count": 0,
+    "stable_manifest_difference_count": 46,
+    "support_surface_available": true,
+    "total_delta_count": 261,
+    "unavailable_optional_manifests": [],
+    "volatile_manifest_difference_count": 4
+  },
+  "support_surface_result": {
+    "added_question_count": 0,
+    "added_questions": [],
+    "added_support_target_doc_ids": [
+      "guides/claude-code-sandbox-model-runner",
+      "manuals/ai/sandboxes/usage",
+      "manuals/dhi/how-to/customize",
+      "manuals/engine/release-notes/29"
+    ],
+    "added_target_reference_count": 11,
+    "after_query_set_id": "docker-docs-pilot-queries",
+    "after_snapshot_id": "2026-05-26",
+    "after_support_target_count": 127,
+    "available": true,
+    "before_query_set_id": "docker-docs-pilot-queries",
+    "before_snapshot_id": "2026-05-01",
+    "before_support_target_count": 127,
+    "changed_question_count": 11,
+    "changed_questions": [
+      {
+        "added_targets": [
+          "manuals/ai/sandboxes/usage"
+        ],
+        "after_targets": [
+          "manuals/ai/sandboxes/faq",
+          "manuals/ai/sandboxes/usage",
+          "manuals/desktop/previous-versions/edge-releases-mac",
+          "manuals/desktop/release-notes",
+          "manuals/engine/release-notes/prior-releases"
+        ],
+        "before_targets": [
+          "manuals/ai/sandboxes/faq",
+          "manuals/ai/sandboxes/get-started",
+          "manuals/desktop/previous-versions/edge-releases-mac",
+          "manuals/desktop/release-notes",
+          "manuals/engine/release-notes/prior-releases"
+        ],
+        "question_id": "docker_docs_faq_0028",
+        "removed_targets": [
+          "manuals/ai/sandboxes/get-started"
+        ]
+      },
+      {
+        "added_targets": [
+          "guides/claude-code-sandbox-model-runner"
+        ],
+        "after_targets": [
+          "guides/claude-code-sandbox-model-runner",
+          "manuals/ai/sandboxes/customize/kits",
+          "manuals/ai/sandboxes/faq",
+          "manuals/desktop/release-notes",
+          "manuals/engine/release-notes/prior-releases"
+        ],
+        "before_targets": [
+          "manuals/ai/sandboxes/customize/kits",
+          "manuals/ai/sandboxes/faq",
+          "manuals/ai/sandboxes/security/credentials",
+          "manuals/desktop/release-notes",
+          "manuals/engine/release-notes/prior-releases"
+        ],
+        "question_id": "docker_docs_faq_0030",
+        "removed_targets": [
+          "manuals/ai/sandboxes/security/credentials"
+        ]
+      },
+      {
+        "added_targets": [
+          "manuals/ai/sandboxes/customize/kits"
+        ],
+        "after_targets": [
+          "manuals/ai/sandboxes/customize/kits",
+          "manuals/ai/sandboxes/customize/templates",
+          "manuals/ai/sandboxes/faq",
+          "manuals/desktop/release-notes",
+          "manuals/engine/release-notes/prior-releases"
+        ],
+        "before_targets": [
+          "manuals/ai/sandboxes/agents/codex",
+          "manuals/ai/sandboxes/customize/templates",
+          "manuals/ai/sandboxes/faq",
+          "manuals/desktop/release-notes",
+          "manuals/engine/release-notes/prior-releases"
+        ],
+        "question_id": "docker_docs_faq_0033",
+        "removed_targets": [
+          "manuals/ai/sandboxes/agents/codex"
+        ]
+      },
+      {
+        "added_targets": [
+          "manuals/dhi/how-to/customize"
+        ],
+        "after_targets": [
+          "manuals/desktop/troubleshoot-and-support/faqs/macfaqs",
+          "manuals/desktop/troubleshoot-and-support/faqs/windowsfaqs",
+          "manuals/dhi/how-to/customize",
+          "manuals/engine/release-notes/prior-releases",
+          "manuals/engine/swarm/secrets"
+        ],
+        "before_targets": [
+          "manuals/desktop/release-notes",
+          "manuals/desktop/troubleshoot-and-support/faqs/macfaqs",
+          "manuals/desktop/troubleshoot-and-support/faqs/windowsfaqs",
+          "manuals/engine/release-notes/prior-releases",
+          "manuals/engine/swarm/secrets"
+        ],
+        "question_id": "docker_docs_faq_0074",
+        "removed_targets": [
+          "manuals/desktop/release-notes"
+        ]
+      },
+      {
+        "added_targets": [
+          "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/enable-eci"
+        ],
+        "after_targets": [
+          "manuals/desktop/release-notes",
+          "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/_index",
+          "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/enable-eci",
+          "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/faq",
+          "reference/compose-file/services"
+        ],
+        "before_targets": [
+          "manuals/desktop/release-notes",
+          "manuals/engine/release-notes/prior-releases",
+          "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/_index",
+          "manuals/enterprise/security/hardened-desktop/enhanced-container-isolation/faq",
+          "reference/compose-file/services"
+        ],
+        "question_id": "docker_docs_faq_0086",
+        "removed_targets": [
+          "manuals/engine/release-notes/prior-releases"
+        ]
+      },
+      {
+        "added_targets": [
+          "manuals/docker-hub/release-notes"
+        ],
+        "after_targets": [
+          "manuals/desktop/release-notes",
+          "manuals/docker-hub/release-notes",
+          "manuals/enterprise/security/provisioning/scim/group-mapping",
+          "manuals/enterprise/security/single-sign-on/FAQs/idp-faqs",
+          "manuals/enterprise/security/single-sign-on/connect"
+        ],
+        "before_targets": [
+          "manuals/desktop/release-notes",
+          "manuals/enterprise/security/provisioning/scim/group-mapping",
+          "manuals/enterprise/security/provisioning/scim/provision-scim",
+          "manuals/enterprise/security/single-sign-on/FAQs/idp-faqs",
+          "manuals/enterprise/security/single-sign-on/connect"
+        ],
+        "question_id": "docker_docs_faq_0105",
+        "removed_targets": [
+          "manuals/enterprise/security/provisioning/scim/provision-scim"
+        ]
+      },
+      {
+        "added_targets": [
+          "manuals/docker-hub/release-notes"
+        ],
+        "after_targets": [
+          "manuals/admin/organization/organization-faqs",
+          "manuals/desktop/release-notes",
+          "manuals/docker-hub/release-notes",
+          "manuals/enterprise/security/single-sign-on/FAQs/idp-faqs",
+          "manuals/enterprise/security/single-sign-on/FAQs/users-faqs"
+        ],
+        "before_targets": [
+          "manuals/admin/organization/organization-faqs",
+          "manuals/admin/organization/setup/onboard",
+          "manuals/desktop/release-notes",
+          "manuals/enterprise/security/single-sign-on/FAQs/idp-faqs",
+          "manuals/enterprise/security/single-sign-on/FAQs/users-faqs"
+        ],
+        "question_id": "docker_docs_faq_0110",
+        "removed_targets": [
+          "manuals/admin/organization/setup/onboard"
+        ]
+      },
+      {
+        "added_targets": [
+          "manuals/desktop/settings-and-maintenance/settings"
+        ],
+        "after_targets": [
+          "manuals/desktop/previous-versions/edge-releases-mac",
+          "manuals/desktop/previous-versions/edge-releases-windows",
+          "manuals/desktop/release-notes",
+          "manuals/desktop/settings-and-maintenance/settings",
+          "manuals/enterprise/security/single-sign-on/FAQs/users-faqs"
+        ],
+        "before_targets": [
+          "manuals/desktop/previous-versions/edge-releases-mac",
+          "manuals/desktop/previous-versions/edge-releases-windows",
+          "manuals/desktop/release-notes",
+          "manuals/enterprise/security/single-sign-on/FAQs/users-faqs",
+          "manuals/enterprise/security/single-sign-on/connect"
+        ],
+        "question_id": "docker_docs_faq_0115",
+        "removed_targets": [
+          "manuals/enterprise/security/single-sign-on/connect"
+        ]
+      },
+      {
+        "added_targets": [
+          "manuals/docker-hub/release-notes"
+        ],
+        "after_targets": [
+          "manuals/desktop/release-notes",
+          "manuals/docker-hub/release-notes",
+          "manuals/enterprise/security/single-sign-on/FAQs/enforcement-faqs",
+          "manuals/enterprise/security/single-sign-on/FAQs/users-faqs",
+          "manuals/enterprise/security/single-sign-on/connect"
+        ],
+        "before_targets": [
+          "manuals/desktop/release-notes",
+          "manuals/enterprise/security/single-sign-on/FAQs/enforcement-faqs",
+          "manuals/enterprise/security/single-sign-on/FAQs/users-faqs",
+          "manuals/enterprise/security/single-sign-on/connect",
+          "manuals/security/security-announcements"
+        ],
+        "question_id": "docker_docs_faq_0116",
+        "removed_targets": [
+          "manuals/security/security-announcements"
+        ]
+      },
+      {
+        "added_targets": [
+          "manuals/engine/release-notes/29"
+        ],
+        "after_targets": [
+          "manuals/desktop/previous-versions/edge-releases-windows",
+          "manuals/desktop/release-notes",
+          "manuals/desktop/setup/install/windows-permission-requirements",
+          "manuals/engine/release-notes/29",
+          "manuals/security/faqs/networking-and-vms"
+        ],
+        "before_targets": [
+          "manuals/desktop/previous-versions/edge-releases-windows",
+          "manuals/desktop/release-notes",
+          "manuals/desktop/setup/install/windows-permission-requirements",
+          "manuals/security/faqs/networking-and-vms",
+          "reference/compose-file/services"
+        ],
+        "question_id": "docker_docs_faq_0138",
+        "removed_targets": [
+          "reference/compose-file/services"
+        ]
+      },
+      {
+        "added_targets": [
+          "manuals/docker-hub/release-notes"
+        ],
+        "after_targets": [
+          "manuals/admin/company/manage/users",
+          "manuals/admin/organization/setup/orgs",
+          "manuals/billing/faqs",
+          "manuals/docker-hub/release-notes",
+          "manuals/subscription/faq"
+        ],
+        "before_targets": [
+          "manuals/admin/company/manage/users",
+          "manuals/admin/organization/setup/orgs",
+          "manuals/billing/faqs",
+          "manuals/dhi/resources",
+          "manuals/subscription/faq"
+        ],
+        "question_id": "docker_docs_faq_0143",
+        "removed_targets": [
+          "manuals/dhi/resources"
+        ]
+      }
+    ],
+    "passed": false,
+    "removed_question_count": 0,
+    "removed_questions": [],
+    "removed_support_target_doc_ids": [
+      "manuals/ai/sandboxes/agents/codex",
+      "manuals/ai/sandboxes/get-started",
+      "manuals/ai/sandboxes/security/credentials",
+      "manuals/dhi/resources"
+    ],
+    "removed_target_reference_count": 11,
+    "support_target_count_delta": 0
+  }
+}

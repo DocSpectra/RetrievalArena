@@ -2,7 +2,7 @@ experiment_name: E001__Semantic_Search__NoAgent__LLMOnlyBaseline__minidocs
 
 datasets:
   - name: minidocs
-    path: ../../DocSpectraCIKM2026/processed/minidocs
+    path: ../processed/minidocs
 
 tests:
   - name: oracle_perfect
@@ -34,4 +34,4 @@ scoring:
   method: lexical_baseline
   match_threshold: 0.5
 
-output_dir: ../../DocSpectraCIKM2026/reports/retrieval_arena
+output_dir: ../reports/retrieval_arena

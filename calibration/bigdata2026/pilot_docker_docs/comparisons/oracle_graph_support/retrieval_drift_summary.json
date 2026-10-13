@@ -1,0 +1,127 @@
+{
+  "after": {
+    "corpus_snapshot_id": "2026-05-26",
+    "dataset": "docker_docs",
+    "graph_snapshot_id": "2026-05-26",
+    "manifest_hash": "e3b15b86f5a0a9c5b7f01aaa939c151ef9d7966b92da3f86642f3250fddd3d49",
+    "query_set_id": "docker-docs-pilot-queries",
+    "retrieval_config_hash": "b589d0a04004208378a9203afbfe2fa9112695460ecb6faea7bbb453de0507a8",
+    "retrieval_config_id": "oracle_graph_support",
+    "run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__oracle_graph_support__4fb90fc63f",
+    "run_id": "4fb90fc63f",
+    "support_surface_id": "2026-05-26",
+    "test": "oracle_graph_support"
+  },
+  "artifact_hashes": {
+    "after": {
+      "action_traces.jsonl": {
+        "sha256": "bc879b14940b3b1ad98599f691896df26a7612cc2a1cce948ebd5f3f7dd9268a",
+        "size_bytes": 58752
+      },
+      "item_scores.jsonl": {
+        "sha256": "0585facd5b98ea2f36f8322998efab2604bb4f1b8da54f3d818f0e96c62592d9",
+        "size_bytes": 283092
+      },
+      "metadata.json": {
+        "sha256": "41c12b6edb812a9113a75578dfefca9020bf8b509e2da3d302bf8178d985231d",
+        "size_bytes": 405
+      },
+      "predictions.jsonl": {
+        "sha256": "24b3de0cfc334472ebfb42020bb19f26d3efe0f1299208da0790ea43ec0170c5",
+        "size_bytes": 622455
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "306d9043e0715cdb13200f3e81c23e79e2081a5c668ea7e04f8ced6750bdd816",
+        "size_bytes": 226150
+      },
+      "scores.json": {
+        "sha256": "21739ac05d1b558d46768fd3f85338ed61c2c03ffc1136c9de7e511073651a11",
+        "size_bytes": 1547
+      }
+    },
+    "before": {
+      "action_traces.jsonl": {
+        "sha256": "bc879b14940b3b1ad98599f691896df26a7612cc2a1cce948ebd5f3f7dd9268a",
+        "size_bytes": 58752
+      },
+      "item_scores.jsonl": {
+        "sha256": "0585facd5b98ea2f36f8322998efab2604bb4f1b8da54f3d818f0e96c62592d9",
+        "size_bytes": 283092
+      },
+      "metadata.json": {
+        "sha256": "41c12b6edb812a9113a75578dfefca9020bf8b509e2da3d302bf8178d985231d",
+        "size_bytes": 405
+      },
+      "predictions.jsonl": {
+        "sha256": "5ebb1668580912d430a2c20887d690655a4aca11ff59f8ba1cb972c5db4d8b3b",
+        "size_bytes": 622451
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "ddd1a97a51d353d46d6ed9b906aff23130a4d376f6681e2582e3649d68e438d6",
+        "size_bytes": 225429
+      },
+      "scores.json": {
+        "sha256": "9feff4e128e5feee6671972acf35c1333fd705084948d992320f7c8264fb7c8c",
+        "size_bytes": 1548
+      }
+    }
+  },
+  "before": {
+    "corpus_snapshot_id": "2026-05-01",
+    "dataset": "docker_docs",
+    "graph_snapshot_id": "2026-05-01",
+    "manifest_hash": "9bfc35834247b66848b15f3a71a7c167b4993629b8262448ff709a5c4f3ecfe8",
+    "query_set_id": "docker-docs-pilot-queries",
+    "retrieval_config_hash": "253f40bcc5009ef9d37cf94d8c2cb6ae911bf2841e2db3f14746e538b83407bd",
+    "retrieval_config_id": "oracle_graph_support",
+    "run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__oracle_graph_support__4fb90fc63f",
+    "run_id": "4fb90fc63f",
+    "support_surface_id": "2026-05-01",
+    "test": "oracle_graph_support"
+  },
+  "comparison_type": "retrieval_drift",
+  "created_at": "2026-05-26T10:17:06+00:00",
+  "evidence_coverage_regression_count": 0,
+  "manifest_hash": "774e1b46e7f25b7718c1ef2c1e343712d9235fb75ecd2572798e6774031bbdf4",
+  "manifest_type": "retrieval_drift_summary",
+  "mean_distance_to_support_delta": 0.006944444444444444,
+  "mean_lexical_f1_delta": 0.0,
+  "mean_ordered_top_k_overlap": 1.0,
+  "mean_rank_displacement": 0.0,
+  "mean_support_recall_delta": 0.0,
+  "mean_top_k_jaccard": 1.0,
+  "optional_signal_availability": {
+    "action_trace": {
+      "available_count": 144,
+      "unavailable_count": 0
+    },
+    "distance_to_support": {
+      "available_count": 144,
+      "unavailable_count": 0
+    },
+    "evidence_coverage": {
+      "available_count": 144,
+      "unavailable_count": 0
+    },
+    "lexical_score_delta": {
+      "available_count": 144,
+      "unavailable_count": 0
+    },
+    "retained_score_delta": {
+      "available_count": 144,
+      "unavailable_count": 0
+    },
+    "support_exposure": {
+      "available_count": 144,
+      "unavailable_count": 0
+    },
+    "support_recall": {
+      "available_count": 144,
+      "unavailable_count": 0
+    }
+  },
+  "query_count": 144,
+  "schema_version": "retrieval_arena.retrieval_drift_summary.v1",
+  "support_exposure_regression_count": 0,
+  "support_recall_regression_count": 0
+}

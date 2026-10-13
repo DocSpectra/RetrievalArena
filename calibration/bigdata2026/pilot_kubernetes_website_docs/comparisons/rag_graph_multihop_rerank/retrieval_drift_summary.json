@@ -1,0 +1,127 @@
+{
+  "after": {
+    "corpus_snapshot_id": "2026-05-26",
+    "dataset": "kubernetes_website_docs",
+    "graph_snapshot_id": "2026-05-26",
+    "manifest_hash": "64c3bf7f8d8e894c6ec83ebb2432c52f42e0083040593a883545d63fa02f847c",
+    "query_set_id": "kubernetes-website-docs-pilot-queries",
+    "retrieval_config_hash": "e2f244b4e07f086f1d8eaf7c865bf684410c41da607210d4d161e26e804be661",
+    "retrieval_config_id": "rag_graph_multihop_rerank",
+    "run_dir": "results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\after\\bigdata2026_kubernetes_website_docs_after\\runs\\kubernetes_website_docs__rag_graph_multihop_rerank__f2712dedb2",
+    "run_id": "f2712dedb2",
+    "support_surface_id": "2026-05-26",
+    "test": "rag_graph_multihop_rerank"
+  },
+  "artifact_hashes": {
+    "after": {
+      "action_traces.jsonl": {
+        "sha256": "e8458a96a271768d151826de8fb318d678ded52010889b2cfa74d9b49b04d5e3",
+        "size_bytes": 10080
+      },
+      "item_scores.jsonl": {
+        "sha256": "38117de567acc59f310010edcf6459570757f674c31df286ea9ad15223a260d4",
+        "size_bytes": 108908
+      },
+      "metadata.json": {
+        "sha256": "b6f269522efc7a9e27445207f69de0bb83594ccfb3b5bf35e0d373e50d7a48a7",
+        "size_bytes": 407
+      },
+      "predictions.jsonl": {
+        "sha256": "a923ca327e74bd033bb9a3a54bb69ed9533e3ca11e53608be0a460e9aa11840d",
+        "size_bytes": 44528
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "ef14b170bf6c649ae5b98f64f859e3ae645c0e02a7395b8ae4e091b0cb1b1eb6",
+        "size_bytes": 488682
+      },
+      "scores.json": {
+        "sha256": "5fad91e409be6fc50c0739962e908e7dd438551df2a943a1c37b43a2142d1794",
+        "size_bytes": 1590
+      }
+    },
+    "before": {
+      "action_traces.jsonl": {
+        "sha256": "e8458a96a271768d151826de8fb318d678ded52010889b2cfa74d9b49b04d5e3",
+        "size_bytes": 10080
+      },
+      "item_scores.jsonl": {
+        "sha256": "38117de567acc59f310010edcf6459570757f674c31df286ea9ad15223a260d4",
+        "size_bytes": 108908
+      },
+      "metadata.json": {
+        "sha256": "b6f269522efc7a9e27445207f69de0bb83594ccfb3b5bf35e0d373e50d7a48a7",
+        "size_bytes": 407
+      },
+      "predictions.jsonl": {
+        "sha256": "c4005435e9b486f92d88f70d0b2d42cfb595718a8721bbd1a35758051b1f4185",
+        "size_bytes": 45196
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "9d26344e9e3611177fd24b0759c72ef3ae356b31df305a48dbf2f7099dc6e550",
+        "size_bytes": 477276
+      },
+      "scores.json": {
+        "sha256": "1731049284ea29cec594a674ab1a756e71d37371119159fdbec416709666f165",
+        "size_bytes": 1591
+      }
+    }
+  },
+  "before": {
+    "corpus_snapshot_id": "2026-05-01",
+    "dataset": "kubernetes_website_docs",
+    "graph_snapshot_id": "2026-05-01",
+    "manifest_hash": "8f0853e85833b87f8cc9faac78090832867e7dff9e11ad07077e68d9ea54ce18",
+    "query_set_id": "kubernetes-website-docs-pilot-queries",
+    "retrieval_config_hash": "7f878d965e5c7a3b1221ddb92815657ba90a83e10f8f5bce5b90116c666512ce",
+    "retrieval_config_id": "rag_graph_multihop_rerank",
+    "run_dir": "results\\bigdata2026\\pilot_kubernetes_website_docs\\retrieval\\before\\bigdata2026_kubernetes_website_docs_before\\runs\\kubernetes_website_docs__rag_graph_multihop_rerank__f2712dedb2",
+    "run_id": "f2712dedb2",
+    "support_surface_id": "2026-05-01",
+    "test": "rag_graph_multihop_rerank"
+  },
+  "comparison_type": "retrieval_drift",
+  "created_at": "2026-05-27T06:48:41+00:00",
+  "evidence_coverage_regression_count": 0,
+  "manifest_hash": "f15fc9ab3d6b878fd4da0d9683afeea2071290bb30f2b9b7a1375729a582ff56",
+  "manifest_type": "retrieval_drift_summary",
+  "mean_distance_to_support_delta": 0.0,
+  "mean_lexical_f1_delta": 0.0,
+  "mean_ordered_top_k_overlap": 1.0,
+  "mean_rank_displacement": 0.0,
+  "mean_support_recall_delta": 0.0,
+  "mean_top_k_jaccard": 1.0,
+  "optional_signal_availability": {
+    "action_trace": {
+      "available_count": 24,
+      "unavailable_count": 0
+    },
+    "distance_to_support": {
+      "available_count": 24,
+      "unavailable_count": 0
+    },
+    "evidence_coverage": {
+      "available_count": 24,
+      "unavailable_count": 0
+    },
+    "lexical_score_delta": {
+      "available_count": 24,
+      "unavailable_count": 0
+    },
+    "retained_score_delta": {
+      "available_count": 24,
+      "unavailable_count": 0
+    },
+    "support_exposure": {
+      "available_count": 24,
+      "unavailable_count": 0
+    },
+    "support_recall": {
+      "available_count": 24,
+      "unavailable_count": 0
+    }
+  },
+  "query_count": 24,
+  "schema_version": "retrieval_arena.retrieval_drift_summary.v1",
+  "support_exposure_regression_count": 0,
+  "support_recall_regression_count": 0
+}

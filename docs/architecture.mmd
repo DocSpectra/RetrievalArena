@@ -1,0 +1,42 @@
+flowchart LR
+  source["Source descriptors\nGit refs or local paths"] --> import["Import\nmaterialize source snapshot\nselect files\nassign doc IDs"]
+  import --> import_manifest["Import manifest\nsource descriptor hash\nselected and ignored files\nsnapshot identity hash"]
+  import_manifest --> transform["Transform\nprepare dataset\noptional graph\noptional support"]
+  transform --> dataset_manifest["Dataset preparation manifest\ninput snapshot identity\ndocument IDs\noutput dataset identity"]
+  dataset_manifest --> snapshot["Snapshot manifests\ncorpus\ngraph\nsupport surface"]
+  snapshot --> test["Test\nretrieval runs\ncontainer outputs\nscoring"]
+  test --> ranked["Ranked v2 scoring\nstrict qrels and runs\npinned ir_measures provider\nper-query availability"]
+  ranked --> replay
+  ranked --> profile["Dual-profile evaluation\noperational_automatic\nscientific_calibration"]
+  profile --> auto["Automatic result family\nstandard ranked metrics\nproject diagnostics\noffline answer diagnostics"]
+  bertscore["Strict BERTScore artifact ingress\nhashed distribution tree\noffline guards\nprovider-bound scores"] --> auto
+  profile --> packet["Deterministic blinded packet\nexternal human work"]
+  packet --> judgments["Immutable judgment import\nprovider BPref\nanswer and attribution families"]
+  auto --> replay
+  judgments --> replay
+  task_pack["Portable task pack\nclosed schemas\nprovider and capability identities"] --> task_exec["RA-owned task execution\nexact source-byte admission\noperation contracts and capability enforcement"]
+  task_exec --> task_records["Observed task records\ntrial identity\nevents\noracle and efficiency evidence"]
+  task_exec --> task_failure["Terminal execution failure\nfailed receipt and resources\nobserved phase journal and cleanup"]
+  task_failure --> replay
+  task_records --> task_score["Pure task scoring\ncorrectness and safety first\nno composite"]
+  task_score --> task_pair["Paired task comparison\nimprovement or regression\nefficiency only after safe success"]
+  task_score --> task_replay["Task replay manifest\ncanonical record hashes\nseparate result family"]
+  task_records --> oracle_replay["Deterministic oracle replay\nretained evidence only\nno environment execution"]
+  oracle_replay --> task_replay
+  task_pair --> task_replay
+  task_replay --> replay
+  test --> replay["Replay manifests\nconfig\nsoftware\ninput/output hashes"]
+  snapshot --> analyze["Analyze\nsnapshot diff\ngraph/support drift\nretrieval drift"]
+  replay --> replay_compare["Replay comparison\nbehavior equality\nprovenance differences\nartifact equality"]
+  replay_compare --> analyze
+  analyze --> audit["Audit and reports\nregressions\ncase studies\nsystems measurements"]
+  audit --> html["HTML report\ninsights\nfamily matrix\nquery case studies"]
+  audit --> evidence["Paper evidence export\nCSV tables\nprovenance notes"]
+
+  comparison["Comparison plans\nbefore descriptor\nafter descriptor\noutput dir"] --> import
+  command["Command layer\nCLI and studies"] --> import
+  command --> transform
+  command --> test
+  command --> bertscore
+  command --> analyze
+  command --> task_exec

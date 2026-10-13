@@ -1,0 +1,13 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+USER root
+ARG DEPENDENCY_LOCK_SHA256
+LABEL io.retrieval-arena.verification.dependency-lock-sha256="${DEPENDENCY_LOCK_SHA256}"
+COPY requirements.lock /opt/retrieval-arena/requirements.lock
+COPY wheels /opt/retrieval-arena/wheels
+RUN python -m pip install --no-index --find-links=/opt/retrieval-arena/wheels \
+    --only-binary=:all: --require-hashes -r /opt/retrieval-arena/requirements.lock \
+    && python -m pip check \
+    && python -c "import torch, transformers, bert_score, spacy; assert torch.__version__ == '2.8.0+cpu'; assert spacy.__version__ == '3.8.16'" \
+    && rm -rf /opt/retrieval-arena/wheels
+USER 65532:65532

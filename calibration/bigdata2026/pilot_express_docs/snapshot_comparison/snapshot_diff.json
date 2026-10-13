@@ -1,0 +1,788 @@
+{
+  "after": {
+    "base_dir": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests",
+    "corpus_id": "express_docs",
+    "corpus_manifest_hash": "c39e0f6561447489597ff2ba700bee117095c8719e668860a076bad0d4f47914",
+    "corpus_manifest_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
+    "input_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests",
+    "snapshot_id": "2026-03-30"
+  },
+  "before": {
+    "base_dir": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests",
+    "corpus_id": "express_docs",
+    "corpus_manifest_hash": "2d4e924b1c1a6d1a15d42a73520549642d43381e77d1734ae3f0922908c67d89",
+    "corpus_manifest_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
+    "input_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests",
+    "snapshot_id": "2025-09-20"
+  },
+  "comparison_type": "snapshot_diff",
+  "corpus_result": {
+    "added_file_count": 0,
+    "added_files": [],
+    "after_content_hash": "e356c3ad99cb849abea72904193ea79aeab7da87a6b2fd3f0f2bc0f03731e19a",
+    "after_corpus_size_bytes": 229212,
+    "after_page_count": 53,
+    "after_snapshot_id": "2026-03-30",
+    "available": true,
+    "before_content_hash": "5cde60c825bdb2dd2641e78c80712dd73c7c8c93b0bd34cbad96ea3c66c2d4c3",
+    "before_corpus_size_bytes": 249743,
+    "before_page_count": 53,
+    "before_snapshot_id": "2025-09-20",
+    "changed_file_count": 31,
+    "changed_files": [
+      {
+        "after_doc_id": "4x/api",
+        "after_sha256": "d9526c642581a73d3aaec4e850d2758a8dcf43dc88e02fc6fe60d3c10678cc6f",
+        "after_size_bytes": 843,
+        "before_doc_id": "4x/api",
+        "before_sha256": "751f1b50547c8a11f446086e83c82bd3c481522cf3743dd62e0b350499df5ac8",
+        "before_size_bytes": 683,
+        "doc_id": "4x/api",
+        "path": "4x/api.md",
+        "size_delta_bytes": 160
+      },
+      {
+        "after_doc_id": "5x/api",
+        "after_sha256": "0ae767110b64fa0dee898bcbde7f56c368c41eca05489c2209b7960060b35f09",
+        "after_size_bytes": 846,
+        "before_doc_id": "5x/api",
+        "before_sha256": "9ca31acf2abaef3df8a58dcf62a267e328c7eadc50a59314771a91b80a9a4f30",
+        "before_size_bytes": 684,
+        "doc_id": "5x/api",
+        "path": "5x/api.md",
+        "size_delta_bytes": 162
+      },
+      {
+        "after_doc_id": "advanced/best-practice-performance",
+        "after_sha256": "5eb4c4e5c4b3e4e517f8cc4fab1224a0dccc8777c9cfe33ab39fd7855651f90b",
+        "after_size_bytes": 20493,
+        "before_doc_id": "advanced/best-practice-performance",
+        "before_sha256": "1abf18c664c8047b544fa7ff71c45cd62ba55dcffec3aa356fdb96e5de47042c",
+        "before_size_bytes": 20483,
+        "doc_id": "advanced/best-practice-performance",
+        "path": "advanced/best-practice-performance.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "advanced/best-practice-security",
+        "after_sha256": "4ff0082ee1365e3f22c7703f122814f60b79e7a69617c9e07f6e07fe8c577ec7",
+        "after_size_bytes": 16297,
+        "before_doc_id": "advanced/best-practice-security",
+        "before_sha256": "4994e0b5833f5658dbaaf3f1e36bd772547f9789c31f504892f0e7c1db034649",
+        "before_size_bytes": 16287,
+        "doc_id": "advanced/best-practice-security",
+        "path": "advanced/best-practice-security.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "advanced/developing-template-engines",
+        "after_sha256": "90a38605e02cf06c4c855302f657a18343b9494a34f662a53da9be85f2a9d23e",
+        "after_size_bytes": 1813,
+        "before_doc_id": "advanced/developing-template-engines",
+        "before_sha256": "75450f6fce3bdf80ebb44f2a577908e0f4449bb246aeef58302e895125080182",
+        "before_size_bytes": 1803,
+        "doc_id": "advanced/developing-template-engines",
+        "path": "advanced/developing-template-engines.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "advanced/healthcheck-graceful-shutdown",
+        "after_sha256": "ba4b7e86cec6d60084a810d711ade1910bc96e4e5e46a95b826a179b3484297f",
+        "after_size_bytes": 1538,
+        "before_doc_id": "advanced/healthcheck-graceful-shutdown",
+        "before_sha256": "b8de40e8ba1acd6c5fdb9c264411e6ea4d046ba4d91396c4410c504126088f5f",
+        "before_size_bytes": 1528,
+        "doc_id": "advanced/healthcheck-graceful-shutdown",
+        "path": "advanced/healthcheck-graceful-shutdown.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "advanced/security-updates",
+        "after_sha256": "9f91d9f4dbabbfdf873b9069ec6ec797f5dae561026d7f0410b2e54b54d171f9",
+        "after_size_bytes": 6999,
+        "before_doc_id": "advanced/security-updates",
+        "before_sha256": "4616fabb3e9280e1cc2e7ec81fd0fe2e2c7a62df34719ec23e298a97f5bca1f4",
+        "before_size_bytes": 6989,
+        "doc_id": "advanced/security-updates",
+        "path": "advanced/security-updates.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "changelog/index",
+        "after_sha256": "88bba954e123645574a9d2814a4b863ca4e433495d71492fa9f68dbdf925ae9f",
+        "after_size_bytes": 341,
+        "before_doc_id": "changelog/index",
+        "before_sha256": "8a38c3c29e13cdc09113d6bc085c90adaf4dc589194e02121fca82d2bd68da4e",
+        "before_size_bytes": 26809,
+        "doc_id": "changelog/index",
+        "path": "changelog/index.md",
+        "size_delta_bytes": -26468
+      },
+      {
+        "after_doc_id": "guide/behind-proxies",
+        "after_sha256": "ddb117d92528d7d36b8a79ea058bbb92f5a34136e5a246f0b26f67861658b068",
+        "after_size_bytes": 5107,
+        "before_doc_id": "guide/behind-proxies",
+        "before_sha256": "bd11eeea0f76d83b80fb52d39a07e0567839a9345f6410a734b60d5483e4c98e",
+        "before_size_bytes": 5097,
+        "doc_id": "guide/behind-proxies",
+        "path": "guide/behind-proxies.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "guide/database-integration",
+        "after_sha256": "eff99c6b428afbabaac9c74b5f97e555cd5f7e25940eb5c3912c513b52ea663f",
+        "after_size_bytes": 9804,
+        "before_doc_id": "guide/database-integration",
+        "before_sha256": "3ab008ec8ea497fc62ca9f7b49f20b7482192d08e39e0e9903a8cecbc963f1dd",
+        "before_size_bytes": 9793,
+        "doc_id": "guide/database-integration",
+        "path": "guide/database-integration.md",
+        "size_delta_bytes": 11
+      },
+      {
+        "after_doc_id": "guide/debugging",
+        "after_sha256": "101c37e1182f8bd739e40096b288e8d8ccd4fd45e76ec42e8333305bd7e15896",
+        "after_size_bytes": 4822,
+        "before_doc_id": "guide/debugging",
+        "before_sha256": "03c5d996d602ac2d74f836859ca47b8d8b0eb8dd840f3cf9fd329bcc5b0d55bc",
+        "before_size_bytes": 4812,
+        "doc_id": "guide/debugging",
+        "path": "guide/debugging.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "guide/error-handling",
+        "after_sha256": "4b5dc27ecc5600735f6ed1d8288448c6f61f6c6beb1c9e143ea0282f305c2a6a",
+        "after_size_bytes": 10230,
+        "before_doc_id": "guide/error-handling",
+        "before_sha256": "2defbf8499f577703a2dc88498e3e04f3afc11b6e046379b064070697c2f964d",
+        "before_size_bytes": 10220,
+        "doc_id": "guide/error-handling",
+        "path": "guide/error-handling.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "guide/migrating-4",
+        "after_sha256": "167557713f7fb39a770e6be775c9c07e02ccc2d7ea15f520b796a03562d99a2b",
+        "after_size_bytes": 18374,
+        "before_doc_id": "guide/migrating-4",
+        "before_sha256": "091d06c243fcb10cee4a8e7453f4a60dd48d0820751afffb9509acf287102cc6",
+        "before_size_bytes": 18364,
+        "doc_id": "guide/migrating-4",
+        "path": "guide/migrating-4.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "guide/migrating-5",
+        "after_sha256": "678a6c81d39f1934c315daa8a027de57ffc2bafa31faf26f80ea226708857da2",
+        "after_size_bytes": 22082,
+        "before_doc_id": "guide/migrating-5",
+        "before_sha256": "89cf799a6e9d0ad5ca2e28bc00a89280aaf36b9fbff7d3e13bd56fcfb096afa1",
+        "before_size_bytes": 20005,
+        "doc_id": "guide/migrating-5",
+        "path": "guide/migrating-5.md",
+        "size_delta_bytes": 2077
+      },
+      {
+        "after_doc_id": "guide/overriding-express-api",
+        "after_sha256": "b6176790fbecd3507057d05363bd3d14f82d3dfb22638f2d2daa5e36386af6eb",
+        "after_size_bytes": 3192,
+        "before_doc_id": "guide/overriding-express-api",
+        "before_sha256": "16f26fff7231f13f76523af65261c93b28a5455b3e5d5205f987fca6544b4566",
+        "before_size_bytes": 3182,
+        "doc_id": "guide/overriding-express-api",
+        "path": "guide/overriding-express-api.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "guide/routing",
+        "after_sha256": "ef09cfcf0ce2a720847953218b8ec80eebd8015812ab1eb06c120c6d3dfacbf8",
+        "after_size_bytes": 15323,
+        "before_doc_id": "guide/routing",
+        "before_sha256": "0756bedb17dbff35487624b00e375a2a2627682c4207416244247939273c6ac5",
+        "before_size_bytes": 14873,
+        "doc_id": "guide/routing",
+        "path": "guide/routing.md",
+        "size_delta_bytes": 450
+      },
+      {
+        "after_doc_id": "guide/using-middleware",
+        "after_sha256": "9f0325824c43c8b47ad8d2a7a9d27f3593f31d64fc12d9daea53df29f08f7108",
+        "after_size_bytes": 10406,
+        "before_doc_id": "guide/using-middleware",
+        "before_sha256": "da71c4b012c32bafcf1e733fe340c18fef31f18599c2cc908a3f401007fb0ffb",
+        "before_size_bytes": 10396,
+        "doc_id": "guide/using-middleware",
+        "path": "guide/using-middleware.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "guide/using-template-engines",
+        "after_sha256": "84f2d0bcbd3b9feca913aab8b02d723581d7fa210ba10d07db07609a302ad798",
+        "after_size_bytes": 2984,
+        "before_doc_id": "guide/using-template-engines",
+        "before_sha256": "f96160ab0176b9740d0637d1cb391be19050846d7208206ebabf210130bd9d98",
+        "before_size_bytes": 2974,
+        "doc_id": "guide/using-template-engines",
+        "path": "guide/using-template-engines.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "guide/writing-middleware",
+        "after_sha256": "7bbfe7918e8474736aba205369c0139d5d577bda18ee4435437e4cb2399440e8",
+        "after_size_bytes": 8572,
+        "before_doc_id": "guide/writing-middleware",
+        "before_sha256": "78f99484344a990d8cf444f10e74e451277627d8724923cc1807a1de1d739415",
+        "before_size_bytes": 8562,
+        "doc_id": "guide/writing-middleware",
+        "path": "guide/writing-middleware.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "resources/community",
+        "after_sha256": "385d9c5764023eafd59989da070ef23939c190ed2c1674b6bb2b642dc5768305",
+        "after_size_bytes": 4251,
+        "before_doc_id": "resources/community",
+        "before_sha256": "677be0304a26bf71e096914c55d925f2cec2bd76a3de94a46ddfc1102985af84",
+        "before_size_bytes": 4239,
+        "doc_id": "resources/community",
+        "path": "resources/community.md",
+        "size_delta_bytes": 12
+      },
+      {
+        "after_doc_id": "resources/contributing",
+        "after_sha256": "3454ee973fb2a76bcd234f2c89db43338b756308b6b2d4a6ee0610d2122ded0b",
+        "after_size_bytes": 28147,
+        "before_doc_id": "resources/contributing",
+        "before_sha256": "74cc8fa20af99c1e8c3531696188f8f496b9a60d15f87e6f7fffba406673c369",
+        "before_size_bytes": 24307,
+        "doc_id": "resources/contributing",
+        "path": "resources/contributing.md",
+        "size_delta_bytes": 3840
+      },
+      {
+        "after_doc_id": "resources/glossary",
+        "after_sha256": "c7559a526513e0e0daded171559002754ee11f450a2d3d46aa2c819199850e72",
+        "after_size_bytes": 3117,
+        "before_doc_id": "resources/glossary",
+        "before_sha256": "b29160eaf1b9ca589a9081831d47d3ecd83a3c3cd58104744de6fee90c45e47b",
+        "before_size_bytes": 3107,
+        "doc_id": "resources/glossary",
+        "path": "resources/glossary.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "resources/middleware",
+        "after_sha256": "77685d27d155a4ff3d07604e06753fdd9f44a71f2c512cea3aba9833f1133ff7",
+        "after_size_bytes": 4888,
+        "before_doc_id": "resources/middleware",
+        "before_sha256": "af92f7b1057976d5c33a80e684bfb21de8d8d2a67aef0fbe8b0e77679457d854",
+        "before_size_bytes": 4878,
+        "doc_id": "resources/middleware",
+        "path": "resources/middleware.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "resources/utils",
+        "after_sha256": "85f66f5ea0ddc783ed72c49a1d4a60745f68a3a02d835601a94be639898e5fc4",
+        "after_size_bytes": 1789,
+        "before_doc_id": "resources/utils",
+        "before_sha256": "a40fa94f483e9ca2c79655f34b8fad25f33ee1fe9b8f49b92271db31963c3263",
+        "before_size_bytes": 1779,
+        "doc_id": "resources/utils",
+        "path": "resources/utils.md",
+        "size_delta_bytes": 10
+      },
+      {
+        "after_doc_id": "starter/basic-routing",
+        "after_sha256": "e51099499e4d0d05692ca10b33d12fa74a408bb769858e9f336535c9ff1233a0",
+        "after_size_bytes": 2022,
+        "before_doc_id": "starter/basic-routing",
+        "before_sha256": "5d070f9c44022397d2dd7b2b3d6889a5d9aca01cc08ea0f0808d19d5b58c3c2d",
+        "before_size_bytes": 2216,
+        "doc_id": "starter/basic-routing",
+        "path": "starter/basic-routing.md",
+        "size_delta_bytes": -194
+      },
+      {
+        "after_doc_id": "starter/examples",
+        "after_sha256": "bf596453dcf3eeb930e6b4e8738e05feab8ca46095dc35eaf377443ea150e7ad",
+        "after_size_bytes": 1022,
+        "before_doc_id": "starter/examples",
+        "before_sha256": "ec84ab40aa769d3e0080f5ceeed1306da9dd50ebc1757dc52e35843a95062f8f",
+        "before_size_bytes": 1162,
+        "doc_id": "starter/examples",
+        "path": "starter/examples.md",
+        "size_delta_bytes": -140
+      },
+      {
+        "after_doc_id": "starter/faq",
+        "after_sha256": "1de234bcbe1fb9d8070ce612f6acb1f9117eeaa8e72218abf976981a3ffaa857",
+        "after_size_bytes": 3930,
+        "before_doc_id": "starter/faq",
+        "before_sha256": "7fcd935ccc51c537dac7a12527b4a79f1c308c65be5e01bde561b6185df27ae3",
+        "before_size_bytes": 3997,
+        "doc_id": "starter/faq",
+        "path": "starter/faq.md",
+        "size_delta_bytes": -67
+      },
+      {
+        "after_doc_id": "starter/generator",
+        "after_sha256": "c39948967ddf0ec947146152eacf718faa700603bd86e365290745fe260cf5d2",
+        "after_size_bytes": 3527,
+        "before_doc_id": "starter/generator",
+        "before_sha256": "8bf7bdc778cb310d263ee9bd591d81593584fb2b930e6cbb0c80f9f024a1d642",
+        "before_size_bytes": 3685,
+        "doc_id": "starter/generator",
+        "path": "starter/generator.md",
+        "size_delta_bytes": -158
+      },
+      {
+        "after_doc_id": "starter/hello-world",
+        "after_sha256": "2c901651bf3643da52c8349ed4b7d4f197d8822212a72c0609ff952898a80fd8",
+        "after_size_bytes": 1888,
+        "before_doc_id": "starter/hello-world",
+        "before_sha256": "5b0fd0841fa9b2e1be80171994a05a0086ebda45d4e94d2887abcc2ab230f668",
+        "before_size_bytes": 2045,
+        "doc_id": "starter/hello-world",
+        "path": "starter/hello-world.md",
+        "size_delta_bytes": -157
+      },
+      {
+        "after_doc_id": "starter/installing",
+        "after_sha256": "700b9f0138af1243a9a3df8f8447606e6ed8aeb4e540ce6cb91907d674e4b51d",
+        "after_size_bytes": 1942,
+        "before_doc_id": "starter/installing",
+        "before_sha256": "f21d508f5965841529a19beeddcd1ffbdac8a806f7bb7dfc345c32ac499032d6",
+        "before_size_bytes": 2004,
+        "doc_id": "starter/installing",
+        "path": "starter/installing.md",
+        "size_delta_bytes": -62
+      },
+      {
+        "after_doc_id": "starter/static-files",
+        "after_sha256": "ad5babe9c8d74aadd80a691a1ca19321a8b34b0c952bbacd0379c52dcf25ed3b",
+        "after_size_bytes": 3101,
+        "before_doc_id": "starter/static-files",
+        "before_sha256": "2b691e78ad105327048279d1d61aa38ea46280db238df6b7394be27ccd30d006",
+        "before_size_bytes": 3258,
+        "doc_id": "starter/static-files",
+        "path": "starter/static-files.md",
+        "size_delta_bytes": -157
+      }
+    ],
+    "corpus_size_delta_bytes": -20531,
+    "page_count_delta": 0,
+    "passed": false,
+    "removed_file_count": 0,
+    "removed_files": []
+  },
+  "created_at": "2026-05-26T10:51:03+00:00",
+  "graph_result": {
+    "added_edge_count": 0,
+    "added_edges": [],
+    "after_edge_count": 29,
+    "after_graph_hash": "c508c73ea7be758ef9bfd7cb437d002668a26b868d3b04fd67ce5f5ae07a8c72",
+    "after_node_count": 53,
+    "after_snapshot_id": "2026-03-30",
+    "available": true,
+    "before_edge_count": 30,
+    "before_graph_hash": "751c26818bdd671669ea5cd26ec4d30d3b3d1ba67548c7872fa17fec15699893",
+    "before_node_count": 53,
+    "before_snapshot_id": "2025-09-20",
+    "descriptor_delta_count": 5,
+    "descriptor_deltas": [
+      {
+        "after": 29,
+        "before": 30,
+        "field": "edge_count"
+      },
+      {
+        "after": 29,
+        "before": 30,
+        "field": "graph_metrics.edge_count"
+      },
+      {
+        "after": 21,
+        "before": 19,
+        "field": "graph_metrics.isolated_node_count"
+      },
+      {
+        "after": 24,
+        "before": 23,
+        "field": "graph_metrics.weak_component_count"
+      },
+      {
+        "after": {
+          "sha256": "5d662fb843b77b0137f24b83c601b7322cfef6dd833dadae0a4e6d48032d30ad",
+          "type": "list"
+        },
+        "before": {
+          "sha256": "b3a5cc3e52ec9a1e8aed9e297a2dcb5387eaf7f645fcfa5c6b86f6b1f09ab0e4",
+          "type": "list"
+        },
+        "field": "graph_metrics.weak_components"
+      }
+    ],
+    "edge_count_delta": -1,
+    "edge_source": "manifest_or_referenced_file",
+    "node_count_delta": 0,
+    "passed": false,
+    "removed_edge_count": 1,
+    "removed_edges": [
+      {
+        "edge_id": "changelog/index->guide/migrating-5",
+        "source": "changelog/index",
+        "target": "guide/migrating-5"
+      }
+    ]
+  },
+  "manifest_results": [
+    {
+      "after_manifest_hash": "c39e0f6561447489597ff2ba700bee117095c8719e668860a076bad0d4f47914",
+      "after_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\corpus_snapshot_manifest.json",
+      "available": true,
+      "before_manifest_hash": "2d4e924b1c1a6d1a15d42a73520549642d43381e77d1734ae3f0922908c67d89",
+      "before_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
+      "field_differences": [
+        {
+          "after": "e356c3ad99cb849abea72904193ea79aeab7da87a6b2fd3f0f2bc0f03731e19a",
+          "before": "5cde60c825bdb2dd2641e78c80712dd73c7c8c93b0bd34cbad96ea3c66c2d4c3",
+          "field": "content_hash"
+        },
+        {
+          "after": 229212,
+          "before": 249743,
+          "field": "corpus_size_bytes"
+        },
+        {
+          "after": {
+            "sha256": "fcc1c7c145132d6bf3893eda139a6231c6d80691de4343a33775cafca9192230",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "f22cc6802920f080b31c86b3b3dae1b1e0d691f9a20650e99d0c9f545761a4e1",
+            "type": "list"
+          },
+          "field": "file_inventory"
+        },
+        {
+          "after": "2026-03-30",
+          "before": "2025-09-20",
+          "field": "snapshot_id"
+        },
+        {
+          "after": "2d4df3f05fbd5d5f211f5938395ae965e8714d60",
+          "before": "74e27ec71d391c89829076063f4f5c29e43c6c9c",
+          "field": "source_commit"
+        }
+      ],
+      "manifest": "corpus",
+      "only_volatile_differences": false,
+      "passed": false,
+      "volatile_differences": [
+        {
+          "after": "c39e0f6561447489597ff2ba700bee117095c8719e668860a076bad0d4f47914",
+          "before": "2d4e924b1c1a6d1a15d42a73520549642d43381e77d1734ae3f0922908c67d89",
+          "field": "manifest_hash"
+        }
+      ],
+      "volatile_fields": [
+        "created_at",
+        "manifest_hash"
+      ]
+    },
+    {
+      "after_manifest_hash": "246ebdf448aee7346889453bb93aaaccda721fe693e70e64fc3824d57007f414",
+      "after_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\graph_snapshot_manifest.json",
+      "available": true,
+      "before_manifest_hash": "ea63a75e843a1603fdd09b5fc73cfc07d1211128b7e7016b965a2883a3069e56",
+      "before_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\graph_snapshot_manifest.json",
+      "field_differences": [
+        {
+          "after": "2026-03-30",
+          "before": "2025-09-20",
+          "field": "corpus_snapshot_id"
+        },
+        {
+          "after": 29,
+          "before": 30,
+          "field": "edge_count"
+        },
+        {
+          "after": "4445f9dd2506040c8adfc58cdd37ef7b7c6a3b192b4b5cc21351abb47484f852",
+          "before": "da7e108ea0cffa3db0ec6b1a1041a4234c4168da45b0386886910b7d4f659a7a",
+          "field": "edge_file_hash"
+        },
+        {
+          "after": {
+            "sha256": "1db109f30113d86da912a52f4a981132f3deed98ef7e2730e4ad09b95dc013fd",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "95c08a4ce5350c8066ca66d39d58bd690607918c9b1b5f2f03d559f93e20c365",
+            "type": "list"
+          },
+          "field": "edge_inventory"
+        },
+        {
+          "after": "c508c73ea7be758ef9bfd7cb437d002668a26b868d3b04fd67ce5f5ae07a8c72",
+          "before": "751c26818bdd671669ea5cd26ec4d30d3b3d1ba67548c7872fa17fec15699893",
+          "field": "graph_hash"
+        },
+        {
+          "after": 29,
+          "before": 30,
+          "field": "graph_metrics.edge_count"
+        },
+        {
+          "after": 21,
+          "before": 19,
+          "field": "graph_metrics.isolated_node_count"
+        },
+        {
+          "after": 24,
+          "before": 23,
+          "field": "graph_metrics.weak_component_count"
+        },
+        {
+          "after": {
+            "sha256": "5d662fb843b77b0137f24b83c601b7322cfef6dd833dadae0a4e6d48032d30ad",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "b3a5cc3e52ec9a1e8aed9e297a2dcb5387eaf7f645fcfa5c6b86f6b1f09ab0e4",
+            "type": "list"
+          },
+          "field": "graph_metrics.weak_components"
+        },
+        {
+          "after": "0bfb6d140d93f5648cea169d8b2e310b819567bb4a75c8af3c3eda3b32ca3701",
+          "before": "3f000881c4af6fea6a3b091ea22bfa27cf2fe7a54bf84463ab44d77aa5eec07c",
+          "field": "graph_metrics_file_hash"
+        },
+        {
+          "after": "2026-03-30",
+          "before": "2025-09-20",
+          "field": "snapshot_id"
+        }
+      ],
+      "manifest": "graph",
+      "only_volatile_differences": false,
+      "passed": false,
+      "volatile_differences": [
+        {
+          "after": "246ebdf448aee7346889453bb93aaaccda721fe693e70e64fc3824d57007f414",
+          "before": "ea63a75e843a1603fdd09b5fc73cfc07d1211128b7e7016b965a2883a3069e56",
+          "field": "manifest_hash"
+        }
+      ],
+      "volatile_fields": [
+        "created_at",
+        "manifest_hash"
+      ]
+    },
+    {
+      "after_manifest_hash": "cfc99198027dc8316e051c5f60e0e1691e365f0b3307e2eb60e2e2620032dbcd",
+      "after_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\after\\snapshot_manifests\\support_surface_manifest.json",
+      "available": true,
+      "before_manifest_hash": "11f2fdf4348ee2e89e9763cf4df4a115325c6101ea26c2a5486105f4fd924c81",
+      "before_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\support_surface_manifest.json",
+      "field_differences": [
+        {
+          "after": "2026-03-30",
+          "before": "2025-09-20",
+          "field": "corpus_snapshot_id"
+        },
+        {
+          "after": "2026-03-30",
+          "before": "2025-09-20",
+          "field": "snapshot_id"
+        },
+        {
+          "after": "2df3c48d646aa1a3adb7050ca787ffdd313d07e35dd09a11bdc56370693a1fc4",
+          "before": "94a961aefc635ac8e17975ee46fcc2242a4ae41e57706ab9631bb59004883e9f",
+          "field": "support_audit_file_hash"
+        },
+        {
+          "after": 13,
+          "before": 14,
+          "field": "support_target_count"
+        },
+        {
+          "after": {
+            "sha256": "a55cfa550891a80b47b339e96a2c4cc47bcd3b9130589fd9210557751b6c218f",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "714b4f9d2fa0a679f0b3041b9d4fc21ee4e5dcaf8795c70da4c36dcc49f2de9c",
+            "type": "list"
+          },
+          "field": "support_target_doc_ids"
+        },
+        {
+          "after": {
+            "sha256": "0191c1c17aed3cbb80c2d00b7d149af25cd119293212d853ce8ad91097c253fc",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "7db4076de8cbdb36dc045987d2a748b11e9437b372f11c88c9b4e0a93eb5135f",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.express_docs_faq_0004"
+        },
+        {
+          "after": {
+            "sha256": "2007215c1a8408ed1c134b7b71d055336c881966a2898fd4b74dd8674b0649de",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "3e20cf6a43bf34e579c422a81df706bac2c6d243b9825473db66bf8caf2adf73",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.express_docs_faq_0005"
+        },
+        {
+          "after": {
+            "sha256": "ae8fc5026404a91954504eac2b6bb267252aca05b37dd774cf9e1fdfa1c29026",
+            "type": "list"
+          },
+          "before": {
+            "sha256": "7c1f340238218929f25ac42fe4e80b01f9cf2678bf2e910846b4eb09cf8aba82",
+            "type": "list"
+          },
+          "field": "support_targets_by_question.express_docs_faq_0007"
+        }
+      ],
+      "manifest": "support_surface",
+      "only_volatile_differences": false,
+      "passed": false,
+      "volatile_differences": [
+        {
+          "after": "cfc99198027dc8316e051c5f60e0e1691e365f0b3307e2eb60e2e2620032dbcd",
+          "before": "11f2fdf4348ee2e89e9763cf4df4a115325c6101ea26c2a5486105f4fd924c81",
+          "field": "manifest_hash"
+        }
+      ],
+      "volatile_fields": [
+        "created_at",
+        "manifest_hash"
+      ]
+    }
+  ],
+  "passed": false,
+  "schema_version": "retrieval_arena.snapshot_diff.v1",
+  "summary": {
+    "added_edge_count": 0,
+    "added_file_count": 0,
+    "added_support_question_count": 0,
+    "changed_file_count": 31,
+    "changed_support_question_count": 3,
+    "corpus_size_delta_bytes": -20531,
+    "graph_available": true,
+    "graph_descriptor_delta_count": 5,
+    "page_count_delta": 0,
+    "removed_edge_count": 1,
+    "removed_file_count": 0,
+    "removed_support_question_count": 0,
+    "stable_manifest_difference_count": 24,
+    "support_surface_available": true,
+    "total_delta_count": 40,
+    "unavailable_optional_manifests": [],
+    "volatile_manifest_difference_count": 3
+  },
+  "support_surface_result": {
+    "added_question_count": 0,
+    "added_questions": [],
+    "added_support_target_doc_ids": [],
+    "added_target_reference_count": 3,
+    "after_query_set_id": "express-docs-pilot-queries",
+    "after_snapshot_id": "2026-03-30",
+    "after_support_target_count": 13,
+    "available": true,
+    "before_query_set_id": "express-docs-pilot-queries",
+    "before_snapshot_id": "2025-09-20",
+    "before_support_target_count": 14,
+    "changed_question_count": 3,
+    "changed_questions": [
+      {
+        "added_targets": [
+          "advanced/best-practice-security"
+        ],
+        "after_targets": [
+          "advanced/best-practice-security",
+          "guide/migrating-5",
+          "guide/routing",
+          "guide/using-template-engines",
+          "starter/faq"
+        ],
+        "before_targets": [
+          "guide/migrating-4",
+          "guide/migrating-5",
+          "guide/routing",
+          "guide/using-template-engines",
+          "starter/faq"
+        ],
+        "question_id": "express_docs_faq_0004",
+        "removed_targets": [
+          "guide/migrating-4"
+        ]
+      },
+      {
+        "added_targets": [
+          "resources/contributing"
+        ],
+        "after_targets": [
+          "advanced/best-practice-security",
+          "guide/error-handling",
+          "guide/routing",
+          "resources/contributing",
+          "starter/faq"
+        ],
+        "before_targets": [
+          "advanced/best-practice-security",
+          "changelog/index",
+          "guide/error-handling",
+          "guide/routing",
+          "starter/faq"
+        ],
+        "question_id": "express_docs_faq_0005",
+        "removed_targets": [
+          "changelog/index"
+        ]
+      },
+      {
+        "added_targets": [
+          "resources/contributing"
+        ],
+        "after_targets": [
+          "guide/migrating-5",
+          "guide/routing",
+          "guide/using-middleware",
+          "resources/contributing",
+          "starter/faq"
+        ],
+        "before_targets": [
+          "advanced/best-practice-performance",
+          "guide/migrating-5",
+          "guide/routing",
+          "guide/using-middleware",
+          "starter/faq"
+        ],
+        "question_id": "express_docs_faq_0007",
+        "removed_targets": [
+          "advanced/best-practice-performance"
+        ]
+      }
+    ],
+    "passed": false,
+    "removed_question_count": 0,
+    "removed_questions": [],
+    "removed_support_target_doc_ids": [
+      "changelog/index"
+    ],
+    "removed_target_reference_count": 3,
+    "support_target_count_delta": -1
+  }
+}

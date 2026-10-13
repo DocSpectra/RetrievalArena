@@ -10,9 +10,11 @@ from typing import Any
 
 from . import __version__
 from .config import ExperimentConfig, TestConfig, load_config
+from .diagnostics import enrich_run_diagnostics
 from .docker import build_image, run_container
 from .errors import RetrievalArenaError, ValidationError
 from .reports import write_run_scores, write_summary
+from .replay_manifests import write_experiment_manifest, write_run_replay_manifest
 from .schemas import validate_action_traces, validate_dataset, validate_metadata, validate_predictions, write_jsonl
 from .scoring import score_predictions
 
@@ -54,6 +56,7 @@ def run_experiment(config: ExperimentConfig, *, output_dir: Path | None = None) 
     for test in config.tests:
         build_image(test)
 
+    run_manifest_paths: list[Path] = []
     for dataset in config.datasets:
         questions, answers = validate_dataset(dataset.path)
         for test in config.tests:
@@ -75,7 +78,12 @@ def run_experiment(config: ExperimentConfig, *, output_dir: Path | None = None) 
             if action_trace_path.exists():
                 validate_action_traces(action_trace_path, questions)
                 shutil.copy2(action_trace_path, run_dir / "action_traces.jsonl")
+            diagnostic_overlay = enrich_run_diagnostics(run_dir, dataset.path)
+            predictions = validate_predictions(run_dir / "predictions.jsonl", questions)
+            if (run_dir / "action_traces.jsonl").exists():
+                validate_action_traces(run_dir / "action_traces.jsonl", questions)
             item_scores, aggregate = score_predictions(predictions, answers, config.scoring.match_threshold)
+            completed_at = datetime.now(timezone.utc).isoformat()
             aggregate.update({
                 "dataset": dataset.name,
                 "test": test.name,
@@ -83,15 +91,35 @@ def run_experiment(config: ExperimentConfig, *, output_dir: Path | None = None) 
                 "build_context": str(test.build_context) if test.build_context else "",
                 "run_id": run_id,
                 "started_at": started_at,
-                "completed_at": datetime.now(timezone.utc).isoformat(),
+                "completed_at": completed_at,
                 "config_path": str(config.config_path),
                 "retrieval_arena_version": __version__,
                 "git_commit": git_commit(repo_root),
                 "container_metadata": metadata,
+                "diagnostic_overlay": diagnostic_overlay,
             })
             write_run_scores(run_dir, item_scores, aggregate)
+            manifest_path = run_dir / "retrieval_replay_manifest.json"
+            write_run_replay_manifest(
+                manifest_path,
+                config=config,
+                dataset=dataset,
+                test=test,
+                run_id=run_id,
+                run_dir=run_dir,
+                metadata=metadata,
+                run_started_at=started_at,
+                run_completed_at=completed_at,
+            )
+            run_manifest_paths.append(manifest_path)
             summary_rows.append({**aggregate, "run_dir": str(run_dir)})
     write_summary(experiment_dir, summary_rows)
+    write_experiment_manifest(
+        experiment_dir / "experiment_manifest.json",
+        config=config,
+        experiment_dir=experiment_dir,
+        run_manifests=run_manifest_paths,
+    )
     return summary_rows
 
 

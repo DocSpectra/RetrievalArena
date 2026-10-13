@@ -1,0 +1,11 @@
+# Resolve inside the Dockerfile's pinned Linux/amd64 CPython 3.12 base.
+ragas==0.4.3
+# Ragas imports legacy ChatVertexAI; community 0.4.2 removed that module.
+langchain-community==0.3.31
+langchain<1
+langchain-core<1
+langchain-openai<1
+openai<3
+instructor>=1.12
+# C1 model provider layer: Anthropic Messages API transport (openai is already above).
+anthropic==1.13.0

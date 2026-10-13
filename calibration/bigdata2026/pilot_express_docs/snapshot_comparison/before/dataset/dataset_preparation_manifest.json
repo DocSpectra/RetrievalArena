@@ -1,0 +1,22 @@
+{
+  "answers_file": "answers.jsonl",
+  "answers_file_hash": "3f0b0eeab581dcb66699526309bac8ef13789186df374e26c4f8aa32100293ec",
+  "corpus_directory_hash": "6149bb0cd5daf5a5885e48e12a84fe7e2dd75276f6ad8179480eee32691e507e",
+  "corpus_id": "express_docs",
+  "created_at": "2026-05-26T10:51:02+00:00",
+  "dataset_output_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\dataset",
+  "graph_edge_file_hash": null,
+  "import_manifest_hash": "5efd03a8b661ef80e1eae8019b4c733d426e30a3c4f846a09aca0d54ca00a95e",
+  "import_manifest_path": "raw\\corpus_imports\\express_docs\\2025-09-20\\corpus_import_manifest.json",
+  "manifest_hash": "8eaf208ce227bf7098d5265937853f279ef546d67449a8699b4fad293ae698c8",
+  "manifest_type": "dataset_preparation",
+  "query_set_id": "express-docs-pilot-queries",
+  "questions_file": "questions.jsonl",
+  "questions_file_hash": "534484d3ef392d9820e587ee8b64ee8a92984f5f1124384236b78799231c3a71",
+  "schema_version": "retrieval_arena.dataset_preparation_manifest.v1",
+  "snapshot_id": "2025-09-20",
+  "stage_status": "ok",
+  "support_input_hash": null,
+  "validation_error": null,
+  "validation_status": "ok"
+}

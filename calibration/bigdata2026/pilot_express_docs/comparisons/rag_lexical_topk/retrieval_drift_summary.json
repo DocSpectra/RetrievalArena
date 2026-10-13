@@ -1,0 +1,127 @@
+{
+  "after": {
+    "corpus_snapshot_id": "2026-03-30",
+    "dataset": "express_docs",
+    "graph_snapshot_id": "2026-03-30",
+    "manifest_hash": "fc88363b87154731e09524f10495f5da1b4521253b3430fd5d325e1064f22875",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "04b843670063367e6bfb9a9039467bba5c1708468d7938e7c7380153229b08dc",
+    "retrieval_config_id": "rag_lexical_topk",
+    "run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_lexical_topk__ddea72412e",
+    "run_id": "ddea72412e",
+    "support_surface_id": "2026-03-30",
+    "test": "rag_lexical_topk"
+  },
+  "artifact_hashes": {
+    "after": {
+      "action_traces.jsonl": {
+        "sha256": "6f4cbeacfca3ee7b9df8a5ef998a8d029a90edb5e34500ebf3ea49aa4afe1281",
+        "size_bytes": 5172
+      },
+      "item_scores.jsonl": {
+        "sha256": "4ff71d67ba1484a1f24d6e690044b5e41754a4b77592cee0fa2ce5be21841afb",
+        "size_bytes": 65324
+      },
+      "metadata.json": {
+        "sha256": "10311eb11a277a57d1fe64913f6e8e5c230a81938786c1051623bed0174e5d72",
+        "size_bytes": 129
+      },
+      "predictions.jsonl": {
+        "sha256": "0fd44a9fb2f07def409a8c4b5dda52a29fa0ef3325cda7b5776befc89f487808",
+        "size_bytes": 143493
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "213179d1570f1fc2b6376e7bf2c463592f6d7d267345c706fcfb6057ba3e6864",
+        "size_bytes": 14823
+      },
+      "scores.json": {
+        "sha256": "1b326c0b3786f03cb3b5186107eb70f82e071053109a5ea9b0a341ef462b5850",
+        "size_bytes": 1223
+      }
+    },
+    "before": {
+      "action_traces.jsonl": {
+        "sha256": "8358356ddc901ee7a749f026b0655f2a76538ed66aebd91aca70993d00134a64",
+        "size_bytes": 5184
+      },
+      "item_scores.jsonl": {
+        "sha256": "9d65be9ee104c28378fe44dbce6d387d02f0d90478c816a4fc7c5bda071e4861",
+        "size_bytes": 65303
+      },
+      "metadata.json": {
+        "sha256": "10311eb11a277a57d1fe64913f6e8e5c230a81938786c1051623bed0174e5d72",
+        "size_bytes": 129
+      },
+      "predictions.jsonl": {
+        "sha256": "c6fda100385ece7d1ebd32ff9b35aa5597a6b8431d9920b0b5c917dd85ac6abe",
+        "size_bytes": 143188
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "c933d1f5ca93b044c0da8f84beb00f36c30f970200fb50b2c916c33583c38938",
+        "size_bytes": 14829
+      },
+      "scores.json": {
+        "sha256": "62f96b985b978ad2900dbba64f006f8d23444b212b1906737f12339f99267823",
+        "size_bytes": 1224
+      }
+    }
+  },
+  "before": {
+    "corpus_snapshot_id": "2025-09-20",
+    "dataset": "express_docs",
+    "graph_snapshot_id": "2025-09-20",
+    "manifest_hash": "1283cc6d5055f1ee4af8de3b51af8952b262826a253c63f99033aa38efceb4b4",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "78c0468a22a6d73701478e5d472da022869b16779f3a0d1cedf831d39c8bf158",
+    "retrieval_config_id": "rag_lexical_topk",
+    "run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_lexical_topk__ddea72412e",
+    "run_id": "ddea72412e",
+    "support_surface_id": "2025-09-20",
+    "test": "rag_lexical_topk"
+  },
+  "comparison_type": "retrieval_drift",
+  "created_at": "2026-05-26T10:51:33+00:00",
+  "evidence_coverage_regression_count": 0,
+  "manifest_hash": "c55b39ccf2c301733be80c87ca21bd6953f2dbfcd6268a83aac038aa2099a9e8",
+  "manifest_type": "retrieval_drift_summary",
+  "mean_distance_to_support_delta": 0.0,
+  "mean_lexical_f1_delta": -0.0009139910121593302,
+  "mean_ordered_top_k_overlap": 0.85,
+  "mean_rank_displacement": 0.15000000000000002,
+  "mean_support_recall_delta": 0.0,
+  "mean_top_k_jaccard": 0.9583333333333334,
+  "optional_signal_availability": {
+    "action_trace": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "distance_to_support": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "evidence_coverage": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "lexical_score_delta": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "retained_score_delta": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "support_exposure": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "support_recall": {
+      "available_count": 8,
+      "unavailable_count": 0
+    }
+  },
+  "query_count": 8,
+  "schema_version": "retrieval_arena.retrieval_drift_summary.v1",
+  "support_exposure_regression_count": 0,
+  "support_recall_regression_count": 0
+}

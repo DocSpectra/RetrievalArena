@@ -1,28 +1,40 @@
-# RetrievalArena
+# Retrieval Arena
 
-RetrievalArena is a dependency-light, containerized evaluation harness for documentation question-answering systems. It runs Dockerized retrieval/generation tests against prepared dataset directories, validates the input/output contracts, computes deterministic lexical scores, and writes reproducible reports.
+Retrieval Arena is a containerized evaluator for documentation retrieval:
+retrieval providers are declarative containers under `tests/`, experiments
+are YAML under `configs/`, and an immutable verification image exposes a
+small operator command set; results are scored with ranked-retrieval
+metrics v2 (`ir-measures`) and, optionally, offline BERTScore over answers.
+The working branch is `capstone/retrieval-metrics-v2`. Its caller is
+DocSpectra Capstone, which evaluates documentation refinements with
+before/after Retrieval Arena runs.
 
-## Quick start
+## Functionality
 
-```cmd
-pip install -e .
-retrieval-arena run --config configs\experiment.example.yaml
-retrieval-arena validate --config configs\experiment.example.yaml
-```
+- Retrieval evaluation — the provider contract, the scoring chain and the
+  table of every evaluation: [docs/retrieval_evaluation.md](docs/retrieval_evaluation.md)
+- Corpus import and dataset preparation — the import chain, the dataset
+  layout, document-id and exclude policies: [docs/corpus_import.md](docs/corpus_import.md)
+- The operator and the verification image — commands, receipts, isolation,
+  admission at `candidate-retrieve`: [docs/operator.md](docs/operator.md)
+- Experiments — an experiment is a YAML under [configs/](configs/); see
+  [configs/experiment.example.yaml](configs/experiment.example.yaml)
+- Historical (BigData 2026 pilots, calibration bundles, HTML report,
+  evidence export, task completion): [docs/bigdata_pilots.md](docs/bigdata_pilots.md),
+  [docs/task_completion_evaluation_plan.md](docs/task_completion_evaluation_plan.md)
 
-The example run writes:
+## Development
 
-```text
-results/toy_faq_reconstruction/summary.csv
-results/toy_faq_reconstruction/summary.md
-```
+- Extension entry point: [experiments, evaluations and dataset workflows](docs/extending.md).
 
-See the parent workspace specification at `project_specifications/RetrievalArenaSpec.md` for the v1 contract and validation plan.
+- Install: `pip install -e .`
+- Unit tests: `python -m unittest discover -s unit_tests`
+- Agent policy and the provider reference: [AGENTS.md](AGENTS.md)
 
-## Output contract validation
+## License
 
-`retrieval-arena validate` runs the deterministic Phase 1 gate and negative
-contract checks before results should be trusted for analysis. Container outputs
-fail validation on invalid JSONL, duplicate predictions, unknown question IDs,
-missing required prediction fields, mismatched question text for a claimed
-`question_id`, missing predictions, or incomplete `metadata.json`.
+MIT — see [LICENSE](LICENSE).
+
+## Citation
+
+See [CITATION.cff](CITATION.cff).

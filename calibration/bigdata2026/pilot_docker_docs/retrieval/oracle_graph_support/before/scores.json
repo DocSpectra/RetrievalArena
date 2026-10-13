@@ -1,0 +1,42 @@
+{
+  "build_context": "tests\\oracle_graph_support",
+  "completed_at": "2026-05-26T10:15:42.259703+00:00",
+  "config_path": "configs\\bigdata2026\\retrieval_docker_docs_before.yaml",
+  "container_metadata": {
+    "deterministic": true,
+    "diagnostic": true,
+    "directed": false,
+    "final_top_k": 8,
+    "hop_budget": 2,
+    "max_context_chars_per_doc": 1200,
+    "name": "oracle_graph_support",
+    "num_questions": 144,
+    "oracle_inputs": [
+      "faq_support_audit.jsonl"
+    ],
+    "seed_ranker": "bm25",
+    "seed_top_k": 5,
+    "support_reachability_rate": 0.0,
+    "support_target_reachability_rate": 0.0,
+    "target_top_k": 5
+  },
+  "dataset": "docker_docs",
+  "diagnostic_overlay": {
+    "diagnostic_trace_available": true,
+    "distance_overlay_available": true,
+    "graph_node_count": 895,
+    "support_question_count": 144
+  },
+  "git_commit": "cb95294f32e266c72f6414c08dca374d081ea30e",
+  "image": "retrieval-arena/oracle-graph-support:latest",
+  "match_percent": 0.0,
+  "mean_f1": 0.1140378446790904,
+  "mean_lexical_overlap": 0.07874672698157413,
+  "mean_precision": 0.09063390313390313,
+  "mean_recall": 0.22334721444928007,
+  "num_questions": 144,
+  "retrieval_arena_version": "0.1.0",
+  "run_id": "4fb90fc63f",
+  "started_at": "2026-05-26T10:15:41.480121+00:00",
+  "test": "oracle_graph_support"
+}

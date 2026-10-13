@@ -1,0 +1,133 @@
+{
+  "after": {
+    "corpus_snapshot_id": "2026-05-26",
+    "dataset": "docker_docs",
+    "graph_snapshot_id": "2026-05-26",
+    "manifest_hash": "561267dda0e1cd82267c567909d979614d47fa97a7e1ede7efd805aae4de39e8",
+    "query_set_id": "docker-docs-pilot-queries",
+    "retrieval_config_hash": "b589d0a04004208378a9203afbfe2fa9112695460ecb6faea7bbb453de0507a8",
+    "retrieval_config_id": "rag_graph_rerank",
+    "run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__rag_graph_rerank__7a725e977b",
+    "run_id": "7a725e977b",
+    "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
+    "support_surface_id": "2026-05-26",
+    "test": "rag_graph_rerank"
+  },
+  "before": {
+    "corpus_snapshot_id": "2026-05-01",
+    "dataset": "docker_docs",
+    "graph_snapshot_id": "2026-05-01",
+    "manifest_hash": "706dbd769b540790271349f58220fe59629ab0113d5769e5c58d5ef3e77e5861",
+    "query_set_id": "docker-docs-pilot-queries",
+    "retrieval_config_hash": "253f40bcc5009ef9d37cf94d8c2cb6ae911bf2841e2db3f14746e538b83407bd",
+    "retrieval_config_id": "rag_graph_rerank",
+    "run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__rag_graph_rerank__7a725e977b",
+    "run_id": "7a725e977b",
+    "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
+    "support_surface_id": "2026-05-01",
+    "test": "rag_graph_rerank"
+  },
+  "cause_label_counts": {
+    "corpus_page_added": 1,
+    "corpus_page_changed": 11,
+    "distance_to_support_increased": 1,
+    "graph_edge_added": 9,
+    "replay_manifest_changed": 144,
+    "retrieval_config_changed": 144,
+    "support_target_added": 11,
+    "support_target_changed": 11,
+    "support_target_removed": 11
+  },
+  "comparison_type": "regression_audit",
+  "created_at": "2026-05-26T10:17:07+00:00",
+  "evidence_availability_counts": {
+    "action_trace": {
+      "available": 144
+    },
+    "corpus": {
+      "available": 144
+    },
+    "distance_to_support": {
+      "available": 144
+    },
+    "evidence_coverage": {
+      "available": 144
+    },
+    "graph": {
+      "available": 144
+    },
+    "lexical_answer_score": {
+      "available": 144
+    },
+    "rank": {
+      "available": 144
+    },
+    "replay_manifest": {
+      "available": 144
+    },
+    "retrieval_candidates": {
+      "available": 144
+    },
+    "retrieval_config": {
+      "available": 144
+    },
+    "retrieval_score": {
+      "available": 144
+    },
+    "scoring_config": {
+      "available": 144
+    },
+    "snapshot_diff": {
+      "available": 144
+    },
+    "support_exposure": {
+      "available": 144
+    },
+    "support_recall": {
+      "available": 144
+    },
+    "support_surface": {
+      "available": 144
+    }
+  },
+  "input_artifacts": {
+    "after_replay_manifest": {
+      "path": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__rag_graph_rerank__7a725e977b\\retrieval_replay_manifest.json",
+      "sha256": "1d1dd7bb099b371db34de4229980f1a8d3973fae1e067f1ce84acf1b3f6ef084",
+      "size_bytes": 226138
+    },
+    "after_run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\after\\bigdata2026_docker_docs_after\\runs\\docker_docs__rag_graph_rerank__7a725e977b",
+    "before_replay_manifest": {
+      "path": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__rag_graph_rerank__7a725e977b\\retrieval_replay_manifest.json",
+      "sha256": "5349364028134fe7452ac0cd86a0cc92eb2172115971cf37d0b21089ac047ed1",
+      "size_bytes": 225417
+    },
+    "before_run_dir": "results\\bigdata2026\\pilot_docker_docs\\retrieval\\before\\bigdata2026_docker_docs_before\\runs\\docker_docs__rag_graph_rerank__7a725e977b",
+    "drift_jsonl": {
+      "path": "reports\\bigdata2026\\pilot_docker_docs\\comparisons\\rag_graph_rerank\\retrieval_drift.jsonl",
+      "sha256": "9297f0aa93e5950b95450d3d46cc5a79d01cf8390542a2f7d0f134d82b3cd728",
+      "size_bytes": 333166
+    },
+    "drift_summary_json": {
+      "path": "reports\\bigdata2026\\pilot_docker_docs\\comparisons\\rag_graph_rerank\\retrieval_drift_summary.json",
+      "sha256": "929880ed8f84d6b6d265e5aaec03e9ae83a4d7afbf7720272c96c1beca9cc0d6",
+      "size_bytes": 4892
+    },
+    "snapshot_diff_json": {
+      "path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\snapshot_diff.json",
+      "sha256": "19e4cac1fd3b21051c908defe2dcb0a420660d92f4db7c92b3593354f8c33315",
+      "size_bytes": 148876
+    }
+  },
+  "labeled_query_count": 144,
+  "manifest_hash": "f87d0c2801f205047f61a1541a7e5dcdef28c712f75bc62447b78d4e762b910d",
+  "manifest_type": "regression_audit_summary",
+  "overall_drift_score": null,
+  "overall_drift_score_note": "No overall drift score or composite summary metric is computed.",
+  "query_count": 144,
+  "schema_version": "retrieval_arena.regression_audit_summary.v1",
+  "source_report_references": {
+    "drift_summary_schema_version": "retrieval_arena.retrieval_drift_summary.v1",
+    "snapshot_diff_schema_version": "retrieval_arena.snapshot_diff.v1"
+  }
+}

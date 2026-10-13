@@ -1,0 +1,15 @@
+{
+  "schema_version": "retrieval_arena.ragas_judge_config.v1",
+  "provider": "ollama",
+  "model": "REPLACE_WITH_INSTALLED_MODEL_TAG",
+  "revision": "REPLACE_WITH_MODEL_SHA256",
+  "temperature": 0,
+  "seed": 7,
+  "retries": 1,
+  "timeout_seconds": 120,
+  "max_output_tokens": 2048,
+  "max_input_tokens": 16000,
+  "answer_prompt": "answer_satisfaction.v1",
+  "context_prompt": "context_support.v1",
+  "faithfulness": true
+}

@@ -1,0 +1,220 @@
+"""Optional Ragas 0.4.3 bridge. No built-in network transport or credentials.
+
+An admitted caller supplies an async structured-output transport; see the metric
+reference for its response contract and the explicit live-execution boundary.
+"""
+from __future__ import annotations
+
+import asyncio
+import hashlib
+from importlib.metadata import version
+import json
+import math
+import os
+from pathlib import Path
+import re
+import time
+
+from .ragas_scoring import (
+    PREFIX, VERDICTS, aggregate, canonical, fields, new_record, pending, require,
+    unavailable, validate_config, validate_verdicts,
+)
+
+
+class JudgeFailure(Exception):
+    pass
+
+
+class ParseFailure(Exception):
+    pass
+
+
+class _Skip(Exception):
+    """Internal: no element prompts to judge."""
+
+
+def resolve_quoted_evidence(detail, supplied_text):
+    """Project v2 exact quotes to deterministic first-occurrence Unicode spans.
+
+    Quotes are model judgments and remain in raw attempts. Offsets are derived
+    locally because local structured-output models miscounted them in the pilot.
+    An absent/nonmatching quote is a parse failure, never a measured zero.
+    """
+    evidence = detail.get("evidence")
+    if not isinstance(evidence, list):
+        raise ParseFailure("evidence-list-required")
+    spans = []
+    for item in evidence:
+        if not isinstance(item, dict) or set(item) != {"text"} or not isinstance(item["text"], str) or not item["text"]:
+            raise ParseFailure("evidence-quote-required")
+        quote = item["text"]
+        start = supplied_text.find(quote)
+        if start < 0:
+            raise ParseFailure("evidence-quote-not-found")
+        spans.append({"start": start, "end": start + len(quote), "text": quote})
+    return {**detail, "evidence": spans}
+
+
+def resolve_string_evidence(detail, supplied_text):
+    """Project v4's exact quote strings through the same checked span mapper."""
+    evidence = detail.get("evidence")
+    if not isinstance(evidence, list) or any(not isinstance(item, str) or not item for item in evidence):
+        raise ParseFailure("evidence-string-list-required")
+    return resolve_quoted_evidence({**detail, "evidence": [{"text": item} for item in evidence]}, supplied_text)
+
+
+def engine_identity(lock_path):
+    """Fail if the optional environment drifts from the full distribution lock."""
+    lock = Path(lock_path).read_bytes()
+    rows = re.findall(rb"^([A-Za-z0-9_.-]+)==([^\s]+) --hash=sha256:([a-f0-9]{64})$", lock, re.M)
+    require(bool(rows), "dependency-lock-empty")
+    for name, pinned, _ in rows:
+        require(version(name.decode()) == pinned.decode(), "dependency-version-mismatch:" + name.decode())
+    require(version("ragas") == "0.4.3", "ragas-version")
+    # Since C1 the adapter includes every provider transport (model_providers/).
+    here = Path(__file__).parent
+    names = ["ragas_scoring.py", "ragas_judge.py", "ragas_ollama.py"] + sorted(
+        "model_providers/" + p.name for p in (here / "model_providers").glob("*.py"))
+    source = b"".join((here / name).read_bytes() for name in names)
+    return {"name": "ragas", "version": "0.4.3", "dependency_lock_sha256": hashlib.sha256(lock).hexdigest(),
+            "adapter_sha256": hashlib.sha256(source).hexdigest()}
+
+
+class RagasJudge:
+    """Use DiscreteMetric per frozen element and optional built-in Faithfulness.
+
+    transport(prompt, response_schema, settings) must be async, enforce admission,
+    and return text/model/revision/usage/cost. No automatic provider selection;
+    model_providers.transport_for maps a validated config to its admitted transport.
+    The batch API is sequential; instantiate a separate judge per concurrent batch.
+    """
+
+    def __init__(self, transport, lock_path):
+        self.engine = engine_identity(lock_path)
+        # Disable framework analytics BEFORE its first import; no unsolicited network.
+        os.environ["RAGAS_DO_NOT_TRACK"] = "true"
+        from ragas.llms.base import InstructorBaseRagasLLM
+        from ragas.metrics import DiscreteMetric
+        from ragas.metrics.collections import ContextRecall, FactualCorrectness, Faithfulness
+
+        self.transport = transport
+        self.discrete_type = DiscreteMetric
+        self.faithfulness_type = Faithfulness
+        self.context_recall_type = ContextRecall
+        self.factual_correctness_type = FactualCorrectness
+        owner = self
+
+        class CapturingLLM(InstructorBaseRagasLLM):
+            def generate(self, prompt, response_model):
+                raise RuntimeError("ragas-use-async-interface")
+
+            async def agenerate(self, prompt, response_model):
+                return await owner._generate(prompt, response_model)
+
+        self.llm = CapturingLLM()
+
+    async def _generate(self, prompt, response_model):
+        # Include structured-output schema in the conservative input budget.
+        schema = response_model.model_json_schema()
+        if len(prompt.encode("utf-8")) + len(canonical(schema)) > self.config["max_input_tokens"]:
+            raise JudgeFailure("input-budget-exceeded")
+        for attempt in range(self.config["retries"] + 1):
+            started = time.monotonic()
+            trace = {"prompt": prompt, "response_schema": schema, "attempt": attempt + 1,
+                     "response": None, "error": None}
+            self.raw.append(trace)
+            try:
+                response = await asyncio.wait_for(
+                    self.transport(prompt, schema, dict(self.config)), timeout=self.config["timeout_seconds"])
+                trace["response"] = response
+                fields(response, "text model revision usage cost")
+                require(response["model"] == self.config["model"] and response["revision"] == self.config["revision"], "observed-model-identity-mismatch")
+                require(isinstance(response["text"], str), "raw-response-text")
+                # Token bytes can exceed tokens; transport must enforce max_output_tokens.
+                # Also bound response memory without silently truncating it.
+                require(len(response["text"].encode("utf-8")) <= 64 * self.config["max_output_tokens"], "response-too-large")
+                try:
+                    parsed = json.loads(response["text"])
+                    require(isinstance(parsed, dict) and set(parsed) == set(response_model.model_fields), "response-fields")
+                    return response_model.model_validate(parsed, strict=True)
+                except Exception as exc:
+                    # Schema/JSON errors never become measured zero.
+                    raise ParseFailure(type(exc).__name__) from exc
+            except ParseFailure:
+                trace["error"] = "parse_error"
+                raise
+            except Exception as exc:
+                trace["error"] = type(exc).__name__
+                if attempt == self.config["retries"]:
+                    raise JudgeFailure(type(exc).__name__) from exc
+            finally:
+                trace["latency_seconds"] = time.monotonic() - started
+
+    async def published(self, name, row, rubric, contexts, config):
+        """Unmodified Ragas 0.4.3 collections metrics with their published prompts."""
+        if name == "faithfulness":
+            return await self.faithfulness_type(llm=self.llm).ascore(
+                user_input=row["question"], response=row["text"], retrieved_contexts=contexts)
+        if name == "context_recall":
+            return await self.context_recall_type(llm=self.llm).ascore(
+                user_input=row["question"], retrieved_contexts=contexts, reference=rubric["reference"])
+        options = config["factual_correctness"]
+        return await self.factual_correctness_type(
+            llm=self.llm, mode=options["mode"], beta=float(options["beta"]),
+            atomicity=options["atomicity"], coverage=options["coverage"]).ascore(
+                response=row["text"], reference=rubric["reference"])
+
+    async def score(self, row, rubric, corpus, config, prompts):
+        validate_config(config)
+        self.config = dict(config)
+        self.raw = []
+        record = new_record(row, rubric, corpus, config, self.engine)
+        started = time.monotonic()
+        try:
+            if prompts is None:
+                # Config v3 with the element metric disabled: published metrics only.
+                require(record["status"] == "disabled", "element-prompts-required")
+                raise _Skip()
+            verdicts = []
+            for element, prompt in zip(rubric["elements"], prompts):
+                metric = self.discrete_type(name="required_element_completeness_v1", prompt="{input}", allowed_values=list(VERDICTS))
+                scored = await metric.ascore(llm=self.llm, input=prompt)
+                try:
+                    detail = json.loads(scored.reason)
+                    fields(detail, "reason evidence")
+                    if config["answer_prompt"].endswith(".v4"):
+                        detail = resolve_string_evidence(detail, row["text"])
+                    elif config["answer_prompt"].endswith((".v2", ".v3")):
+                        detail = resolve_quoted_evidence(detail, row["text"])
+                    verdicts.append({"schema_version": PREFIX + "element_verdict.v1", "element_id": element["element_id"],
+                                     "verdict": scored.value, **detail})
+                except Exception as exc:
+                    raise ParseFailure(type(exc).__name__) from exc
+            try:
+                validate_verdicts(verdicts, row, rubric["elements"])
+            except Exception as exc:
+                raise ParseFailure(type(exc).__name__) from exc
+            record["verdicts"] = verdicts
+            record["aggregate"] = aggregate(verdicts, row, rubric["elements"])
+        except _Skip:
+            pass
+        except (JudgeFailure, ParseFailure) as exc:
+            record.update(status="parse_error" if isinstance(exc, ParseFailure) else "judge_error", error=str(exc))
+        # Separate availability: failure here never overwrites completeness or another metric.
+        chunks = {(c["document_id"], c["chunk_id"]): c["text"] for c in corpus["chunks"]}
+        contexts = [chunks[(c["document_id"], c["chunk_id"])] for c in row["contexts"]]
+        for name in pending(record):
+            try:
+                result = await self.published(name, row, rubric, contexts, config)
+                record[name] = {"status": "ok", "value": float(result.value)} if math.isfinite(result.value) else unavailable("no_statements")
+            except ParseFailure:
+                record[name] = unavailable("parse_error")
+            except Exception:
+                record[name] = unavailable("judge_error")
+        record["raw"] = self.raw
+        record["measurements"]["latency_seconds"] = {"status": "available", "value": time.monotonic() - started}
+        for field in ("usage", "cost"):
+            values = [t["response"].get(field) if isinstance(t["response"], dict) else None for t in self.raw]
+            if values and all(v is not None for v in values):
+                record["measurements"][field] = {"status": "available", "value": values}
+        return record

@@ -1,0 +1,337 @@
+# Dual-profile ranked evaluation
+
+Retrieval Arena exposes two strict, versioned evaluation profiles:
+
+- `operational_automatic`: zero-human evaluation from frozen qrels, ranked
+  predictions, evidence requirements, snapshot bindings, and exact lineage;
+- `scientific_calibration`: optional artifact-only evaluation from a frozen
+  review packet and immutable imported judgments.
+
+The profiles are separate result and replay families. They share registered
+input identities, but no report, aggregate, replay, or evidence export combines
+their values. There is no composite score.
+
+## Commands
+
+```powershell
+python -m retrieval_arena.cli evaluate-profile --config <dual-profile.json> --out-dir <output>
+python -m retrieval_arena.cli score-bertscore --provider <provider.json> --answer-pairs <answers.jsonl> --out <scores.json>
+python -m retrieval_arena.cli export-review-packet --candidates <candidates.jsonl> --policy <review-policy.json> --out <packet.json>
+python -m retrieval_arena.cli import-judgments --judgments <judgments.json> --packet <packet.json> --policy <review-policy.json> --out <import.json>
+```
+
+All commands are noninteractive. They do not read stdin, open an editor or
+browser, invoke a human workflow, use the network, or download a model.
+
+## Registered Docker operator
+
+For portable cross-repository qualification, `run-verification.ps1` and
+`run-verification.sh` register `evaluate-profile` as a distinct container
+command. It takes an admitted input root, a fresh marker-owned output root,
+and a self-hashed immutable image receipt. Both adapters validate the receipt
+and OCI labels for source commit/tree, dependency lock, and `linux/amd64`
+before creating a non-root container with a read-only root, no network,
+dropped capabilities, no-new-privileges, and read-only source/input mounts.
+
+The input root contains `operator-request.json` with schema
+`retrieval_arena.profile_evaluation_request.v1`. Its closed inventory must
+exactly hash all regular files other than the request, and `config_path` is a
+POSIX-relative path within that root. Symlinks, traversal, writable input,
+missing/extra files, and non-fresh output roots fail closed. The output root
+must initially contain only `.retrieval-arena-output-owner` whose contents are
+`retrieval_arena.output_root.v1`; the operator emits ordinary profile outputs
+and a self-hashed `operator_receipt.v1.json`. The receipt binds command,
+admitted inventory, output inventory, image/source/lock/platform identity,
+exit classification, and timestamps. It is operational provenance, never a
+substitute for the result/replay/audit artifacts.
+
+## Configuration
+
+`retrieval_arena.dual_profile_config.v1` rejects unknown fields and contains:
+
+- `profile_policy_path`;
+- `ranked_dataset_path`, `automatic_qrels_path`, and the non-empty
+  `automatic_qrels_snapshot_id` that binds those source judgments,
+  `ranked_predictions_path`, and `ranked_metric_policy_path`, all using the
+  accepted ranked-v2 contracts;
+- `requirements_path`, `bindings_path`, `lineage_path`, and
+  `requirement_predictions_path`;
+- optional `answer_pairs_path`, `bertscore_provider_path`, and
+  `bertscore_scores_path`;
+- `review_policy_path`, `review_packet_path`, and `judgment_artifact_path`,
+  which must all be absent in `operational_automatic` and all be present in
+  `scientific_calibration`.
+
+The paths are resolved relative to the JSON configuration. The evaluator is
+corpus-neutral: no path convention, task-pack layout, experiment name, or
+DocSpectra module is assumed.
+
+## Profile policy
+
+`retrieval_arena.evaluation_profile_policy.v1` binds the profile,
+`confirmatory` or `exploratory` classification, context-item cutoff, exact
+ordered metric-family declarations, evidence-requirement, binding, and lineage
+policy/artifact hashes, calibration requirement, network and interaction
+prohibitions, and a canonical self-hash.
+
+The family declarations are closed:
+
+| Family | Measures or evidence | Classification |
+| --- | --- | --- |
+| Standard ranked retrieval | evidence Recall@k, nDCG@k, reciprocal rank@k | provider-owned standard IR |
+| Project diagnostics | complete-support@k, RequirementCoverage@k, AllRequirements@k, exact lineage counts | project-specific, never named standard Recall |
+| Automatic answer diagnostics | lexical precision/recall/F1 and optional BERTScore precision/recall/F1 | diagnostic only |
+| Calibrated relevance | BPref and answer-bearing relevance | imported-human calibration only |
+| Calibrated answer quality | semantic answer quality and paraphrase robustness | imported-human calibration only |
+| Calibrated attribution | attribution correctness | imported-human calibration only |
+
+V1 commands and artifacts remain on their existing paths. Ranked-v2 artifacts
+remain `retrieval_arena.ranked_*.v2` and are passed to the unchanged
+ranked-v2 scorer. Neither is implicitly upgraded, reinterpreted, or compared
+to a dual-profile artifact. The new ingress accepts ranked-v2 artifacts
+explicitly; it does not manufacture qrels for v1 data.
+
+## Evidence requirements and snapshot bindings
+
+`retrieval_arena.evidence_requirements.v1` defines a non-empty ordered set of
+stable `evidence_requirement_id` records for every query.
+
+`retrieval_arena.requirement_bindings.v1` binds each requirement to zero or
+more physical `support_target_id` values in each registered snapshot. Every
+binding identifies its own evidence unit, normalized evidence hash, bounded
+context hash, structural owner, and repository/document provenance.
+
+`retrieval_arena.requirement_prediction.v1` binds one query's ordered unique
+targets to the same corpus snapshot and context-item cutoff as ranked-v2.
+
+For a query and snapshot, RequirementCoverage@k is the fraction of frozen
+requirements that have at least one explicitly bound target in the first `k`
+unique targets. AllRequirements@k is one only when all frozen requirements are
+covered. Physical bindings are OR alternatives inside one requirement;
+requirements are AND obligations across the query. Empty bindings remain in
+the denominator. A consolidated target satisfies multiple requirements only
+through separate evidence-unit bindings.
+
+## Exact support lineage
+
+`retrieval_arena.support_lineage.v1` accepts automatic transfer only for:
+
+- `identity_unchanged`;
+- `exact_target_relocation` with exact repository/document lineage;
+- `exact_evidence_unit_preserved`.
+
+All three require exact normalized evidence, bounded context, and structural
+owner identity, complete provenance, and no ambiguity, contradiction, or
+conflict. `semantic_rewrite_unresolved`, `novel_support_unjudged`, and
+`support_removed` are inventoried and never promoted.
+
+Duplicate and cyclic edges are rejected. A many-to-many history is admissible
+only as unique, direct, acyclic, non-conflicting
+`many_to_many_decomposed` evidence-unit edges with the complete exact
+predicate. Lexical overlap, embeddings, model confidence, treatment authorship,
+and transitive history cannot create relevance.
+
+The destination-qrel composer requires the declared automatic-qrel source
+snapshot to equal the lineage source and the ranked dataset snapshot to equal
+the lineage destination. It copies only positive source qrels over admitted
+edges, deduplicates equal destination judgments, rejects conflicting grades,
+and records the exact lineage-record hash as judgment provenance. The original
+source target inventory is never scored directly. Source negatives,
+nontransfer classes, and source targets without an admitted edge remain
+unjudged at the destination; no negative transfer is invented. Standard
+ranked scoring consumes this same canonical destination inventory.
+
+The complete or pooled scope on the frozen source artifacts is preserved as an
+input identity. If any admitted destination top-k prediction is absent from the
+composed destination qrels, the evaluator derives an in-memory `pooled`
+dataset/policy scoring view. It retains `complete` only when the source is
+complete and every destination top-k pair is judged. The derived view has its
+own hash and never mutates the source files, policy identity, or recorded input
+hashes.
+
+`retrieval_arena.destination_qrel_inventory.v2` carries two canonical hashed
+ledgers. The source-qrel disposition ledger gives every source qrel exactly one
+reason-bearing transferred or non-transferred disposition and binds its source
+judgment plus every governing lineage record. The destination top-k ledger
+partitions every ranked pair into judged or unjudged, binds transferred
+judgment provenance, and records closed reasons for source nonpositive,
+semantic-rewrite, removed, novel, or no-exact-lineage cases. Conservation
+checks require exact source coverage, exact correspondence between transferred
+dispositions and destination qrels, and exact top-k judged/unjudged
+partitioning before any result is written.
+
+When a snapshot leaves one query with no admitted positive target, its
+standard ranked measures are explicitly unavailable with
+`zero_relevant_items`; stable requirements remain in the separate coverage
+denominator. Any macro over the remaining provider-scored queries is labeled
+`available_queries_only` rather than silently treating the missing query as
+zero. If no query has an admitted positive destination target, every standard
+query and the standard aggregate are explicitly unavailable; the provider is
+not invoked.
+
+## Offline BERTScore
+
+`retrieval_arena.bertscore_provider.v1` pins:
+
+- `bert-score` package version and local distribution path/hash;
+- checkpoint identifier and revision;
+- tokenizer identifier and revision;
+- local model, tokenizer, and optional baseline artifact paths and hashes;
+- baseline and rescaling policies;
+- language, device, and dtype;
+- `runtime_download: false`;
+- a canonical provider self-hash.
+
+The artifact-producing `score-bertscore` ingress requires
+`package_artifact_path` to be the exact hashed local distribution tree that it
+imports. It validates the tree's sole `bert_score` package and `.dist-info`
+name/version, removes any ambient `bert_score` module, loads only from the
+registered tree, verifies every loaded provider module path, disables bytecode
+writes, sets `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`, and revalidates
+all artifact hashes after execution. A wheel/archive may document an external
+provider but is not executable by this ingress. No same-version ambient
+installation, injected callable, runtime installation, or fallback is
+trusted. A provider-owned
+`retrieval_arena.bertscore_scores.v1` artifact must bind the exact provider and
+answer-pair hashes. Missing registered provider material makes only BERTScore
+explicitly unavailable. A hash mismatch or provider substitution fails
+admission. Supplying a scores artifact without its provider is rejected.
+
+The opt-in `retrieval_arena.bertscore_provider.v2` extends the closed v1
+provider with a required positive integer `num_layers`. The provider self-hash
+binds that value and the offline scorer supplies it explicitly for local
+checkpoint paths. V2 canonicalizes distribution names according to the
+Python package naming convention (runs of dash, underscore, or dot become a
+dash, case-insensitively), while preserving exact version and artifact hashes.
+V2 also rejects empty pair inventories and rescaling without a registered
+baseline. V1 admission and invocation remain unchanged.
+
+V2 score admission retains finite raw provider values without clipping:
+floating-point overshoot and negative values are not rewritten as zero or
+one. Booleans, strings, and nonfinite values are rejected. The existing scores
+artifact binds its versioned provider identity, so this policy cannot be
+substituted without changing that identity. This contract extension alone does
+not establish a provisioned model/runtime or successful real-model execution;
+those require separate pinned-image and checkpoint qualification.
+
+BERTScore precision, recall, and F1 remain model-bound paraphrase diagnostics.
+They do not create qrels, transfer support, establish factuality, detect every
+contradiction, prove attribution, or replace semantic human judgments.
+
+## Review packets
+
+`retrieval_arena.review_policy.v1` freezes the packet and candidate-pool
+identity, snapshots, guidelines, assessor classes, allowed assessor IDs, seed,
+budget, sampling, blinding, stopping, and reveal state.
+
+The deterministic exporter:
+
+1. deduplicates the cross-condition frame by snapshot/query/target;
+2. verifies identical assessor-visible evidence for duplicates;
+3. stratifies by snapshot, candidate class, and top-k rank band;
+4. uses simple random sampling without replacement with proportional
+   largest-remainder allocation and minimum one per non-empty stratum when the
+   ceiling permits;
+5. freezes the seed and primary ceiling plus a non-assessor frame inventory of
+   pair IDs and sampling strata, verifies its count/hash, and deterministically
+   rederives allocations, selected/duplicate IDs, and inclusion probabilities
+   against that exact inventory;
+6. freezes inclusion probabilities and a fixed, non-outcome-driven stop;
+7. selects `ceil(0.10 * primary_count)` independent duplicate assessments;
+8. randomizes assessor order;
+9. removes condition, system, outcome, rank, delta, and lineage-class labels
+   from every assessor record;
+10. self-hashes the frame, frozen inventory, selected sample, assessor
+    projection, and packet.
+
+The primary ceiling is at most 240. The adopted 10% duplicate rate is a
+project use of the domain-specific S24 precedent, not a universal constant.
+At the ceiling the arithmetic maximum is 240 primary + 24 duplicate + at most
+24 adjudications = 288 actions.
+
+## Immutable judgment import
+
+`retrieval_arena.judgment_artifact.v1` binds the exact packet, pool, policy,
+dataset, query set, snapshots, assessor classes/IDs, reveal state, records, and
+self-hash. Unknown fields are rejected, including condition labels. Every
+frozen primary and duplicate assessment must be present. Adjudication records
+bind exactly two assessments. Post-reveal material is always exploratory.
+`outcome_revealed_at_import` must be Boolean. Every primary, duplicate, and
+adjudication record enforces `nonrelevant` exactly when relevance is zero and
+`relevant` exactly when relevance is positive before agreement or BPref input
+is formed.
+
+Import reports raw label-pair counts, exact agreement, and Cohen's kappa.
+Agreement is assessor evidence, not retrieval effectiveness. Answer-bearing
+relevance, semantic answer quality, attribution correctness, and paraphrase
+robustness remain separate calibrated families.
+
+## Calibration-only BPref
+
+BPref is delegated to the registered `ir_measures==0.4.3` /
+`pytrec_eval` provider and is available only in
+`scientific_calibration`. Unjudged items are ignored. A query with no judged
+positive or no judged negative has an explicit unavailable reason instead of
+zero; the query-macro value is unavailable unless every scored query is
+available. BPref is not truncated or renamed as an `@k` metric, does not replace
+Recall@k, and does not imply a full-frame estimate for a sampled artifact.
+
+## Outputs and replay
+
+Automatic execution writes only:
+
+- `automatic_result.v1.json`;
+- `automatic_replay.v1.json`;
+- `automatic_audit.v1.json`;
+- `automatic_evidence.v1.json`;
+- `automatic_report.v1.md`.
+
+Calibration writes the parallel `calibration_*` family. Result and replay
+schemas, hashes, family names, classification, judgment source, qrels scope,
+lineage inventory, judged/unjudged counts, provider identities,
+available/unavailable states, and every input hash remain explicit. Identical
+inputs produce byte-identical artifacts. Automatic result, audit, evidence,
+report, and replay artifacts bind the destination-inventory, source-disposition,
+destination-top-k, and effective-scoring-view hashes; the full ledgers remain
+evaluator-only inside the automatic result.
+
+## Security and scope
+
+- Human work remains external and artifact-driven.
+- Runtime network/model download is forbidden.
+- The evaluator does not inspect or own an authoring pipeline.
+- No result family may grade itself or mutate its qrels, packet, or policy.
+- No AP/MAP, R-precision, alpha-nDCG, ERR-IA, D#, inferred-AP, or composite
+  endpoint is exposed by this implementation.
+
+### Registered offline score production
+
+Both verification adapters now expose `score-bertscore` using the existing
+admission and atomic publication owner. Its closed request schema is
+`retrieval_arena.bertscore_scoring_request.v1`, with the same config path and
+complete input inventory fields as the profile request. The referenced
+`retrieval_arena.bertscore_scoring_config.v1` contains only `schema_version`,
+`provider_path`, and `answer_pairs_path`. Paths are relative to the config;
+provider asset paths are relative to the provider and confined to admitted input.
+
+Scoring requires provider v2, produces `bertscore_scores.v1.json`, and emits
+`retrieval_arena.bertscore_scoring_operator_receipt.v1`. Both adapters assign
+8 GiB memory and two CPUs; network remains disabled. Input inventory and
+request bytes are revalidated before publication. The scorer uses the existing
+RA-owned implementation and does not infer judgments or inspect authoring state.
+Contract fixtures do not establish actual checkpoint availability; a separately
+provisioned immutable runtime and a real-model canary remain required.
+
+The scoring dependency closure now pins CPU PyTorch 2.8.0+cpu, Transformers
+4.55.4, bert-score 0.3.13, and every downloaded transitive wheel alongside the
+unchanged ranked dependency versions. `Dockerfile.provision` consumes a local
+build context containing that exact `requirements.lock` and a `wheels/`
+directory. Build with networking disabled from a verified immutable evaluator
+base (use a checked local tag when Docker cannot use a bare image ID in FROM).
+The recipe uses no index, enforces wheel hashes, checks installed dependencies,
+and verifies scoring imports. It performs no model inference.
+
+Pass the resulting image ID to the existing `build-verification.ps1
+-ProvisionedImage` path. That owner checks the new lock label and derives the
+source-bound verification image offline. Historical image/source receipts
+retain their previous dependency locks and are not upgraded by this build.

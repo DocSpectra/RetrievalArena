@@ -1,0 +1,351 @@
+{
+  "build_context_hash": "991ebae4a952099fc8e7a592df306c42ae7cf0e19fd8e74764de14b2939cea8a",
+  "config_git_provenance": {
+    "branch": "IEEEBigData2026_metrics",
+    "commit": "77dbb3d777f3d3a4ea463ea0b6b36df75c820a5c",
+    "diff_hash": "5f4ac6f7d5c30fab221beffc30e2610f6c8e5d0ab76d626a4bc365cdf99df459",
+    "dirty": true,
+    "is_git_worktree": true,
+    "ref": null,
+    "ref_commit": null,
+    "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
+    "repo_root": ".",
+    "tag": null,
+    "untracked_files": [
+      "docs/incremental_baseline_refresh.md"
+    ]
+  },
+  "container_image": "retrieval-arena/oracle-graph-support:latest",
+  "container_metadata_hash": "fd77fc4c011ac90a00c1b6c4bbbc68897e0ee569f2a13d03d18a12788efc9d2e",
+  "corpus_snapshot_id": "2025-09-20",
+  "created_at": "2026-05-26T10:51:14+00:00",
+  "dataset": "express_docs",
+  "dataset_git_provenance": {
+    "branch": "IEEEBigData2026_metrics",
+    "commit": "77dbb3d777f3d3a4ea463ea0b6b36df75c820a5c",
+    "diff_hash": "5f4ac6f7d5c30fab221beffc30e2610f6c8e5d0ab76d626a4bc365cdf99df459",
+    "dirty": true,
+    "is_git_worktree": true,
+    "ref": null,
+    "ref_commit": null,
+    "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
+    "repo_root": ".",
+    "tag": null,
+    "untracked_files": [
+      "docs/incremental_baseline_refresh.md"
+    ]
+  },
+  "experiment_name": "bigdata2026_express_docs_before",
+  "graph_snapshot_id": "2025-09-20",
+  "input_artifact_hashes": {
+    "answers.jsonl": {
+      "sha256": "40e044a62f7c5e50e5112520c819b92fa5bb9e6682731e6ef9dacad772380d61",
+      "size_bytes": 3648
+    },
+    "config.yaml": {
+      "sha256": "add1f154fe34b5f28eb57874990d373b4c81a0e9ac876a2246962a124fac0a98",
+      "size_bytes": 176
+    },
+    "corpus/3x/api.md": {
+      "sha256": "4e556df5e7eee8ef308c0e64d470d34776aec673392ab36ed7952653f7e39913",
+      "size_bytes": 987
+    },
+    "corpus/4x/api.md": {
+      "sha256": "751f1b50547c8a11f446086e83c82bd3c481522cf3743dd62e0b350499df5ac8",
+      "size_bytes": 683
+    },
+    "corpus/5x/api.md": {
+      "sha256": "9ca31acf2abaef3df8a58dcf62a267e328c7eadc50a59314771a91b80a9a4f30",
+      "size_bytes": 684
+    },
+    "corpus/advanced/best-practice-performance.md": {
+      "sha256": "1abf18c664c8047b544fa7ff71c45cd62ba55dcffec3aa356fdb96e5de47042c",
+      "size_bytes": 20483
+    },
+    "corpus/advanced/best-practice-security.md": {
+      "sha256": "4994e0b5833f5658dbaaf3f1e36bd772547f9789c31f504892f0e7c1db034649",
+      "size_bytes": 16287
+    },
+    "corpus/advanced/developing-template-engines.md": {
+      "sha256": "75450f6fce3bdf80ebb44f2a577908e0f4449bb246aeef58302e895125080182",
+      "size_bytes": 1803
+    },
+    "corpus/advanced/healthcheck-graceful-shutdown.md": {
+      "sha256": "b8de40e8ba1acd6c5fdb9c264411e6ea4d046ba4d91396c4410c504126088f5f",
+      "size_bytes": 1528
+    },
+    "corpus/advanced/security-updates.md": {
+      "sha256": "4616fabb3e9280e1cc2e7ec81fd0fe2e2c7a62df34719ec23e298a97f5bca1f4",
+      "size_bytes": 6989
+    },
+    "corpus/api.md": {
+      "sha256": "ee07b907ff18b379438955c63d1b50cd705b07f27a9e5087d8e0f1399d42662b",
+      "size_bytes": 661
+    },
+    "corpus/blog/posts.md": {
+      "sha256": "d559be409559e49f6b9a6bc8d6a604e06ad36b27ed3f92227d1025b6d1888693",
+      "size_bytes": 886
+    },
+    "corpus/blog/write-post.md": {
+      "sha256": "30495b6841ed2922357882012e4dcb6077c1f9a4850a2de5824692928bab30cb",
+      "size_bytes": 2707
+    },
+    "corpus/changelog/index.md": {
+      "sha256": "8a38c3c29e13cdc09113d6bc085c90adaf4dc589194e02121fca82d2bd68da4e",
+      "size_bytes": 26809
+    },
+    "corpus/guide/behind-proxies.md": {
+      "sha256": "bd11eeea0f76d83b80fb52d39a07e0567839a9345f6410a734b60d5483e4c98e",
+      "size_bytes": 5097
+    },
+    "corpus/guide/database-integration.md": {
+      "sha256": "3ab008ec8ea497fc62ca9f7b49f20b7482192d08e39e0e9903a8cecbc963f1dd",
+      "size_bytes": 9793
+    },
+    "corpus/guide/debugging.md": {
+      "sha256": "03c5d996d602ac2d74f836859ca47b8d8b0eb8dd840f3cf9fd329bcc5b0d55bc",
+      "size_bytes": 4812
+    },
+    "corpus/guide/error-handling.md": {
+      "sha256": "2defbf8499f577703a2dc88498e3e04f3afc11b6e046379b064070697c2f964d",
+      "size_bytes": 10220
+    },
+    "corpus/guide/migrating-4.md": {
+      "sha256": "091d06c243fcb10cee4a8e7453f4a60dd48d0820751afffb9509acf287102cc6",
+      "size_bytes": 18364
+    },
+    "corpus/guide/migrating-5.md": {
+      "sha256": "89cf799a6e9d0ad5ca2e28bc00a89280aaf36b9fbff7d3e13bd56fcfb096afa1",
+      "size_bytes": 20005
+    },
+    "corpus/guide/overriding-express-api.md": {
+      "sha256": "16f26fff7231f13f76523af65261c93b28a5455b3e5d5205f987fca6544b4566",
+      "size_bytes": 3182
+    },
+    "corpus/guide/routing.md": {
+      "sha256": "0756bedb17dbff35487624b00e375a2a2627682c4207416244247939273c6ac5",
+      "size_bytes": 14873
+    },
+    "corpus/guide/using-middleware.md": {
+      "sha256": "da71c4b012c32bafcf1e733fe340c18fef31f18599c2cc908a3f401007fb0ffb",
+      "size_bytes": 10396
+    },
+    "corpus/guide/using-template-engines.md": {
+      "sha256": "f96160ab0176b9740d0637d1cb391be19050846d7208206ebabf210130bd9d98",
+      "size_bytes": 2974
+    },
+    "corpus/guide/writing-middleware.md": {
+      "sha256": "78f99484344a990d8cf444f10e74e451277627d8724923cc1807a1de1d739415",
+      "size_bytes": 8562
+    },
+    "corpus/resources/community.md": {
+      "sha256": "677be0304a26bf71e096914c55d925f2cec2bd76a3de94a46ddfc1102985af84",
+      "size_bytes": 4239
+    },
+    "corpus/resources/contributing.md": {
+      "sha256": "74cc8fa20af99c1e8c3531696188f8f496b9a60d15f87e6f7fffba406673c369",
+      "size_bytes": 24307
+    },
+    "corpus/resources/glossary.md": {
+      "sha256": "b29160eaf1b9ca589a9081831d47d3ecd83a3c3cd58104744de6fee90c45e47b",
+      "size_bytes": 3107
+    },
+    "corpus/resources/middleware.md": {
+      "sha256": "af92f7b1057976d5c33a80e684bfb21de8d8d2a67aef0fbe8b0e77679457d854",
+      "size_bytes": 4878
+    },
+    "corpus/resources/middleware/body-parser.md": {
+      "sha256": "19f056fa44066b6a59e37cb616d3c197c3dc4b85b84c0858e9dd08447f43088c",
+      "size_bytes": 164
+    },
+    "corpus/resources/middleware/compression.md": {
+      "sha256": "a89d9f6d997d5995b59e4b4cd935b32b8967b7cf8a2068a9c61c5b12f452fefd",
+      "size_bytes": 164
+    },
+    "corpus/resources/middleware/connect-rid.md": {
+      "sha256": "a07beebc6f8cd3faeb9866b14190ac6a21181ece7094be8360c525310b1118ce",
+      "size_bytes": 164
+    },
+    "corpus/resources/middleware/cookie-parser.md": {
+      "sha256": "42e5450f0339d51975777e1cdc2984917b61c3bce040060413c98b4f37f3be7a",
+      "size_bytes": 170
+    },
+    "corpus/resources/middleware/cookie-session.md": {
+      "sha256": "eb30935cf1b9dd61302ad6741d578121caa2c72230908fddd64b0d6ba2086f69",
+      "size_bytes": 173
+    },
+    "corpus/resources/middleware/cors.md": {
+      "sha256": "d283f8ff98c32bcda6d2d0594daf2267ce205c03a18744849c09195c5a247d30",
+      "size_bytes": 143
+    },
+    "corpus/resources/middleware/errorhandler.md": {
+      "sha256": "d5af9669a7ecdd43209ca4927ca1b051a0607569921cb487c302b674f26c0528",
+      "size_bytes": 167
+    },
+    "corpus/resources/middleware/method-override.md": {
+      "sha256": "0e0bdbe3f8f4c0e7f7dd108b175940e07fac9149c9ca4939f24aea90fe2c8c92",
+      "size_bytes": 176
+    },
+    "corpus/resources/middleware/morgan.md": {
+      "sha256": "e1ea1827b02f34b80ccf65b5a3a9107a9eafe7e6642a65d8d005b545ae5b52d9",
+      "size_bytes": 149
+    },
+    "corpus/resources/middleware/multer.md": {
+      "sha256": "2a5d9f82dc059f1d38b5568f53f75a31d9b21a2a0b57b0170f72ec9b330c5182",
+      "size_bytes": 149
+    },
+    "corpus/resources/middleware/response-time.md": {
+      "sha256": "2553526befde09f5b77feb74cd8072250bff3bc2d910cc5f15c171150f31923a",
+      "size_bytes": 170
+    },
+    "corpus/resources/middleware/serve-favicon.md": {
+      "sha256": "1daf7c832dcc1fe7a60766ec0b50701750259925c66f27b0f03421fdb420cb71",
+      "size_bytes": 170
+    },
+    "corpus/resources/middleware/serve-index.md": {
+      "sha256": "abdd47048295904c9cdf2fbf044d3158f23aafe8998cb3709bf42dbdf9a889fd",
+      "size_bytes": 164
+    },
+    "corpus/resources/middleware/serve-static.md": {
+      "sha256": "8ed0ab5e1508c64567ff04060e79197bea9c1e5d62b8a6f281216ba8bc0f307a",
+      "size_bytes": 167
+    },
+    "corpus/resources/middleware/session.md": {
+      "sha256": "5c301fe2bc8dcd863c9324bb94c7300069b635da7916221595cc1f7c3a5dadd3",
+      "size_bytes": 152
+    },
+    "corpus/resources/middleware/timeout.md": {
+      "sha256": "89bf2b3b6d71dbe1c93d91bc70e64ec51f0496a2588e5f0a91c0da5b54a221a9",
+      "size_bytes": 152
+    },
+    "corpus/resources/middleware/vhost.md": {
+      "sha256": "2ea4ffd379276326c74f3b8111f88b164ddbde6b77e3a0bc346cba11a9694b95",
+      "size_bytes": 146
+    },
+    "corpus/resources/utils.md": {
+      "sha256": "a40fa94f483e9ca2c79655f34b8fad25f33ee1fe9b8f49b92271db31963c3263",
+      "size_bytes": 1779
+    },
+    "corpus/starter/basic-routing.md": {
+      "sha256": "5d070f9c44022397d2dd7b2b3d6889a5d9aca01cc08ea0f0808d19d5b58c3c2d",
+      "size_bytes": 2216
+    },
+    "corpus/starter/examples.md": {
+      "sha256": "ec84ab40aa769d3e0080f5ceeed1306da9dd50ebc1757dc52e35843a95062f8f",
+      "size_bytes": 1162
+    },
+    "corpus/starter/faq.md": {
+      "sha256": "7fcd935ccc51c537dac7a12527b4a79f1c308c65be5e01bde561b6185df27ae3",
+      "size_bytes": 3997
+    },
+    "corpus/starter/generator.md": {
+      "sha256": "8bf7bdc778cb310d263ee9bd591d81593584fb2b930e6cbb0c80f9f024a1d642",
+      "size_bytes": 3685
+    },
+    "corpus/starter/hello-world.md": {
+      "sha256": "5b0fd0841fa9b2e1be80171994a05a0086ebda45d4e94d2887abcc2ab230f668",
+      "size_bytes": 2045
+    },
+    "corpus/starter/installing.md": {
+      "sha256": "f21d508f5965841529a19beeddcd1ffbdac8a806f7bb7dfc345c32ac499032d6",
+      "size_bytes": 2004
+    },
+    "corpus/starter/static-files.md": {
+      "sha256": "2b691e78ad105327048279d1d61aa38ea46280db238df6b7394be27ccd30d006",
+      "size_bytes": 3258
+    },
+    "corpus/support/index.md": {
+      "sha256": "d9bbd95d924cc6d2c7ef6dd2d26dfa2854f98054da1ff3625e6c82abed88d30e",
+      "size_bytes": 1541
+    },
+    "faq_support_audit.jsonl": {
+      "sha256": "e036820c79805475aaee6f91319b12372f0bcbcf71476f08d9dd7e574466f97d",
+      "size_bytes": 20617
+    },
+    "graph_edges.csv": {
+      "sha256": "da7e108ea0cffa3db0ec6b1a1041a4234c4168da45b0386886910b7d4f659a7a",
+      "size_bytes": 1456
+    },
+    "graph_metrics.json": {
+      "sha256": "3f000881c4af6fea6a3b091ea22bfa27cf2fe7a54bf84463ab44d77aa5eec07c",
+      "size_bytes": 8569
+    },
+    "questions.jsonl": {
+      "sha256": "11c0c46f28db2381d028c340a7c2a83c309c1bec1bc48b6bcdff0806b52ed09e",
+      "size_bytes": 724
+    }
+  },
+  "manifest_hash": "d2925aa4b22aa8852bdf4ccbfc3d40cbd8a00e594f16ae056d73abcaa54a03af",
+  "manifest_type": "retrieval_replay",
+  "output_artifact_hashes": {
+    "action_traces.jsonl": {
+      "sha256": "feacfe297199477bf09fa27f2ad9a2ac06c3a0baad73b4d0e200b478dde4c8c5",
+      "size_bytes": 3224
+    },
+    "item_scores.jsonl": {
+      "sha256": "a2c3dd35679a79dfbafc9178ff1da079542e5b2f0d9d9b7ecba92233c9236946",
+      "size_bytes": 10466
+    },
+    "metadata.json": {
+      "sha256": "1b93294ecf564a3090d97113a9711f42ff8796eb08f1e4fb0c6c60094a8fc8db",
+      "size_bytes": 403
+    },
+    "predictions.jsonl": {
+      "sha256": "ae213d901626a526928ae22fce8c09a9b9bc3d1692a1b17a2ebd4aa910b7dfe2",
+      "size_bytes": 20762
+    },
+    "scores.json": {
+      "sha256": "d2946b910ec8e31ef6dc9c69247c6aad310257ad353b12a76f2f7dafc21bfb71",
+      "size_bytes": 1544
+    }
+  },
+  "query_set_hash": "534484d3ef392d9820e587ee8b64ee8a92984f5f1124384236b78799231c3a71",
+  "query_set_id": "express-docs-pilot-queries",
+  "resolved_run_identity_hash": "f8b5d94db9726b84aeaf4bf310f883f26846e63beb3be19f6dfee61b1315baef",
+  "retrieval_arena_git_provenance": {
+    "branch": "IEEEBigData2026_metrics",
+    "commit": "77dbb3d777f3d3a4ea463ea0b6b36df75c820a5c",
+    "diff_hash": "5f4ac6f7d5c30fab221beffc30e2610f6c8e5d0ab76d626a4bc365cdf99df459",
+    "dirty": true,
+    "is_git_worktree": true,
+    "ref": null,
+    "ref_commit": null,
+    "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
+    "repo_root": ".",
+    "tag": null,
+    "untracked_files": [
+      "docs/incremental_baseline_refresh.md"
+    ]
+  },
+  "retrieval_arena_version": "0.1.0",
+  "retrieval_config_hash": "78c0468a22a6d73701478e5d472da022869b16779f3a0d1cedf831d39c8bf158",
+  "retrieval_config_id": "oracle_graph_support",
+  "run_completed_at": "2026-05-26T10:51:14.929806+00:00",
+  "run_id": "fb402f1d83",
+  "run_started_at": "2026-05-26T10:51:14.357190+00:00",
+  "schema_version": "retrieval_arena.replay_manifest.v1",
+  "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
+  "scoring_method": "lexical_baseline",
+  "snapshot_manifest_references": {
+    "corpus": {
+      "manifest_hash": "2d4e924b1c1a6d1a15d42a73520549642d43381e77d1734ae3f0922908c67d89",
+      "manifest_type": "corpus_snapshot",
+      "path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\corpus_snapshot_manifest.json",
+      "snapshot_id": "2025-09-20"
+    },
+    "graph": {
+      "manifest_hash": "ea63a75e843a1603fdd09b5fc73cfc07d1211128b7e7016b965a2883a3069e56",
+      "manifest_type": "graph_snapshot",
+      "path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\graph_snapshot_manifest.json",
+      "snapshot_id": "2025-09-20"
+    },
+    "support_surface": {
+      "manifest_hash": "11f2fdf4348ee2e89e9763cf4df4a115325c6101ea26c2a5486105f4fd924c81",
+      "manifest_type": "support_surface",
+      "path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\snapshot_manifests\\support_surface_manifest.json",
+      "snapshot_id": "2025-09-20"
+    }
+  },
+  "support_surface_id": "2025-09-20",
+  "test": "oracle_graph_support"
+}

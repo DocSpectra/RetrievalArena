@@ -1,0 +1,40 @@
+{
+  "build_context": "tests\\rag_graph_multihop_rerank",
+  "completed_at": "2026-05-27T06:46:00.463709+00:00",
+  "config_path": "configs\\bigdata2026\\retrieval_kubernetes_website_docs_before.yaml",
+  "container_metadata": {
+    "candidate_budget": 60,
+    "deterministic": true,
+    "directed": false,
+    "distance_penalty": 0.15,
+    "final_ranker": "bm25_minus_distance_penalty",
+    "final_top_k": 5,
+    "frontier_budget_per_node": 12,
+    "max_context_chars_per_doc": 1200,
+    "max_hops": 3,
+    "name": "rag_graph_multihop_rerank",
+    "reserved_deep_slots": 2,
+    "reserved_min_graph_distance": 2,
+    "seed_ranker": "bm25",
+    "seed_top_k": 5
+  },
+  "dataset": "kubernetes_website_docs",
+  "diagnostic_overlay": {
+    "diagnostic_trace_available": true,
+    "distance_overlay_available": true,
+    "graph_node_count": 1449,
+    "support_question_count": 24
+  },
+  "git_commit": "0a9db1cc8a03cdbbece5149a8b87e63182cf6cb0",
+  "image": "retrieval-arena/rag-graph-multihop-rerank:latest",
+  "match_percent": 0.0,
+  "mean_f1": 0.0005929354333609652,
+  "mean_lexical_overlap": 0.0005241297468354431,
+  "mean_precision": 0.025000000000000005,
+  "mean_recall": 0.00030027416804180416,
+  "num_questions": 24,
+  "retrieval_arena_version": "0.1.0",
+  "run_id": "f2712dedb2",
+  "started_at": "2026-05-27T06:45:59.779975+00:00",
+  "test": "rag_graph_multihop_rerank"
+}

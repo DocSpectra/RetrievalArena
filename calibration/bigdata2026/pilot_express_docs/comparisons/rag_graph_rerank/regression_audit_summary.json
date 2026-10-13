@@ -1,0 +1,132 @@
+{
+  "after": {
+    "corpus_snapshot_id": "2026-03-30",
+    "dataset": "express_docs",
+    "graph_snapshot_id": "2026-03-30",
+    "manifest_hash": "f9bcd078a8a1df77ebc9d44e79ac9ab4ee1a068a0046f7ae95bf241d21f2af69",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "04b843670063367e6bfb9a9039467bba5c1708468d7938e7c7380153229b08dc",
+    "retrieval_config_id": "rag_graph_rerank",
+    "run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_rerank__6a80ca385b",
+    "run_id": "6a80ca385b",
+    "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
+    "support_surface_id": "2026-03-30",
+    "test": "rag_graph_rerank"
+  },
+  "before": {
+    "corpus_snapshot_id": "2025-09-20",
+    "dataset": "express_docs",
+    "graph_snapshot_id": "2025-09-20",
+    "manifest_hash": "1e8af902fcee12c333fce64fdc183d8bc2032a8294e0e4b5b3ff97a68be2627b",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "78c0468a22a6d73701478e5d472da022869b16779f3a0d1cedf831d39c8bf158",
+    "retrieval_config_id": "rag_graph_rerank",
+    "run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_rerank__6a80ca385b",
+    "run_id": "6a80ca385b",
+    "scoring_hash": "ed9e87b889bd797a155742848534a931011cf45761d65c5d7c1377fb93d21329",
+    "support_surface_id": "2025-09-20",
+    "test": "rag_graph_rerank"
+  },
+  "cause_label_counts": {
+    "corpus_page_changed": 3,
+    "evidence_unavailable": 8,
+    "graph_edge_removed": 3,
+    "replay_manifest_changed": 8,
+    "retrieval_config_changed": 8,
+    "support_target_added": 3,
+    "support_target_changed": 3,
+    "support_target_removed": 3
+  },
+  "comparison_type": "regression_audit",
+  "created_at": "2026-05-26T10:51:34+00:00",
+  "evidence_availability_counts": {
+    "action_trace": {
+      "available": 8
+    },
+    "corpus": {
+      "available": 8
+    },
+    "distance_to_support": {
+      "unavailable": 8
+    },
+    "evidence_coverage": {
+      "available": 8
+    },
+    "graph": {
+      "available": 8
+    },
+    "lexical_answer_score": {
+      "available": 8
+    },
+    "rank": {
+      "available": 8
+    },
+    "replay_manifest": {
+      "available": 8
+    },
+    "retrieval_candidates": {
+      "available": 8
+    },
+    "retrieval_config": {
+      "available": 8
+    },
+    "retrieval_score": {
+      "available": 8
+    },
+    "scoring_config": {
+      "available": 8
+    },
+    "snapshot_diff": {
+      "available": 8
+    },
+    "support_exposure": {
+      "available": 8
+    },
+    "support_recall": {
+      "available": 8
+    },
+    "support_surface": {
+      "available": 8
+    }
+  },
+  "input_artifacts": {
+    "after_replay_manifest": {
+      "path": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_rerank__6a80ca385b\\retrieval_replay_manifest.json",
+      "sha256": "726b8e17b30ab576182cc326d99e588910c5e096bdc98c51e8e1053ea0b55670",
+      "size_bytes": 14823
+    },
+    "after_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_rerank__6a80ca385b",
+    "before_replay_manifest": {
+      "path": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_rerank__6a80ca385b\\retrieval_replay_manifest.json",
+      "sha256": "0c20244fb24d5a54e423fbc4afcab1473eec37ac70c4441f019bbf18a8e3d783",
+      "size_bytes": 14829
+    },
+    "before_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_rerank__6a80ca385b",
+    "drift_jsonl": {
+      "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\retrieval_drift.jsonl",
+      "sha256": "60f6af90eb7d0eced67c84fd41d9c0d174397828c1f3005a610118fa6995d7af",
+      "size_bytes": 17944
+    },
+    "drift_summary_json": {
+      "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\retrieval_drift_summary.json",
+      "sha256": "bdb333a929efcc8b12f05ff98f2fd13f06e5cd1b4966d60de504e2139f2e06ac",
+      "size_bytes": 4862
+    },
+    "snapshot_diff_json": {
+      "path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\snapshot_diff.json",
+      "sha256": "1c56ab17f4c241c1c0d075d568ed8f56cc5b92483c6cfd1d90f13be7e4a06319",
+      "size_bytes": 32171
+    }
+  },
+  "labeled_query_count": 8,
+  "manifest_hash": "cc58e9781553873805865cd5581fd38e41f0cabd75478490767cdefc1ad0fdb3",
+  "manifest_type": "regression_audit_summary",
+  "overall_drift_score": null,
+  "overall_drift_score_note": "No overall drift score or composite summary metric is computed.",
+  "query_count": 8,
+  "schema_version": "retrieval_arena.regression_audit_summary.v1",
+  "source_report_references": {
+    "drift_summary_schema_version": "retrieval_arena.retrieval_drift_summary.v1",
+    "snapshot_diff_schema_version": "retrieval_arena.snapshot_diff.v1"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "candidate_budget": 60,
+  "deterministic": true,
+  "directed": false,
+  "distance_penalty": 0.15,
+  "final_ranker": "bm25_minus_distance_penalty",
+  "final_top_k": 5,
+  "frontier_budget_per_node": 12,
+  "max_context_chars_per_doc": 1200,
+  "max_hops": 3,
+  "name": "rag_graph_multihop_rerank",
+  "reserved_deep_slots": 2,
+  "reserved_min_graph_distance": 2,
+  "seed_ranker": "bm25",
+  "seed_top_k": 5
+}

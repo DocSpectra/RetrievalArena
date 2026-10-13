@@ -1,0 +1,14 @@
+*
+!retrieval_arena/
+!retrieval_arena/**
+**/__pycache__/
+!unit_tests/
+!unit_tests/ragas_fixture.py
+!unit_tests/test_ragas_scoring.py
+!unit_tests/test_ragas_api.py
+!unit_tests/test_model_providers.py
+!containers/
+!containers/ragas/
+!containers/ragas/Dockerfile
+!containers/ragas/requirements.lock
+!containers/ragas/ragas_operator.py

@@ -1,0 +1,22 @@
+{
+  "answers_file": "answers.jsonl",
+  "answers_file_hash": "2f6671068708afb4a6460aacfac31aa382b8832b819c051f2d69c7c6e1cf1e30",
+  "corpus_directory_hash": "8ca217d5bb2cd8d8878dac557b637912f9e0bd17fba26fab2aec5b94b4039229",
+  "corpus_id": "docker_docs",
+  "created_at": "2026-05-26T10:14:23+00:00",
+  "dataset_output_path": "reports\\bigdata2026\\pilot_docker_docs\\snapshot_comparison\\before\\dataset",
+  "graph_edge_file_hash": null,
+  "import_manifest_hash": "04a069f1c0679b661ac3fecd9701f241a6c45552bc6c0bc66f92366701308903",
+  "import_manifest_path": "raw\\corpus_imports\\docker_docs\\2026-05-01\\corpus_import_manifest.json",
+  "manifest_hash": "6e5c1d28dbabb57ffea7fa1a213418845fb6de46f2ef06b066aefa02ebb89e1b",
+  "manifest_type": "dataset_preparation",
+  "query_set_id": "docker-docs-pilot-queries",
+  "questions_file": "questions.jsonl",
+  "questions_file_hash": "897060e7f4d5240de659b9001d2465e7958f0e77444f4625b70e4e00144ffddb",
+  "schema_version": "retrieval_arena.dataset_preparation_manifest.v1",
+  "snapshot_id": "2026-05-01",
+  "stage_status": "ok",
+  "support_input_hash": null,
+  "validation_error": null,
+  "validation_status": "ok"
+}

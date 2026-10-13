@@ -1,0 +1,19 @@
+{
+  "schema_version": "retrieval_arena.ragas_judge_config.v3",
+  "provider": "ollama",
+  "model": "REPLACE_WITH_INSTALLED_MODEL_TAG",
+  "revision": "REPLACE_WITH_MODEL_SHA256",
+  "temperature": 0,
+  "seed": 7,
+  "retries": 1,
+  "timeout_seconds": 600,
+  "max_output_tokens": 4096,
+  "max_input_tokens": 32000,
+  "answer_prompt": "answer_satisfaction.v4",
+  "context_prompt": "context_support.v4",
+  "thinking": false,
+  "faithfulness": true,
+  "element_completeness": false,
+  "context_recall": true,
+  "factual_correctness": {"mode": "f1", "beta": 1.0, "atomicity": "low", "coverage": "low"}
+}

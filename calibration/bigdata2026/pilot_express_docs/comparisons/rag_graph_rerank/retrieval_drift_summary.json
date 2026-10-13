@@ -1,0 +1,127 @@
+{
+  "after": {
+    "corpus_snapshot_id": "2026-03-30",
+    "dataset": "express_docs",
+    "graph_snapshot_id": "2026-03-30",
+    "manifest_hash": "f9bcd078a8a1df77ebc9d44e79ac9ab4ee1a068a0046f7ae95bf241d21f2af69",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "04b843670063367e6bfb9a9039467bba5c1708468d7938e7c7380153229b08dc",
+    "retrieval_config_id": "rag_graph_rerank",
+    "run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_rerank__6a80ca385b",
+    "run_id": "6a80ca385b",
+    "support_surface_id": "2026-03-30",
+    "test": "rag_graph_rerank"
+  },
+  "artifact_hashes": {
+    "after": {
+      "action_traces.jsonl": {
+        "sha256": "feacfe297199477bf09fa27f2ad9a2ac06c3a0baad73b4d0e200b478dde4c8c5",
+        "size_bytes": 3224
+      },
+      "item_scores.jsonl": {
+        "sha256": "a2c3dd35679a79dfbafc9178ff1da079542e5b2f0d9d9b7ecba92233c9236946",
+        "size_bytes": 10466
+      },
+      "metadata.json": {
+        "sha256": "bb87e3606eba993a63a755e7cd405f3de564e9437c16e9252499e2df56431c37",
+        "size_bytes": 185
+      },
+      "predictions.jsonl": {
+        "sha256": "7479ea8ba90670d5b3e360580c9cfb6ae0837fb3376d6bb35b4ca8e4ad164ccd",
+        "size_bytes": 18094
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "726b8e17b30ab576182cc326d99e588910c5e096bdc98c51e8e1053ea0b55670",
+        "size_bytes": 14823
+      },
+      "scores.json": {
+        "sha256": "151652a7356ba3ab599fce3777946a92038cd77dbddbd3369c3efe451637a8dd",
+        "size_bytes": 1286
+      }
+    },
+    "before": {
+      "action_traces.jsonl": {
+        "sha256": "feacfe297199477bf09fa27f2ad9a2ac06c3a0baad73b4d0e200b478dde4c8c5",
+        "size_bytes": 3224
+      },
+      "item_scores.jsonl": {
+        "sha256": "a2c3dd35679a79dfbafc9178ff1da079542e5b2f0d9d9b7ecba92233c9236946",
+        "size_bytes": 10466
+      },
+      "metadata.json": {
+        "sha256": "bb87e3606eba993a63a755e7cd405f3de564e9437c16e9252499e2df56431c37",
+        "size_bytes": 185
+      },
+      "predictions.jsonl": {
+        "sha256": "49aa2db70624cb568458e61d6ca23680c81a4d83781a551842581b13314d89f0",
+        "size_bytes": 18058
+      },
+      "retrieval_replay_manifest.json": {
+        "sha256": "0c20244fb24d5a54e423fbc4afcab1473eec37ac70c4441f019bbf18a8e3d783",
+        "size_bytes": 14829
+      },
+      "scores.json": {
+        "sha256": "ee9d2f7d0e165a6799af0192cebbdc3630a51ee555b7f38c7c857c2ec4ce8859",
+        "size_bytes": 1287
+      }
+    }
+  },
+  "before": {
+    "corpus_snapshot_id": "2025-09-20",
+    "dataset": "express_docs",
+    "graph_snapshot_id": "2025-09-20",
+    "manifest_hash": "1e8af902fcee12c333fce64fdc183d8bc2032a8294e0e4b5b3ff97a68be2627b",
+    "query_set_id": "express-docs-pilot-queries",
+    "retrieval_config_hash": "78c0468a22a6d73701478e5d472da022869b16779f3a0d1cedf831d39c8bf158",
+    "retrieval_config_id": "rag_graph_rerank",
+    "run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_rerank__6a80ca385b",
+    "run_id": "6a80ca385b",
+    "support_surface_id": "2025-09-20",
+    "test": "rag_graph_rerank"
+  },
+  "comparison_type": "retrieval_drift",
+  "created_at": "2026-05-26T10:51:33+00:00",
+  "evidence_coverage_regression_count": 0,
+  "manifest_hash": "bf28e7a519a9ec4a848d5f28fcea551e0eed4f9af47f2a881afb4338336c89e9",
+  "manifest_type": "retrieval_drift_summary",
+  "mean_distance_to_support_delta": null,
+  "mean_lexical_f1_delta": 0.0,
+  "mean_ordered_top_k_overlap": 1.0,
+  "mean_rank_displacement": 0.0,
+  "mean_support_recall_delta": 0.0,
+  "mean_top_k_jaccard": 1.0,
+  "optional_signal_availability": {
+    "action_trace": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "distance_to_support": {
+      "available_count": 0,
+      "unavailable_count": 8
+    },
+    "evidence_coverage": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "lexical_score_delta": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "retained_score_delta": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "support_exposure": {
+      "available_count": 8,
+      "unavailable_count": 0
+    },
+    "support_recall": {
+      "available_count": 8,
+      "unavailable_count": 0
+    }
+  },
+  "query_count": 8,
+  "schema_version": "retrieval_arena.retrieval_drift_summary.v1",
+  "support_exposure_regression_count": 0,
+  "support_recall_regression_count": 0
+}

@@ -222,3 +222,23 @@ __marimo__/
 results/**
 !results/
 !results/.gitkeep
+
+# Local test scratch output
+.tmp_unit_tests/
+
+# BigData generated corpus/run artifacts
+raw/**
+processed/**
+graphs/**
+reports/**
+analysis/**
+!raw/
+!raw/.gitkeep
+!processed/
+!processed/.gitkeep
+!graphs/
+!graphs/.gitkeep
+!reports/
+!reports/.gitkeep
+!analysis/
+!analysis/.gitkeep

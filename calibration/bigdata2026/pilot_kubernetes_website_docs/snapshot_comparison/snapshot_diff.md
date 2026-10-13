@@ -1,0 +1,748 @@
+# Snapshot Diff
+
+- Status: FAILED
+- Corpus files: +164 / -103 / changed 77
+- Graph edges: +159 / -209
+- Support questions changed: 13
+
+## Corpus
+
+### Added Files
+- `blog/_posts/2026-03-20-etcd-370-beta.md`
+- `blog/_posts/2026/deprecation-of-service-externalips.md`
+- `blog/_posts/2026/mixed-version-proxy.md`
+- `blog/_posts/2026/psi-metrics-ga.md`
+- `blog/_posts/2026/reconciling-unfixed-kubernetes-cves.md`
+- `docs/concepts/workloads/pods/probes.md`
+- `docs/concepts/workloads/pods/static-pods.md`
+- `docs/reference/glossary/san.md`
+- `docs/reference/kubernetes-api/admissionregistration/_index.md`
+- `docs/reference/kubernetes-api/admissionregistration/mutating-admission-policy-binding-v1.md`
+- `docs/reference/kubernetes-api/admissionregistration/mutating-admission-policy-v1.md`
+- `docs/reference/kubernetes-api/admissionregistration/mutating-webhook-configuration-v1.md`
+- `docs/reference/kubernetes-api/admissionregistration/validating-admission-policy-binding-v1.md`
+- `docs/reference/kubernetes-api/admissionregistration/validating-admission-policy-v1.md`
+- `docs/reference/kubernetes-api/admissionregistration/validating-webhook-configuration-v1.md`
+- `docs/reference/kubernetes-api/apiextensions/_index.md`
+- `docs/reference/kubernetes-api/apiextensions/custom-resource-definition-v1.md`
+- `docs/reference/kubernetes-api/apiregistration/_index.md`
+- `docs/reference/kubernetes-api/apiregistration/api-service-v1.md`
+- `docs/reference/kubernetes-api/apiserverinternal/_index.md`
+- `docs/reference/kubernetes-api/apiserverinternal/storage-version-v1alpha1.md`
+- `docs/reference/kubernetes-api/apps/_index.md`
+- `docs/reference/kubernetes-api/apps/controller-revision-v1.md`
+- `docs/reference/kubernetes-api/apps/daemon-set-v1.md`
+- `docs/reference/kubernetes-api/apps/deployment-v1.md`
+- `docs/reference/kubernetes-api/apps/replica-set-v1.md`
+- `docs/reference/kubernetes-api/apps/stateful-set-v1.md`
+- `docs/reference/kubernetes-api/autoscaling/_index.md`
+- `docs/reference/kubernetes-api/autoscaling/horizontal-pod-autoscaler-v2.md`
+- `docs/reference/kubernetes-api/batch/_index.md`
+- `docs/reference/kubernetes-api/batch/cron-job-v1.md`
+- `docs/reference/kubernetes-api/batch/job-v1.md`
+- `docs/reference/kubernetes-api/certificates/_index.md`
+- `docs/reference/kubernetes-api/certificates/certificate-signing-request-v1.md`
+- `docs/reference/kubernetes-api/certificates/cluster-trust-bundle-v1beta1.md`
+- `docs/reference/kubernetes-api/certificates/pod-certificate-request-v1beta1.md`
+- `docs/reference/kubernetes-api/coordination/_index.md`
+- `docs/reference/kubernetes-api/coordination/lease-candidate-v1beta1.md`
+- `docs/reference/kubernetes-api/coordination/lease-v1.md`
+- `docs/reference/kubernetes-api/core/_index.md`
+- `docs/reference/kubernetes-api/core/component-status-v1.md`
+- `docs/reference/kubernetes-api/core/config-map-v1.md`
+- `docs/reference/kubernetes-api/core/endpoints-v1.md`
+- `docs/reference/kubernetes-api/core/event-v1.md`
+- `docs/reference/kubernetes-api/core/limit-range-v1.md`
+- `docs/reference/kubernetes-api/core/namespace-v1.md`
+- `docs/reference/kubernetes-api/core/node-v1.md`
+- `docs/reference/kubernetes-api/core/persistent-volume-claim-v1.md`
+- `docs/reference/kubernetes-api/core/persistent-volume-v1.md`
+- `docs/reference/kubernetes-api/core/pod-template-v1.md`
+- `docs/reference/kubernetes-api/core/pod-v1.md`
+- `docs/reference/kubernetes-api/core/replication-controller-v1.md`
+- `docs/reference/kubernetes-api/core/resource-quota-v1.md`
+- `docs/reference/kubernetes-api/core/secret-v1.md`
+- `docs/reference/kubernetes-api/core/service-account-v1.md`
+- `docs/reference/kubernetes-api/core/service-v1.md`
+- `docs/reference/kubernetes-api/definitions/_index.md`
+- `docs/reference/kubernetes-api/definitions/api-group-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/api-resource-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/api-versions-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/basic-device-v1beta1-resource.md`
+- `docs/reference/kubernetes-api/definitions/binding-v1.md`
+- `docs/reference/kubernetes-api/definitions/condition-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/delete-options-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/event-source-v1.md`
+- `docs/reference/kubernetes-api/definitions/eviction-v1-policy.md`
+- `docs/reference/kubernetes-api/definitions/field-selector-attributes-v1-authorization.md`
+- `docs/reference/kubernetes-api/definitions/field-selector-requirement-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/fields-v1-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/group-resource-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/group-version-for-discovery-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/label-selector-attributes-v1-authorization.md`
+- `docs/reference/kubernetes-api/definitions/label-selector-requirement-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/label-selector-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/list-meta-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/local-object-reference-v1.md`
+- `docs/reference/kubernetes-api/definitions/local-subject-access-review-v1-authorization.md`
+- `docs/reference/kubernetes-api/definitions/managed-fields-entry-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/match-condition-v1-admissionregistration.md`
+- `docs/reference/kubernetes-api/definitions/match-resources-v1-admissionregistration.md`
+- `docs/reference/kubernetes-api/definitions/micro-time-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/named-rule-with-operations-v1-admissionregistration.md`
+- `docs/reference/kubernetes-api/definitions/node-selector-term-v1.md`
+- `docs/reference/kubernetes-api/definitions/node-selector-v1.md`
+- `docs/reference/kubernetes-api/definitions/non-resource-attributes-v1-authorization.md`
+- `docs/reference/kubernetes-api/definitions/non-resource-rule-v1-authorization.md`
+- `docs/reference/kubernetes-api/definitions/object-meta-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/object-reference-v1.md`
+- `docs/reference/kubernetes-api/definitions/owner-reference-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/param-kind-v1-admissionregistration.md`
+- `docs/reference/kubernetes-api/definitions/param-ref-v1-admissionregistration.md`
+- `docs/reference/kubernetes-api/definitions/patch-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/policy-rule-v1-rbac.md`
+- `docs/reference/kubernetes-api/definitions/preconditions-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/quantity-resource.md`
+- `docs/reference/kubernetes-api/definitions/resource-attributes-v1-authorization.md`
+- `docs/reference/kubernetes-api/definitions/resource-rule-v1-authorization.md`
+- `docs/reference/kubernetes-api/definitions/role-ref-v1-rbac.md`
+- `docs/reference/kubernetes-api/definitions/rule-with-operations-v1-admissionregistration.md`
+- `docs/reference/kubernetes-api/definitions/scale-v1-autoscaling.md`
+- `docs/reference/kubernetes-api/definitions/self-subject-access-review-v1-authorization.md`
+- `docs/reference/kubernetes-api/definitions/self-subject-review-v1-authentication.md`
+- `docs/reference/kubernetes-api/definitions/self-subject-rules-review-v1-authorization.md`
+- `docs/reference/kubernetes-api/definitions/server-address-by-client-cidr-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/service-reference-v1-admissionregistration.md`
+- `docs/reference/kubernetes-api/definitions/shard-info-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/status-cause-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/status-details-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/status-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/subject-access-review-v1-authorization.md`
+- `docs/reference/kubernetes-api/definitions/subject-rules-review-status-v1-authorization.md`
+- `docs/reference/kubernetes-api/definitions/subject-v1-rbac.md`
+- `docs/reference/kubernetes-api/definitions/time-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/token-review-v1-authentication.md`
+- `docs/reference/kubernetes-api/definitions/toleration-v1.md`
+- `docs/reference/kubernetes-api/definitions/typed-local-object-reference-v1.md`
+- `docs/reference/kubernetes-api/definitions/typed-local-object-reference-v1alpha2-scheduling.md`
+- `docs/reference/kubernetes-api/definitions/user-info-v1-authentication.md`
+- `docs/reference/kubernetes-api/definitions/variable-v1-admissionregistration.md`
+- `docs/reference/kubernetes-api/definitions/watch-event-v1-meta.md`
+- `docs/reference/kubernetes-api/definitions/webhook-client-config-v1-admissionregistration.md`
+- `docs/reference/kubernetes-api/discovery/_index.md`
+- `docs/reference/kubernetes-api/discovery/endpoint-slice-v1.md`
+- `docs/reference/kubernetes-api/events/_index.md`
+- `docs/reference/kubernetes-api/events/event-v1.md`
+- `docs/reference/kubernetes-api/flowcontrol/_index.md`
+- `docs/reference/kubernetes-api/flowcontrol/flow-schema-v1.md`
+- `docs/reference/kubernetes-api/flowcontrol/priority-level-configuration-v1.md`
+- `docs/reference/kubernetes-api/group-versions.md`
+- `docs/reference/kubernetes-api/networking/_index.md`
+- `docs/reference/kubernetes-api/networking/ingress-class-v1.md`
+- `docs/reference/kubernetes-api/networking/ingress-v1.md`
+- `docs/reference/kubernetes-api/networking/ip-address-v1.md`
+- `docs/reference/kubernetes-api/networking/network-policy-v1.md`
+- `docs/reference/kubernetes-api/networking/service-cidr-v1.md`
+- `docs/reference/kubernetes-api/node/_index.md`
+- `docs/reference/kubernetes-api/node/runtime-class-v1.md`
+- `docs/reference/kubernetes-api/policy/_index.md`
+- `docs/reference/kubernetes-api/policy/pod-disruption-budget-v1.md`
+- `docs/reference/kubernetes-api/rbac/_index.md`
+- `docs/reference/kubernetes-api/rbac/cluster-role-binding-v1.md`
+- `docs/reference/kubernetes-api/rbac/cluster-role-v1.md`
+- `docs/reference/kubernetes-api/rbac/role-binding-v1.md`
+- `docs/reference/kubernetes-api/rbac/role-v1.md`
+- `docs/reference/kubernetes-api/resource/_index.md`
+- `docs/reference/kubernetes-api/resource/device-class-v1.md`
+- `docs/reference/kubernetes-api/resource/device-taint-rule-v1beta2.md`
+- `docs/reference/kubernetes-api/resource/resource-claim-template-v1.md`
+- `docs/reference/kubernetes-api/resource/resource-claim-v1.md`
+- `docs/reference/kubernetes-api/resource/resource-pool-status-request-v1alpha3.md`
+- `docs/reference/kubernetes-api/resource/resource-slice-v1.md`
+- `docs/reference/kubernetes-api/scheduling/_index.md`
+- `docs/reference/kubernetes-api/scheduling/pod-group-v1alpha2.md`
+- `docs/reference/kubernetes-api/scheduling/priority-class-v1.md`
+- `docs/reference/kubernetes-api/scheduling/workload-v1alpha2.md`
+- `docs/reference/kubernetes-api/storage/_index.md`
+- `docs/reference/kubernetes-api/storage/csi-driver-v1.md`
+- `docs/reference/kubernetes-api/storage/csi-node-v1.md`
+- `docs/reference/kubernetes-api/storage/csi-storage-capacity-v1.md`
+- `docs/reference/kubernetes-api/storage/storage-class-v1.md`
+- `docs/reference/kubernetes-api/storage/volume-attachment-v1.md`
+- `docs/reference/kubernetes-api/storage/volume-attributes-class-v1.md`
+- `docs/reference/kubernetes-api/storagemigration/_index.md`
+- `docs/reference/kubernetes-api/storagemigration/storage-version-migration-v1beta1.md`
+
+### Removed Files
+- `blog/_posts/2026-04-22-psi-metrics-ga/index.md`
+- `blog/_posts/2026/mutable-csi-node-allocatable-ga.md`
+- `docs/concepts/configuration/liveness-readiness-startup-probes.md`
+- `docs/reference/kubernetes-api/authentication-resources/_index.md`
+- `docs/reference/kubernetes-api/authentication-resources/certificate-signing-request-v1.md`
+- `docs/reference/kubernetes-api/authentication-resources/cluster-trust-bundle-v1beta1.md`
+- `docs/reference/kubernetes-api/authentication-resources/pod-certificate-request-v1beta1.md`
+- `docs/reference/kubernetes-api/authentication-resources/self-subject-review-v1.md`
+- `docs/reference/kubernetes-api/authentication-resources/service-account-v1.md`
+- `docs/reference/kubernetes-api/authentication-resources/token-request-v1.md`
+- `docs/reference/kubernetes-api/authentication-resources/token-review-v1.md`
+- `docs/reference/kubernetes-api/authorization-resources/_index.md`
+- `docs/reference/kubernetes-api/authorization-resources/cluster-role-binding-v1.md`
+- `docs/reference/kubernetes-api/authorization-resources/cluster-role-v1.md`
+- `docs/reference/kubernetes-api/authorization-resources/local-subject-access-review-v1.md`
+- `docs/reference/kubernetes-api/authorization-resources/role-binding-v1.md`
+- `docs/reference/kubernetes-api/authorization-resources/role-v1.md`
+- `docs/reference/kubernetes-api/authorization-resources/self-subject-access-review-v1.md`
+- `docs/reference/kubernetes-api/authorization-resources/self-subject-rules-review-v1.md`
+- `docs/reference/kubernetes-api/authorization-resources/subject-access-review-v1.md`
+- `docs/reference/kubernetes-api/cluster-resources/_index.md`
+- `docs/reference/kubernetes-api/cluster-resources/api-service-v1.md`
+- `docs/reference/kubernetes-api/cluster-resources/component-status-v1.md`
+- `docs/reference/kubernetes-api/cluster-resources/event-v1.md`
+- `docs/reference/kubernetes-api/cluster-resources/ip-address-v1.md`
+- `docs/reference/kubernetes-api/cluster-resources/lease-candidate-v1beta1.md`
+- `docs/reference/kubernetes-api/cluster-resources/lease-v1.md`
+- `docs/reference/kubernetes-api/cluster-resources/namespace-v1.md`
+- `docs/reference/kubernetes-api/cluster-resources/node-v1.md`
+- `docs/reference/kubernetes-api/cluster-resources/resource-pool-status-request-v1alpha3.md`
+- `docs/reference/kubernetes-api/cluster-resources/runtime-class-v1.md`
+- `docs/reference/kubernetes-api/cluster-resources/service-cidr-v1.md`
+- `docs/reference/kubernetes-api/common-definitions/_index.md`
+- `docs/reference/kubernetes-api/common-definitions/delete-options.md`
+- `docs/reference/kubernetes-api/common-definitions/label-selector.md`
+- `docs/reference/kubernetes-api/common-definitions/list-meta.md`
+- `docs/reference/kubernetes-api/common-definitions/local-object-reference.md`
+- `docs/reference/kubernetes-api/common-definitions/node-selector-requirement.md`
+- `docs/reference/kubernetes-api/common-definitions/object-field-selector.md`
+- `docs/reference/kubernetes-api/common-definitions/object-meta.md`
+- `docs/reference/kubernetes-api/common-definitions/object-reference.md`
+- `docs/reference/kubernetes-api/common-definitions/patch.md`
+- `docs/reference/kubernetes-api/common-definitions/quantity.md`
+- `docs/reference/kubernetes-api/common-definitions/resource-field-selector.md`
+- `docs/reference/kubernetes-api/common-definitions/status.md`
+- `docs/reference/kubernetes-api/common-definitions/typed-local-object-reference.md`
+- `docs/reference/kubernetes-api/common-parameters/common-parameters.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/_index.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/config-map-v1.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/csi-driver-v1.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/csi-node-v1.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/csi-storage-capacity-v1.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-v1.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/secret-v1.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/storage-class-v1.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/storage-version-migration-v1beta1.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/volume-attachment-v1.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/volume-attributes-class-v1.md`
+- `docs/reference/kubernetes-api/config-and-storage-resources/volume.md`
+- `docs/reference/kubernetes-api/extend-resources/_index.md`
+- `docs/reference/kubernetes-api/extend-resources/custom-resource-definition-v1.md`
+- `docs/reference/kubernetes-api/extend-resources/device-class-v1.md`
+- `docs/reference/kubernetes-api/extend-resources/mutating-webhook-configuration-v1.md`
+- `docs/reference/kubernetes-api/extend-resources/validating-webhook-configuration-v1.md`
+- `docs/reference/kubernetes-api/policy-resources/_index.md`
+- `docs/reference/kubernetes-api/policy-resources/flow-schema-v1.md`
+- `docs/reference/kubernetes-api/policy-resources/limit-range-v1.md`
+- `docs/reference/kubernetes-api/policy-resources/mutating-admission-policy-binding-v1.md`
+- `docs/reference/kubernetes-api/policy-resources/mutating-admission-policy-v1.md`
+- `docs/reference/kubernetes-api/policy-resources/network-policy-v1.md`
+- `docs/reference/kubernetes-api/policy-resources/pod-disruption-budget-v1.md`
+- `docs/reference/kubernetes-api/policy-resources/priority-level-configuration-v1.md`
+- `docs/reference/kubernetes-api/policy-resources/resource-quota-v1.md`
+- `docs/reference/kubernetes-api/policy-resources/validating-admission-policy-binding-v1.md`
+- `docs/reference/kubernetes-api/policy-resources/validating-admission-policy-v1.md`
+- `docs/reference/kubernetes-api/service-resources/_index.md`
+- `docs/reference/kubernetes-api/service-resources/endpoint-slice-v1.md`
+- `docs/reference/kubernetes-api/service-resources/endpoints-v1.md`
+- `docs/reference/kubernetes-api/service-resources/ingress-class-v1.md`
+- `docs/reference/kubernetes-api/service-resources/ingress-v1.md`
+- `docs/reference/kubernetes-api/service-resources/service-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/_index.md`
+- `docs/reference/kubernetes-api/workload-resources/binding-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/controller-revision-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/cron-job-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/daemon-set-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/deployment-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/device-taint-rule-v1beta2.md`
+- `docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2.md`
+- `docs/reference/kubernetes-api/workload-resources/job-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/pod-group-v1alpha2.md`
+- `docs/reference/kubernetes-api/workload-resources/pod-template-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/pod-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/priority-class-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/replica-set-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/replication-controller-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/resource-claim-template-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/resource-claim-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/resource-slice-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/stateful-set-v1.md`
+- `docs/reference/kubernetes-api/workload-resources/workload-v1alpha2.md`
+
+### Changed Files
+- `blog/_posts/2018/kubernetes-1-10-stabilizing-storage-security-networking.md`
+- `blog/_posts/2018/kubernetes-1-11-release-announcement.md`
+- `blog/_posts/2018/kubernetes-1-12-release-announcement.md`
+- `blog/_posts/2018/kubernetes-1-13-release-announcement.md`
+- `blog/_posts/2019/1-14-release-announcement.md`
+- `blog/_posts/2019/kubernetes-1-15-release-announcement.md`
+- `blog/_posts/2019/kubernetes-1-16-release-announcement.md`
+- `blog/_posts/2019/kubernetes-1.17-release-announcement.md`
+- `blog/_posts/2020/kubernetes-1.18-release-announcement.md`
+- `blog/_posts/2020/kubernetes-release-1.19.md`
+- `blog/_posts/2020/kubernetes-release-1.20.md`
+- `blog/_posts/2021/kubernetes-release-1.21.md`
+- `blog/_posts/2021/kubernetes-release-1.22.md`
+- `blog/_posts/2021/kubernetes-release-1.23.md`
+- `blog/_posts/2022/kubernetes-1.25-blog.md`
+- `blog/_posts/2022/kubernetes-1.26-blog.md`
+- `blog/_posts/2022/kubernetes-release-1.24.md`
+- `blog/_posts/2023/kubernetes-1.27-release.md`
+- `blog/_posts/2023/kubernetes-1.28-blog.md`
+- `blog/_posts/2023/kubernetes-1.29.md`
+- `blog/_posts/2024/kubernetes-v1-30-release.md`
+- `blog/_posts/2024/kubernetes-v1-31-release.md`
+- `blog/_posts/2024/kubernetes-v1-32-release/index.md`
+- `blog/_posts/2025/kubernetes-v1-33-release/index.md`
+- `blog/_posts/2025/kubernetes-v1-34-release/index.md`
+- `blog/_posts/2025/kubernetes-v1-35-release/index.md`
+- `blog/_posts/2026/ccm-metric-route-sync-total.md`
+- `blog/_posts/2026/dashboard-to-headlamp/index.md`
+- `blog/_posts/2026/declarative-validation.md`
+- `blog/_posts/2026/dra-136-update.md`
+- `blog/_posts/2026/inplace-pod-level-resources-beta.md`
+- `blog/_posts/2026/kubernetes-v1-36-manifest-based-admission-control.md`
+- `blog/_posts/2026/kubernetes-v1-36-release/index.md`
+- `blog/_posts/2026/server-side-sharded-list-and-watch.md`
+- `blog/_posts/2026/volume-group-snapshot-ga.md`
+- `blog/_posts/2026/workload-aware-scheduling-1-36.md`
+- `docs/concepts/architecture/nodes.md`
+- `docs/concepts/containers/runtime-class.md`
+- `docs/concepts/overview/_index.md`
+- `docs/concepts/overview/working-with-objects/field-selectors.md`
+- `docs/concepts/overview/working-with-objects/names.md`
+- `docs/concepts/overview/working-with-objects/namespaces.md`
+- `docs/concepts/scheduling-eviction/dynamic-resource-allocation.md`
+- `docs/concepts/scheduling-eviction/node-pressure-eviction.md`
+- `docs/concepts/scheduling-eviction/resource-bin-packing.md`
+- `docs/concepts/security/rbac-good-practices.md`
+- `docs/concepts/security/service-accounts.md`
+- `docs/concepts/services-networking/gateway.md`
+- `docs/concepts/storage/ephemeral-storage.md`
+- `docs/concepts/workloads/controllers/cron-jobs.md`
+- `docs/concepts/workloads/controllers/daemonset.md`
+- `docs/concepts/workloads/controllers/deployment.md`
+- `docs/concepts/workloads/controllers/job.md`
+- `docs/concepts/workloads/controllers/replicaset.md`
+- `docs/concepts/workloads/controllers/replicationcontroller.md`
+- `docs/concepts/workloads/controllers/statefulset.md`
+- `docs/concepts/workloads/pods/_index.md`
+- `docs/concepts/workloads/pods/pod-condition.md`
+- `docs/contribute/style/hugo-shortcodes/index.md`
+- `docs/home/_index.md`
+- `docs/reference/access-authn-authz/admission-controllers.md`
+- `docs/reference/access-authn-authz/certificate-signing-requests.md`
+- `docs/reference/access-authn-authz/mutating-admission-policy.md`
+- `docs/reference/access-authn-authz/node.md`
+- `docs/reference/access-authn-authz/validating-admission-policy.md`
+- `docs/reference/command-line-tools-reference/feature-gates/ClusterTrustBundle.md`
+- `docs/reference/command-line-tools-reference/feature-gates/RestartAllContainersOnContainerExits.md`
+- `docs/reference/kubectl/conventions.md`
+- `docs/reference/using-api/api-concepts.md`
+- `docs/reference/using-api/cel.md`
+- `docs/reference/using-api/health-checks.md`
+- `docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm.md`
+- `docs/tasks/administer-cluster/change-pv-reclaim-policy.md`
+- `docs/tasks/administer-cluster/kubelet-credential-provider.md`
+- `docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes.md`
+- `docs/tasks/configure-pod-container/pull-image-private-registry.md`
+- `docs/tasks/configure-pod-container/static-pod.md`
+
+## Graph
+
+### Added Edges
+- `blog/_posts/2026/deprecation-of-service-externalips` -> `docs/concepts/services-networking/service`
+- `blog/_posts/2026/deprecation-of-service-externalips` -> `docs/reference/access-authn-authz/admission-controllers`
+- `blog/_posts/2026/psi-metrics-ga` -> `docs/reference/instrumentation/understand-psi-metrics`
+- `blog/_posts/2026/reconciling-unfixed-kubernetes-cves` -> `docs/reference/issues-security/official-cve-feed`
+- `docs/concepts/security/service-accounts` -> `docs/reference/access-authn-authz/admission-controllers`
+- `docs/concepts/security/service-accounts` -> `docs/reference/access-authn-authz/node`
+- `docs/concepts/security/service-accounts` -> `docs/reference/command-line-tools-reference/feature-gates/index`
+- `docs/concepts/storage/ephemeral-storage` -> `docs/concepts/scheduling-eviction/node-pressure-eviction`
+- `docs/concepts/workloads/pods/_index` -> `docs/concepts/workloads/pods/static-pods`
+- `docs/concepts/workloads/pods/pod-condition` -> `docs/concepts/workloads/pods/probes`
+- `docs/concepts/workloads/pods/probes` -> `docs/concepts/workloads/pods/pod-lifecycle`
+- `docs/concepts/workloads/pods/probes` -> `docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes`
+- `docs/concepts/workloads/pods/static-pods` -> `docs/concepts/overview/components`
+- `docs/concepts/workloads/pods/static-pods` -> `docs/concepts/workloads/controllers/daemonset`
+- `docs/concepts/workloads/pods/static-pods` -> `docs/concepts/workloads/pods/ephemeral-containers`
+- `docs/concepts/workloads/pods/static-pods` -> `docs/tasks/configure-pod-container/static-pod`
+- `docs/reference/access-authn-authz/admission-controllers` -> `docs/reference/access-authn-authz/node`
+- `docs/reference/access-authn-authz/node` -> `docs/reference/access-authn-authz/validating-admission-policy`
+- `docs/reference/access-authn-authz/node` -> `docs/reference/command-line-tools-reference/feature-gates/index`
+- `docs/reference/access-authn-authz/node` -> `docs/tasks/administer-cluster/kubelet-credential-provider`
+- `docs/reference/command-line-tools-reference/feature-gates/ClusterTrustBundle` -> `docs/tasks/administer-cluster/enable-disable-api`
+- `docs/reference/kubernetes-api/admissionregistration/mutating-admission-policy-binding-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/admissionregistration/mutating-admission-policy-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/admissionregistration/mutating-webhook-configuration-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/admissionregistration/validating-admission-policy-binding-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/admissionregistration/validating-admission-policy-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/admissionregistration/validating-webhook-configuration-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/apiextensions/custom-resource-definition-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/apiregistration/api-service-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/apiserverinternal/storage-version-v1alpha1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/apps/controller-revision-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/apps/daemon-set-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/apps/deployment-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/apps/replica-set-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/apps/stateful-set-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/autoscaling/horizontal-pod-autoscaler-v2` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/batch/cron-job-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/batch/job-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/certificates/certificate-signing-request-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/certificates/cluster-trust-bundle-v1beta1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/certificates/pod-certificate-request-v1beta1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/coordination/lease-candidate-v1beta1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/coordination/lease-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/component-status-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/config-map-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/endpoints-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/event-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/limit-range-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/namespace-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/node-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/persistent-volume-claim-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/persistent-volume-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/pod-template-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/pod-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/replication-controller-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/resource-quota-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/secret-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/service-account-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/core/service-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/api-group-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/api-resource-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/api-versions-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/basic-device-v1beta1-resource` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/binding-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/condition-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/delete-options-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/event-source-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/eviction-v1-policy` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/field-selector-attributes-v1-authorization` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/field-selector-requirement-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/fields-v1-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/group-resource-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/group-version-for-discovery-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/label-selector-attributes-v1-authorization` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/label-selector-requirement-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/label-selector-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/list-meta-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/local-object-reference-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/local-subject-access-review-v1-authorization` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/managed-fields-entry-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/match-condition-v1-admissionregistration` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/match-resources-v1-admissionregistration` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/micro-time-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/named-rule-with-operations-v1-admissionregistration` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/node-selector-term-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/node-selector-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/non-resource-attributes-v1-authorization` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/non-resource-rule-v1-authorization` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/object-meta-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/object-reference-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/owner-reference-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/param-kind-v1-admissionregistration` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/param-ref-v1-admissionregistration` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/patch-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/policy-rule-v1-rbac` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/preconditions-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/quantity-resource` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/resource-attributes-v1-authorization` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/resource-rule-v1-authorization` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/role-ref-v1-rbac` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/rule-with-operations-v1-admissionregistration` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/scale-v1-autoscaling` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/self-subject-access-review-v1-authorization` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/self-subject-review-v1-authentication` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/self-subject-rules-review-v1-authorization` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/server-address-by-client-cidr-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/service-reference-v1-admissionregistration` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/shard-info-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/status-cause-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/status-details-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/status-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/subject-access-review-v1-authorization` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/subject-rules-review-status-v1-authorization` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/subject-v1-rbac` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/time-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/token-review-v1-authentication` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/toleration-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/typed-local-object-reference-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/typed-local-object-reference-v1alpha2-scheduling` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/user-info-v1-authentication` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/variable-v1-admissionregistration` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/watch-event-v1-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/definitions/webhook-client-config-v1-admissionregistration` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/discovery/endpoint-slice-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/events/event-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/flowcontrol/flow-schema-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/flowcontrol/priority-level-configuration-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/networking/ingress-class-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/networking/ingress-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/networking/ip-address-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/networking/network-policy-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/networking/service-cidr-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/node/runtime-class-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/policy/pod-disruption-budget-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/rbac/cluster-role-binding-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/rbac/cluster-role-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/rbac/role-binding-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/rbac/role-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/resource/device-class-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/resource/device-taint-rule-v1beta2` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/resource/resource-claim-template-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/resource/resource-claim-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/resource/resource-pool-status-request-v1alpha3` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/resource/resource-slice-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/scheduling/pod-group-v1alpha2` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/scheduling/priority-class-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/scheduling/workload-v1alpha2` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/storage/csi-driver-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/storage/csi-node-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/storage/csi-storage-capacity-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/storage/storage-class-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/storage/volume-attachment-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/storage/volume-attributes-class-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/storagemigration/storage-version-migration-v1beta1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/using-api/health-checks` -> `docs/concepts/workloads/pods/probes`
+- `docs/tasks/administer-cluster/kubelet-credential-provider` -> `docs/reference/access-authn-authz/node`
+- `docs/tasks/administer-cluster/kubelet-credential-provider` -> `docs/reference/command-line-tools-reference/feature-gates/index`
+- `docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes` -> `docs/concepts/workloads/pods/probes`
+- `docs/tasks/configure-pod-container/static-pod` -> `docs/concepts/workloads/pods/static-pods`
+
+### Removed Edges
+- `blog/_posts/2021/minreadysecond-statefulsets` -> `docs/reference/kubernetes-api/workload-resources/stateful-set-v1`
+- `blog/_posts/2021/podsecuritypolicy-past-present-and-future` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `blog/_posts/2021/seccomp-default` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `blog/_posts/2021/upcoming-changes-in-kubernetes-1-22/index` -> `docs/reference/kubernetes-api/authentication-resources/certificate-signing-request-v1`
+- `blog/_posts/2021/upcoming-changes-in-kubernetes-1-22/index` -> `docs/reference/kubernetes-api/authentication-resources/token-review-v1`
+- `blog/_posts/2021/upcoming-changes-in-kubernetes-1-22/index` -> `docs/reference/kubernetes-api/cluster-resources/api-service-v1`
+- `blog/_posts/2021/upcoming-changes-in-kubernetes-1-22/index` -> `docs/reference/kubernetes-api/cluster-resources/lease-v1`
+- `blog/_posts/2021/upcoming-changes-in-kubernetes-1-22/index` -> `docs/reference/kubernetes-api/extend-resources/custom-resource-definition-v1`
+- `blog/_posts/2021/upcoming-changes-in-kubernetes-1-22/index` -> `docs/reference/kubernetes-api/extend-resources/mutating-webhook-configuration-v1`
+- `blog/_posts/2021/upcoming-changes-in-kubernetes-1-22/index` -> `docs/reference/kubernetes-api/extend-resources/validating-webhook-configuration-v1`
+- `blog/_posts/2021/upcoming-changes-in-kubernetes-1-22/index` -> `docs/reference/kubernetes-api/service-resources/ingress-class-v1`
+- `blog/_posts/2021/upcoming-changes-in-kubernetes-1-22/index` -> `docs/reference/kubernetes-api/service-resources/ingress-v1`
+- `blog/_posts/2022/scalable-job-tracking-ga/index` -> `docs/reference/kubernetes-api/workload-resources/job-v1`
+- `blog/_posts/2023/efficient-selinux-relabeling-beta` -> `docs/reference/kubernetes-api/config-and-storage-resources/csi-driver-v1`
+- `blog/_posts/2023/efficient-selinux-relabeling-beta` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `blog/_posts/2023/kubernetes-1.27-deprecations-and-removals` -> `docs/reference/kubernetes-api/config-and-storage-resources/csi-storage-capacity-v1`
+- `blog/_posts/2025/endpoints-deprecation` -> `docs/reference/kubernetes-api/service-resources/endpoint-slice-v1`
+- `blog/_posts/2025/enhancing-kubernetes-event-management-custom-aggregation` -> `docs/reference/kubernetes-api/cluster-resources/event-v1`
+- `blog/_posts/2025/jobs-managedby-goes-ga` -> `docs/reference/kubernetes-api/workload-resources/job-v1`
+- `blog/_posts/2025/start-sidecar-first/index` -> `docs/concepts/configuration/liveness-readiness-startup-probes`
+- `blog/_posts/2026-04-22-psi-metrics-ga/index` -> `docs/reference/instrumentation/understand-psi-metrics`
+- `blog/_posts/2026/breaking-changes-in-selinux-volume-labeling` -> `docs/reference/kubernetes-api/config-and-storage-resources/csi-driver-v1`
+- `blog/_posts/2026/breaking-changes-in-selinux-volume-labeling` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/concepts/architecture/leases` -> `docs/reference/kubernetes-api/cluster-resources/lease-v1`
+- `docs/concepts/cluster-administration/addons` -> `docs/reference/kubernetes-api/cluster-resources/event-v1`
+- `docs/concepts/cluster-administration/coordinated-leader-election` -> `docs/reference/kubernetes-api/cluster-resources/lease-candidate-v1beta1`
+- `docs/concepts/cluster-administration/coordinated-leader-election` -> `docs/reference/kubernetes-api/cluster-resources/lease-v1`
+- `docs/concepts/cluster-administration/node-shutdown` -> `docs/reference/kubernetes-api/config-and-storage-resources/volume-attachment-v1`
+- `docs/concepts/configuration/liveness-readiness-startup-probes` -> `docs/concepts/workloads/pods/pod-lifecycle`
+- `docs/concepts/configuration/liveness-readiness-startup-probes` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/concepts/configuration/liveness-readiness-startup-probes` -> `docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes`
+- `docs/concepts/configuration/manage-resources-containers` -> `docs/reference/kubernetes-api/cluster-resources/event-v1`
+- `docs/concepts/configuration/manage-resources-containers` -> `docs/reference/kubernetes-api/cluster-resources/node-v1`
+- `docs/concepts/configuration/manage-resources-containers` -> `docs/reference/kubernetes-api/common-definitions/quantity`
+- `docs/concepts/configuration/manage-resources-containers` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/concepts/configuration/secret` -> `docs/reference/kubernetes-api/authentication-resources/token-request-v1`
+- `docs/concepts/configuration/secret` -> `docs/reference/kubernetes-api/config-and-storage-resources/secret-v1`
+- `docs/concepts/extend-kubernetes/api-extension/apiserver-aggregation` -> `docs/reference/kubernetes-api/cluster-resources/api-service-v1`
+- `docs/concepts/extend-kubernetes/compute-storage-net/device-plugins` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/concepts/overview/working-with-objects/_index` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/concepts/overview/working-with-objects/_index` -> `docs/reference/kubernetes-api/workload-resources/stateful-set-v1`
+- `docs/concepts/overview/working-with-objects/owners-dependents` -> `docs/reference/kubernetes-api/common-definitions/object-meta`
+- `docs/concepts/policy/resource-quotas` -> `docs/reference/kubernetes-api/policy-resources/resource-quota-v1`
+- `docs/concepts/scheduling-eviction/api-eviction` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/concepts/scheduling-eviction/topology-spread-constraints` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/concepts/security/service-accounts` -> `docs/reference/kubernetes-api/authentication-resources/service-account-v1`
+- `docs/concepts/security/service-accounts` -> `docs/reference/kubernetes-api/authentication-resources/token-request-v1`
+- `docs/concepts/security/service-accounts` -> `docs/reference/kubernetes-api/authentication-resources/token-review-v1`
+- `docs/concepts/services-networking/endpoint-slices` -> `docs/reference/kubernetes-api/service-resources/endpoint-slice-v1`
+- `docs/concepts/services-networking/endpoint-slices` -> `docs/reference/kubernetes-api/service-resources/endpoints-v1`
+- `docs/concepts/services-networking/ingress` -> `docs/reference/kubernetes-api/service-resources/ingress-v1`
+- `docs/concepts/services-networking/ingress-controllers` -> `docs/reference/kubernetes-api/service-resources/ingress-v1`
+- `docs/concepts/services-networking/service` -> `docs/reference/kubernetes-api/service-resources/endpoint-slice-v1`
+- `docs/concepts/services-networking/service` -> `docs/reference/kubernetes-api/service-resources/endpoints-v1`
+- `docs/concepts/services-networking/service` -> `docs/reference/kubernetes-api/service-resources/service-v1`
+- `docs/concepts/storage/persistent-volumes` -> `docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1`
+- `docs/concepts/storage/persistent-volumes` -> `docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-v1`
+- `docs/concepts/storage/projected-volumes` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/concepts/storage/storage-capacity` -> `docs/reference/kubernetes-api/config-and-storage-resources/csi-driver-v1`
+- `docs/concepts/storage/storage-capacity` -> `docs/reference/kubernetes-api/config-and-storage-resources/csi-storage-capacity-v1`
+- `docs/concepts/windows/intro` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/concepts/workloads/autoscaling/horizontal-pod-autoscale` -> `docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2`
+- `docs/concepts/workloads/controllers/job` -> `docs/reference/kubernetes-api/workload-resources/job-v1`
+- `docs/concepts/workloads/controllers/statefulset` -> `docs/reference/kubernetes-api/workload-resources/controller-revision-v1`
+- `docs/concepts/workloads/pods/_index` -> `docs/tasks/configure-pod-container/static-pod`
+- `docs/concepts/workloads/pods/downward-api` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/concepts/workloads/pods/init-containers` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/concepts/workloads/pods/pod-condition` -> `docs/concepts/configuration/liveness-readiness-startup-probes`
+- `docs/concepts/workloads/pods/pod-lifecycle` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/reference/access-authn-authz/admission-controllers` -> `docs/reference/kubernetes-api/policy-resources/limit-range-v1`
+- `docs/reference/access-authn-authz/admission-controllers` -> `docs/reference/kubernetes-api/policy-resources/resource-quota-v1`
+- `docs/reference/access-authn-authz/authentication` -> `docs/reference/kubernetes-api/authentication-resources/self-subject-review-v1`
+- `docs/reference/access-authn-authz/certificate-signing-requests` -> `docs/reference/kubernetes-api/authentication-resources/certificate-signing-request-v1`
+- `docs/reference/access-authn-authz/service-accounts-admin` -> `docs/reference/kubernetes-api/authentication-resources/token-request-v1`
+- `docs/reference/access-authn-authz/webhook` -> `docs/reference/kubernetes-api/authorization-resources/subject-access-review-v1`
+- `docs/reference/command-line-tools-reference/feature-gates/AuthorizeWithSelectors` -> `docs/reference/kubernetes-api/authorization-resources/subject-access-review-v1`
+- `docs/reference/command-line-tools-reference/feature-gates/JobReadyPods` -> `docs/reference/kubernetes-api/workload-resources/job-v1`
+- `docs/reference/kubernetes-api/authentication-resources/_index` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authentication-resources/certificate-signing-request-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authentication-resources/cluster-trust-bundle-v1beta1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authentication-resources/pod-certificate-request-v1beta1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authentication-resources/self-subject-review-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authentication-resources/service-account-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authentication-resources/token-request-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authentication-resources/token-review-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authorization-resources/_index` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authorization-resources/cluster-role-binding-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authorization-resources/cluster-role-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authorization-resources/local-subject-access-review-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authorization-resources/role-binding-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authorization-resources/role-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authorization-resources/self-subject-access-review-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authorization-resources/self-subject-rules-review-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/authorization-resources/subject-access-review-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/cluster-resources/_index` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/cluster-resources/api-service-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/cluster-resources/component-status-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/cluster-resources/event-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/cluster-resources/ip-address-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/cluster-resources/lease-candidate-v1beta1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/cluster-resources/lease-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/cluster-resources/namespace-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/cluster-resources/node-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/cluster-resources/resource-pool-status-request-v1alpha3` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/cluster-resources/runtime-class-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/cluster-resources/service-cidr-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/_index` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/delete-options` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/label-selector` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/list-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/local-object-reference` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/node-selector-requirement` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/object-field-selector` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/object-meta` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/object-reference` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/patch` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/quantity` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/resource-field-selector` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/status` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-definitions/typed-local-object-reference` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/common-parameters/common-parameters` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/_index` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/config-map-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/csi-driver-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/csi-node-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/csi-storage-capacity-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/secret-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/storage-class-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/storage-version-migration-v1beta1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/volume` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/volume-attachment-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/config-and-storage-resources/volume-attributes-class-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/extend-resources/_index` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/extend-resources/custom-resource-definition-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/extend-resources/device-class-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/extend-resources/mutating-webhook-configuration-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/extend-resources/validating-webhook-configuration-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/policy-resources/_index` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/policy-resources/flow-schema-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/policy-resources/limit-range-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/policy-resources/mutating-admission-policy-binding-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/policy-resources/mutating-admission-policy-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/policy-resources/network-policy-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/policy-resources/pod-disruption-budget-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/policy-resources/priority-level-configuration-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/policy-resources/resource-quota-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/policy-resources/validating-admission-policy-binding-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/policy-resources/validating-admission-policy-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/service-resources/_index` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/service-resources/endpoint-slice-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/service-resources/endpoints-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/service-resources/ingress-class-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/service-resources/ingress-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/service-resources/service-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/_index` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/binding-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/controller-revision-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/cron-job-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/daemon-set-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/deployment-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/device-taint-rule-v1beta2` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/job-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/pod-group-v1alpha2` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/pod-template-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/pod-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/priority-class-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/replica-set-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/replication-controller-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/resource-claim-template-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/resource-claim-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/resource-slice-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/stateful-set-v1` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/kubernetes-api/workload-resources/workload-v1alpha2` -> `docs/contribute/generate-ref-docs/contribute-upstream`
+- `docs/reference/labels-annotations-taints/_index` -> `docs/reference/kubernetes-api/common-definitions/quantity`
+- `docs/reference/labels-annotations-taints/_index` -> `docs/reference/kubernetes-api/service-resources/endpoint-slice-v1`
+- `docs/reference/labels-annotations-taints/_index` -> `docs/reference/kubernetes-api/service-resources/endpoints-v1`
+- `docs/reference/labels-annotations-taints/audit-annotations` -> `docs/reference/kubernetes-api/cluster-resources/event-v1`
+- `docs/reference/networking/virtual-ips` -> `docs/reference/kubernetes-api/service-resources/service-v1`
+- `docs/reference/node/seccomp` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/reference/scheduling/config` -> `docs/reference/kubernetes-api/cluster-resources/event-v1`
+- `docs/reference/using-api/api-concepts` -> `docs/reference/kubernetes-api/service-resources/service-v1`
+- `docs/reference/using-api/health-checks` -> `docs/concepts/configuration/liveness-readiness-startup-probes`
+- `docs/reference/using-api/server-side-apply` -> `docs/reference/kubernetes-api/common-definitions/object-meta`
+- `docs/reference/using-api/server-side-apply` -> `docs/reference/kubernetes-api/common-parameters/common-parameters`
+- `docs/setup/best-practices/certificates` -> `docs/reference/kubernetes-api/authentication-resources/certificate-signing-request-v1`
+- `docs/tasks/administer-cluster/change-pv-reclaim-policy` -> `docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-v1`
+- `docs/tasks/administer-cluster/manage-resources/cpu-constraint-namespace` -> `docs/reference/kubernetes-api/policy-resources/limit-range-v1`
+- `docs/tasks/administer-cluster/manage-resources/memory-constraint-namespace` -> `docs/reference/kubernetes-api/policy-resources/limit-range-v1`
+- `docs/tasks/administer-cluster/manage-resources/quota-memory-cpu-namespace` -> `docs/reference/kubernetes-api/policy-resources/resource-quota-v1`
+- `docs/tasks/administer-cluster/manage-resources/quota-pod-namespace` -> `docs/reference/kubernetes-api/policy-resources/resource-quota-v1`
+- `docs/tasks/administer-cluster/namespaces` -> `docs/reference/kubernetes-api/cluster-resources/namespace-v1`
+- `docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes` -> `docs/concepts/configuration/liveness-readiness-startup-probes`
+- `docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/tasks/configure-pod-container/configure-service-account` -> `docs/reference/kubernetes-api/authentication-resources/service-account-v1`
+- `docs/tasks/configure-pod-container/configure-service-account` -> `docs/reference/kubernetes-api/authentication-resources/token-request-v1`
+- `docs/tasks/configure-pod-container/pull-image-private-registry` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/tasks/configure-pod-container/static-pod` -> `docs/concepts/workloads/pods/ephemeral-containers`
+- `docs/tasks/debug/debug-cluster/monitor-node-health` -> `docs/reference/kubernetes-api/cluster-resources/event-v1`
+- `docs/tasks/debug/debug-cluster/resource-metrics-pipeline` -> `docs/reference/kubernetes-api/cluster-resources/api-service-v1`
+- `docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning` -> `docs/reference/kubernetes-api/extend-resources/custom-resource-definition-v1`
+- `docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions` -> `docs/reference/kubernetes-api/workload-resources/controller-revision-v1`
+- `docs/tasks/inject-data-application/downward-api-volume-expose-pod-information` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/tasks/inject-data-application/environment-variable-expose-pod-information` -> `docs/reference/kubernetes-api/workload-resources/pod-v1`
+- `docs/tasks/manage-daemon/update-daemon-set` -> `docs/reference/kubernetes-api/workload-resources/daemon-set-v1`
+- `docs/tasks/tls/certificate-issue-client-csr` -> `docs/reference/kubernetes-api/authentication-resources/certificate-signing-request-v1`
+
+## Support Surface
+
+- Changed question `kubernetes_website_docs_faq_0001`
+- Changed question `kubernetes_website_docs_faq_0002`
+- Changed question `kubernetes_website_docs_faq_0003`
+- Changed question `kubernetes_website_docs_faq_0006`
+- Changed question `kubernetes_website_docs_faq_0008`
+- Changed question `kubernetes_website_docs_faq_0011`
+- Changed question `kubernetes_website_docs_faq_0013`
+- Changed question `kubernetes_website_docs_faq_0014`
+- Changed question `kubernetes_website_docs_faq_0016`
+- Changed question `kubernetes_website_docs_faq_0017`
+- Changed question `kubernetes_website_docs_faq_0018`
+- Changed question `kubernetes_website_docs_faq_0019`
+- Changed question `kubernetes_website_docs_faq_0021`

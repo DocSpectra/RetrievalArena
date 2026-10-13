@@ -1,0 +1,59 @@
+{
+  "corpus_id": "express_docs",
+  "created_at": "2026-05-26T10:51:02+00:00",
+  "dataset_preparation_manifest_hash": "8eaf208ce227bf7098d5265937853f279ef546d67449a8699b4fad293ae698c8",
+  "dataset_preparation_manifest_path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\before\\dataset\\dataset_preparation_manifest.json",
+  "is_clean_qa_surface": true,
+  "manifest_hash": "c73ef54428947f6f5ed845d18765ad01cc2b6aad7b93d2ea7225e13a6edb6b4e",
+  "manifest_type": "support_construction",
+  "partial_threshold": 0.25,
+  "qa_surface_type": "dedicated_faq",
+  "query_set_id": "express-docs-pilot-queries",
+  "schema_version": "retrieval_arena.support_construction_manifest.v1",
+  "snapshot_id": "2025-09-20",
+  "stage_status": "ok",
+  "support_audit_configuration": {
+    "method": "idf_weighted_answer_support_v1",
+    "partial_threshold": 0.25,
+    "qa_surface_type": "dedicated_faq",
+    "source": "answers_jsonl_and_dataset_corpus",
+    "supported_threshold": 0.6,
+    "top_k": 5
+  },
+  "support_audit_file": "faq_support_audit.jsonl",
+  "support_audit_file_hash": "94a961aefc635ac8e17975ee46fcc2242a4ae41e57706ab9631bb59004883e9f",
+  "support_construction_method": "idf_weighted_answer_support_v1",
+  "support_label_counts": {
+    "supported": 8
+  },
+  "support_query_count": 8,
+  "support_target_count": 14,
+  "support_target_doc_ids": [
+    "advanced/best-practice-performance",
+    "advanced/best-practice-security",
+    "changelog/index",
+    "guide/database-integration",
+    "guide/error-handling",
+    "guide/migrating-4",
+    "guide/migrating-5",
+    "guide/routing",
+    "guide/using-middleware",
+    "guide/using-template-engines",
+    "resources/contributing",
+    "starter/faq",
+    "starter/installing",
+    "support/index"
+  ],
+  "supported_question_ids": [
+    "express_docs_faq_0001",
+    "express_docs_faq_0002",
+    "express_docs_faq_0003",
+    "express_docs_faq_0004",
+    "express_docs_faq_0005",
+    "express_docs_faq_0006",
+    "express_docs_faq_0007",
+    "express_docs_faq_0008"
+  ],
+  "supported_threshold": 0.6,
+  "top_k": 5
+}

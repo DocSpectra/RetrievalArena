@@ -1,0 +1,1430 @@
+{
+  "baseline_bundle": {
+    "copied_artifacts": [
+      "calibration\\bigdata2026\\pilot_express_docs\\comparisons",
+      "calibration\\bigdata2026\\pilot_express_docs\\pilot_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\plan_resolved.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\snapshot_comparison",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\before\\retrieval_replay_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\before\\scores.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\before\\metadata.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\retrieval_replay_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\scores.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\metadata.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\retrieval_replay_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\scores.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\metadata.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\retrieval_replay_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\scores.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\metadata.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\retrieval_replay_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\scores.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\metadata.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\retrieval_replay_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\scores.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\metadata.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\retrieval_replay_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\scores.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\metadata.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\retrieval_replay_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\scores.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\metadata.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\retrieval_replay_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\scores.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\metadata.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\retrieval_replay_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\scores.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\metadata.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\retrieval_replay_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\scores.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\metadata.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\retrieval_replay_manifest.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\scores.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\metadata.json",
+      "calibration\\bigdata2026\\pilot_express_docs\\BASELINE.md"
+    ],
+    "include_raw": false,
+    "path": "calibration\\bigdata2026\\pilot_express_docs"
+  },
+  "comparisons": [
+    {
+      "after_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_lexical_topk__ddea72412e",
+      "audit_jsonl": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit.jsonl",
+      "audit_summary_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit_summary.json",
+      "before_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_lexical_topk__ddea72412e",
+      "comparison_id": "rag_lexical_topk",
+      "drift_jsonl": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift.jsonl",
+      "drift_summary_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift_summary.json",
+      "systems_measurements_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\systems_measurements.json"
+    },
+    {
+      "after_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_vector__6e7b60616a",
+      "audit_jsonl": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\regression_audit.jsonl",
+      "audit_summary_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\regression_audit_summary.json",
+      "before_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_vector__6e7b60616a",
+      "comparison_id": "rag_vector",
+      "drift_jsonl": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\retrieval_drift.jsonl",
+      "drift_summary_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\retrieval_drift_summary.json",
+      "systems_measurements_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\systems_measurements.json"
+    },
+    {
+      "after_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_rerank__6a80ca385b",
+      "audit_jsonl": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\regression_audit.jsonl",
+      "audit_summary_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\regression_audit_summary.json",
+      "before_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_rerank__6a80ca385b",
+      "comparison_id": "rag_graph_rerank",
+      "drift_jsonl": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\retrieval_drift.jsonl",
+      "drift_summary_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\retrieval_drift_summary.json",
+      "systems_measurements_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\systems_measurements.json"
+    },
+    {
+      "after_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__oracle_graph_support__fb402f1d83",
+      "audit_jsonl": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\regression_audit.jsonl",
+      "audit_summary_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\regression_audit_summary.json",
+      "before_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__oracle_graph_support__fb402f1d83",
+      "comparison_id": "oracle_graph_support",
+      "drift_jsonl": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift.jsonl",
+      "drift_summary_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift_summary.json",
+      "systems_measurements_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\systems_measurements.json"
+    },
+    {
+      "after_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_multihop_rerank__4d2d590171",
+      "audit_jsonl": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\regression_audit.jsonl",
+      "audit_summary_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\regression_audit_summary.json",
+      "before_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_multihop_rerank__4d2d590171",
+      "comparison_id": "rag_graph_multihop_rerank",
+      "drift_jsonl": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\retrieval_drift.jsonl",
+      "drift_summary_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\retrieval_drift_summary.json",
+      "systems_measurements_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\systems_measurements.json"
+    },
+    {
+      "after_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_iterative_search__feaac08533",
+      "audit_jsonl": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\regression_audit.jsonl",
+      "audit_summary_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\regression_audit_summary.json",
+      "before_run_dir": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_iterative_search__feaac08533",
+      "comparison_id": "rag_iterative_search",
+      "drift_jsonl": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\retrieval_drift.jsonl",
+      "drift_summary_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\retrieval_drift_summary.json",
+      "systems_measurements_json": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\systems_measurements.json"
+    }
+  ],
+  "corpus_id": "express_docs",
+  "created_at": "2026-05-26T10:55:59+00:00",
+  "environment": {
+    "available_memory_bytes": null,
+    "available_memory_unavailable_reason": "standard_library_available_memory_unavailable",
+    "cpu_count": 32,
+    "os": "nt",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+    "python_implementation": "CPython",
+    "python_version": "3.12.10",
+    "retrieval_arena_git_provenance": {
+      "branch": "IEEEBigData2026_metrics",
+      "commit": "77dbb3d777f3d3a4ea463ea0b6b36df75c820a5c",
+      "diff_hash": "30fbf777242507786728474580001aecdf8b0d0ef70ccdd31e8aa5c3886110ba",
+      "dirty": true,
+      "is_git_worktree": true,
+      "ref": null,
+      "ref_commit": null,
+      "remote_url": "https://github.com/DocSpectra/RetrievalArena.git",
+      "repo_root": ".",
+      "tag": null,
+      "untracked_files": [
+        "docs/incremental_baseline_refresh.md"
+      ]
+    },
+    "retrieval_arena_version": "0.1.0"
+  },
+  "manifest_hash": "bd5af3b86c91b269bfab28a98bfc20688f8d27ac68fa40dd88a72886f62e35ea",
+  "manifest_type": "bigdata2026_pilot_run",
+  "pilot_id": "pilot_express_docs_2025_09_20_to_2026_03_30",
+  "plan_hash": "dfb0175b6a33687ceb8c1ca274d64f5163425ba07fe41caf0ca8a40e51cd6503",
+  "plan_path": "configs\\bigdata2026\\pilot_express_docs.json",
+  "query_set_id": "express-docs-pilot-queries",
+  "retrieval_runs": {
+    "after_experiment_manifest": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\experiment_manifest.json",
+    "before_experiment_manifest": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\experiment_manifest.json"
+  },
+  "reuse_decisions": [
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\corpus_snapshot_comparison_manifest.json",
+      "decision": "reused",
+      "reason": "existing snapshot comparison manifest and diff reports matched the active plan",
+      "stage": "snapshot_compare"
+    },
+    {
+      "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_lexical_topk__ddea72412e\\retrieval_replay_manifest.json",
+      "dataset": "express_docs",
+      "decision": "reused",
+      "hash_checks": {
+        "corpus_manifest_hash": true,
+        "dataset": true,
+        "graph_manifest_hash": true,
+        "query_set_hash": true,
+        "query_set_id": true,
+        "resolved_run_identity_hash": true,
+        "scoring_hash": true,
+        "support_manifest_hash": true,
+        "test": true
+      },
+      "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+      "side": "before",
+      "stage": "retrieval_runs",
+      "test": "rag_lexical_topk"
+    },
+    {
+      "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_vector__6e7b60616a\\retrieval_replay_manifest.json",
+      "dataset": "express_docs",
+      "decision": "reused",
+      "hash_checks": {
+        "corpus_manifest_hash": true,
+        "dataset": true,
+        "graph_manifest_hash": true,
+        "query_set_hash": true,
+        "query_set_id": true,
+        "resolved_run_identity_hash": true,
+        "scoring_hash": true,
+        "support_manifest_hash": true,
+        "test": true
+      },
+      "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+      "side": "before",
+      "stage": "retrieval_runs",
+      "test": "rag_vector"
+    },
+    {
+      "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_rerank__6a80ca385b\\retrieval_replay_manifest.json",
+      "dataset": "express_docs",
+      "decision": "reused",
+      "hash_checks": {
+        "corpus_manifest_hash": true,
+        "dataset": true,
+        "graph_manifest_hash": true,
+        "query_set_hash": true,
+        "query_set_id": true,
+        "resolved_run_identity_hash": true,
+        "scoring_hash": true,
+        "support_manifest_hash": true,
+        "test": true
+      },
+      "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+      "side": "before",
+      "stage": "retrieval_runs",
+      "test": "rag_graph_rerank"
+    },
+    {
+      "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__oracle_graph_support__fb402f1d83\\retrieval_replay_manifest.json",
+      "dataset": "express_docs",
+      "decision": "reused",
+      "hash_checks": {
+        "corpus_manifest_hash": true,
+        "dataset": true,
+        "graph_manifest_hash": true,
+        "query_set_hash": true,
+        "query_set_id": true,
+        "resolved_run_identity_hash": true,
+        "scoring_hash": true,
+        "support_manifest_hash": true,
+        "test": true
+      },
+      "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+      "side": "before",
+      "stage": "retrieval_runs",
+      "test": "oracle_graph_support"
+    },
+    {
+      "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_multihop_rerank__4d2d590171\\retrieval_replay_manifest.json",
+      "dataset": "express_docs",
+      "decision": "reused",
+      "hash_checks": {
+        "corpus_manifest_hash": true,
+        "dataset": true,
+        "graph_manifest_hash": true,
+        "query_set_hash": true,
+        "query_set_id": true,
+        "resolved_run_identity_hash": true,
+        "scoring_hash": true,
+        "support_manifest_hash": true,
+        "test": true
+      },
+      "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+      "side": "before",
+      "stage": "retrieval_runs",
+      "test": "rag_graph_multihop_rerank"
+    },
+    {
+      "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_iterative_search__feaac08533\\retrieval_replay_manifest.json",
+      "dataset": "express_docs",
+      "decision": "reused",
+      "hash_checks": {
+        "corpus_manifest_hash": true,
+        "dataset": true,
+        "graph_manifest_hash": true,
+        "query_set_hash": true,
+        "query_set_id": true,
+        "resolved_run_identity_hash": true,
+        "scoring_hash": true,
+        "support_manifest_hash": true,
+        "test": true
+      },
+      "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+      "side": "before",
+      "stage": "retrieval_runs",
+      "test": "rag_iterative_search"
+    },
+    {
+      "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_lexical_topk__ddea72412e\\retrieval_replay_manifest.json",
+      "dataset": "express_docs",
+      "decision": "reused",
+      "hash_checks": {
+        "corpus_manifest_hash": true,
+        "dataset": true,
+        "graph_manifest_hash": true,
+        "query_set_hash": true,
+        "query_set_id": true,
+        "resolved_run_identity_hash": true,
+        "scoring_hash": true,
+        "support_manifest_hash": true,
+        "test": true
+      },
+      "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+      "side": "after",
+      "stage": "retrieval_runs",
+      "test": "rag_lexical_topk"
+    },
+    {
+      "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_vector__6e7b60616a\\retrieval_replay_manifest.json",
+      "dataset": "express_docs",
+      "decision": "reused",
+      "hash_checks": {
+        "corpus_manifest_hash": true,
+        "dataset": true,
+        "graph_manifest_hash": true,
+        "query_set_hash": true,
+        "query_set_id": true,
+        "resolved_run_identity_hash": true,
+        "scoring_hash": true,
+        "support_manifest_hash": true,
+        "test": true
+      },
+      "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+      "side": "after",
+      "stage": "retrieval_runs",
+      "test": "rag_vector"
+    },
+    {
+      "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_rerank__6a80ca385b\\retrieval_replay_manifest.json",
+      "dataset": "express_docs",
+      "decision": "reused",
+      "hash_checks": {
+        "corpus_manifest_hash": true,
+        "dataset": true,
+        "graph_manifest_hash": true,
+        "query_set_hash": true,
+        "query_set_id": true,
+        "resolved_run_identity_hash": true,
+        "scoring_hash": true,
+        "support_manifest_hash": true,
+        "test": true
+      },
+      "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+      "side": "after",
+      "stage": "retrieval_runs",
+      "test": "rag_graph_rerank"
+    },
+    {
+      "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__oracle_graph_support__fb402f1d83\\retrieval_replay_manifest.json",
+      "dataset": "express_docs",
+      "decision": "reused",
+      "hash_checks": {
+        "corpus_manifest_hash": true,
+        "dataset": true,
+        "graph_manifest_hash": true,
+        "query_set_hash": true,
+        "query_set_id": true,
+        "resolved_run_identity_hash": true,
+        "scoring_hash": true,
+        "support_manifest_hash": true,
+        "test": true
+      },
+      "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+      "side": "after",
+      "stage": "retrieval_runs",
+      "test": "oracle_graph_support"
+    },
+    {
+      "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_multihop_rerank__4d2d590171\\retrieval_replay_manifest.json",
+      "dataset": "express_docs",
+      "decision": "reused",
+      "hash_checks": {
+        "corpus_manifest_hash": true,
+        "dataset": true,
+        "graph_manifest_hash": true,
+        "query_set_hash": true,
+        "query_set_id": true,
+        "resolved_run_identity_hash": true,
+        "scoring_hash": true,
+        "support_manifest_hash": true,
+        "test": true
+      },
+      "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+      "side": "after",
+      "stage": "retrieval_runs",
+      "test": "rag_graph_multihop_rerank"
+    },
+    {
+      "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_iterative_search__feaac08533\\retrieval_replay_manifest.json",
+      "dataset": "express_docs",
+      "decision": "reused",
+      "hash_checks": {
+        "corpus_manifest_hash": true,
+        "dataset": true,
+        "graph_manifest_hash": true,
+        "query_set_hash": true,
+        "query_set_id": true,
+        "resolved_run_identity_hash": true,
+        "scoring_hash": true,
+        "support_manifest_hash": true,
+        "test": true
+      },
+      "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+      "side": "after",
+      "stage": "retrieval_runs",
+      "test": "rag_iterative_search"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk",
+      "comparison_id": "rag_lexical_topk",
+      "decision": "reused",
+      "reason": "existing drift reports are present",
+      "stage": "drift"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector",
+      "comparison_id": "rag_vector",
+      "decision": "reused",
+      "reason": "existing drift reports are present",
+      "stage": "drift"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank",
+      "comparison_id": "rag_graph_rerank",
+      "decision": "reused",
+      "reason": "existing drift reports are present",
+      "stage": "drift"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support",
+      "comparison_id": "oracle_graph_support",
+      "decision": "reused",
+      "reason": "existing drift reports are present",
+      "stage": "drift"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank",
+      "comparison_id": "rag_graph_multihop_rerank",
+      "decision": "reused",
+      "reason": "existing drift reports are present",
+      "stage": "drift"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search",
+      "comparison_id": "rag_iterative_search",
+      "decision": "reused",
+      "reason": "existing drift reports are present",
+      "stage": "drift"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk",
+      "comparison_id": "rag_lexical_topk",
+      "decision": "reused",
+      "reason": "existing audit reports are present",
+      "stage": "audit"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector",
+      "comparison_id": "rag_vector",
+      "decision": "reused",
+      "reason": "existing audit reports are present",
+      "stage": "audit"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank",
+      "comparison_id": "rag_graph_rerank",
+      "decision": "reused",
+      "reason": "existing audit reports are present",
+      "stage": "audit"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support",
+      "comparison_id": "oracle_graph_support",
+      "decision": "reused",
+      "reason": "existing audit reports are present",
+      "stage": "audit"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank",
+      "comparison_id": "rag_graph_multihop_rerank",
+      "decision": "reused",
+      "reason": "existing audit reports are present",
+      "stage": "audit"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search",
+      "comparison_id": "rag_iterative_search",
+      "decision": "reused",
+      "reason": "existing audit reports are present",
+      "stage": "audit"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk",
+      "comparison_id": "rag_lexical_topk",
+      "decision": "reused",
+      "reason": "existing systems measurements are present",
+      "stage": "measurements"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector",
+      "comparison_id": "rag_vector",
+      "decision": "reused",
+      "reason": "existing systems measurements are present",
+      "stage": "measurements"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank",
+      "comparison_id": "rag_graph_rerank",
+      "decision": "reused",
+      "reason": "existing systems measurements are present",
+      "stage": "measurements"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support",
+      "comparison_id": "oracle_graph_support",
+      "decision": "reused",
+      "reason": "existing systems measurements are present",
+      "stage": "measurements"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank",
+      "comparison_id": "rag_graph_multihop_rerank",
+      "decision": "reused",
+      "reason": "existing systems measurements are present",
+      "stage": "measurements"
+    },
+    {
+      "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search",
+      "comparison_id": "rag_iterative_search",
+      "decision": "reused",
+      "reason": "existing systems measurements are present",
+      "stage": "measurements"
+    }
+  ],
+  "schema_version": "retrieval_arena.bigdata2026_pilot_run.v1",
+  "snapshot_pair": {
+    "after": {
+      "snapshot_id": "2026-03-30",
+      "source_descriptor": "configs\\corpus_sources\\express_docs_2026_03_30.json"
+    },
+    "before": {
+      "snapshot_id": "2025-09-20",
+      "source_descriptor": "configs\\corpus_sources\\express_docs_2025_09_20.json"
+    },
+    "comparison_plan": "configs\\bigdata2026\\snapshot_comparison_express_docs.json"
+  },
+  "stage_status": "completed",
+  "stages": [
+    {
+      "checks": [
+        {
+          "name": "snapshot_comparison_plan",
+          "path": "configs\\bigdata2026\\snapshot_comparison_express_docs.json",
+          "status": "ok"
+        },
+        {
+          "name": "source_descriptor_before",
+          "path": "configs\\corpus_sources\\express_docs_2025_09_20.json",
+          "status": "ok"
+        },
+        {
+          "docs_root": "en",
+          "name": "git_source_before",
+          "path": "raw\\express_docs",
+          "requested_ref": "74e27ec71d391c89829076063f4f5c29e43c6c9c",
+          "resolved_commit": "74e27ec71d391c89829076063f4f5c29e43c6c9c",
+          "source_worktree_clean": true,
+          "status": "ok"
+        },
+        {
+          "name": "source_descriptor_after",
+          "path": "configs\\corpus_sources\\express_docs_2026_03_30.json",
+          "status": "ok"
+        },
+        {
+          "docs_root": "en",
+          "name": "git_source_after",
+          "path": "raw\\express_docs",
+          "requested_ref": "2d4df3f05fbd5d5f211f5938395ae965e8714d60",
+          "resolved_commit": "2d4df3f05fbd5d5f211f5938395ae965e8714d60",
+          "source_worktree_clean": true,
+          "status": "ok"
+        },
+        {
+          "name": "retrieval_before_config",
+          "path": "configs\\bigdata2026\\retrieval_express_docs_before.yaml",
+          "status": "ok"
+        },
+        {
+          "name": "retrieval_after_config",
+          "path": "configs\\bigdata2026\\retrieval_express_docs_after.yaml",
+          "status": "ok"
+        },
+        {
+          "dataset": "express_docs",
+          "name": "retrieval_before_selected_dataset",
+          "status": "ok"
+        },
+        {
+          "name": "retrieval_before_selected_tests",
+          "status": "ok",
+          "tests": [
+            "oracle_graph_support",
+            "rag_graph_multihop_rerank",
+            "rag_graph_rerank",
+            "rag_iterative_search",
+            "rag_lexical_topk",
+            "rag_vector"
+          ]
+        },
+        {
+          "name": "docker_build_context_before_rag_lexical_topk",
+          "path": "tests\\rag_lexical_topk",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_before_rag_vector",
+          "path": "tests\\rag_vector",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_before_rag_graph_rerank",
+          "path": "tests\\rag_graph_rerank",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_before_oracle_graph_support",
+          "path": "tests\\oracle_graph_support",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_before_rag_graph_multihop_rerank",
+          "path": "tests\\rag_graph_multihop_rerank",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_before_rag_iterative_search",
+          "path": "tests\\rag_iterative_search",
+          "status": "ok"
+        },
+        {
+          "dataset": "express_docs",
+          "name": "retrieval_after_selected_dataset",
+          "status": "ok"
+        },
+        {
+          "name": "retrieval_after_selected_tests",
+          "status": "ok",
+          "tests": [
+            "oracle_graph_support",
+            "rag_graph_multihop_rerank",
+            "rag_graph_rerank",
+            "rag_iterative_search",
+            "rag_lexical_topk",
+            "rag_vector"
+          ]
+        },
+        {
+          "name": "docker_build_context_after_rag_lexical_topk",
+          "path": "tests\\rag_lexical_topk",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_after_rag_vector",
+          "path": "tests\\rag_vector",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_after_rag_graph_rerank",
+          "path": "tests\\rag_graph_rerank",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_after_oracle_graph_support",
+          "path": "tests\\oracle_graph_support",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_after_rag_graph_multihop_rerank",
+          "path": "tests\\rag_graph_multihop_rerank",
+          "status": "ok"
+        },
+        {
+          "name": "docker_build_context_after_rag_iterative_search",
+          "path": "tests\\rag_iterative_search",
+          "status": "ok"
+        },
+        {
+          "name": "docker_engine",
+          "server_version": "29.4.2",
+          "status": "ok"
+        }
+      ],
+      "completed_at": "2026-05-26T10:55:59+00:00",
+      "input_artifacts": [
+        {
+          "path": "configs\\bigdata2026\\snapshot_comparison_express_docs.json"
+        },
+        {
+          "path": "configs\\bigdata2026\\retrieval_express_docs_before.yaml"
+        },
+        {
+          "path": "configs\\bigdata2026\\retrieval_express_docs_after.yaml"
+        }
+      ],
+      "manifest_references": [],
+      "output_artifacts": [],
+      "stage": "prerequisites",
+      "started_at": "2026-05-26T10:55:59+00:00",
+      "status": "completed",
+      "unavailable_optional_inputs": []
+    },
+    {
+      "completed_at": "2026-05-26T10:55:59+00:00",
+      "input_artifacts": [
+        {
+          "path": "configs\\bigdata2026\\snapshot_comparison_express_docs.json"
+        }
+      ],
+      "manifest_references": [
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\corpus_snapshot_comparison_manifest.json"
+        }
+      ],
+      "output_artifacts": [
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\corpus_snapshot_comparison_manifest.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\snapshot_diff.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\snapshot_diff.md"
+        }
+      ],
+      "reuse_decisions": [
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\snapshot_comparison\\corpus_snapshot_comparison_manifest.json",
+          "decision": "reused",
+          "reason": "existing snapshot comparison manifest and diff reports matched the active plan",
+          "stage": "snapshot_compare"
+        }
+      ],
+      "stage": "snapshot_compare",
+      "started_at": "2026-05-26T10:55:59+00:00",
+      "status": "completed",
+      "unavailable_optional_inputs": []
+    },
+    {
+      "completed_at": "2026-05-26T10:56:00+00:00",
+      "input_artifacts": [
+        {
+          "path": "configs\\bigdata2026\\retrieval_express_docs_before.yaml"
+        }
+      ],
+      "manifest_references": [
+        {
+          "path": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\experiment_manifest.json"
+        }
+      ],
+      "output_artifacts": [
+        {
+          "path": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\experiment_manifest.json"
+        }
+      ],
+      "reuse_decisions": [
+        {
+          "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_lexical_topk__ddea72412e\\retrieval_replay_manifest.json",
+          "dataset": "express_docs",
+          "decision": "reused",
+          "hash_checks": {
+            "corpus_manifest_hash": true,
+            "dataset": true,
+            "graph_manifest_hash": true,
+            "query_set_hash": true,
+            "query_set_id": true,
+            "resolved_run_identity_hash": true,
+            "scoring_hash": true,
+            "support_manifest_hash": true,
+            "test": true
+          },
+          "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+          "side": "before",
+          "stage": "retrieval_runs",
+          "test": "rag_lexical_topk"
+        },
+        {
+          "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_vector__6e7b60616a\\retrieval_replay_manifest.json",
+          "dataset": "express_docs",
+          "decision": "reused",
+          "hash_checks": {
+            "corpus_manifest_hash": true,
+            "dataset": true,
+            "graph_manifest_hash": true,
+            "query_set_hash": true,
+            "query_set_id": true,
+            "resolved_run_identity_hash": true,
+            "scoring_hash": true,
+            "support_manifest_hash": true,
+            "test": true
+          },
+          "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+          "side": "before",
+          "stage": "retrieval_runs",
+          "test": "rag_vector"
+        },
+        {
+          "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_rerank__6a80ca385b\\retrieval_replay_manifest.json",
+          "dataset": "express_docs",
+          "decision": "reused",
+          "hash_checks": {
+            "corpus_manifest_hash": true,
+            "dataset": true,
+            "graph_manifest_hash": true,
+            "query_set_hash": true,
+            "query_set_id": true,
+            "resolved_run_identity_hash": true,
+            "scoring_hash": true,
+            "support_manifest_hash": true,
+            "test": true
+          },
+          "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+          "side": "before",
+          "stage": "retrieval_runs",
+          "test": "rag_graph_rerank"
+        },
+        {
+          "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__oracle_graph_support__fb402f1d83\\retrieval_replay_manifest.json",
+          "dataset": "express_docs",
+          "decision": "reused",
+          "hash_checks": {
+            "corpus_manifest_hash": true,
+            "dataset": true,
+            "graph_manifest_hash": true,
+            "query_set_hash": true,
+            "query_set_id": true,
+            "resolved_run_identity_hash": true,
+            "scoring_hash": true,
+            "support_manifest_hash": true,
+            "test": true
+          },
+          "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+          "side": "before",
+          "stage": "retrieval_runs",
+          "test": "oracle_graph_support"
+        },
+        {
+          "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_graph_multihop_rerank__4d2d590171\\retrieval_replay_manifest.json",
+          "dataset": "express_docs",
+          "decision": "reused",
+          "hash_checks": {
+            "corpus_manifest_hash": true,
+            "dataset": true,
+            "graph_manifest_hash": true,
+            "query_set_hash": true,
+            "query_set_id": true,
+            "resolved_run_identity_hash": true,
+            "scoring_hash": true,
+            "support_manifest_hash": true,
+            "test": true
+          },
+          "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+          "side": "before",
+          "stage": "retrieval_runs",
+          "test": "rag_graph_multihop_rerank"
+        },
+        {
+          "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\before\\bigdata2026_express_docs_before\\runs\\express_docs__rag_iterative_search__feaac08533\\retrieval_replay_manifest.json",
+          "dataset": "express_docs",
+          "decision": "reused",
+          "hash_checks": {
+            "corpus_manifest_hash": true,
+            "dataset": true,
+            "graph_manifest_hash": true,
+            "query_set_hash": true,
+            "query_set_id": true,
+            "resolved_run_identity_hash": true,
+            "scoring_hash": true,
+            "support_manifest_hash": true,
+            "test": true
+          },
+          "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+          "side": "before",
+          "stage": "retrieval_runs",
+          "test": "rag_iterative_search"
+        }
+      ],
+      "stage": "retrieval_before",
+      "started_at": "2026-05-26T10:55:59+00:00",
+      "status": "completed",
+      "unavailable_optional_inputs": []
+    },
+    {
+      "completed_at": "2026-05-26T10:56:00+00:00",
+      "input_artifacts": [
+        {
+          "path": "configs\\bigdata2026\\retrieval_express_docs_after.yaml"
+        }
+      ],
+      "manifest_references": [
+        {
+          "path": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\experiment_manifest.json"
+        }
+      ],
+      "output_artifacts": [
+        {
+          "path": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\experiment_manifest.json"
+        }
+      ],
+      "reuse_decisions": [
+        {
+          "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_lexical_topk__ddea72412e\\retrieval_replay_manifest.json",
+          "dataset": "express_docs",
+          "decision": "reused",
+          "hash_checks": {
+            "corpus_manifest_hash": true,
+            "dataset": true,
+            "graph_manifest_hash": true,
+            "query_set_hash": true,
+            "query_set_id": true,
+            "resolved_run_identity_hash": true,
+            "scoring_hash": true,
+            "support_manifest_hash": true,
+            "test": true
+          },
+          "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+          "side": "after",
+          "stage": "retrieval_runs",
+          "test": "rag_lexical_topk"
+        },
+        {
+          "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_vector__6e7b60616a\\retrieval_replay_manifest.json",
+          "dataset": "express_docs",
+          "decision": "reused",
+          "hash_checks": {
+            "corpus_manifest_hash": true,
+            "dataset": true,
+            "graph_manifest_hash": true,
+            "query_set_hash": true,
+            "query_set_id": true,
+            "resolved_run_identity_hash": true,
+            "scoring_hash": true,
+            "support_manifest_hash": true,
+            "test": true
+          },
+          "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+          "side": "after",
+          "stage": "retrieval_runs",
+          "test": "rag_vector"
+        },
+        {
+          "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_rerank__6a80ca385b\\retrieval_replay_manifest.json",
+          "dataset": "express_docs",
+          "decision": "reused",
+          "hash_checks": {
+            "corpus_manifest_hash": true,
+            "dataset": true,
+            "graph_manifest_hash": true,
+            "query_set_hash": true,
+            "query_set_id": true,
+            "resolved_run_identity_hash": true,
+            "scoring_hash": true,
+            "support_manifest_hash": true,
+            "test": true
+          },
+          "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+          "side": "after",
+          "stage": "retrieval_runs",
+          "test": "rag_graph_rerank"
+        },
+        {
+          "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__oracle_graph_support__fb402f1d83\\retrieval_replay_manifest.json",
+          "dataset": "express_docs",
+          "decision": "reused",
+          "hash_checks": {
+            "corpus_manifest_hash": true,
+            "dataset": true,
+            "graph_manifest_hash": true,
+            "query_set_hash": true,
+            "query_set_id": true,
+            "resolved_run_identity_hash": true,
+            "scoring_hash": true,
+            "support_manifest_hash": true,
+            "test": true
+          },
+          "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+          "side": "after",
+          "stage": "retrieval_runs",
+          "test": "oracle_graph_support"
+        },
+        {
+          "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_graph_multihop_rerank__4d2d590171\\retrieval_replay_manifest.json",
+          "dataset": "express_docs",
+          "decision": "reused",
+          "hash_checks": {
+            "corpus_manifest_hash": true,
+            "dataset": true,
+            "graph_manifest_hash": true,
+            "query_set_hash": true,
+            "query_set_id": true,
+            "resolved_run_identity_hash": true,
+            "scoring_hash": true,
+            "support_manifest_hash": true,
+            "test": true
+          },
+          "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+          "side": "after",
+          "stage": "retrieval_runs",
+          "test": "rag_graph_multihop_rerank"
+        },
+        {
+          "artifact": "results\\bigdata2026\\pilot_express_docs\\retrieval\\after\\bigdata2026_express_docs_after\\runs\\express_docs__rag_iterative_search__feaac08533\\retrieval_replay_manifest.json",
+          "dataset": "express_docs",
+          "decision": "reused",
+          "hash_checks": {
+            "corpus_manifest_hash": true,
+            "dataset": true,
+            "graph_manifest_hash": true,
+            "query_set_hash": true,
+            "query_set_id": true,
+            "resolved_run_identity_hash": true,
+            "scoring_hash": true,
+            "support_manifest_hash": true,
+            "test": true
+          },
+          "reason": "run manifest, query, snapshot, scoring, and resolved run identity matched",
+          "side": "after",
+          "stage": "retrieval_runs",
+          "test": "rag_iterative_search"
+        }
+      ],
+      "stage": "retrieval_after",
+      "started_at": "2026-05-26T10:56:00+00:00",
+      "status": "completed",
+      "unavailable_optional_inputs": []
+    },
+    {
+      "completed_at": "2026-05-26T10:56:00+00:00",
+      "input_artifacts": [],
+      "manifest_references": [
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\retrieval_drift_summary.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\retrieval_drift_summary.json"
+        }
+      ],
+      "output_artifacts": [],
+      "reuse_decisions": [
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk",
+          "comparison_id": "rag_lexical_topk",
+          "decision": "reused",
+          "reason": "existing drift reports are present",
+          "stage": "drift"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector",
+          "comparison_id": "rag_vector",
+          "decision": "reused",
+          "reason": "existing drift reports are present",
+          "stage": "drift"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank",
+          "comparison_id": "rag_graph_rerank",
+          "decision": "reused",
+          "reason": "existing drift reports are present",
+          "stage": "drift"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support",
+          "comparison_id": "oracle_graph_support",
+          "decision": "reused",
+          "reason": "existing drift reports are present",
+          "stage": "drift"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank",
+          "comparison_id": "rag_graph_multihop_rerank",
+          "decision": "reused",
+          "reason": "existing drift reports are present",
+          "stage": "drift"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search",
+          "comparison_id": "rag_iterative_search",
+          "decision": "reused",
+          "reason": "existing drift reports are present",
+          "stage": "drift"
+        }
+      ],
+      "stage": "drift",
+      "started_at": "2026-05-26T10:56:00+00:00",
+      "status": "completed",
+      "unavailable_optional_inputs": []
+    },
+    {
+      "completed_at": "2026-05-26T10:56:00+00:00",
+      "input_artifacts": [],
+      "manifest_references": [
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\regression_audit_summary.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\regression_audit_summary.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\regression_audit_summary.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\regression_audit_summary.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\regression_audit_summary.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\regression_audit_summary.json"
+        }
+      ],
+      "output_artifacts": [],
+      "reuse_decisions": [
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk",
+          "comparison_id": "rag_lexical_topk",
+          "decision": "reused",
+          "reason": "existing audit reports are present",
+          "stage": "audit"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector",
+          "comparison_id": "rag_vector",
+          "decision": "reused",
+          "reason": "existing audit reports are present",
+          "stage": "audit"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank",
+          "comparison_id": "rag_graph_rerank",
+          "decision": "reused",
+          "reason": "existing audit reports are present",
+          "stage": "audit"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support",
+          "comparison_id": "oracle_graph_support",
+          "decision": "reused",
+          "reason": "existing audit reports are present",
+          "stage": "audit"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank",
+          "comparison_id": "rag_graph_multihop_rerank",
+          "decision": "reused",
+          "reason": "existing audit reports are present",
+          "stage": "audit"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search",
+          "comparison_id": "rag_iterative_search",
+          "decision": "reused",
+          "reason": "existing audit reports are present",
+          "stage": "audit"
+        }
+      ],
+      "stage": "audit",
+      "started_at": "2026-05-26T10:56:00+00:00",
+      "status": "completed",
+      "unavailable_optional_inputs": []
+    },
+    {
+      "completed_at": "2026-05-26T10:56:01+00:00",
+      "input_artifacts": [],
+      "manifest_references": [
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk\\systems_measurements.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector\\systems_measurements.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank\\systems_measurements.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support\\systems_measurements.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank\\systems_measurements.json"
+        },
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search\\systems_measurements.json"
+        }
+      ],
+      "output_artifacts": [],
+      "reuse_decisions": [
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_lexical_topk",
+          "comparison_id": "rag_lexical_topk",
+          "decision": "reused",
+          "reason": "existing systems measurements are present",
+          "stage": "measurements"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_vector",
+          "comparison_id": "rag_vector",
+          "decision": "reused",
+          "reason": "existing systems measurements are present",
+          "stage": "measurements"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_rerank",
+          "comparison_id": "rag_graph_rerank",
+          "decision": "reused",
+          "reason": "existing systems measurements are present",
+          "stage": "measurements"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\oracle_graph_support",
+          "comparison_id": "oracle_graph_support",
+          "decision": "reused",
+          "reason": "existing systems measurements are present",
+          "stage": "measurements"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_graph_multihop_rerank",
+          "comparison_id": "rag_graph_multihop_rerank",
+          "decision": "reused",
+          "reason": "existing systems measurements are present",
+          "stage": "measurements"
+        },
+        {
+          "artifact": "reports\\bigdata2026\\pilot_express_docs\\comparisons\\rag_iterative_search",
+          "comparison_id": "rag_iterative_search",
+          "decision": "reused",
+          "reason": "existing systems measurements are present",
+          "stage": "measurements"
+        }
+      ],
+      "stage": "measurements",
+      "started_at": "2026-05-26T10:56:01+00:00",
+      "status": "completed",
+      "unavailable_optional_inputs": []
+    },
+    {
+      "baseline_bundle": {
+        "copied_artifacts": [
+          "calibration\\bigdata2026\\pilot_express_docs\\comparisons",
+          "calibration\\bigdata2026\\pilot_express_docs\\pilot_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\plan_resolved.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\snapshot_comparison",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\before\\retrieval_replay_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\before\\scores.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\before\\metadata.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\retrieval_replay_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\scores.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\metadata.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\retrieval_replay_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\scores.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\metadata.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\retrieval_replay_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\scores.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\metadata.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\retrieval_replay_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\scores.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\metadata.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\retrieval_replay_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\scores.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\metadata.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\retrieval_replay_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\scores.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\metadata.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\retrieval_replay_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\scores.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\metadata.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\retrieval_replay_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\scores.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\metadata.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\retrieval_replay_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\scores.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\metadata.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\retrieval_replay_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\scores.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\metadata.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\retrieval_replay_manifest.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\scores.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\metadata.json",
+          "calibration\\bigdata2026\\pilot_express_docs\\BASELINE.md"
+        ],
+        "include_raw": false,
+        "path": "calibration\\bigdata2026\\pilot_express_docs"
+      },
+      "completed_at": "2026-05-26T10:56:01+00:00",
+      "input_artifacts": [
+        {
+          "path": "reports\\bigdata2026\\pilot_express_docs"
+        }
+      ],
+      "manifest_references": [],
+      "output_artifacts": [
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\comparisons"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\pilot_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\plan_resolved.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\snapshot_comparison"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\before\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\before\\scores.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\before\\metadata.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\scores.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_lexical_topk\\after\\metadata.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\scores.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\before\\metadata.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\scores.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_vector\\after\\metadata.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\scores.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\before\\metadata.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\scores.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_rerank\\after\\metadata.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\scores.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\before\\metadata.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\scores.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\oracle_graph_support\\after\\metadata.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\scores.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\before\\metadata.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\scores.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_graph_multihop_rerank\\after\\metadata.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\scores.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\before\\metadata.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\retrieval_replay_manifest.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\scores.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\retrieval\\rag_iterative_search\\after\\metadata.json"
+        },
+        {
+          "path": "calibration\\bigdata2026\\pilot_express_docs\\BASELINE.md"
+        }
+      ],
+      "stage": "baseline_bundle",
+      "started_at": "2026-05-26T10:56:01+00:00",
+      "status": "completed",
+      "unavailable_optional_inputs": []
+    }
+  ]
+}

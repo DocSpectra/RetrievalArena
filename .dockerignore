@@ -1,0 +1,12 @@
+*
+!containers/
+containers/*
+!containers/verification/
+containers/verification/*
+!containers/verification/Dockerfile
+!containers/verification/requirements.lock
+!containers/verification/verify.py
+!containers/verification/evaluate_profile.py
+!containers/verification/review_packet.py
+!containers/verification/candidate_retrieval.py
+!containers/verification/docstyle_measurement.py

@@ -1,0 +1,31 @@
+{
+  "build_context": "tests\\rag_lexical_topk",
+  "completed_at": "2026-05-27T06:47:11.910231+00:00",
+  "config_path": "configs\\bigdata2026\\retrieval_kubernetes_website_docs_after.yaml",
+  "container_metadata": {
+    "deterministic": true,
+    "max_context_chars_per_doc": 1500,
+    "name": "rag_lexical_topk",
+    "ranker": "bm25",
+    "top_k": 5
+  },
+  "dataset": "kubernetes_website_docs",
+  "diagnostic_overlay": {
+    "diagnostic_trace_available": true,
+    "distance_overlay_available": true,
+    "graph_node_count": 1486,
+    "support_question_count": 24
+  },
+  "git_commit": "0a9db1cc8a03cdbbece5149a8b87e63182cf6cb0",
+  "image": "retrieval-arena/rag-lexical-topk:latest",
+  "match_percent": 0.0,
+  "mean_f1": 0.1523779861268501,
+  "mean_lexical_overlap": 0.10408226342736061,
+  "mean_precision": 0.14104249405382377,
+  "mean_recall": 0.5233088728800968,
+  "num_questions": 24,
+  "retrieval_arena_version": "0.1.0",
+  "run_id": "f568db7fd7",
+  "started_at": "2026-05-27T06:46:39.777624+00:00",
+  "test": "rag_lexical_topk"
+}
