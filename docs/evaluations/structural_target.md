@@ -48,6 +48,7 @@ Properties:
 - **Normalized λ₂:** the second eigenvalue of `D^-1/2 (D − A) D^-1/2` on the binary symmetric adjacency, using dense `eigvalsh`. It is 0 for a disconnected graph or fewer than two nodes.
 - **C2 evaluation set:** the subgraph induced by the images of baseline-M pages plus new pages. Baseline pages from outside M that join M are excluded, so connecting them is never penalized.
 - **Disabling C2:** set `use_lambda2=False`.
+- **C v2:** [structural_connectivity_constraint_v2](structural_connectivity_constraint_v2.md) runs this rule unchanged and then applies two config-declared relaxations (C2 joined pages, C1b templated pages). This file is unchanged by v2.
 
 ## `structural_link_guard.v1`
 

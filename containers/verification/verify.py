@@ -33,6 +33,7 @@ COMMANDS = {
         "unit_tests.test_docstyle_measurement",
         "unit_tests.test_repo_lexicon",
         "unit_tests.test_pooled_support",
+        "unit_tests.test_structural_target_v2",
     ),
     "all": None,
     "evaluate-profile": (),
