@@ -173,6 +173,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     corpus_reachability.add_argument("--dataset", required=True, help="Prepared dataset directory (corpus/, graph_edges.csv, questions.jsonl, faq_support_audit.jsonl).")
     corpus_reachability.add_argument("--query-set-id", help="Optional query set identifier recorded in the manifest.")
+    graph = subparsers.add_parser("graph", help="Graph measurements (docs/evaluations/normalized_magnetic_spectrum.md).")
+    graph_subparsers = graph.add_subparsers(dest="graph_command", required=True)
+    graph_spectra = graph_subparsers.add_parser(
+        "measure-spectra", help="Host development run of the measure-graph-spectra jobs; canonical runs use the operator.")
+    graph_spectra.add_argument("--input-root", required=True, help="Directory holding config.json and the bundles it names.")
+    graph_spectra.add_argument("--out", required=True, help="JSONL output path (one receipt per job).")
     support = subparsers.add_parser("support", help="Pooled, LLM-verified support (docs/evaluations/pooled_support.md).")
     support_subparsers = support.add_subparsers(dest="support_command", required=True)
     support_pool = support_subparsers.add_parser("pool", help="Build the candidate pool (passage generators plus evaluated runs).")
@@ -455,6 +461,15 @@ def main(argv: list[str] | None = None) -> int:
                 "aggregate": built["surface"].get("aggregate"),
             }
             print(json.dumps(result, sort_keys=True))
+        elif args.command == "graph" and args.graph_command == "measure-spectra":
+            from .graph.magnetic_spectrum import run_jobs
+            root = Path(args.input_root)
+            rows = run_jobs(json.loads((root / "config.json").read_text(encoding="utf-8")), root)
+            out = Path(args.out)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text("".join(json.dumps(r, sort_keys=True, separators=(",", ":")) + "\n" for r in rows), encoding="utf-8")
+            print(json.dumps({"jobs": len(rows), "out": str(out.resolve()),
+                              "numerical_status": sorted({r["numerical_status"] for r in rows})}))
         elif args.command == "snapshot" and args.snapshot_command == "manifest":
             dataset_path = Path(args.dataset)
             out_dir = Path(args.out_dir)

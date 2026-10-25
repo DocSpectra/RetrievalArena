@@ -38,6 +38,7 @@ COPY containers/verification/evaluate_profile.py /opt/retrieval-arena/evaluate_p
 COPY containers/verification/review_packet.py /opt/retrieval-arena/review_packet.py
 COPY containers/verification/candidate_retrieval.py /opt/retrieval-arena/candidate_retrieval.py
 COPY containers/verification/docstyle_measurement.py /opt/retrieval-arena/docstyle_measurement.py
+COPY containers/verification/graph_spectra.py /opt/retrieval-arena/graph_spectra.py
 RUN test -x /usr/bin/git \
     && mkdir -p /workspace/source \
     && chown 65532:65532 /workspace/source

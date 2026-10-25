@@ -79,6 +79,7 @@ class VerificationContainerContractTests(unittest.TestCase):
         self.assertIn('\"candidate-retrieve-prepare\":', runner)
         self.assertIn('\"candidate-retrieve-finalize\":', runner)
         self.assertIn('\"measure-docstyle\":', runner)
+        self.assertIn('\"measure-graph-spectra\":', runner)
         self.assertIn("argv[1] not in COMMANDS", runner)
         self.assertNotIn("subprocess", runner)
         self.assertIn("sys.path.insert(0, str(OPERATOR_ROOT))", runner)
@@ -99,6 +100,9 @@ class VerificationContainerContractTests(unittest.TestCase):
         docstyle_operator = "containers/verification/docstyle_measurement.py"
         self.assertIn(f"!{docstyle_operator}", dockerignore)
         self.assertIn(f"COPY {docstyle_operator} /opt/retrieval-arena/docstyle_measurement.py", dockerfile)
+        spectra_operator = "containers/verification/graph_spectra.py"
+        self.assertIn(f"!{spectra_operator}", dockerignore)
+        self.assertIn(f"COPY {spectra_operator} /opt/retrieval-arena/graph_spectra.py", dockerfile)
 
     def test_review_packet_operator_is_atomic_and_receipted(self):
         operator = self.text("containers/verification/review_packet.py")

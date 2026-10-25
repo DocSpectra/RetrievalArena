@@ -36,7 +36,7 @@ against (`configs/experiments/ra_s0xx_image_receipt.json`).
 PowerShell 7 is required. Parameters bind by name (`PositionalBinding =
 $false`; only `Command` may be positional). The `.sh` adapter accepts the
 same as `--input-root= --output-root= [--candidate-root=] --receipt=` beside
-its positional form. The seven `-Command` values:
+its positional form. The eight `-Command` values:
 
 | Command | What it does |
 | --- | --- |
@@ -46,6 +46,7 @@ its positional form. The seven `-Command` values:
 | `score-bertscore` | offline BERTScore over composed answer pairs (`retrieval_arena.bertscore_scoring_request.v1`; container memory raised to 8 GB) — [evaluations/score_bertscore.md](evaluations/score_bertscore.md) |
 | `review-packet` | export a blinded review packet and optionally import judgments (below) |
 | `candidate-retrieve` | one provider run over a candidate repository (below); expands to the image's `candidate-retrieve-prepare` and `-finalize` around the provider container |
+| `measure-graph-spectra` | `normalized_magnetic_spectrum.v1` over graph bundles in the input root (`retrieval_arena.graph_spectra_operator_request.v1`, `config.json`, bundles); single-threaded BLAS, 4 GB; writes `graph_spectra.v1.jsonl`, its manifest and a self-hashed receipt — [evaluations/normalized_magnetic_spectrum.md](evaluations/normalized_magnetic_spectrum.md) |
 | `measure-docstyle` | S052: the DocEng 2026 per-document metrics (Appendix B, spaCy `en_core_web_sm` 3.8.0) over every `.md` document of a candidate repository under the request's corpus policy; one phase with the candidate mounted read-only (`-CandidateRoot`); no question, no generative model — [evaluations/measure_docstyle.md](evaluations/measure_docstyle.md) |
 
 Before running, the adapter checks: clean tree, receipt schema and

@@ -34,6 +34,7 @@ COMMANDS = {
         "unit_tests.test_repo_lexicon",
         "unit_tests.test_pooled_support",
         "unit_tests.test_structural_target_v2",
+        "unit_tests.test_magnetic_spectrum",
     ),
     "all": None,
     "evaluate-profile": (),
@@ -42,6 +43,7 @@ COMMANDS = {
     "candidate-retrieve-prepare": (),
     "candidate-retrieve-finalize": (),
     "measure-docstyle": (),
+    "measure-graph-spectra": (),
 }
 
 
@@ -93,6 +95,10 @@ def main(argv: list[str]) -> int:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from docstyle_measurement import main as docstyle_measurement_main
         return docstyle_measurement_main()
+    if argv[1] == "measure-graph-spectra":
+        sys.path.insert(0, str(OPERATOR_ROOT))
+        from graph_spectra import main as graph_spectra_main
+        return graph_spectra_main()
     scratch = SOURCE_ROOT / ".tmp_unit_tests"
     html_scratch = SOURCE_ROOT / "unit_tests" / "_tmp_html_report"
     if not scratch.is_dir() or not html_scratch.is_dir():
