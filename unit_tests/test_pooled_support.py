@@ -330,9 +330,10 @@ class EscalationTests(Base):
         pooling.pool_files(self.root / "pool_config.json", self.root / "corpus", self.root / "queries.jsonl",
                            self.root / "runs", None, self.pool_dir, encoder=encoder)
 
-    def escalate(self, out, prior, transport, config=None, corpus=None):
+    def escalate(self, out, prior, transport, config=None, corpus=None, query_ids=None):
         run = verification.EscalateRun(self.pool_dir, corpus or self.root / "corpus", self.queries,
-                                       config or verifier_config(max_input_tokens=200000), self.root / out, transport, prior)
+                                       config or verifier_config(max_input_tokens=200000), self.root / out, transport, prior,
+                                       query_ids=query_ids)
         stats = asyncio.run(run.run())
         return run, stats, verification.write_qrels(run)
 
@@ -374,6 +375,14 @@ class EscalationTests(Base):
         small = verifier_config(max_input_tokens=200)  # the page does not fit: recorded, stays undetermined
         run4, _, m4 = self.escalate("v4", run1.out_dir, SplitTransport(), config=small)
         self.assertEqual(m4["escalation"]["outcomes"].get("input_too_long"), m4["escalation"]["targets"])
+        counter = SplitTransport()  # a query selection leaves the other queries' undetermined pages as they were
+        run5, _, m5 = self.escalate("v5", run1.out_dir, counter, query_ids=["q1", "q2"])
+        after = {(d["query_id"], d["doc_id"]): d for d in pooling.read_jsonl(run5.out_dir / "page_decisions.jsonl")}
+        self.assertEqual(after[("q3", "guide/split")]["decision"], "undetermined")
+        self.assertNotIn("escalation", after[("q3", "guide/split")])
+        self.assertEqual(counter.calls, m5["escalation"]["targets"])
+        with self.assertRaises(ValidationError):
+            self.escalate("v6", run1.out_dir, SplitTransport(), query_ids=["unknown"])
 
     def test_refusals(self):
         run1, _, _ = self.verify("v1", transport=SplitTransport())

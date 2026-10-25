@@ -26,7 +26,7 @@ NETWORKS = {"pool": {"none"}, "verify": {"external_api"}, "escalate": {"external
 ARGS = {
     "pool": {"config", "corpus", "queries", "run_root", "model_dir"},
     "verify": {"config", "pool", "queries", "prior", "query_ids", "limit", "resume"},
-    "escalate": {"config", "pool", "corpus", "queries", "prior", "limit", "resume"},
+    "escalate": {"config", "pool", "corpus", "queries", "prior", "query_ids", "limit", "resume"},
     "review-packet": {"qrels", "pool", "queries", "per_stratum", "seed", "packet_id"},
     "import-review": {"packet", "key", "responses"},
 }
@@ -79,7 +79,7 @@ def run(command, args, source, output, network):
                     (output / name).write_bytes((p("resume") / name).read_bytes())
         transport = transport_for(config, network, output)
         if command == "escalate":
-            vrun = verification.EscalateRun(p("pool"), p("corpus"), queries, config, output, transport, p("prior"))
+            vrun = verification.EscalateRun(p("pool"), p("corpus"), queries, config, output, transport, p("prior"), query_ids=query_ids)
         else:
             vrun = verification.VerifyRun(p("pool"), queries, config, output, transport, prior_dir=p("prior"), query_ids=query_ids)
         stats = asyncio.run(vrun.run(limit=args["limit"]))

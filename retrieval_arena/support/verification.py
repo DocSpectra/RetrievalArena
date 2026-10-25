@@ -279,7 +279,7 @@ class EscalateRun(_Judging):
     other page are copied unchanged. Resumable like VerifyRun; judgments start from the prior bytes."""
 
     def __init__(self, pool_dir: Path, corpus_dir: Path, queries: list[dict[str, Any]], config: dict[str, Any],
-                 out_dir: Path, transport: Callable[..., Any] | None, prior_dir: Path):
+                 out_dir: Path, transport: Callable[..., Any] | None, prior_dir: Path, query_ids: list[str] | None = None):
         self.config = validate_verifier_config(config)
         self.p_sha, self.s_sha = prompt_sha256(), settings_sha256(config)
         self.pool_dir, self.out_dir, self.prior_dir = Path(pool_dir), Path(out_dir), Path(prior_dir)
@@ -296,13 +296,15 @@ class EscalateRun(_Judging):
             raise ValidationError("pooled-support-escalation-pool-mismatch")
         self.queries = {q["question_id"]: q for q in queries}
         self.prior_decisions = read_jsonl(self.prior_dir / "page_decisions.jsonl")
-        targets = [d for d in self.prior_decisions
-                   if d["decision"] == "undetermined" and self.corpus_inventory.get(d["doc_id"]) == d["page_sha256"]]
-        if not {d["query_id"] for d in targets} <= set(self.queries):
+        prior_queries = {d["query_id"] for d in self.prior_decisions}
+        self.query_ids = sorted(query_ids) if query_ids is not None else sorted(prior_queries)
+        if not set(self.query_ids) <= prior_queries or not set(self.query_ids) <= set(self.queries):
             raise ValidationError("pooled-support-query-ids-unknown")
+        selected = set(self.query_ids)
+        targets = [d for d in self.prior_decisions if d["query_id"] in selected
+                   and d["decision"] == "undetermined" and self.corpus_inventory.get(d["doc_id"]) == d["page_sha256"]]
         self.windows = {d["doc_id"]: page_window(d["doc_id"], docs[d["doc_id"]]) for d in targets}
         self.targets = sorted(((d["query_id"], d["doc_id"], d["page_sha256"]) for d in targets))
-        self.query_ids = sorted({d["query_id"] for d in self.prior_decisions})
 
     def key(self, target: tuple[str, str, str]) -> str:
         q, d, page_sha = target
@@ -312,7 +314,7 @@ class EscalateRun(_Judging):
         return {"escalation_policy_id": ESCALATION_POLICY_ID, "pool_sha256": self.pool_manifest["pool_sha256"],
                 "prompt_sha256": self.p_sha, "settings_sha256": self.s_sha,
                 "prior_qrels_manifest_sha256": hashlib.sha256((self.prior_dir / "qrels_manifest.json").read_bytes()).hexdigest(),
-                "targets_sha256": sha256_json(self.targets)}
+                "query_ids_sha256": sha256_json(self.query_ids), "targets_sha256": sha256_json(self.targets)}
 
     def prepare(self) -> None:
         self._prepare((self.prior_dir / "judgments.jsonl").read_bytes())
