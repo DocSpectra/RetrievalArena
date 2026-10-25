@@ -37,6 +37,7 @@ COMMANDS = {
         "unit_tests.test_magnetic_spectrum",
         "unit_tests.test_magnetic_attribution",
         "unit_tests.test_trace_provenance",
+        "unit_tests.test_answer_element_comparison",
     ),
     "all": None,
     "evaluate-profile": (),
@@ -48,6 +49,7 @@ COMMANDS = {
     "measure-graph-spectra": (),
     "measure-magnetic-attribution": (),
     "audit-trace-provenance": (),
+    "compare-answer-elements": (),
 }
 
 
@@ -111,6 +113,10 @@ def main(argv: list[str]) -> int:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from trace_provenance import main as trace_provenance_main
         return trace_provenance_main()
+    if argv[1] == "compare-answer-elements":
+        sys.path.insert(0, str(OPERATOR_ROOT))
+        from answer_element_comparison import main as answer_element_main
+        return answer_element_main()
     scratch = SOURCE_ROOT / ".tmp_unit_tests"
     html_scratch = SOURCE_ROOT / "unit_tests" / "_tmp_html_report"
     if not scratch.is_dir() or not html_scratch.is_dir():

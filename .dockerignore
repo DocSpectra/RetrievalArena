@@ -13,3 +13,4 @@ containers/verification/*
 !containers/verification/graph_spectra.py
 !containers/verification/magnetic_attribution.py
 !containers/verification/trace_provenance.py
+!containers/verification/answer_element_comparison.py

@@ -82,6 +82,7 @@ class VerificationContainerContractTests(unittest.TestCase):
         self.assertIn('\"measure-graph-spectra\":', runner)
         self.assertIn('\"measure-magnetic-attribution\":', runner)
         self.assertIn('\"audit-trace-provenance\":', runner)
+        self.assertIn('\"compare-answer-elements\":', runner)
         self.assertIn("argv[1] not in COMMANDS", runner)
         self.assertNotIn("subprocess", runner)
         self.assertIn("sys.path.insert(0, str(OPERATOR_ROOT))", runner)
@@ -111,6 +112,9 @@ class VerificationContainerContractTests(unittest.TestCase):
         provenance_operator = "containers/verification/trace_provenance.py"
         self.assertIn(f"!{provenance_operator}", dockerignore)
         self.assertIn(f"COPY {provenance_operator} /opt/retrieval-arena/trace_provenance.py", dockerfile)
+        element_operator = "containers/verification/answer_element_comparison.py"
+        self.assertIn(f"!{element_operator}", dockerignore)
+        self.assertIn(f"COPY {element_operator} /opt/retrieval-arena/answer_element_comparison.py", dockerfile)
 
     def test_review_packet_operator_is_atomic_and_receipted(self):
         operator = self.text("containers/verification/review_packet.py")
