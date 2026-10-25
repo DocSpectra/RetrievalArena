@@ -333,6 +333,18 @@ class ElementComparisonTests(unittest.TestCase):
         leaky['pairs'][0]['answers']['A'] += ' opaque-variant-x'
         self.assertIn('string:opaque-variant-x', aec.leakage(leaky, ['opaque-variant-x']))
 
+    def test_reason_repeating_shown_text_is_not_a_leak(self):
+        # A judge reason that copies the acceptance criterion is text the packet shows anyway.
+        for aid in [a['answer_id'] for a in self.fx.answers]:
+            rec = self.fx.record(f'j-{aid}')
+            for v in rec['raw_verdicts']:
+                if v['element_id'] == 'E2' and aid.split('-')[1] == 't1':
+                    v['reason'] = 'Says rotation restarts the widget.'
+            self.fx.rewrite(f'j-{aid}', rec)
+        res = self.fx.run()
+        self.assertIn('packet', res)
+        self.assertNotIn('Reason text for', json.dumps(res['packet']))
+
     def test_deterministic(self):
         a = aec.canonical({k: v for k, v in self.fx.run().items()})
         b = aec.canonical({k: v for k, v in self.fx.run().items()})

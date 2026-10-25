@@ -731,7 +731,14 @@ def run(config, root):
                 texts[a['answer_id']] = (Path(root) / a['answer_path']).read_text(encoding='utf-8')
         forbidden = set(config['selection'].get('forbidden_strings', []))
         forbidden |= {a['answer_id'] for a in config['answers']} | {j['judgment_id'] for j in config['judgments']}
-        forbidden |= {r['raw_reason'] for r in rows if r['raw_reason'] and len(r['raw_reason']) >= 20}
+        # A judge reason is a leak only when it is not also text the packet legitimately shows (a reason that
+        # repeats an acceptance criterion or quotes an answer reveals nothing).
+        shown = [t['question'] for t in config['tasks']]
+        shown += [x for t in config['tasks'] for e in t['elements'] for x in (e['requirement'], e['acceptance'])]
+        shown += [(Path(root) / r['path']).read_text(encoding='utf-8') for t in config['tasks'] for r in t.get('references', [])]
+        shown += [texts[a] for p in chosen for a in (p['answer_a'], p['answer_b'])]
+        forbidden |= {r['raw_reason'] for r in rows if r['raw_reason'] and len(r['raw_reason']) >= 20
+                      and not any(r['raw_reason'] in s for s in shown)}
         packet, response, key = build_review(config, root, chosen, texts, sorted(forbidden))
         receipt['packet_sha256'] = response['packet_sha256']
         result.update(selection=receipt, packet=packet, response=response, key=key)
