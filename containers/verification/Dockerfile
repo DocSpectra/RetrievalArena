@@ -40,6 +40,7 @@ COPY containers/verification/candidate_retrieval.py /opt/retrieval-arena/candida
 COPY containers/verification/docstyle_measurement.py /opt/retrieval-arena/docstyle_measurement.py
 COPY containers/verification/graph_spectra.py /opt/retrieval-arena/graph_spectra.py
 COPY containers/verification/magnetic_attribution.py /opt/retrieval-arena/magnetic_attribution.py
+COPY containers/verification/trace_provenance.py /opt/retrieval-arena/trace_provenance.py
 RUN test -x /usr/bin/git \
     && mkdir -p /workspace/source \
     && chown 65532:65532 /workspace/source

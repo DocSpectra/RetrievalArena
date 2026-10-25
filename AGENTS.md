@@ -123,7 +123,7 @@ launch record and the receipt carry `corpus_faq_patterns`.
 `scripts/run-verification.ps1` / `.sh` run the immutable verification image
 (`containers/verification/`), repository mounted read-only, network none.
 Parameters, by name: `-Command` (`focused`, `all`, `evaluate-profile`,
-`review-packet`, `score-bertscore`, `candidate-retrieve`, `measure-docstyle`, `measure-graph-spectra`, `measure-magnetic-attribution`), `-InputRoot`,
+`review-packet`, `score-bertscore`, `candidate-retrieve`, `measure-docstyle`, `measure-graph-spectra`, `measure-magnetic-attribution`, `audit-trace-provenance`), `-InputRoot`,
 `-OutputRoot` (fresh, containing only `.retrieval-arena-output-owner`),
 `-CandidateRoot` (candidate-retrieve and measure-docstyle), `-Receipt`. PowerShell 7 is
 required. Since S024 the `.ps1` binds by name only (`PositionalBinding =
