@@ -1,6 +1,6 @@
 [CmdletBinding(PositionalBinding = $false)]
 param(
-    [Parameter(Mandatory = $true, Position = 0)][ValidateSet('focused','all','evaluate-profile','review-packet','score-bertscore','candidate-retrieve','measure-docstyle','measure-graph-spectra')][string]$Command,
+    [Parameter(Mandatory = $true, Position = 0)][ValidateSet('focused','all','evaluate-profile','review-packet','score-bertscore','candidate-retrieve','measure-docstyle','measure-graph-spectra','measure-magnetic-attribution')][string]$Command,
     [Parameter()][string]$InputRoot,
     [Parameter()][string]$OutputRoot,
     [Parameter()][string]$CandidateRoot,
@@ -36,7 +36,7 @@ if ($head -ne $value.source_commit -or $tree -ne $value.source_tree) { throw 've
 $labels = (& docker image inspect --format '{{json .Config.Labels}}' $image | ConvertFrom-Json)
 if ($LASTEXITCODE -ne 0 -or $labels.'org.opencontainers.image.revision' -ne $value.source_commit -or $labels.'io.retrieval-arena.source.tree' -ne $value.source_tree -or $labels.'io.retrieval-arena.verification.dependency-lock-sha256' -ne $value.dependency_lock_sha256 -or $labels.'io.retrieval-arena.verification.platform' -ne $value.platform) { throw 'verification-image-label-mismatch' }
 
-if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candidate-retrieve','measure-docstyle','measure-graph-spectra')) {
+if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candidate-retrieve','measure-docstyle','measure-graph-spectra','measure-magnetic-attribution')) {
     if ([string]::IsNullOrWhiteSpace($InputRoot) -or [string]::IsNullOrWhiteSpace($OutputRoot)) { throw 'verification-operator-input-output-required' }
     $inputPath = (Resolve-Path -LiteralPath $InputRoot).Path
     $outputPath = (Resolve-Path -LiteralPath $OutputRoot).Path
@@ -110,7 +110,7 @@ if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candida
         $memoryIndex = [Array]::IndexOf($arguments, '--memory')
         $arguments[$memoryIndex + 1] = '8g'
     }
-    if ($Command -eq 'measure-graph-spectra') {
+    if ($Command -in @('measure-graph-spectra','measure-magnetic-attribution')) {
         # Dense complex eigensystems of the largest declared views.
         $memoryIndex = [Array]::IndexOf($arguments, '--memory')
         $arguments[$memoryIndex + 1] = '4g'

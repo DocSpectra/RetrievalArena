@@ -35,6 +35,7 @@ COMMANDS = {
         "unit_tests.test_pooled_support",
         "unit_tests.test_structural_target_v2",
         "unit_tests.test_magnetic_spectrum",
+        "unit_tests.test_magnetic_attribution",
     ),
     "all": None,
     "evaluate-profile": (),
@@ -44,6 +45,7 @@ COMMANDS = {
     "candidate-retrieve-finalize": (),
     "measure-docstyle": (),
     "measure-graph-spectra": (),
+    "measure-magnetic-attribution": (),
 }
 
 
@@ -99,6 +101,10 @@ def main(argv: list[str]) -> int:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from graph_spectra import main as graph_spectra_main
         return graph_spectra_main()
+    if argv[1] == "measure-magnetic-attribution":
+        sys.path.insert(0, str(OPERATOR_ROOT))
+        from magnetic_attribution import main as magnetic_attribution_main
+        return magnetic_attribution_main()
     scratch = SOURCE_ROOT / ".tmp_unit_tests"
     html_scratch = SOURCE_ROOT / "unit_tests" / "_tmp_html_report"
     if not scratch.is_dir() or not html_scratch.is_dir():

@@ -11,3 +11,4 @@ containers/verification/*
 !containers/verification/candidate_retrieval.py
 !containers/verification/docstyle_measurement.py
 !containers/verification/graph_spectra.py
+!containers/verification/magnetic_attribution.py
