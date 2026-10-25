@@ -3,6 +3,7 @@
 Runs inside a pinned image with the RA source mounted read-only (scripts/run_support.py):
   pool           embedding image, network none
   verify         hosted-model image (anthropic SDK), network external_api only; `resume` continues a stopped run
+  escalate       as verify: whole-page judgment of a prior version's undetermined pages (EscalateRun)
   review-packet  any RA image, network none
   import-review  any RA image, network none
 Request: /input/operator-request.json {schema_version, command, args, input_inventory}.
@@ -21,10 +22,11 @@ from retrieval_arena.errors import ValidationError  # noqa: E402
 
 SCHEMA_REQUEST = "retrieval_arena.pooled_support_operator_request.v1"
 SCHEMA_RECEIPT = "retrieval_arena.pooled_support_operator_receipt.v1"
-NETWORKS = {"pool": {"none"}, "verify": {"external_api"}, "review-packet": {"none"}, "import-review": {"none"}}
+NETWORKS = {"pool": {"none"}, "verify": {"external_api"}, "escalate": {"external_api"}, "review-packet": {"none"}, "import-review": {"none"}}
 ARGS = {
     "pool": {"config", "corpus", "queries", "run_root", "model_dir"},
     "verify": {"config", "pool", "queries", "prior", "query_ids", "limit", "resume"},
+    "escalate": {"config", "pool", "corpus", "queries", "prior", "limit", "resume"},
     "review-packet": {"qrels", "pool", "queries", "per_stratum", "seed", "packet_id"},
     "import-review": {"packet", "key", "responses"},
 }
@@ -63,11 +65,11 @@ def run(command, args, source, output, network):
         model = Path("/models/embedding") if args["model_dir"] == "/models/embedding" else p("model_dir")
         manifest = pooling.pool_files(p("config"), p("corpus"), p("queries"), p("run_root"), str(model), output)
         return "completed", {"pool_sha256": manifest["pool_sha256"], "summary": manifest["summary"]}
-    if command == "verify":
+    if command in ("verify", "escalate"):
         from retrieval_arena.model_providers import transport_for
         config = json.loads(p("config").read_text(encoding="utf-8"))
         verification.validate_verifier_config(config)
-        query_ids = json.loads(p("query_ids").read_text(encoding="utf-8")) if args["query_ids"] else None
+        query_ids = json.loads(p("query_ids").read_text(encoding="utf-8")) if args.get("query_ids") else None
         queries = pooling.read_jsonl(p("queries"))
         if args["resume"]:
             # A stopped run's output, staged as input: its state and judgments seed this output (VerifyRun checks the state).
@@ -76,13 +78,17 @@ def run(command, args, source, output, network):
                 if (p("resume") / name).exists():
                     (output / name).write_bytes((p("resume") / name).read_bytes())
         transport = transport_for(config, network, output)
-        vrun = verification.VerifyRun(p("pool"), queries, config, output, transport, prior_dir=p("prior"), query_ids=query_ids)
+        if command == "escalate":
+            vrun = verification.EscalateRun(p("pool"), p("corpus"), queries, config, output, transport, p("prior"))
+        else:
+            vrun = verification.VerifyRun(p("pool"), queries, config, output, transport, prior_dir=p("prior"), query_ids=query_ids)
         stats = asyncio.run(vrun.run(limit=args["limit"]))
         manifest = verification.write_qrels(vrun)
         manifest_counts = manifest["counts"]
         status = "completed" if not stats["spend_stopped"] and stats["remaining_windows"] == 0 else "completed_with_failures"
         return status, {"run": stats, "qrels_version": manifest["qrels_version"], "counts": manifest_counts,
-                        "qrels_sha256": manifest["qrels_sha256"], "judgments_sha256": manifest["judgments_sha256"]}
+                        "qrels_sha256": manifest["qrels_sha256"], "judgments_sha256": manifest["judgments_sha256"],
+                        **({"escalation": manifest["escalation"]} if command == "escalate" else {})}
     if command == "review-packet":
         info = review.packet_files(p("qrels"), p("pool"), p("queries"), output, args["per_stratum"], args["seed"], args["packet_id"])
         return "completed", info

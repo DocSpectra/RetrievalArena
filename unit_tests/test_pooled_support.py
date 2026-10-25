@@ -298,6 +298,99 @@ class VerifyTests(Base):
         self.assertEqual(sum(1 for r in qrels if r["query_id"] == "q1" and r["support_target_id"] == "guide/alpha"), 1)
 
 
+class SplitTransport(FakeTransport):
+    """An answer in two parts (PART1, PART2): `answers` only when one passage holds both, `insufficient` for one part."""
+
+    def __init__(self, page_verdict=None, **kw):
+        super().__init__(**kw)
+        self.page_verdict = page_verdict
+
+    async def __call__(self, prompt, schema, config):
+        passage = prompt.split("<passage>\n", 1)[1].rsplit("\n</passage>", 1)[0]
+        parts = [p for p in ("PART1", "PART2") if p in passage]
+        if not parts:
+            return await super().__call__(prompt, schema, config)
+        self.calls += 1
+        if len(parts) == 2:
+            body = self.page_verdict or {"verdict": "answers", "supporting_span": passage.splitlines()[1].strip(), "reason": "both"}
+        else:
+            body = {"verdict": "insufficient", "supporting_span": "", "reason": "cut off"}
+        return {"text": json.dumps(body), "model": config["model"], "revision": config["revision"], "usage": {}, "cost": 1e-6}
+
+
+class EscalationTests(Base):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        corpus_files(self.root)
+        split = ["# Split", "PART1 network volume beta"] + [f"filler {i}" for i in range(26)] + ["PART2 network volume beta"]
+        (self.root / "corpus" / "guide" / "split.md").write_text("\n".join(split) + "\n", encoding="utf-8")
+        self.queries = pooling.read_jsonl(self.root / "queries.jsonl")
+        self.pool_dir = self.root / "pool"
+        pooling.pool_files(self.root / "pool_config.json", self.root / "corpus", self.root / "queries.jsonl",
+                           self.root / "runs", None, self.pool_dir, encoder=encoder)
+
+    def escalate(self, out, prior, transport, config=None, corpus=None):
+        run = verification.EscalateRun(self.pool_dir, corpus or self.root / "corpus", self.queries,
+                                       config or verifier_config(max_input_tokens=200000), self.root / out, transport, prior)
+        stats = asyncio.run(run.run())
+        return run, stats, verification.write_qrels(run)
+
+    def test_split_answer_is_found_on_the_whole_page(self):
+        run1, _, m1 = self.verify("v1", transport=SplitTransport())
+        before = {(d["query_id"], d["doc_id"]): d for d in pooling.read_jsonl(run1.out_dir / "page_decisions.jsonl")}
+        self.assertEqual(before[("q3", "guide/split")]["decision"], "undetermined")
+        self.assertIn("q3", m1["counts"]["queries_dropped_no_verified_page"])
+        counter = SplitTransport()
+        run2, stats, m2 = self.escalate("v2", run1.out_dir, counter)
+        targets = [k for k, d in before.items() if d["decision"] == "undetermined"]
+        self.assertEqual(counter.calls, len(targets))  # one whole-page call per undetermined page
+        after = {(d["query_id"], d["doc_id"]): d for d in pooling.read_jsonl(run2.out_dir / "page_decisions.jsonl")}
+        split = after[("q3", "guide/split")]
+        self.assertEqual((split["decision"], split["answering_window_ids"]), ("supported", ["guide/split#page"]))
+        self.assertEqual(split["escalation"]["prior_decision"], "undetermined")
+        self.assertTrue(all(after[k] == v for k, v in before.items() if k not in targets))  # other pages unchanged
+        self.assertIn("q3", m2["ordered_query_ids"])  # the dropped question is back
+        self.assertEqual(m2["qrels_version"], 2)
+        self.assertEqual(m2["escalation"]["targets"], len(targets))
+        self.assertNotEqual(m2["settings_sha256"], m2["escalation"]["prior_settings_sha256"])
+        self.assertTrue((run2.out_dir / "judgments.jsonl").read_bytes().startswith((run1.out_dir / "judgments.jsonl").read_bytes()))
+        again = SplitTransport()
+        _, stats2, m3 = self.escalate("v2", run1.out_dir, again)  # resume: nothing left
+        self.assertEqual((again.calls, stats2["attempted_windows"]), (0, 0))
+        self.assertEqual(m3["qrels_sha256"], m2["qrels_sha256"])
+
+    def test_outcomes_other_than_answers(self):
+        run1, _, _ = self.verify("v1", transport=SplitTransport())
+        no = {"verdict": "not_answer", "supporting_span": "", "reason": "no"}
+        run2, _, m2 = self.escalate("v2", run1.out_dir, SplitTransport(page_verdict=no))
+        after = {(d["query_id"], d["doc_id"]): d for d in pooling.read_jsonl(run2.out_dir / "page_decisions.jsonl")}
+        self.assertEqual(after[("q3", "guide/split")]["decision"], "not_supported")
+        self.assertNotIn("q3", m2["ordered_query_ids"])
+        unsure = {"verdict": "insufficient", "supporting_span": "", "reason": "?"}
+        run3, _, _ = self.escalate("v3", run1.out_dir, SplitTransport(page_verdict=unsure))
+        after = {(d["query_id"], d["doc_id"]): d for d in pooling.read_jsonl(run3.out_dir / "page_decisions.jsonl")}
+        self.assertEqual(after[("q3", "guide/split")]["decision"], "undetermined")
+        small = verifier_config(max_input_tokens=200)  # the page does not fit: recorded, stays undetermined
+        run4, _, m4 = self.escalate("v4", run1.out_dir, SplitTransport(), config=small)
+        self.assertEqual(m4["escalation"]["outcomes"].get("input_too_long"), m4["escalation"]["targets"])
+
+    def test_refusals(self):
+        run1, _, _ = self.verify("v1", transport=SplitTransport())
+        page = self.root / "corpus" / "guide" / "split.md"
+        page.write_text(page.read_text(encoding="utf-8") + "edited\n", encoding="utf-8")
+        with self.assertRaises(ValidationError):  # the corpus is not the pool's
+            self.escalate("v2", run1.out_dir, SplitTransport())
+        prompt = verification.PROMPT_TEMPLATE
+        try:
+            verification.PROMPT_TEMPLATE = prompt + " "
+            with self.assertRaises(ValidationError):
+                verification.EscalateRun(self.pool_dir, self.root / "corpus", self.queries, verifier_config(),
+                                         self.root / "v3", SplitTransport(), run1.out_dir)
+        finally:
+            verification.PROMPT_TEMPLATE = prompt
+
+
 class ReviewTests(Base):
     def setUp(self):
         super().setUp()

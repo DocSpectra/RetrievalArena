@@ -8,10 +8,11 @@ Added in C2 (October 12, 2026). A TREC-style qrels construction stage: pool cand
 | --- | --- | --- | --- |
 | `support pool` | windows, two passage generators, evaluated runs, pool union | an image with `sentence-transformers` (the pinned embedding image) | none |
 | `support verify` | one verifier call per (query, window); checkpoint, resume, incremental extension; page decisions; qrels | an image with the `anthropic` SDK (the RAGAS image) | `external_api` |
+| `support escalate` | one verifier call per `undetermined` page of a prior version, on the whole page; new version (operator only) | as `support verify` | `external_api` |
 | `support review-packet` | stratified, seeded, blinded spot-check packet plus a separate key | any RA image | none |
 | `support import-review` | validate reviewer responses; precision and miss rate with Wilson 95% intervals | any RA image | none |
 
-Each verb is a function in `retrieval_arena/support/` (`pooling.py`, `verification.py`, `review.py`) and a CLI verb (`python -m retrieval_arena.cli support <verb>`). The containerized form is the closed operator `containers/support/support_operator.py`, launched by the thin host shim `scripts/run_support.py` (docker or podman). The shim writes `operator-request.json` with the input inventory, mounts the RA source read-only at `/opt/ra-src`, picks the network, and passes `ANTHROPIC_API_KEY` by name for `verify` only. It refuses a dirty `retrieval_arena/` or `containers/support/` unless `--allow-dirty` is passed, and the receipt records the source commit, tree and dirty flag. Every operator writes `receipt.json` (`retrieval_arena.pooled_support_operator_receipt.v1`) with the input inventory hash, the args and an output inventory.
+Each verb is a function in `retrieval_arena/support/` (`pooling.py`, `verification.py`, `review.py`) and a CLI verb (`python -m retrieval_arena.cli support <verb>`). The containerized form is the closed operator `containers/support/support_operator.py`, launched by the thin host shim `scripts/run_support.py` (docker or podman). The shim writes `operator-request.json` with the input inventory, mounts the RA source read-only at `/opt/ra-src`, picks the network, and passes `ANTHROPIC_API_KEY` by name for `verify` and `escalate` only. It refuses a dirty `retrieval_arena/` or `containers/support/` unless `--allow-dirty` is passed, and the receipt records the source commit, tree and dirty flag. Every operator writes `receipt.json` (`retrieval_arena.pooled_support_operator_receipt.v1`) with the input inventory hash, the args and an output inventory.
 
 ## Pool rule (`pooled_support_pool_v1`)
 
@@ -43,6 +44,15 @@ Config `retrieval_arena.pooled_support_verifier_config.v1`: the provider fields 
 - **Resume.** Judgments are appended as they finish. A rerun into the same output, with the same pool, prompt, settings, prior and query selection (`verify_state.json`), judges only windows without a terminal row (`ok`, `span_invalid`, `input_too_long`). The operator's `resume` arg stages a stopped run's state, judgments and ledger into a fresh output.
 - **Incremental (`prior`).** A new version starts from the prior version's `judgments.jsonl` bytes, unchanged, and judges only (query, page, page content) triples the prior never judged. A different prompt or settings hash is refused. The prior's page decisions carry over unchanged. The qrels cover the current pool's corpus: a decision counts only if its `page_sha256` equals the corpus page's. So an edited page that kept its id is unjudged on the new corpus until it is verified.
 
+## Whole-page escalation (`whole_page_escalation_v1`)
+
+Added October 24, 2026 (ICSC D-P5). Line windows can split an answer: each window holds part of it, comes back `insufficient`, and the page stays `undetermined`, so a query whose only answering page is split can be dropped. `escalate` (`EscalateRun`) takes a prior version (`prior`), its pool and the pool's corpus (`corpus`, checked against `corpus_inventory.json`), and judges every `undetermined` decision on the current corpus once more, with the **same prompt**, on the whole page (stripped, as one window `<doc_id>#page`).
+
+- **Settings.** The prompt hash must equal the prior's; the settings may differ (normally a larger `max_input_tokens`, so long pages fit). The manifest records both settings hashes (`escalation.prior_settings_sha256`). A page that still does not fit is `input_too_long` and stays undetermined.
+- **Decisions.** `ok` `answers` makes the page `supported` (answering window `<doc_id>#page`); `ok` `not_answer` makes it `not_supported`; anything else leaves it `undetermined`. Each target's decision gets an `escalation` block (window, judgment key, status, verdict, prior decision). Every other decision is copied unchanged. Qrels follow the usual rule, so a dropped query whose page is now supported is kept again.
+- **Version.** A new qrels version (`prior + 1`); judgments start from the prior bytes; resume as for `verify`. The manifest's `escalation` block gives the target count and outcome counts.
+- **Reading.** A whole page is a larger passage than a window, so the verifier sees more context: report escalated labels as such (counts from the manifest), and apply escalation to every pool compared, never to one arm only.
+
 ## Spot-check
 
 `review-packet` samples `per_stratum` verifier-supported and `per_stratum` verifier-not-supported pages (seeded, without replacement, current corpus only) and shuffles them. Each item shows question, reference answer, page id and one passage: the accepted window for a supported page, the top-ranked window otherwise. It never shows the verdict. `review_key.json` maps items to strata and holds the stratum sizes; the review page never receives it.
@@ -58,7 +68,7 @@ Config `retrieval_arena.pooled_support_verifier_config.v1`: the provider fields 
 
 ## Tests
 
-`unit_tests/test_pooled_support.py` (in `focused`), offline with a fake transport and a bag-of-words encoder: window boundaries; BM25 and embedding determinism and ties; pool union, per-source provenance and run-only windows; parse failures as explicit statuses; qrels accepted by `validate_ranked_inputs` (pooled, unjudged stays unjudged); spend-stop and resume; incremental verify (judged pages skipped, prompt or settings change refused, prior files byte-identical, judgments a byte prefix); changed page content becomes unjudged; review packet determinism, blinding, stratum checks, round trip and Wilson bounds.
+`unit_tests/test_pooled_support.py` (in `focused`), offline with a fake transport and a bag-of-words encoder: window boundaries; BM25 and embedding determinism and ties; pool union, per-source provenance and run-only windows; parse failures as explicit statuses; qrels accepted by `validate_ranked_inputs` (pooled, unjudged stays unjudged); spend-stop and resume; incremental verify (judged pages skipped, prompt or settings change refused, prior files byte-identical, judgments a byte prefix); changed page content becomes unjudged; escalation (a split answer becomes supported and its dropped query returns, other decisions unchanged, `not_answer` / `insufficient` / `input_too_long` outcomes, resume, corpus and prompt refusals); review packet determinism, blinding, stratum checks, round trip and Wilson bounds.
 
 ## Portability
 

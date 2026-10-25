@@ -4,7 +4,7 @@ Argument passing only: it writes the request with the input inventory, mounts th
 source read-only, picks the network, and passes a credential by name. All admission
 and logic run in the container. Works with docker or podman on Linux, macOS and Windows.
 
-  python scripts/run_support.py <pool|verify|review-packet|import-review> --image <ref>
+  python scripts/run_support.py <pool|verify|escalate|review-packet|import-review> --image <ref>
       --input-root <dir> --output-root <new dir> --args <json file>
       [--model-dir <dir>] [--engine docker|podman] [--allow-dirty]
 """
@@ -18,8 +18,8 @@ import sys
 from pathlib import Path
 
 RA = Path(__file__).resolve().parents[1]
-NETWORK = {"pool": "none", "verify": "external_api", "review-packet": "none", "import-review": "none"}
-CREDENTIAL = {"verify": "ANTHROPIC_API_KEY"}
+NETWORK = {"pool": "none", "verify": "external_api", "escalate": "external_api", "review-packet": "none", "import-review": "none"}
+CREDENTIAL = {"verify": "ANTHROPIC_API_KEY", "escalate": "ANTHROPIC_API_KEY"}
 
 
 def git(*argv):

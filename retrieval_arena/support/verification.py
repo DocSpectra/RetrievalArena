@@ -12,6 +12,10 @@ Failures are explicit statuses, never "not relevant". A page is supported if any
 of its windows is judged `answers` with a verbatim supporting span; not supported
 only if every window is judged `not_answer`; otherwise undetermined (left out of
 the qrels, i.e. unjudged). See docs/evaluations/pooled_support.md.
+
+Whole-page escalation (EscalateRun) judges every `undetermined` page of a prior
+version once more, with the same prompt, on the whole page as one window; an
+answer spread across windows can then be seen. Only that page's decision changes.
 """
 from __future__ import annotations
 
@@ -24,13 +28,14 @@ from pathlib import Path
 from typing import Any, Callable
 
 from ..errors import ValidationError
-from .pooling import read_jsonl, sha256_json, write_json, write_jsonl
+from .pooling import SCHEMA_WINDOW, load_corpus, read_jsonl, sha256_json, sha256_text, write_json, write_jsonl
 
 SCHEMA_VERIFIER_CONFIG = "retrieval_arena.pooled_support_verifier_config.v1"
 SCHEMA_JUDGMENT = "retrieval_arena.pooled_support_judgment.v1"
 SCHEMA_DECISION = "retrieval_arena.pooled_support_page_decision.v1"
 SCHEMA_QRELS_MANIFEST = "retrieval_arena.pooled_support_qrels_manifest.v1"
 JUDGMENT_POLICY_ID = "pooled_support_llm_verified_v1"
+ESCALATION_POLICY_ID = "whole_page_escalation_v1"
 LABEL = "LLM-verified support (pooled candidates); not independently judged relevance"
 
 PROMPT_VERSION = "pooled_support_verifier.v1"
@@ -131,48 +136,8 @@ def judgment_key(query_id: str, doc_id: str, page_sha: str, window_sha: str, p_s
 
 # ------------------------------------------------------------------ run
 
-class VerifyRun:
-    """Judge the windows of a pool's unjudged pages; resumable; optionally extends a prior version."""
-
-    def __init__(self, pool_dir: Path, queries: list[dict[str, Any]], config: dict[str, Any], out_dir: Path,
-                 transport: Callable[..., Any] | None, prior_dir: Path | None = None, query_ids: list[str] | None = None):
-        self.config = validate_verifier_config(config)
-        self.p_sha, self.s_sha = prompt_sha256(), settings_sha256(config)
-        self.pool_dir, self.out_dir, self.prior_dir = Path(pool_dir), Path(out_dir), Path(prior_dir) if prior_dir else None
-        self.pool = read_jsonl(self.pool_dir / "pool.jsonl")
-        self.windows = {w["window_id"]: w for w in read_jsonl(self.pool_dir / "windows.jsonl")}
-        self.pool_manifest = json.loads((self.pool_dir / "pool_manifest.json").read_text(encoding="utf-8"))
-        self.queries = {q["question_id"]: q for q in queries}
-        self.query_ids = sorted(query_ids) if query_ids is not None else sorted({r["query_id"] for r in self.pool})
-        if not set(self.query_ids) <= {r["query_id"] for r in self.pool} or not set(self.query_ids) <= set(self.queries):
-            raise ValidationError("pooled-support-query-ids-unknown")
-        self.transport = transport
-        self.prior_manifest = None
-        self.prior_pages: set[tuple[str, str, str]] = set()
-        if self.prior_dir is not None:
-            self.prior_manifest = json.loads((self.prior_dir / "qrels_manifest.json").read_text(encoding="utf-8"))
-            if self.prior_manifest["prompt_sha256"] != self.p_sha or self.prior_manifest["settings_sha256"] != self.s_sha:
-                raise ValidationError("pooled-support-verifier-changed")  # a new version must use the frozen prompt and settings
-            self.prior_pages = {(r["query_id"], r["doc_id"], r["page_sha256"]) for r in read_jsonl(self.prior_dir / "judgments.jsonl")}
-
-    def state(self) -> dict[str, Any]:
-        return {"pool_sha256": self.pool_manifest["pool_sha256"], "prompt_sha256": self.p_sha, "settings_sha256": self.s_sha,
-                "prior_judgments_sha256": hashlib.sha256((self.prior_dir / "judgments.jsonl").read_bytes()).hexdigest() if self.prior_dir else None,
-                "query_ids_sha256": sha256_json(self.query_ids)}
-
-    def prepare(self) -> None:
-        """Fresh out_dir: seed judgments with the prior bytes. Existing out_dir: must be the same run (resume)."""
-        state_path = self.out_dir / "verify_state.json"
-        if state_path.exists():
-            if json.loads(state_path.read_text(encoding="utf-8")) != self.state():
-                raise ValidationError("pooled-support-resume-mismatch")
-            return
-        if self.out_dir.exists() and any(p.name not in {".retrieval-arena-output-owner"} for p in self.out_dir.iterdir()):
-            raise ValidationError("pooled-support-output-not-fresh")
-        self.out_dir.mkdir(parents=True, exist_ok=True)
-        prior = (self.prior_dir / "judgments.jsonl").read_bytes() if self.prior_dir else b""
-        (self.out_dir / "judgments.jsonl").write_bytes(prior)
-        write_json(state_path, self.state())
+class _Judging:
+    """Append-only judging of (pool row, window, key) items; subclasses define prepare() and todo()."""
 
     def existing(self) -> dict[str, dict[str, Any]]:
         latest = {}
@@ -180,20 +145,6 @@ class VerifyRun:
         for row in read_jsonl(path) if path.exists() else []:
             latest[row["judgment_key"]] = row
         return latest
-
-    def todo(self) -> list[tuple[dict[str, Any], dict[str, Any], str]]:
-        done = {k for k, r in self.existing().items() if r["status"] in ("ok", "span_invalid", "input_too_long")}
-        selected = set(self.query_ids)
-        items = []
-        for row in self.pool:
-            if row["query_id"] not in selected or (row["query_id"], row["doc_id"], row["page_sha256"]) in self.prior_pages:
-                continue
-            for wid in row["window_ids"]:
-                window = self.windows[wid]
-                key = judgment_key(row["query_id"], row["doc_id"], row["page_sha256"], window["text_sha256"], self.p_sha, self.s_sha)
-                if key not in done:
-                    items.append((row, window, key))
-        return items
 
     async def judge(self, row, window, key):
         q = self.queries[row["query_id"]]
@@ -251,6 +202,154 @@ class VerifyRun:
         return {"attempted_windows": len(items), "statuses": dict(counts), "spend_stopped": stop["stopped"],
                 "remaining_windows": len(self.todo())}
 
+    def _prepare(self, prior_bytes: bytes) -> None:
+        """Fresh out_dir: seed judgments with the prior bytes. Existing out_dir: must be the same run (resume)."""
+        state_path = self.out_dir / "verify_state.json"
+        if state_path.exists():
+            if json.loads(state_path.read_text(encoding="utf-8")) != self.state():
+                raise ValidationError("pooled-support-resume-mismatch")
+            return
+        if self.out_dir.exists() and any(p.name not in {".retrieval-arena-output-owner"} for p in self.out_dir.iterdir()):
+            raise ValidationError("pooled-support-output-not-fresh")
+        self.out_dir.mkdir(parents=True, exist_ok=True)
+        (self.out_dir / "judgments.jsonl").write_bytes(prior_bytes)
+        write_json(state_path, self.state())
+
+
+class VerifyRun(_Judging):
+    """Judge the windows of a pool's unjudged pages; resumable; optionally extends a prior version."""
+
+    def __init__(self, pool_dir: Path, queries: list[dict[str, Any]], config: dict[str, Any], out_dir: Path,
+                 transport: Callable[..., Any] | None, prior_dir: Path | None = None, query_ids: list[str] | None = None):
+        self.config = validate_verifier_config(config)
+        self.p_sha, self.s_sha = prompt_sha256(), settings_sha256(config)
+        self.pool_dir, self.out_dir, self.prior_dir = Path(pool_dir), Path(out_dir), Path(prior_dir) if prior_dir else None
+        self.pool = read_jsonl(self.pool_dir / "pool.jsonl")
+        self.windows = {w["window_id"]: w for w in read_jsonl(self.pool_dir / "windows.jsonl")}
+        self.pool_manifest = json.loads((self.pool_dir / "pool_manifest.json").read_text(encoding="utf-8"))
+        self.queries = {q["question_id"]: q for q in queries}
+        self.query_ids = sorted(query_ids) if query_ids is not None else sorted({r["query_id"] for r in self.pool})
+        if not set(self.query_ids) <= {r["query_id"] for r in self.pool} or not set(self.query_ids) <= set(self.queries):
+            raise ValidationError("pooled-support-query-ids-unknown")
+        self.transport = transport
+        self.prior_manifest = None
+        self.prior_pages: set[tuple[str, str, str]] = set()
+        if self.prior_dir is not None:
+            self.prior_manifest = json.loads((self.prior_dir / "qrels_manifest.json").read_text(encoding="utf-8"))
+            if self.prior_manifest["prompt_sha256"] != self.p_sha or self.prior_manifest["settings_sha256"] != self.s_sha:
+                raise ValidationError("pooled-support-verifier-changed")  # a new version must use the frozen prompt and settings
+            self.prior_pages = {(r["query_id"], r["doc_id"], r["page_sha256"]) for r in read_jsonl(self.prior_dir / "judgments.jsonl")}
+
+    def state(self) -> dict[str, Any]:
+        return {"pool_sha256": self.pool_manifest["pool_sha256"], "prompt_sha256": self.p_sha, "settings_sha256": self.s_sha,
+                "prior_judgments_sha256": hashlib.sha256((self.prior_dir / "judgments.jsonl").read_bytes()).hexdigest() if self.prior_dir else None,
+                "query_ids_sha256": sha256_json(self.query_ids)}
+
+    def prepare(self) -> None:
+        self._prepare((self.prior_dir / "judgments.jsonl").read_bytes() if self.prior_dir else b"")
+
+    def todo(self) -> list[tuple[dict[str, Any], dict[str, Any], str]]:
+        done = {k for k, r in self.existing().items() if r["status"] in ("ok", "span_invalid", "input_too_long")}
+        selected = set(self.query_ids)
+        items = []
+        for row in self.pool:
+            if row["query_id"] not in selected or (row["query_id"], row["doc_id"], row["page_sha256"]) in self.prior_pages:
+                continue
+            for wid in row["window_ids"]:
+                window = self.windows[wid]
+                key = judgment_key(row["query_id"], row["doc_id"], row["page_sha256"], window["text_sha256"], self.p_sha, self.s_sha)
+                if key not in done:
+                    items.append((row, window, key))
+        return items
+
+
+def page_window(doc_id: str, text: str) -> dict[str, Any]:
+    """The whole page as one window (same stripping as make_windows)."""
+    body = text.strip()
+    return {"schema_version": SCHEMA_WINDOW, "window_id": f"{doc_id}#page", "doc_id": doc_id, "start_line": 1,
+            "end_line": len(text.splitlines()), "text": body, "text_sha256": sha256_text(body)}
+
+
+class EscalateRun(_Judging):
+    """Judge every `undetermined` current page of a prior qrels version once more, on the whole page.
+
+    Same prompt as the prior version (refused otherwise); the settings may differ (a larger
+    max_input_tokens), and both hashes are recorded. `answers` makes the page supported,
+    `not_answer` not supported; any other outcome leaves it undetermined. Decisions of every
+    other page are copied unchanged. Resumable like VerifyRun; judgments start from the prior bytes."""
+
+    def __init__(self, pool_dir: Path, corpus_dir: Path, queries: list[dict[str, Any]], config: dict[str, Any],
+                 out_dir: Path, transport: Callable[..., Any] | None, prior_dir: Path):
+        self.config = validate_verifier_config(config)
+        self.p_sha, self.s_sha = prompt_sha256(), settings_sha256(config)
+        self.pool_dir, self.out_dir, self.prior_dir = Path(pool_dir), Path(out_dir), Path(prior_dir)
+        self.transport = transport
+        self.pool_manifest = json.loads((self.pool_dir / "pool_manifest.json").read_text(encoding="utf-8"))
+        self.corpus_inventory = json.loads((self.pool_dir / "corpus_inventory.json").read_text(encoding="utf-8"))
+        docs = load_corpus(Path(corpus_dir))
+        if {d: sha256_text(t) for d, t in docs.items()} != self.corpus_inventory:
+            raise ValidationError("pooled-support-escalation-corpus-mismatch")
+        self.prior_manifest = json.loads((self.prior_dir / "qrels_manifest.json").read_text(encoding="utf-8"))
+        if self.prior_manifest["prompt_sha256"] != self.p_sha:
+            raise ValidationError("pooled-support-escalation-prompt-changed")
+        if self.prior_manifest["pool_sha256"] != self.pool_manifest["pool_sha256"]:
+            raise ValidationError("pooled-support-escalation-pool-mismatch")
+        self.queries = {q["question_id"]: q for q in queries}
+        self.prior_decisions = read_jsonl(self.prior_dir / "page_decisions.jsonl")
+        targets = [d for d in self.prior_decisions
+                   if d["decision"] == "undetermined" and self.corpus_inventory.get(d["doc_id"]) == d["page_sha256"]]
+        if not {d["query_id"] for d in targets} <= set(self.queries):
+            raise ValidationError("pooled-support-query-ids-unknown")
+        self.windows = {d["doc_id"]: page_window(d["doc_id"], docs[d["doc_id"]]) for d in targets}
+        self.targets = sorted(((d["query_id"], d["doc_id"], d["page_sha256"]) for d in targets))
+        self.query_ids = sorted({d["query_id"] for d in self.prior_decisions})
+
+    def key(self, target: tuple[str, str, str]) -> str:
+        q, d, page_sha = target
+        return judgment_key(q, d, page_sha, self.windows[d]["text_sha256"], self.p_sha, self.s_sha)
+
+    def state(self) -> dict[str, Any]:
+        return {"escalation_policy_id": ESCALATION_POLICY_ID, "pool_sha256": self.pool_manifest["pool_sha256"],
+                "prompt_sha256": self.p_sha, "settings_sha256": self.s_sha,
+                "prior_qrels_manifest_sha256": hashlib.sha256((self.prior_dir / "qrels_manifest.json").read_bytes()).hexdigest(),
+                "targets_sha256": sha256_json(self.targets)}
+
+    def prepare(self) -> None:
+        self._prepare((self.prior_dir / "judgments.jsonl").read_bytes())
+
+    def todo(self) -> list[tuple[dict[str, Any], dict[str, Any], str]]:
+        done = {k for k, r in self.existing().items() if r["status"] in ("ok", "span_invalid", "input_too_long")}
+        return [({"query_id": q, "doc_id": d, "page_sha256": s}, self.windows[d], self.key((q, d, s)))
+                for q, d, s in self.targets if self.key((q, d, s)) not in done]
+
+    def escalate(self, decisions: dict[tuple[str, str, str], dict[str, Any]], latest: dict[str, dict[str, Any]]) -> None:
+        """Rewrite the targets' decisions in place from their whole-page judgments."""
+        for target in self.targets:
+            d = dict(decisions[target])
+            row = latest.get(self.key(target))
+            verdict = row["verdict"] if row is not None and row["status"] == "ok" else None
+            if verdict == "answers":
+                d["decision"], d["answering_window_ids"] = "supported", [row["window_id"]]
+            elif verdict == "not_answer":
+                d["decision"] = "not_supported"
+            d["escalation"] = {"policy_id": ESCALATION_POLICY_ID, "window_id": self.windows[target[1]]["window_id"],
+                               "judgment_key": self.key(target), "status": row["status"] if row else "unjudged",
+                               "verdict": verdict, "prior_decision": "undetermined"}
+            if row is not None:
+                d["judgment_keys"] = d["judgment_keys"] + [row["judgment_key"]]
+                d["judgment_provenance_sha256"] = sha256_json([d["judgment_provenance_sha256"], sha256_json(row)])
+            decisions[target] = d
+
+    def manifest_extra(self) -> dict[str, Any]:
+        rows = self.existing()
+        outcome = Counter()
+        for t in self.targets:
+            r = rows.get(self.key(t))
+            outcome[(r["verdict"] if r["status"] == "ok" else r["status"]) if r else "unjudged"] += 1
+        return {"escalation": {"policy_id": ESCALATION_POLICY_ID, "prior_settings_sha256": self.prior_manifest["settings_sha256"],
+                               "targets": len(self.targets), "outcomes": dict(sorted(outcome.items())),
+                               "targets_sha256": sha256_json(self.targets)}}
+
 
 # ------------------------------------------------------------------ decisions and qrels
 
@@ -288,8 +387,10 @@ def write_qrels(run: VerifyRun, corpus_inventory: dict[str, str] | None = None) 
     if run.prior_dir is not None:
         for d in read_jsonl(run.prior_dir / "page_decisions.jsonl"):
             decisions[(d["query_id"], d["doc_id"], d["page_sha256"])] = d
-    selected = set(run.query_ids)
-    for row in run.pool:
+    if isinstance(run, EscalateRun):
+        run.escalate(decisions, latest)
+    selected = set(run.query_ids) if isinstance(run, VerifyRun) else set()
+    for row in run.pool if isinstance(run, VerifyRun) else ():
         key = (row["query_id"], row["doc_id"], row["page_sha256"])
         if key not in decisions and row["query_id"] in selected:
             decisions[key] = decide(row, latest, run.windows, run.p_sha, run.s_sha)
@@ -334,6 +435,8 @@ def write_qrels(run: VerifyRun, corpus_inventory: dict[str, str] | None = None) 
             "qrels_rows": len(qrels), "qrels_positive": sum(r["relevance"] for r in qrels)},
         "ordered_query_ids": kept,
     }
+    if isinstance(run, EscalateRun):
+        manifest.update(run.manifest_extra())
     manifest["judgment_provenance_sha256"] = sha256_json([r["judgment_provenance_sha256"] for r in qrels])
     write_json(run.out_dir / "qrels_manifest.json", manifest)
     return manifest
