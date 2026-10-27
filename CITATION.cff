@@ -1,13 +1,12 @@
-# Placeholder citation metadata (S048, 2026-09-16): a valid CFF file whose
-# authors and version are to be filled by the maintainers. No author names
-# have been invented; the single entry below is the owning organisation
-# named in LICENSE. Replace it with the real author list before citing.
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below. Authors and version are placeholders pending maintainer input."
+message: "If you use this software, please cite it as below."
 title: "Retrieval Arena"
 type: software
 authors:
-  - name: "DocSpectra"
+  - family-names: "D'Antonio"
+    given-names: "Rocker"
+    orcid: "https://orcid.org/0009-0001-8444-1772"
+    affiliation: "Mississippi State University"
 repository-code: "https://github.com/DocSpectra/RetrievalArena"
 license: MIT
 date-released: "2026-09-16"
