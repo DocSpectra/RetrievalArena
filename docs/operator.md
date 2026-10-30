@@ -42,6 +42,7 @@ its positional form. The eight `-Command` values:
 | --- | --- |
 | `focused` | the fixed module list in `containers/verification/verify.py` (23 modules since C2, which added `test_pooled_support`; C1 added `test_model_providers`); on green, the last stdout line is the self-hashed `retrieval_arena.focused_verification_witness.v1` binding commit/tree/image/lock, `focused_suite_success`, the exact `focused_tests_run` count and case ids; consumers read the witness, never unittest prose |
 | `all` | `unittest discover` over `unit_tests/` |
+| `export-page-representations` | full normalized complex heat kernels, real/imaginary page rows, simple features and fixed-anchor descriptive maps; no model inference, 4 CPUs/8 GiB — [evaluations/page_representations.md](evaluations/page_representations.md) |
 | `evaluate-profile` | the dual-profile evaluation over an input root holding `operator-request.json` (`retrieval_arena.profile_evaluation_request.v1`: `config_path`, `input_inventory`, `input_inventory_sha256`) — [dual_profile_evaluation.md](dual_profile_evaluation.md) |
 | `score-bertscore` | offline BERTScore over composed answer pairs (`retrieval_arena.bertscore_scoring_request.v1`; container memory raised to 8 GB) — [evaluations/score_bertscore.md](evaluations/score_bertscore.md) |
 | `review-packet` | export a blinded review packet and optionally import judgments (below) |
