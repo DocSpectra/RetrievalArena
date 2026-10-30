@@ -71,6 +71,8 @@ class CorpusSupportTests(unittest.TestCase):
         self.assertEqual(a['transitions']['S-O'][1]['b_hits']['G4'],1)
         self.assertEqual(a['transitions']['S-O'][1]['interaction'],-1)
         self.assertEqual(a['arm_eligible']['LT']['queries'],2)
+        self.assertEqual(a['transition_tables']['LT-O']['common']['delta_matrix']['-1']['1'],1)
+        self.assertEqual(a['transition_tables']['LT-O']['common']['queries'],2)
         with self.assertRaises(ValueError): sc.analyze(rows,qs,dict(pops,common=['q1']),[['LT','O']],draws=2,seed=1)
         with self.assertRaises(ValueError): sc.analyze(rows+rows[:1],qs,pops,[['LT','O']],draws=2,seed=1)
     def test_parity_checks_score_tolerances_and_exact_ids(self):

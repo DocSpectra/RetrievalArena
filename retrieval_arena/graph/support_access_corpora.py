@@ -111,7 +111,7 @@ def analyze(rows,queries,populations,pairs,*,draws,seed):
     if not masks['common']<=set(qids): raise ValueError('corpus-population-universe')
     inferred={q for q in qids if all(index[s,q]['eligible'] for s in populations['primary_surfaces'])}
     if masks['common']!=inferred: raise ValueError('corpus-common-population-label-mismatch')
-    out={'schema_version':VERSION,'populations':{},'contrasts':{},'transitions':{}}
+    out={'schema_version':VERSION,'populations':{},'contrasts':{},'transitions':{},'transition_tables':{}}
     for pop,ids in masks.items():
         mask=[q in ids for q in qids]
         out['populations'][pop]={}
@@ -145,6 +145,13 @@ def analyze(rows,queries,populations,pairs,*,draws,seed):
                 'a_only_targets':sorted(set(x['known_target_ids_in_view'])-set(y['known_target_ids_in_view'])),
                 'b_only_targets':sorted(set(y['known_target_ids_in_view'])-set(x['known_target_ids_in_view']))})
         out['transitions'][a+'-'+b]=transitions
+        out['transition_tables'][a+'-'+b]={}
+        for pop,ids in masks.items():
+            subset=[t for t in transitions if t['query_id'] in ids]
+            out['transition_tables'][a+'-'+b][pop]={
+                'from_surface':b,'to_surface':a,'queries':len(subset),
+                'delta_matrix':{str(before):{str(after):sum(t['b_delta']==before and t['a_delta']==after for t in subset) for after in (-1,0,1)} for before in (-1,0,1)},
+                'failure_transitions':[{'from_stage':before,'to_stage':after,'queries':n} for (before,after),n in sorted(Counter((t['b_failure'],t['a_failure']) for t in subset).items())]}
     return out
 
 def example_ids(transitions,index,*,a,b):
