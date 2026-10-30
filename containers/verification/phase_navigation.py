@@ -8,6 +8,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+import numpy as np
+
 for _name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ[_name] = "1"
 
