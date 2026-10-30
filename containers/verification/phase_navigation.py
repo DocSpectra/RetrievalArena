@@ -77,6 +77,7 @@ def _graph_features(nodes, edges, job):
     if not job["measure_spectrum"]:
         result["spectra_status"] = "not_requested_for_full_scope_companion"
         return result
+    desc["trophic_incoherence"] = ms.trophic_incoherence(nodes, edges)
     for q in (0.0, 0.10, 0.25):
         matrix = ms.normalized_magnetic_matrix(nodes, edges, q)
         cfg = ms.SpectrumConfig(modes=len(nodes), solver="dense")
