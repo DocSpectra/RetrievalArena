@@ -60,8 +60,11 @@ class VerificationContainerContractTests(unittest.TestCase):
         self.assertIn("--memory 2g --cpus 2", shell)
         self.assertIn('operator_memory=2g', shell)
         self.assertIn('operator_memory=8g', shell)
-        self.assertIn('--memory "$operator_memory" --cpus 2', shell)
-        self.assertIn("$arguments[$memoryIndex + 1] = '8g'", powershell)
+        self.assertIn('operator_cpus=2', shell)
+        self.assertIn('[ "$command_name" != measure-phase-navigation ] || operator_cpus=4', shell)
+        self.assertIn('--memory "$operator_memory" --cpus "$operator_cpus"', shell)
+        self.assertIn("if ($Command -eq 'measure-phase-navigation') { '8g' }", powershell)
+        self.assertIn("$arguments[$cpuIndex + 1] = '4'", powershell)
 
     def test_posix_adapters_cover_linux_and_macos_hash_tools_and_pretty_receipts(self):
         build = self.text("scripts/build-verification.sh")
