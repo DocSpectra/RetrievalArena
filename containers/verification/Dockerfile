@@ -45,6 +45,7 @@ COPY containers/verification/answer_element_comparison.py /opt/retrieval-arena/a
 COPY containers/verification/phase_navigation.py /opt/retrieval-arena/phase_navigation.py
 COPY containers/verification/support_access.py /opt/retrieval-arena/support_access.py
 COPY containers/verification/support_access_corpora.py /opt/retrieval-arena/support_access_corpora.py
+COPY containers/verification/page_representations.py /opt/retrieval-arena/page_representations.py
 RUN test -x /usr/bin/git \
     && mkdir -p /workspace/source \
     && chown 65532:65532 /workspace/source
