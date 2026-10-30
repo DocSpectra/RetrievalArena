@@ -36,7 +36,7 @@ if ($head -ne $value.source_commit -or $tree -ne $value.source_tree) { throw 've
 $labels = (& docker image inspect --format '{{json .Config.Labels}}' $image | ConvertFrom-Json)
 if ($LASTEXITCODE -ne 0 -or $labels.'org.opencontainers.image.revision' -ne $value.source_commit -or $labels.'io.retrieval-arena.source.tree' -ne $value.source_tree -or $labels.'io.retrieval-arena.verification.dependency-lock-sha256' -ne $value.dependency_lock_sha256 -or $labels.'io.retrieval-arena.verification.platform' -ne $value.platform) { throw 'verification-image-label-mismatch' }
 
-if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candidate-retrieve','measure-docstyle','measure-graph-spectra','measure-magnetic-attribution','audit-trace-provenance','compare-answer-elements','measure-phase-navigation','score-phase-navigation','compare-support-access','compare-support-access-corpora','export-page-representations','generate-complementary-context','evaluate-complementary-context')) {
+if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candidate-retrieve','measure-docstyle','measure-graph-spectra','measure-magnetic-attribution','audit-trace-provenance','compare-answer-elements','measure-phase-navigation','score-phase-navigation','compare-support-access','compare-support-access-corpora','export-page-representations','generate-complementary-context','evaluate-complementary-context') -or $Command -eq 'page-roles') {
     if ([string]::IsNullOrWhiteSpace($InputRoot) -or [string]::IsNullOrWhiteSpace($OutputRoot)) { throw 'verification-operator-input-output-required' }
     $inputPath = (Resolve-Path -LiteralPath $InputRoot).Path
     $outputPath = (Resolve-Path -LiteralPath $OutputRoot).Path

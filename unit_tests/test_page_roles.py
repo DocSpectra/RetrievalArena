@@ -33,6 +33,16 @@ def fixture_reply(value):
 
 
 class AnnotationTests(unittest.TestCase):
+    def test_new_command_has_mount_and_resource_admission_in_both_launchers(self):
+        root = Path(__file__).resolve().parents[1]
+        powershell = (root/'scripts/run-verification.ps1').read_text()
+        mount_line = next(line for line in powershell.splitlines() if line.startswith("if ($Command -in @('evaluate-profile'"))
+        self.assertIn("-or $Command -eq 'page-roles'", mount_line)
+        self.assertIn("if ($Command -eq 'page-roles')", powershell)
+        shell = (root/'scripts/run-verification.sh').read_text()
+        self.assertIn('[ "$command_name" != page-roles ] || operator_memory=8g', shell)
+        self.assertIn('[ "$command_name" != page-roles ] || operator_cpus=4', shell)
+
     def test_view_blinding_and_full_length(self):
         text = '---\nrole: procedure\npath: secret\n---\n# Header\nSee [visible](hidden-path)\n```sh\nrun thing\n```\n{{< include x >}}'
         prose, flags = pa.view(text)
