@@ -97,6 +97,53 @@ class PhaseNavigationTests(unittest.TestCase):
         self.assertAlmostEqual(first["value"], second["value"], places=14)
         self.assertEqual(first["actual_rank"], 2)
 
+    def test_subspace_statistic_is_node_permutation_invariant(self):
+        nodes = list("abcde")
+        edges = [("a", "b"), ("b", "c"), ("c", "d"), ("d", "e")]
+        matrix = normalized_magnetic_matrix(nodes, edges, 0.25)
+        values, vectors = np.linalg.eigh(matrix)
+        first = qualify_subspace_polarization(nodes, edges, matrix, values, vectors, requested_rank=2)
+        order = ["c", "a", "e", "b", "d"]
+        permutation = [nodes.index(x) for x in order]
+        permuted_edges = [(s, t) for s,t in edges]
+        permuted_matrix = normalized_magnetic_matrix(order, permuted_edges, 0.25)
+        permuted_values, permuted_vectors = np.linalg.eigh(permuted_matrix)
+        second = qualify_subspace_polarization(order, permuted_edges, permuted_matrix,
+                                                permuted_values, permuted_vectors, requested_rank=2)
+        self.assertEqual(first["status"], "qualified")
+        self.assertEqual(second["status"], "qualified")
+        self.assertAlmostEqual(first["value"], second["value"], places=12)
+
+    def test_forest_orientation_construct_limit_is_reproduced(self):
+        nodes = list("abcd")
+        orientations = [
+            [("a", "b"), ("b", "c"), ("c", "d")],
+            [("b", "a"), ("c", "b"), ("d", "c")],
+            [("a", "b"), ("c", "b"), ("c", "d")],
+        ]
+        values = []
+        for edges in orientations:
+            matrix = normalized_magnetic_matrix(nodes, edges, 0.25)
+            eig, vec = np.linalg.eigh(matrix)
+            result = qualify_subspace_polarization(nodes, edges, matrix, eig, vec, requested_rank=2)
+            self.assertEqual(result["status"], "qualified")
+            values.append(result["value"])
+        self.assertAlmostEqual(values[0], values[1], places=12)
+        self.assertAlmostEqual(values[0], values[2], places=12)
+
+    def test_repeated_dense_solver_results_agree(self):
+        nodes = list("abcde")
+        edges = [("a", "b"), ("b", "c"), ("c", "d"), ("d", "e"), ("e", "a")]
+        matrix = normalized_magnetic_matrix(nodes, edges, 0.25)
+        e1, v1 = np.linalg.eigh(matrix)
+        e2, v2 = np.linalg.eigh(matrix.copy())
+        self.assertTrue(np.allclose(e1, e2, atol=1e-13, rtol=0))
+        p1 = qualify_subspace_polarization(nodes, edges, matrix, e1, v1, requested_rank=3)
+        p2 = qualify_subspace_polarization(nodes, edges, matrix, e2, v2, requested_rank=3)
+        self.assertEqual(p1["status"], "qualified")
+        self.assertEqual(p2["status"], "qualified")
+        self.assertAlmostEqual(p1["value"], p2["value"], places=12)
+
     def test_random_entries_are_stable_without_replacement_and_sorted_input_independent(self):
         nodes = ["d", "a", "c", "b"]
         a = sample_random_entries(nodes, master_seed=29061029, family="main", view="lwcc", query_id="q")
