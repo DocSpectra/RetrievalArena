@@ -10,7 +10,9 @@ from retrieval_arena.graph.phase_navigation import (
     qualify_phase_modes,
     qualify_subspace_polarization,
     sample_random_entries,
+    score_trial,
     traverse_once,
+    query_macro,
 )
 from retrieval_arena.graph.magnetic_spectrum import normalized_magnetic_matrix
 
@@ -171,6 +173,18 @@ class PhaseNavigationTests(unittest.TestCase):
         self.assertEqual(len(random["trials"]), 3)
         self.assertTrue(all(len(t["candidate_ids"]) <= 2 for t in random["trials"]))
         self.assertEqual(random["seed_ids"], [t["seed_id"] for t in random["trials"]])
+
+    def test_candidate_stage_hit_is_distinct_from_final_page_access(self):
+        nodes = ["seed", "target", "other"]
+        edges = [("seed", "target")]
+        trial = traverse_once(nodes, edges, {"seed": 1.0, "target": 0.5, "other": 0.0},
+                              "seed", candidate_budget=3, final_top_k=1)
+        scored = score_trial(trial, {"target"})
+        self.assertEqual(scored["candidate_hit"], 1)
+        self.assertEqual(scored["hit"], 0)
+        macro = query_macro([trial], [trial], {"target"})
+        self.assertEqual(macro["semantic_candidate_hit"], 1.0)
+        self.assertEqual(macro["random_candidate_hit"], 1.0)
 
 
 if __name__ == "__main__":

@@ -212,9 +212,11 @@ def matched_trials(nodes, edges, scores, query_id, *, family, view, master_seed=
 def score_trial(trial, known_targets):
     """Separate evaluator: mark access to known positives without relabeling other pages negative."""
     targets = set(known_targets)
+    candidates = set(trial["candidate_ids"])
     selected = set(trial["selected_ids"])
     seed = trial["seed_id"]
-    return {"hit": int(bool(selected & targets)), "seed_hit": int(seed in targets),
+    return {"hit": int(bool(selected & targets)), "candidate_hit": int(bool(candidates & targets)),
+            "seed_hit": int(seed in targets),
             "expansion_added_hit": int(bool((selected - {seed}) & targets)),
             "selected_count": len(selected), "candidate_count": trial["candidate_count"],
             "dead_end": bool(trial["dead_end"]),
@@ -231,6 +233,8 @@ def query_macro(semantic_trials, random_trials, known_targets):
     c_sem = float(sem[0]["hit"])
     c_rand = mean(rnd, "hit")
     return {"C_semantic": c_sem, "C_random": c_rand, "D": c_sem - c_rand,
+            "semantic_candidate_hit": float(sem[0]["candidate_hit"]),
+            "random_candidate_hit": mean(rnd, "candidate_hit"),
             "semantic_seed_hit": float(sem[0]["seed_hit"]),
             "random_seed_hit": mean(rnd, "seed_hit"),
             "semantic_expansion_added_access": float(sem[0]["expansion_added_hit"]),

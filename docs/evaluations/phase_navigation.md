@@ -42,12 +42,14 @@ breaks ties). Random entry is uniform without replacement, separately keyed
 by master seed, family, view and query ID. Every start is one trial; all trials
 are retained. No global fallback or support-informed pruning is implemented.
 
-Per-query `H` is one if any selected page intersects the view-projected known
-positive target set. Random starts are averaged within query before query
-macro aggregation. `C_semantic`, `C_random`, and `D=C_semantic-C_random` are
-page-level known-support access measures. A zero means no recorded known
-positive page was selected; it does not mean other pages are irrelevant or
-that an answer failed. Target distance and seed-only access are diagnostics.
+The evaluator reports known-positive intersections at the reached candidate
+set and at the final selected-page set. Per-query `H` is one if any selected
+page intersects the view-projected known-positive target set. Random starts
+are averaged within query before query macro aggregation. `C_semantic`,
+`C_random`, and `D=C_semantic-C_random` are page-level known-support access
+measures. A zero means no recorded known-positive page was selected; it does
+not mean other pages are irrelevant or that an answer failed. Candidate,
+target-distance, seed-only and dead-end counts are diagnostics.
 
 ## Operator
 
