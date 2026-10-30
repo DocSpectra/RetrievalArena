@@ -63,9 +63,9 @@ class VerificationContainerContractTests(unittest.TestCase):
         self.assertIn('operator_cpus=2', shell)
         self.assertIn('[ "$command_name" != measure-phase-navigation ] || operator_cpus=4', shell)
         self.assertIn('--memory "$operator_memory" --cpus "$operator_cpus"', shell)
-        self.assertIn("if ($Command -in @('measure-phase-navigation','compare-support-access')) { '8g' }", powershell)
-        self.assertIn('[ "$command_name" != compare-support-access ] || operator_memory=8g', shell)
-        self.assertIn('[ "$command_name" != compare-support-access ] || operator_cpus=4', shell)
+        self.assertIn("if ($Command -in @('measure-phase-navigation','compare-support-access','compare-support-access-corpora')) { '8g' }", powershell)
+        self.assertIn('[ "$command_name" != compare-support-access ] && [ "$command_name" != compare-support-access-corpora ] || operator_memory=8g', shell)
+        self.assertIn('[ "$command_name" != compare-support-access ] && [ "$command_name" != compare-support-access-corpora ] || operator_cpus=4', shell)
         self.assertIn("$arguments[$cpuIndex + 1] = '4'", powershell)
 
     def test_posix_adapters_cover_linux_and_macos_hash_tools_and_pretty_receipts(self):

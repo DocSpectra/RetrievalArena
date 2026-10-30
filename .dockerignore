@@ -16,3 +16,4 @@ containers/verification/*
 !containers/verification/answer_element_comparison.py
 !containers/verification/phase_navigation.py
 !containers/verification/support_access.py
+!containers/verification/support_access_corpora.py
