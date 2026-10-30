@@ -37,6 +37,7 @@ COMMANDS = {
         "unit_tests.test_magnetic_spectrum",
         "unit_tests.test_magnetic_attribution",
         "unit_tests.test_phase_navigation",
+        "unit_tests.test_support_access",
         "unit_tests.test_trace_provenance",
         "unit_tests.test_answer_element_comparison",
     ),
@@ -53,6 +54,7 @@ COMMANDS = {
     "compare-answer-elements": (),
     "measure-phase-navigation": (),
     "score-phase-navigation": (),
+    "compare-support-access": (),
 }
 
 
@@ -120,6 +122,10 @@ def main(argv: list[str]) -> int:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from answer_element_comparison import main as answer_element_main
         return answer_element_main()
+    if argv[1] == "compare-support-access":
+        sys.path.insert(0, str(OPERATOR_ROOT))
+        from support_access import main as support_access_main
+        return support_access_main()
     if argv[1] in {"measure-phase-navigation", "score-phase-navigation"}:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from phase_navigation import main as phase_navigation_main

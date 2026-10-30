@@ -43,6 +43,7 @@ COPY containers/verification/magnetic_attribution.py /opt/retrieval-arena/magnet
 COPY containers/verification/trace_provenance.py /opt/retrieval-arena/trace_provenance.py
 COPY containers/verification/answer_element_comparison.py /opt/retrieval-arena/answer_element_comparison.py
 COPY containers/verification/phase_navigation.py /opt/retrieval-arena/phase_navigation.py
+COPY containers/verification/support_access.py /opt/retrieval-arena/support_access.py
 RUN test -x /usr/bin/git \
     && mkdir -p /workspace/source \
     && chown 65532:65532 /workspace/source

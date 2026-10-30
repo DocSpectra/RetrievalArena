@@ -63,3 +63,5 @@ runtime are recorded. The code is portable Python; operator execution has
 only been qualified on the recorded platform for a particular study.
 
 Focused tests: `unit_tests.test_phase_navigation`.
+
+For view-matched semantic top-k comparisons, support identity overlap and uncapped reachability diagnostics on saved semantic trials, see [support-access comparison](support_access.md). Historical nonseed-positive fields keep their original meaning.

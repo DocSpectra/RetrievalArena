@@ -106,3 +106,5 @@ export and import are staged together, so an import failure leaves only the
 terminal receipt. The schemas and the stratified sampling live in
 `retrieval_arena/review_packets.py`; the same functions are the CLI's
 `export-review-packet` and `import-judgments`.
+
+`compare-support-access` adds the offline [cached support-access comparison](evaluations/support_access.md) to both verification adapters. It requires the standard exact input inventory and a fresh output root; execution uses at most four CPUs, 8 GiB, 4 GiB of generated output and 7,200 seconds.
