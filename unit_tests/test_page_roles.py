@@ -237,6 +237,8 @@ class EvaluationTests(unittest.TestCase):
             {'a': 'g', 'b': 'h'}, RUBRIC['roles'], 10, 1)
         self.assertEqual(result['paired'], 1); self.assertEqual(result['accuracy'], 1.)
         self.assertEqual(result['group_bootstrap']['undefined_kappa_draws'], 10)
+        self.assertEqual(result['human_distribution']['unresolved'], 1)
+        self.assertIsInstance(pa.canonical(result), bytes)
 
     def test_offline_grouped_classifier_end_to_end(self):
         result = pe.evaluate(*self.fixture())

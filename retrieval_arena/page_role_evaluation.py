@@ -38,7 +38,8 @@ def agreement(human, ai, groups, classes, draws, seed):
     require(ids, 'agreement-no-pairs')
     result = scores([human[v] for v in ids], [ai[v] for v in ids], classes)
     result.update({'paired': len(ids), 'total': len(human), 'unresolved': sorted(set(human)-set(ids)),
-                   'human_distribution': dict(Counter(human.values())), 'ai_distribution': dict(Counter(ai.values())),
+                   'human_distribution': dict(Counter('unresolved' if v is None else v for v in human.values())),
+                   'ai_distribution': dict(Counter('unresolved' if v is None else v for v in ai.values())),
                    'interpretation': 'single-human reference; kappa is sensitive to prevalence; no inter-human reliability'})
     clustered = defaultdict(list)
     for v in ids:
