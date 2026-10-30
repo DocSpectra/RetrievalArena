@@ -40,6 +40,12 @@ def run(inp,out,modeldir,lockpath,runnerpath):
         if not name.isalnum(): raise ValueError('ranking-corpus-id')
         required.add(name+'/graph.json')
         required|={p.relative_to(inp).as_posix() for p in (inp/name/'corpus').glob('*.md')}
+    reference=cfg.get('encoding_reference')
+    if reference:
+        if reference!={'corpus_id':names[0],'queries_path':'encoding-reference/questions.jsonl','corpus_path':'encoding-reference/corpus'}:
+            raise ValueError('ranking-encoding-reference')
+        required.add(reference['queries_path'])
+        required|={p.relative_to(inp).as_posix() for p in (inp/reference['corpus_path']).glob('*.md')}
     inv=regular_inventory(inp)
     if {r['path'] for r in inv}!=required: raise ValueError('ranking-undeclared-input-or-label')
     qs=rows(inp/cfg['queries_path'])
@@ -64,28 +70,39 @@ def run(inp,out,modeldir,lockpath,runnerpath):
     # This complete identity keys every text. IDs alone are never cache keys.
     cache={}; events=[]
     def encode(texts,stage):
-        keys=[cache_key(t,policy) for t in texts]
-        pending=[]; pending_keys=[]
-        for k,t in zip(keys,texts):
-            if k not in cache and k not in pending_keys: pending_keys.append(k); pending.append(t)
-        if pending:
-            vectors=model.encode(pending,batch_size=cfg['batch_size'],normalize_embeddings=True,show_progress_bar=False)
-            for k,v in zip(pending_keys,vectors):
-                vector=list(map(float,v))
-                if len(vector)!=384 or not all(map(math.isfinite,vector)): raise ValueError('ranking-vector')
-                cache[k]=vector
-        events.append({'stage':stage,'input_texts':len(texts),'new_distinct_texts':len(pending),
-            'reused_text_occurrences':len(texts)-len(pending),'encode_invocations':int(bool(pending)),
-            'batches':math.ceil(len(pending)/cfg['batch_size'])})
-        return [cache[k] for k in keys], keys
-    qv,qkeys=encode([q['question'] for q in qs],'queries')
+        # Padding/batch composition can change float32 output slightly. Preserve
+        # every historical occurrence and order; content deduplication is not a
+        # numerically compatible encoding optimization. Keys include batch input.
+        seqhash=sha256_bytes(canonical(texts))
+        keys=[cache_key(t,dict(policy,encoding_sequence_sha256=seqhash,position=i)) for i,t in enumerate(texts)]
+        vectors=model.encode(texts,batch_size=cfg['batch_size'],normalize_embeddings=True,show_progress_bar=False)
+        result=[]
+        for k,v in zip(keys,vectors):
+            vector=list(map(float,v))
+            if len(vector)!=384 or not all(map(math.isfinite,vector)): raise ValueError('ranking-vector')
+            cache[k]=vector; result.append(vector)
+        events.append({'stage':stage,'input_texts':len(texts),'new_distinct_texts':len(set(texts)),
+            'encoded_text_occurrences':len(texts),'reused_text_occurrences':0,'encode_invocations':1,
+            'encoding_sequence_sha256':seqhash,'batches':math.ceil(len(texts)/cfg['batch_size'])})
+        return result, keys
+    encodeqs=rows(inp/reference['queries_path']) if reference else qs
+    query_ids=[q.get('query_id',q.get('question_id')) for q in encodeqs]
+    if len(query_ids)!=len(set(query_ids)): raise ValueError('ranking-reference-query-duplicate')
+    qv_all,qkeys_all=encode([q['question'] for q in encodeqs],'queries')
+    qindex={qid:(q['question'],v,k) for qid,q,v,k in zip(query_ids,encodeqs,qv_all,qkeys_all)}
+    if any(q['query_id'] not in qindex or q['question']!=qindex[q['query_id']][0] for q in qs): raise ValueError('ranking-reference-query-text')
+    qv=[qindex[q['query_id']][1] for q in qs]; qkeys=[qindex[q['query_id']][2] for q in qs]
     predictions=[]; allscores={}; graphs={}; docidentities={}
     for name in names:
         graph=json.loads((inp/name/'graph.json').read_bytes()); graphs[name]=graph
         paths=sorted((inp/name/'corpus').glob('*.md'),key=lambda p:p.stem)
         ids=[p.stem for p in paths]
         if ids!=sorted(graph['nodes']) or len(ids)!=len(set(ids)): raise ValueError('ranking-document-universe')
-        dv,dkeys=encode([p.read_text(encoding='utf-8') for p in paths],name)
+        encodepaths=sorted((inp/reference['corpus_path']).glob('*.md'),key=lambda p:p.stem) if reference and name==reference['corpus_id'] else paths
+        dv_all,dkeys_all=encode([p.read_text(encoding='utf-8') for p in encodepaths],name)
+        dindex={p.stem:(p.read_text(encoding='utf-8'),v,k) for p,v,k in zip(encodepaths,dv_all,dkeys_all)}
+        if any(p.stem not in dindex or p.read_text(encoding='utf-8')!=dindex[p.stem][0] for p in paths): raise ValueError('ranking-reference-document-text')
+        dv=[dindex[p.stem][1] for p in paths]; dkeys=[dindex[p.stem][2] for p in paths]
         docidentities[name]=[{'doc_id':p.stem,'raw_sha256':sha256_file(p),'cache_key':k} for p,k in zip(paths,dkeys)]
         scores={}
         for q,v in zip(qs,qv):
@@ -105,7 +122,8 @@ def run(inp,out,modeldir,lockpath,runnerpath):
     jsonl(out/'scores.jsonl',({'corpus_id':name,'query_id':qid,'scores':pairs} for name,vs in allscores.items() for qid,pairs in vs.items()))
     write(out/'graphs.json',graphs)
     write(out/'encoding_inventory.json',{'policy':policy,'documents':docidentities,'query_cache_keys':dict(zip([q['query_id'] for q in qs],qkeys)),
-        'events':events,'distinct_encoded_texts':len(cache),'encode_invocations':sum(e['encode_invocations'] for e in events),
+        'events':events,'encoded_vector_keys':len(cache),'distinct_encoded_texts':len({p.read_text(encoding='utf8') for name in names for p in (inp/name/'corpus').glob('*.md')} | {q['question'] for q in encodeqs} | ({p.read_text(encoding='utf8') for p in (inp/reference['corpus_path']).glob('*.md')} if reference else set())),
+        'encoded_text_occurrences':sum(e['encoded_text_occurrences'] for e in events),'encode_invocations':sum(e['encode_invocations'] for e in events),
         'runtime_seconds':time.monotonic()-started,'paid_calls':0,'outbound_calls':0})
     write(out/'ranking_manifest.json',{'schema_version':'retrieval_arena.support_access_rank_manifest.v2',
         'source_commit':os.environ.get('RA_SOURCE_COMMIT'),'source_tree':os.environ.get('RA_SOURCE_TREE'),
@@ -113,7 +131,7 @@ def run(inp,out,modeldir,lockpath,runnerpath):
         'outputs':regular_inventory(out),'parity_status':result['status']})
     if sum(r['size_bytes'] for r in regular_inventory(out))>cfg['max_output_bytes']: raise ValueError('ranking-output-budget')
     if result['status']!='qualified': raise ValueError('ranking-parity-failed')
-    print(json.dumps({'parity':result['status'],'distinct_encoded_texts':len(cache),'events':events,'seconds':time.monotonic()-started}))
+    print(json.dumps({'parity':result['status'],'encoded_vector_keys':len(cache),'events':events,'seconds':time.monotonic()-started}))
 
 if __name__=='__main__':
     run(Path('/input'),Path('/output'),Path('/model'),Path('/provenance/embedding_models.lock.json'),Path('/app/runner.py'))

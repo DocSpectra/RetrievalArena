@@ -105,6 +105,12 @@ Content and the full model/encoding/runtime policy key each cached vector;
 unchanged IDs cannot reuse rewritten text. Distinct encodes, reused occurrences,
 encode invocations/batches, model files and input/output inventories are recorded.
 Scores must cover exactly every final page and remain finite. No chunking.
+Encoding preserves repeated text occurrences and ordered batching. An explicit
+label-free `encoding_reference` can supply the historical complete encoding
+panel/corpus for the first corpus parity check; evaluation still uses only the
+declared queries and eligible pages. Every retained text must match its reference.
+Batch-sequence identity and position enter vector keys. Deduplication is not
+assumed numerically equivalent, and no thread override is introduced.
 
 `compare-support-access-corpora` uses evaluation config/request v2 in the normal
 immutable verification image. Input inventory is exact. Corpora, predictions,
