@@ -85,12 +85,55 @@ resumed completed-call time counts against the cumulative cap. Provider failure
 records preserve error type only, avoiding accidental data/secret disclosure.
 Do not launch two writers in one output directory.
 
-Annotation requires one allowed role, concise rationale, exact body quote,
+Under the original policy, annotation requires one allowed role, concise rationale, exact body quote,
 ambiguity and incomplete flags. RA resolves the first exact body occurrence to
 decoded Unicode-codepoint offsets and records match multiplicity. Unknown may
 omit evidence only with incomplete=true. Frontmatter and invented quotes fail.
 Model confidence is not used. Call timestamps, digest and attempt IDs remain in
 valid records. Schema validity does not establish correctness.
+
+### Versioned display-to-source evidence projection
+
+New manifests can explicitly set `evidence_policy: mapped_display_quote.v2`.
+Absent that field, `exact_raw_quote.v1` remains the historical default, with
+unchanged cache hashes, output fields and verdicts. Unknown policies are refused
+before transport. Changing policy changes manifest/cache identity and cannot
+resume into an existing batch directory. The v2 batch result declares
+`retrieval_arena.page_role_annotation.v2`; its provider JSON schema is unchanged.
+
+`mapped_view` reproduces the existing source display exactly while retaining
+raw Unicode-codepoint intervals for its characters. It tracks link-label
+extraction and marks generated URL/image/template/markup replacements. Literal
+fenced and inline code is preserved. This does not change existing blind
+packets, grouping, views or raw source bytes.
+
+`resolve_display_quote` finds the first visible-body occurrence after folding
+only runs of whitespace, including CRLF/LF and wrapped lines. It performs no
+case, punctuation, spelling or semantic/fuzzy matching. The returned annotation
+preserves the original model `quote`. Its evidence span additionally records:
+
+- exact raw `start`, `end` and `source_quote`;
+- matched `view_start`, `view_end`, view hash and `display_quote`;
+- typed `source_segments`, visible occurrence count and transformation flags.
+
+Do not present the model's quote as a verbatim raw-source quote when the
+transformation flags are set. Consumers use `source_quote` for verbatim source
+citations and retain the displayed/model text separately. Deleted Markdown
+delimiters/destinations can produce gaps between source segments; the covering
+raw interval remains inspectable rather than silently rewritten.
+
+A complete generated `[destination omitted]` marker can be mapped to its
+original URL only when the matching quote has source-grounded alphanumeric
+context on both sides. Partial, standalone or one-sided generated markers
+are rejected. Image/template/markup replacement markers cannot supply evidence;
+literal marker text in actual prose remains ordinary source text. Metadata,
+invented wording and absent hidden destinations cannot match the visible body.
+Unknown without available content still requires an empty quote/incomplete flag.
+
+This is a changed evidence-location contract, not a new model call or role-quality
+judgment. Replaying saved responses under it is separately named offline
+development evidence; never overwrite an original batch or its v1 verdicts.
+Model labels, retry choices and human validation are unchanged by projection.
 
 ## Agreement and classifier endpoint
 

@@ -14,6 +14,9 @@ import re
 import time
 
 VERSION = 'retrieval_arena.page_role_annotation.v1'
+VERSION_V2 = 'retrieval_arena.page_role_annotation.v2'
+STRICT_EVIDENCE = 'exact_raw_quote.v1'
+MAPPED_EVIDENCE = 'mapped_display_quote.v2'
 
 
 def canonical(value):
@@ -57,6 +60,124 @@ def view(text):
     parts = re.split(r'(```.*?```|~~~.*?~~~|`[^`\n]+`)', value, flags=re.S)
     value = ''.join(part if i % 2 else prose(part) for i, part in enumerate(parts))
     return value, flags
+
+
+def mapped_view(text):
+    """Reproduce view() exactly, retaining a raw-source interval for each char.
+
+    Replacements identify their origin rather than pretending to be source text.
+    Code remains literal. This is an alignment view, never rendered execution.
+    """
+    value = body(text); offset = len(text)-len(value)
+    source = [(offset+i, offset+i+1, 'source') for i in range(len(value))]
+
+    def prose(value, source):
+        def rewrite(pattern, replacement, flags=0):
+            nonlocal value, source
+            parts, positions = [], []; previous = 0
+            for match in re.finditer(pattern, value, flags):
+                parts.append(value[previous:match.start()]); positions.extend(source[previous:match.start()])
+                new_text, new_positions = replacement(match, source)
+                require(len(new_text) == len(new_positions), 'quote-map-shape')
+                parts.append(new_text); positions.extend(new_positions); previous = match.end()
+            parts.append(value[previous:]); positions.extend(source[previous:])
+            value, source = ''.join(parts), positions
+
+        def omit(match, positions): return '', []
+        def marker(label, kind):
+            def replace(match, positions):
+                selected = positions[match.start():match.end()]
+                span = (selected[0][0], selected[-1][1], kind)
+                return label, [span]*len(label)
+            return replace
+        def image(match, positions):
+            prefix, suffix = '[image unavailable: ', ']'
+            selected = positions[match.start():match.end()]
+            span = (selected[0][0], selected[-1][1], 'unavailable_image')
+            return prefix+match[1]+suffix, [span]*len(prefix)+positions[match.start(1):match.end(1)]+[span]
+        rewrite(r'<!--.*?-->', omit, re.S)
+        rewrite(r'{{[<%].*?[%>]}}', marker('[unrendered template]', 'unrendered_template'), re.S)
+        rewrite(r'!\[([^\]]*)\]\([^)]*\)', image)
+        rewrite(r'\[([^\]]*)\]\([^)]*\)', lambda m, p: (m[1], p[m.start(1):m.end(1)]))
+        rewrite(r'^\s*\[[^\]]+\]:\s*\S+.*$', omit, re.M)
+        rewrite(r'https?://[^\s<>]+', marker('[destination omitted]', 'redacted_destination'))
+        rewrite(r'<[^>]+>', marker('[markup omitted]', 'omitted_markup'))
+        return value, source
+
+    output, positions = [], []; previous = 0
+    for match in re.finditer(r'```.*?```|~~~.*?~~~|`[^`\n]+`', value, re.S):
+        part, mapped = prose(value[previous:match.start()], source[previous:match.start()])
+        output.extend([part, match[0]]); positions.extend(mapped); positions.extend(source[match.start():match.end()])
+        previous = match.end()
+    part, mapped = prose(value[previous:], source[previous:])
+    output.append(part); positions.extend(mapped)
+    return ''.join(output), positions
+
+
+def _fold_whitespace(value):
+    output, positions = [], []
+    for match in re.finditer(r'\s+|\S+', value):
+        if match[0].isspace():
+            output.append(' '); positions.append((match.start(), match.end()))
+        else:
+            output.append(match[0]); positions.extend((i, i+1) for i in range(match.start(), match.end()))
+    return ''.join(output), positions
+
+
+def resolve_display_quote(quote, text):
+    """Whitespace-only display match, projected to auditable raw-source spans.
+
+    No case/punctuation normalization or fuzzy/semantic matching. A destination
+    marker must be complete and have source-grounded words on both sides. Other
+    generated markers, and quotes consisting only of whitespace, are refused.
+    """
+    display, positions = mapped_view(text)
+    folded, folded_positions = _fold_whitespace(display)
+    candidate = _fold_whitespace(quote)[0].strip()
+    require(candidate, 'missing-evidence')
+    start = folded.find(candidate)
+    require(start >= 0, 'unsupported-evidence')
+    view_start = folded_positions[start][0]
+    view_end = folded_positions[start+len(candidate)-1][1]
+    selected = positions[view_start:view_end]
+    require(selected and any(kind == 'source' for _, _, kind in selected), 'quote-generated-only')
+
+    # Inspect complete generated runs, so partial marker substrings cannot pass.
+    i = 0
+    while i < len(positions):
+        span = positions[i]
+        if span[2] == 'source':
+            i += 1; continue
+        end = i+1
+        while end < len(positions) and positions[end] == span: end += 1
+        if i < view_end and end > view_start:
+            require(span[2] == 'redacted_destination', 'quote-unavailable-content')
+            require(view_start <= i and end <= view_end, 'quote-partial-marker')
+            left = any(display[j].isalnum() and positions[j][2] == 'source' for j in range(view_start, i))
+            right = any(display[j].isalnum() and positions[j][2] == 'source' for j in range(end, view_end))
+            require(left and right, 'quote-unanchored-marker')
+        i = end
+
+    # Image alternative text can map inside an omitted image, but the generated
+    # image wrapper above is never accepted. Every accepted interval is in body.
+    raw_start, raw_end = selected[0][0], selected[-1][1]
+    require(len(text)-len(body(text)) <= raw_start < raw_end <= len(text), 'quote-source-bounds')
+    require(all(a <= b and a >= raw_start and b <= raw_end for a, b, _ in selected), 'quote-source-order')
+    segments = []
+    for a, b, kind in selected:
+        if segments and segments[-1]['kind'] == kind and a <= segments[-1]['end']:
+            require(a >= segments[-1]['start'], 'quote-source-order')
+            segments[-1]['end'] = max(b, segments[-1]['end'])
+        else:
+            require(not segments or a >= segments[-1]['end'], 'quote-source-order')
+            segments.append({'start': a, 'end': b, 'kind': kind})
+    return {'start': raw_start, 'end': raw_end, 'unit': 'decoded_unicode_codepoints',
+            'match_policy': 'first_whitespace_folded_display_occurrence.v2',
+            'occurrences': folded.count(candidate), 'view_start': view_start, 'view_end': view_end,
+            'view_sha256': raw_hash(display), 'display_quote': display[view_start:view_end],
+            'source_quote': text[raw_start:raw_end], 'source_segments': segments,
+            'whitespace_normalized': quote != display[view_start:view_end],
+            'display_transformed': display[view_start:view_end] != text[raw_start:raw_end]}
 
 
 def leakage_groups(pages, texts, *, threshold, shingle_words, minimum_tokens):
@@ -193,7 +314,8 @@ def annotation_schema(roles):
                            'rationale': {'type': 'string'}, 'ambiguity': {'type': 'boolean'}, 'incomplete': {'type': 'boolean'}}}
 
 
-def validate_annotation(value, text, roles, unknown_role):
+def validate_annotation(value, text, roles, unknown_role, *, evidence_policy=STRICT_EVIDENCE):
+    require(evidence_policy in (STRICT_EVIDENCE, MAPPED_EVIDENCE), 'annotation-evidence-policy')
     require(isinstance(value, dict) and set(value) == {'role', 'quote', 'rationale', 'ambiguity', 'incomplete'}, 'annotation-fields')
     require(value['role'] in roles and type(value['ambiguity']) is bool and type(value['incomplete']) is bool, 'annotation-role-flags')
     require(all(isinstance(value[k], str) for k in ('quote', 'rationale')), 'annotation-strings')
@@ -201,21 +323,29 @@ def validate_annotation(value, text, roles, unknown_role):
     quote = value['quote']
     prose, _ = view(text)
     if quote:
-        require(quote in prose and quote in body(text), 'unsupported-evidence')
-        start = text.index(quote, len(text)-len(body(text)))
-        span = {'start': start, 'end': start+len(quote), 'unit': 'decoded_unicode_codepoints',
-                'match_policy': 'first_exact_body_occurrence', 'occurrences': body(text).count(quote)}
+        if evidence_policy == MAPPED_EVIDENCE:
+            span = resolve_display_quote(quote, text)
+        else:
+            require(quote in prose and quote in body(text), 'unsupported-evidence')
+            start = text.index(quote, len(text)-len(body(text)))
+            span = {'start': start, 'end': start+len(quote), 'unit': 'decoded_unicode_codepoints',
+                    'match_policy': 'first_exact_body_occurrence', 'occurrences': body(text).count(quote)}
     else:
         require(value['role'] == unknown_role and value['incomplete'], 'missing-evidence')
         span = None
     require(value['role'] == unknown_role or prose.strip(), 'empty-content-role')
-    return {**value, 'evidence_span': span}
+    result = {**value, 'evidence_span': span}
+    if evidence_policy == MAPPED_EVIDENCE: result['evidence_policy'] = evidence_policy
+    return result
 
 
-def cache_identity(text, rubric, prompt, settings, roles):
-    return digest({'raw_sha256': raw_hash(text), 'view_sha256': raw_hash(view(text)[0]),
+def cache_identity(text, rubric, prompt, settings, roles, *, evidence_policy=STRICT_EVIDENCE):
+    require(evidence_policy in (STRICT_EVIDENCE, MAPPED_EVIDENCE), 'annotation-evidence-policy')
+    identity = {'raw_sha256': raw_hash(text), 'view_sha256': raw_hash(view(text)[0]),
                    'rubric_sha256': digest(rubric), 'prompt_sha256': raw_hash(prompt),
-                   'settings': settings, 'schema': annotation_schema(roles), 'version': VERSION})
+                   'settings': settings, 'schema': annotation_schema(roles), 'version': VERSION}
+    if evidence_policy == MAPPED_EVIDENCE: identity['evidence_policy'] = evidence_policy
+    return digest(identity)
 
 
 async def run_batch(texts, rubric, prompt, manifest, approval, output, transport):
@@ -227,6 +357,8 @@ async def run_batch(texts, rubric, prompt, manifest, approval, output, transport
             and approval.get('manifest_sha256') == digest(manifest), 'annotation-not-authorized')
     require(manifest['rubric_sha256'] == digest(rubric) and manifest['prompt_sha256'] == raw_hash(prompt), 'annotation-protocol-identity')
     require(manifest['schema_sha256'] == digest(annotation_schema(rubric['roles'])), 'annotation-schema-identity')
+    evidence_policy = manifest.get('evidence_policy', STRICT_EVIDENCE)
+    require(evidence_policy in (STRICT_EVIDENCE, MAPPED_EVIDENCE), 'annotation-evidence-policy')
     require(manifest['page_hashes'] == {v: raw_hash(s) for v, s in sorted(texts.items())}, 'annotation-page-identity')
     require(manifest['max_pages'] >= len(texts) and 0 <= manifest['retries'] <= 2, 'annotation-page-retry-limit')
     require(0 < manifest['max_attempts'] <= 10000 and 0 < manifest['max_seconds'] <= 14400, 'annotation-budget')
@@ -252,7 +384,7 @@ async def run_batch(texts, rubric, prompt, manifest, approval, output, transport
         events.append(e)
     roles = rubric['roles']; settings = manifest['settings']
     for v, text in sorted(texts.items()):
-        identity = cache_identity(text, rubric, prompt, settings, roles)
+        identity = cache_identity(text, rubric, prompt, settings, roles, evidence_policy=evidence_policy)
         if v in completed:
             require(completed[v]['cache_identity'] == identity, 'stale-cache')
             continue
@@ -276,7 +408,7 @@ async def run_batch(texts, rubric, prompt, manifest, approval, output, transport
                 # digest/response identity and records spend, including failures.
                 (output/(attempt_id+'.json')).write_bytes(canonical(reply)+b'\n')
                 require(reply['model'] == settings['model'] and reply['revision'] == settings['revision'], 'annotation-model-identity')
-                result = validate_annotation(json.loads(reply['text']), text, roles, rubric['unknown_role'])
+                result = validate_annotation(json.loads(reply['text']), text, roles, rubric['unknown_role'], evidence_policy=evidence_policy)
             except Exception as error:
                 # Error text may contain provider/user data; retain type only.
                 emit({'event': 'invalid', 'doc_id': v, 'attempt_id': attempt_id,
@@ -290,5 +422,6 @@ async def run_batch(texts, rubric, prompt, manifest, approval, output, transport
                      'revision': settings['revision'], 'timestamp': datetime.now(timezone.utc).isoformat()}
             emit(event); completed[v] = event
             break
-    return {'schema_version': VERSION, 'manifest_sha256': digest(manifest), 'attempts': len(starts),
+    return {'schema_version': VERSION_V2 if evidence_policy == MAPPED_EVIDENCE else VERSION,
+            'manifest_sha256': digest(manifest), 'attempts': len(starts),
             'annotations': list(completed.values()), 'unresolved': sorted(set(texts)-set(completed))}

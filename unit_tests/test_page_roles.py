@@ -188,6 +188,119 @@ class AnnotationTests(unittest.TestCase):
                 launcher.launch(inp, Path(tmp, 'output'), Path(tmp, 'missing-receipt.json'))
 
 
+class QuoteProjectionTests(unittest.TestCase):
+    def validate(self, quote, text):
+        return pa.validate_annotation(annotation(quote=quote), text, RUBRIC['roles'], 'unknown',
+                                      evidence_policy=pa.MAPPED_EVIDENCE)
+
+    def test_mapped_view_reproduces_every_display_transform_and_literal_code(self):
+        text = ('---\r\ntitle: hidden\r\n---\r\n# Heading\r\n'
+                'Before <!-- hidden -->after {{< include "missing" >}}.\n'
+                '![Alt label](image.png) [link label](private-path)\n'
+                '[id]: https://hidden.test\n'
+                'Get https://example.test/path now. <span>Visible</span>\n'
+                '```xml\n<node>https://literal.test</node>\n```\n'
+                '`<inline>` and ~~~text\nhttps://literal.test\n~~~')
+        display, positions = pa.mapped_view(text)
+        self.assertEqual(display, pa.view(text)[0])
+        self.assertEqual(len(display), len(positions))
+        for char, (start, end, kind) in zip(display, positions):
+            self.assertGreaterEqual(start, len(text)-len(pa.body(text)))
+            if kind == 'source': self.assertEqual(text[start:end], char)
+
+    def test_crlf_unicode_and_multiline_quote_have_exact_raw_offsets(self):
+        text = '---\r\ntitle: hidden\r\n---\r\né Ω\r\nRun this.\r\n\r\nCheck it.'
+        quote = 'é Ω\nRun this.\n\nCheck it.'
+        result = self.validate(quote, text); span = result['evidence_span']
+        self.assertEqual(result['quote'], quote)
+        self.assertEqual(span['source_quote'], 'é Ω\r\nRun this.\r\n\r\nCheck it.')
+        self.assertEqual(text[span['start']:span['end']], span['source_quote'])
+        self.assertTrue(span['whitespace_normalized'])
+        self.assertEqual(span['source_segments'], [{'start': text.index('é'), 'end': len(text), 'kind': 'source'}])
+
+    def test_wrapping_tabs_and_quoted_edge_whitespace_only_are_normalized(self):
+        text = 'Run the\r\n\t small task.'
+        result = self.validate('  Run the small task. \n', text)
+        self.assertEqual(result['evidence_span']['source_quote'], text)
+        self.assertEqual(result['quote'], '  Run the small task. \n')
+
+    def test_link_label_projection_keeps_raw_markdown_and_destinations_explicit(self):
+        text = 'Run [this task](hidden/path) and check it.'
+        result = self.validate('Run this task and check it.', text); span = result['evidence_span']
+        self.assertEqual(span['source_quote'], text)
+        self.assertTrue(span['display_transformed'])
+        self.assertNotIn('hidden/path', span['display_quote'])
+        self.assertGreater(len(span['source_segments']), 1)
+
+    def test_destination_marker_maps_to_its_real_url_with_two_sided_anchors(self):
+        text = 'Docker provides a script at\r\nhttps://example.test/install\r\nto install software.'
+        quote = 'Docker provides a script at [destination omitted] to install software.'
+        span = self.validate(quote, text)['evidence_span']
+        self.assertEqual(span['source_quote'], text)
+        self.assertEqual(text[span['start']:span['end']], text)
+        hidden = next(s for s in span['source_segments'] if s['kind'] == 'redacted_destination')
+        self.assertEqual(text[hidden['start']:hidden['end']], 'https://example.test/install')
+
+    def test_generated_or_partial_markers_and_hidden_destinations_are_not_evidence(self):
+        text = 'Use https://secret.test/path for setup.'
+        for quote in ['[destination omitted]', 'destination omitted', 'omitted] for setup.',
+                      '[destination omitted] for setup.', 'Use [destination omitted]', 'secret.test/path']:
+            with self.subTest(quote=quote), self.assertRaises(ValueError): self.validate(quote, text)
+        with self.assertRaises(ValueError): self.validate('[destination omitted]', 'https://secret.test/path')
+
+    def test_unavailable_template_image_or_markup_cannot_supply_evidence(self):
+        for text, quote in [('Before {{< missing >}} after', 'Before [unrendered template] after'),
+                            ('Before ![diagram](image) after', 'Before [image unavailable: diagram] after'),
+                            ('Before <tag> after', 'Before [markup omitted] after')]:
+            with self.subTest(text=text), self.assertRaises(ValueError): self.validate(quote, text)
+        # Literal text is different from a generated display marker.
+        self.assertEqual(self.validate('[destination omitted]', 'The literal string [destination omitted] is documented.')['evidence_span']['source_quote'], '[destination omitted]')
+
+    def test_no_fuzzy_semantic_case_or_punctuation_matching_or_metadata_evidence(self):
+        text = '---\ntitle: Metadata only\n---\nRun the task. Check success.'
+        for quote in ['Metadata only', 'run the task.', 'Run the task!', 'Run task.', 'Check the task.']:
+            with self.subTest(quote=quote), self.assertRaises(ValueError): self.validate(quote, text)
+
+    def test_duplicate_quote_selects_first_visible_body_occurrence(self):
+        text = '---\ntitle: Run this.\n---\nRun this.\r\nRun this.'
+        span = self.validate('Run this.', text)['evidence_span']
+        self.assertEqual(span['start'], text.index('Run this.', len(text)-len(pa.body(text))))
+        self.assertEqual(span['occurrences'], 2)
+
+    def test_v1_legacy_hash_and_verdict_are_unchanged_and_policies_do_not_share_cache(self):
+        text = 'Run\r\nthis.'
+        args = (text, RUBRIC, 'prompt', SETTINGS, RUBRIC['roles'])
+        original = pa.digest({'raw_sha256': pa.raw_hash(text), 'view_sha256': pa.raw_hash(pa.view(text)[0]),
+            'rubric_sha256': pa.digest(RUBRIC), 'prompt_sha256': pa.raw_hash('prompt'), 'settings': SETTINGS,
+            'schema': pa.annotation_schema(RUBRIC['roles']), 'version': pa.VERSION})
+        self.assertEqual(pa.cache_identity(*args), original)
+        self.assertNotEqual(original, pa.cache_identity(*args, evidence_policy=pa.MAPPED_EVIDENCE))
+        with self.assertRaises(ValueError): pa.validate_annotation(annotation(quote='Run\nthis.'), text, RUBRIC['roles'], 'unknown')
+        self.validate('Run\nthis.', text)
+        with self.assertRaises(ValueError): pa.cache_identity(*args, evidence_policy='unknown')
+
+    def test_bounded_batch_uses_manifest_policy_and_preserves_returned_quote(self):
+        quote = 'Run this.'; texts = {'a': 'Run\r\nthis.'}
+        manifest = {**batch_manifest(texts), 'evidence_policy': pa.MAPPED_EVIDENCE}
+        async def fixture(*args): return fixture_reply(annotation(quote=quote))
+        with tempfile.TemporaryDirectory() as tmp:
+            result = asyncio.run(pa.run_batch(texts, RUBRIC, 'prompt', manifest, approval(manifest), tmp, fixture))
+            self.assertEqual(result['schema_version'], pa.VERSION_V2)
+            self.assertEqual(result['attempts'], 1)
+            value = result['annotations'][0]['annotation']
+            self.assertEqual(value['quote'], quote)
+            self.assertEqual(value['evidence_span']['source_quote'], texts['a'])
+            self.assertEqual(value['evidence_policy'], pa.MAPPED_EVIDENCE)
+            changed = {**manifest, 'evidence_policy': pa.STRICT_EVIDENCE}
+            with self.assertRaisesRegex(ValueError, 'resume-manifest-changed'):
+                asyncio.run(pa.run_batch(texts, RUBRIC, 'prompt', changed, approval(changed), tmp, fixture))
+
+    def test_unknown_empty_quote_stays_explicitly_incomplete(self):
+        value = pa.validate_annotation(annotation('unknown', '', True), '', RUBRIC['roles'], 'unknown', evidence_policy=pa.MAPPED_EVIDENCE)
+        self.assertIsNone(value['evidence_span'])
+        self.assertEqual(value['evidence_policy'], pa.MAPPED_EVIDENCE)
+
+
 class EvaluationTests(unittest.TestCase):
     def fixture(self):
         ids = [f'p{i:02}' for i in range(48)]
