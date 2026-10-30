@@ -30,3 +30,5 @@ Paths in the owner column are relative to `retrieval_arena/` unless explicitly r
 For implementation changes, add focused behavioral tests for the changed contract and follow [operator validation](operator.md). Check `containers/verification/verify.py::COMMANDS` when selecting suites: a test file's existence does not imply inclusion in `focused`. Documentation-only changes need source/link checks, not an experiment launch or image rebuild merely to preview prose. A later operator run still needs a checkout matching its receipt, including after documentation commits.
 
 For full normalized magnetic heat-row exports, pair affinity and edge-masked recomputation, see [page representations](evaluations/page_representations.md).
+
+For frozen seed-preserving affinity selection with held-separate labels, see [complementary context](evaluations/complementary_context.md).

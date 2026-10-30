@@ -46,6 +46,7 @@ COPY containers/verification/phase_navigation.py /opt/retrieval-arena/phase_navi
 COPY containers/verification/support_access.py /opt/retrieval-arena/support_access.py
 COPY containers/verification/support_access_corpora.py /opt/retrieval-arena/support_access_corpora.py
 COPY containers/verification/page_representations.py /opt/retrieval-arena/page_representations.py
+COPY containers/verification/complementary_context.py /opt/retrieval-arena/complementary_context.py
 RUN test -x /usr/bin/git \
     && mkdir -p /workspace/source \
     && chown 65532:65532 /workspace/source
