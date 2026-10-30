@@ -308,20 +308,44 @@ def import_human(form, packet, key, roles, texts, *, previous=None):
     return result
 
 
-def annotation_schema(roles):
-    return {'type': 'object', 'additionalProperties': False, 'required': ['role', 'quote', 'rationale', 'ambiguity', 'incomplete'],
+def _facet_specs(facets):
+    facets = {} if facets is None else facets
+    require(isinstance(facets, dict), 'annotation-facet-config')
+    for name, spec in facets.items():
+        require(isinstance(name, str) and re.fullmatch(r'[a-z][a-z0-9_]*', name) is not None and isinstance(spec, dict), 'annotation-facet-config')
+        values = spec.get('values')
+        require(isinstance(values, list) and values and all(isinstance(v, str) and v.strip() for v in values), 'annotation-facet-values')
+        require(len(values) == len(set(values)) and spec.get('missing_value') in values, 'annotation-facet-values')
+    return facets
+
+
+def annotation_schema(roles, facets=None):
+    facets = _facet_specs(facets)
+    schema = {'type': 'object', 'additionalProperties': False, 'required': ['role', 'quote', 'rationale', 'ambiguity', 'incomplete'],
             'properties': {'role': {'type': 'string', 'enum': roles}, 'quote': {'type': 'string'},
                            'rationale': {'type': 'string'}, 'ambiguity': {'type': 'boolean'}, 'incomplete': {'type': 'boolean'}}}
+    if facets:
+        schema['required'].append('facets')
+        schema['properties']['facets'] = {'type': 'object', 'additionalProperties': False, 'required': sorted(facets),
+            'properties': {name: {'type': 'string', 'enum': spec['values']} for name, spec in sorted(facets.items())}}
+    return schema
 
 
-def validate_annotation(value, text, roles, unknown_role, *, evidence_policy=STRICT_EVIDENCE):
+def validate_annotation(value, text, roles, unknown_role, *, evidence_policy=STRICT_EVIDENCE, facets=None):
     require(evidence_policy in (STRICT_EVIDENCE, MAPPED_EVIDENCE), 'annotation-evidence-policy')
-    require(isinstance(value, dict) and set(value) == {'role', 'quote', 'rationale', 'ambiguity', 'incomplete'}, 'annotation-fields')
+    facets = _facet_specs(facets)
+    expected = {'role', 'quote', 'rationale', 'ambiguity', 'incomplete'} | ({'facets'} if facets else set())
+    require(isinstance(value, dict) and set(value) == expected, 'annotation-fields')
     require(value['role'] in roles and type(value['ambiguity']) is bool and type(value['incomplete']) is bool, 'annotation-role-flags')
     require(all(isinstance(value[k], str) for k in ('quote', 'rationale')), 'annotation-strings')
     require(0 < len(value['rationale']) <= 1200 and len(value['quote']) <= 1200, 'annotation-length')
     quote = value['quote']
     prose, _ = view(text)
+    if facets:
+        require(isinstance(value['facets'], dict) and set(value['facets']) == set(facets), 'annotation-facet-fields')
+        require(all(value['facets'][name] in spec['values'] for name, spec in facets.items()), 'annotation-facet-value')
+        if not prose.strip():
+            require(all(value['facets'][name] == spec['missing_value'] for name, spec in facets.items()), 'annotation-facet-missing-content')
     if quote:
         if evidence_policy == MAPPED_EVIDENCE:
             span = resolve_display_quote(quote, text)
@@ -339,11 +363,11 @@ def validate_annotation(value, text, roles, unknown_role, *, evidence_policy=STR
     return result
 
 
-def cache_identity(text, rubric, prompt, settings, roles, *, evidence_policy=STRICT_EVIDENCE):
+def cache_identity(text, rubric, prompt, settings, roles, *, evidence_policy=STRICT_EVIDENCE, facets=None):
     require(evidence_policy in (STRICT_EVIDENCE, MAPPED_EVIDENCE), 'annotation-evidence-policy')
     identity = {'raw_sha256': raw_hash(text), 'view_sha256': raw_hash(view(text)[0]),
                    'rubric_sha256': digest(rubric), 'prompt_sha256': raw_hash(prompt),
-                   'settings': settings, 'schema': annotation_schema(roles), 'version': VERSION}
+                   'settings': settings, 'schema': annotation_schema(roles, facets), 'version': VERSION}
     if evidence_policy == MAPPED_EVIDENCE: identity['evidence_policy'] = evidence_policy
     return digest(identity)
 
@@ -356,7 +380,8 @@ async def run_batch(texts, rubric, prompt, manifest, approval, output, transport
     require(approval.get('decision') == 'yes' and approval.get('author') and approval.get('record')
             and approval.get('manifest_sha256') == digest(manifest), 'annotation-not-authorized')
     require(manifest['rubric_sha256'] == digest(rubric) and manifest['prompt_sha256'] == raw_hash(prompt), 'annotation-protocol-identity')
-    require(manifest['schema_sha256'] == digest(annotation_schema(rubric['roles'])), 'annotation-schema-identity')
+    facets = _facet_specs(rubric.get('facets'))
+    require(manifest['schema_sha256'] == digest(annotation_schema(rubric['roles'], facets)), 'annotation-schema-identity')
     evidence_policy = manifest.get('evidence_policy', STRICT_EVIDENCE)
     require(evidence_policy in (STRICT_EVIDENCE, MAPPED_EVIDENCE), 'annotation-evidence-policy')
     require(manifest['page_hashes'] == {v: raw_hash(s) for v, s in sorted(texts.items())}, 'annotation-page-identity')
@@ -384,7 +409,7 @@ async def run_batch(texts, rubric, prompt, manifest, approval, output, transport
         events.append(e)
     roles = rubric['roles']; settings = manifest['settings']
     for v, text in sorted(texts.items()):
-        identity = cache_identity(text, rubric, prompt, settings, roles, evidence_policy=evidence_policy)
+        identity = cache_identity(text, rubric, prompt, settings, roles, evidence_policy=evidence_policy, facets=facets)
         if v in completed:
             require(completed[v]['cache_identity'] == identity, 'stale-cache')
             continue
@@ -403,12 +428,12 @@ async def run_batch(texts, rubric, prompt, manifest, approval, output, transport
             call_start = time.monotonic()
             try:
                 import asyncio
-                reply = await asyncio.wait_for(transport(request, annotation_schema(roles), settings), timeout=min(remaining, settings['timeout_seconds']))
+                reply = await asyncio.wait_for(transport(request, annotation_schema(roles, facets), settings), timeout=min(remaining, settings['timeout_seconds']))
                 # Save raw response before schema validation. Provider layer checks
                 # digest/response identity and records spend, including failures.
                 (output/(attempt_id+'.json')).write_bytes(canonical(reply)+b'\n')
                 require(reply['model'] == settings['model'] and reply['revision'] == settings['revision'], 'annotation-model-identity')
-                result = validate_annotation(json.loads(reply['text']), text, roles, rubric['unknown_role'], evidence_policy=evidence_policy)
+                result = validate_annotation(json.loads(reply['text']), text, roles, rubric['unknown_role'], evidence_policy=evidence_policy, facets=facets)
             except Exception as error:
                 # Error text may contain provider/user data; retain type only.
                 emit({'event': 'invalid', 'doc_id': v, 'attempt_id': attempt_id,
@@ -422,6 +447,6 @@ async def run_batch(texts, rubric, prompt, manifest, approval, output, transport
                      'revision': settings['revision'], 'timestamp': datetime.now(timezone.utc).isoformat()}
             emit(event); completed[v] = event
             break
-    return {'schema_version': VERSION_V2 if evidence_policy == MAPPED_EVIDENCE else VERSION,
+    return {'schema_version': VERSION_V2 if evidence_policy == MAPPED_EVIDENCE or facets else VERSION,
             'manifest_sha256': digest(manifest), 'attempts': len(starts),
             'annotations': list(completed.values()), 'unresolved': sorted(set(texts)-set(completed))}

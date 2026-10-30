@@ -301,6 +301,63 @@ class QuoteProjectionTests(unittest.TestCase):
         self.assertEqual(value['evidence_policy'], pa.MAPPED_EVIDENCE)
 
 
+class FacetAnnotationTests(unittest.TestCase):
+    FACETS = {'content_scope': {'values': ['product', 'about_meta', 'mixed', 'unknown'], 'missing_value': 'unknown'}}
+
+    def test_schema_requires_declared_facets_without_changing_legacy_schema(self):
+        old = pa.annotation_schema(RUBRIC['roles'])
+        self.assertEqual(set(old['required']), {'role', 'quote', 'rationale', 'ambiguity', 'incomplete'})
+        self.assertEqual(old, pa.annotation_schema(RUBRIC['roles'], {}))
+        new = pa.annotation_schema(RUBRIC['roles'], self.FACETS)
+        self.assertIn('facets', new['required'])
+        self.assertEqual(new['properties']['facets']['required'], ['content_scope'])
+        self.assertEqual(new['properties']['facets']['properties']['content_scope']['enum'], self.FACETS['content_scope']['values'])
+        self.assertEqual(new['properties']['role'], old['properties']['role'])
+
+    def test_scope_and_purpose_are_independent_and_scope_is_not_a_role(self):
+        for scope in ['product', 'about_meta']:
+            value = {**annotation(), 'facets': {'content_scope': scope}}
+            result = pa.validate_annotation(value, 'Run this.', RUBRIC['roles'], 'unknown', facets=self.FACETS)
+            self.assertEqual(result['role'], 'procedure'); self.assertEqual(result['facets']['content_scope'], scope)
+        with self.assertRaises(ValueError):
+            pa.validate_annotation({**annotation('about_meta'), 'facets': {'content_scope': 'about_meta'}}, 'Run this.', RUBRIC['roles'], 'unknown', facets=self.FACETS)
+
+    def test_invalid_facet_config_or_output_is_rejected(self):
+        for spec in [{'bad-name': self.FACETS['content_scope']}, {'scope': {'values': ['x', 'x'], 'missing_value': 'x'}},
+                     {'scope': {'values': ['x'], 'missing_value': 'unknown'}}, {'scope': {'values': 'x', 'missing_value': 'x'}}]:
+            with self.subTest(spec=spec), self.assertRaises(ValueError): pa.annotation_schema(RUBRIC['roles'], spec)
+        for facets in [{}, {'content_scope': 'invented'}, {'content_scope': 'product', 'extra': 'x'}, None]:
+            with self.subTest(facets=facets), self.assertRaises(ValueError):
+                pa.validate_annotation({**annotation(), 'facets': facets}, 'Run this.', RUBRIC['roles'], 'unknown', facets=self.FACETS)
+
+    def test_empty_available_body_requires_declared_missing_facet_value(self):
+        value = {**annotation('unknown', '', True), 'facets': {'content_scope': 'unknown'}}
+        self.assertEqual(pa.validate_annotation(value, '', RUBRIC['roles'], 'unknown', facets=self.FACETS)['facets'], value['facets'])
+        with self.assertRaises(ValueError):
+            pa.validate_annotation({**value, 'facets': {'content_scope': 'product'}}, '', RUBRIC['roles'], 'unknown', facets=self.FACETS)
+
+    def test_facet_schema_changes_cache_identity(self):
+        args = ('Run this.', RUBRIC, 'prompt', SETTINGS, RUBRIC['roles'])
+        self.assertNotEqual(pa.cache_identity(*args), pa.cache_identity(*args, facets=self.FACETS))
+        changed = {'content_scope': {'values': ['product', 'unknown'], 'missing_value': 'unknown'}}
+        self.assertNotEqual(pa.cache_identity(*args, facets=self.FACETS), pa.cache_identity(*args, facets=changed))
+
+    def test_batch_dispatches_facet_schema_and_validates_provider_output(self):
+        rubric = {**RUBRIC, 'facets': self.FACETS}
+        manifest = {**batch_manifest({'a': 'Run this.'}), 'rubric_sha256': pa.digest(rubric),
+                    'schema_sha256': pa.digest(pa.annotation_schema(rubric['roles'], self.FACETS)),
+                    'evidence_policy': pa.MAPPED_EVIDENCE}
+        seen = []
+        async def fixture(prompt, schema, settings):
+            seen.append(schema)
+            return fixture_reply({**annotation(), 'facets': {'content_scope': 'about_meta'}})
+        with tempfile.TemporaryDirectory() as tmp:
+            result = asyncio.run(pa.run_batch({'a': 'Run this.'}, rubric, 'prompt', manifest, approval(manifest), tmp, fixture))
+            self.assertEqual(result['attempts'], 1); self.assertEqual(result['schema_version'], pa.VERSION_V2)
+            self.assertEqual(seen, [pa.annotation_schema(rubric['roles'], self.FACETS)])
+            self.assertEqual(result['annotations'][0]['annotation']['facets']['content_scope'], 'about_meta')
+
+
 class EvaluationTests(unittest.TestCase):
     def fixture(self):
         ids = [f'p{i:02}' for i in range(48)]

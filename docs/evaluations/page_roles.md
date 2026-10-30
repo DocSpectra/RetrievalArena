@@ -135,6 +135,25 @@ judgment. Replaying saved responses under it is separately named offline
 development evidence; never overwrite an original batch or its v1 verdicts.
 Model labels, retry choices and human validation are unchanged by projection.
 
+### Optional descriptive facets
+
+A caller's rubric may declare `facets`, mapping each facet name to a `values`
+list and a `missing_value` from that list. Names are lowercase identifiers;
+enum values are unique nonempty strings. Explanatory rules can live in the same
+rubric. Facet names/values are caller data, never corpus-specific RA defaults.
+
+With a nonempty declaration, `annotation_schema(roles, facets)` adds a required
+`facets` object with exactly the declared names and enum values. Validation keeps
+the primary `role` separate, refuses extra/missing facets and requires missing
+facet values for an empty available body. A configured facet cannot become an
+additional purpose class. Batch dispatch, schema hashes and cache identity bind
+the declaration; the result uses the v2 batch schema. Human purpose imports and
+classifiers are unchanged; optional human facet notes are not silently scored.
+
+Without a facet declaration, the prior provider schema, validation and cache
+identity remain identical. This extension makes no provider calls itself and
+does not authorize an existing batch under a changed rubric/schema.
+
 ## Agreement and classifier endpoint
 
 `agreement` compares saved independent initial human/AI label streams; it reports
