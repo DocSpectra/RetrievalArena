@@ -36,6 +36,7 @@ COMMANDS = {
         "unit_tests.test_structural_target_v2",
         "unit_tests.test_magnetic_spectrum",
         "unit_tests.test_magnetic_attribution",
+        "unit_tests.test_phase_navigation",
         "unit_tests.test_trace_provenance",
         "unit_tests.test_answer_element_comparison",
     ),
@@ -50,6 +51,8 @@ COMMANDS = {
     "measure-magnetic-attribution": (),
     "audit-trace-provenance": (),
     "compare-answer-elements": (),
+    "measure-phase-navigation": (),
+    "score-phase-navigation": (),
 }
 
 
@@ -117,6 +120,10 @@ def main(argv: list[str]) -> int:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from answer_element_comparison import main as answer_element_main
         return answer_element_main()
+    if argv[1] in {"measure-phase-navigation", "score-phase-navigation"}:
+        sys.path.insert(0, str(OPERATOR_ROOT))
+        from phase_navigation import main as phase_navigation_main
+        return phase_navigation_main(argv[1])
     scratch = SOURCE_ROOT / ".tmp_unit_tests"
     html_scratch = SOURCE_ROOT / "unit_tests" / "_tmp_html_report"
     if not scratch.is_dir() or not html_scratch.is_dir():

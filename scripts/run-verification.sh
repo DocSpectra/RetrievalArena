@@ -2,7 +2,7 @@
 set -eu
 
 usage() {
-  echo 'usage: run-verification.sh <focused|all> [receipt] | <evaluate-profile|review-packet|score-bertscore|measure-graph-spectra|measure-magnetic-attribution|audit-trace-provenance|compare-answer-elements> <input-root> <output-root> [receipt] | <candidate-retrieve|measure-docstyle> <input-root> <output-root> <candidate-root> [receipt]' >&2
+  echo 'usage: run-verification.sh <focused|all> [receipt] | <evaluate-profile|review-packet|score-bertscore|measure-graph-spectra|measure-magnetic-attribution|audit-trace-provenance|compare-answer-elements|measure-phase-navigation|score-phase-navigation> <input-root> <output-root> [receipt] | <candidate-retrieve|measure-docstyle> <input-root> <output-root> <candidate-root> [receipt]' >&2
   echo '       named form: run-verification.sh <command> --input-root=<p> --output-root=<p> [--candidate-root=<p>] [--receipt=<p>]' >&2
   exit 2
 }
@@ -27,7 +27,7 @@ if [ "$named_seen" -eq 1 ]; then
   case "$command_name" in
     candidate-retrieve|measure-docstyle) [ -n "$input_root" ] && [ -n "$output_root" ] || { echo verification-operator-input-output-required >&2; exit 2; }
       [ -n "$candidate_root" ] || { echo verification-candidate-root-required >&2; exit 2; } ;;
-    evaluate-profile|review-packet|score-bertscore|measure-graph-spectra|measure-magnetic-attribution|audit-trace-provenance|compare-answer-elements) [ -n "$input_root" ] && [ -n "$output_root" ] || { echo verification-operator-input-output-required >&2; exit 2; }
+    evaluate-profile|review-packet|score-bertscore|measure-graph-spectra|measure-magnetic-attribution|audit-trace-provenance|compare-answer-elements|measure-phase-navigation|score-phase-navigation) [ -n "$input_root" ] && [ -n "$output_root" ] || { echo verification-operator-input-output-required >&2; exit 2; }
       [ -z "$candidate_root" ] || { echo verification-command-invalid >&2; exit 2; } ;;
     focused|all) [ -z "$input_root" ] && [ -z "$output_root" ] && [ -z "$candidate_root" ] || { echo verification-command-invalid >&2; exit 2; } ;;
     *) echo verification-command-invalid >&2; exit 2 ;;
@@ -35,7 +35,7 @@ if [ "$named_seen" -eq 1 ]; then
 elif [ "$command_name" = candidate-retrieve ] || [ "$command_name" = measure-docstyle ]; then
   [ "$#" -ge 3 ] && [ "$#" -le 4 ] || { echo verification-candidate-root-required >&2; exit 2; }
   input_root=$1; output_root=$2; candidate_root=$3; receipt=${4:-$repo/.tmp/verification-image.json}
-elif [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ] || [ "$command_name" = measure-graph-spectra ] || [ "$command_name" = measure-magnetic-attribution ] || [ "$command_name" = audit-trace-provenance ] || [ "$command_name" = compare-answer-elements ]; then
+elif [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ] || [ "$command_name" = measure-graph-spectra ] || [ "$command_name" = measure-magnetic-attribution ] || [ "$command_name" = audit-trace-provenance ] || [ "$command_name" = compare-answer-elements ] || [ "$command_name" = measure-phase-navigation ] || [ "$command_name" = score-phase-navigation ]; then
   [ "$#" -ge 2 ] && [ "$#" -le 3 ] || { echo verification-operator-input-output-required >&2; exit 2; }
   input_root=$1; output_root=$2; receipt=${3:-$repo/.tmp/verification-image.json}
 else
@@ -71,7 +71,7 @@ label_lock=$(docker image inspect --format '{{ index .Config.Labels "io.retrieva
 label_platform=$(docker image inspect --format '{{ index .Config.Labels "io.retrieval-arena.verification.platform" }}' "$image")
 [ "$label_commit" = "$commit" ] && [ "$label_tree" = "$tree" ] && [ "$label_lock" = "$receipt_lock" ] && [ "$label_platform" = "$platform" ] || { echo verification-image-label-mismatch >&2; exit 2; }
 
-if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ] || [ "$command_name" = candidate-retrieve ] || [ "$command_name" = measure-docstyle ] || [ "$command_name" = measure-graph-spectra ] || [ "$command_name" = measure-magnetic-attribution ] || [ "$command_name" = audit-trace-provenance ] || [ "$command_name" = compare-answer-elements ]; then
+if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ] || [ "$command_name" = score-bertscore ] || [ "$command_name" = candidate-retrieve ] || [ "$command_name" = measure-docstyle ] || [ "$command_name" = measure-graph-spectra ] || [ "$command_name" = measure-magnetic-attribution ] || [ "$command_name" = audit-trace-provenance ] || [ "$command_name" = compare-answer-elements ] || [ "$command_name" = measure-phase-navigation ] || [ "$command_name" = score-phase-navigation ]; then
   input_root=$(CDPATH= cd -- "$input_root" && pwd)
   output_root=$(CDPATH= cd -- "$output_root" && pwd)
   [ "$input_root" != "$output_root" ] && [ "$input_root" != "$repo" ] && [ "$output_root" != "$repo" ] && [ -f "$input_root/operator-request.json" ] || { echo verification-operator-root-admission-invalid >&2; exit 2; }
@@ -142,9 +142,12 @@ if [ "$command_name" = evaluate-profile ] || [ "$command_name" = review-packet ]
   [ "$command_name" != score-bertscore ] || operator_memory=8g
   [ "$command_name" != measure-graph-spectra ] || operator_memory=4g
   [ "$command_name" != measure-magnetic-attribution ] || operator_memory=4g
+  [ "$command_name" != measure-phase-navigation ] || operator_memory=8g
   [ "$command_name" != audit-trace-provenance ] || operator_memory=4g
   [ "$command_name" != compare-answer-elements ] || operator_memory=4g
-  exec docker run --rm --platform "$platform" --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory "$operator_memory" --cpus 2 \
+  operator_cpus=2
+  [ "$command_name" != measure-phase-navigation ] || operator_cpus=4
+  exec docker run --rm --platform "$platform" --network none --read-only --security-opt no-new-privileges --cap-drop ALL --pids-limit 512 --memory "$operator_memory" --cpus "$operator_cpus" \
     --mount "type=bind,src=$repo,dst=/workspace/source,readonly" --mount "type=bind,src=$input_root,dst=/workspace/input,readonly" --mount "type=bind,src=$output_root,dst=/workspace/output" \
     --tmpfs /tmp:rw,noexec,nosuid,nodev,size=256m,uid=65532,gid=65532 \
     --env "RA_SOURCE_COMMIT=$commit" --env "RA_SOURCE_TREE=$tree" --env "RA_DEPENDENCY_LOCK_SHA256=$receipt_lock" --env "RA_IMAGE_REFERENCE=$image" --env "RA_PLATFORM=$platform" \

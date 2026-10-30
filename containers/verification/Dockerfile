@@ -42,6 +42,7 @@ COPY containers/verification/graph_spectra.py /opt/retrieval-arena/graph_spectra
 COPY containers/verification/magnetic_attribution.py /opt/retrieval-arena/magnetic_attribution.py
 COPY containers/verification/trace_provenance.py /opt/retrieval-arena/trace_provenance.py
 COPY containers/verification/answer_element_comparison.py /opt/retrieval-arena/answer_element_comparison.py
+COPY containers/verification/phase_navigation.py /opt/retrieval-arena/phase_navigation.py
 RUN test -x /usr/bin/git \
     && mkdir -p /workspace/source \
     && chown 65532:65532 /workspace/source
