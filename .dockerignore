@@ -14,3 +14,4 @@ containers/verification/*
 !containers/verification/magnetic_attribution.py
 !containers/verification/trace_provenance.py
 !containers/verification/answer_element_comparison.py
+!containers/verification/phase_navigation.py
