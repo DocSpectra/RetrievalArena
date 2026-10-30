@@ -92,6 +92,11 @@ class PageRepresentationTests(unittest.TestCase):
         pages=[{'doc_id':v,'source_family':g} for v,g in [('a','x'),('b','x'),('c','y')]]
         cards=pr.review_cards(pages,{r['doc_id']:text for r in pages},3)
         self.assertEqual(len(cards),3); self.assertTrue(all(c['role'] is None for c in cards))
+        # With more strata than slots, the packet must not consist solely of
+        # the first lexical prefix; selection still receives no graph/features.
+        many=[{'doc_id':str(i),'source_family':f'{i:03d}'} for i in range(60)]
+        subset=pr.review_cards(many,{str(i):text for i in range(60)},20)
+        self.assertTrue(any(int(c['doc_id'])>=20 for c in subset))
 
     def test_deterministic_maps_and_invalid_input(self):
         nodes,edges=CASES['localized']; h,_=pr.heat_kernel(nodes,edges); h2,_=pr.heat_kernel(nodes,edges)

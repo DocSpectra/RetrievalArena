@@ -141,7 +141,8 @@ def review_cards(pages, texts, count=40):
     for ids in strata.values(): ids.sort(key=lambda s:hashlib.sha256(s.encode()).hexdigest())
     chosen=[]
     while len(chosen)<min(count,len(pages)):
-        for group in sorted(strata):
+        # Hash ordering avoids exhausting a lexical prefix when strata outnumber cards.
+        for group in sorted(strata,key=lambda s:hashlib.sha256(s.encode()).hexdigest()):
             if strata[group] and len(chosen)<count: chosen.append((group,strata[group].pop(0)))
     return [{'doc_id':v,'topic_stratum':g,'excerpt':frontmatter(texts[v])[:3000],
              'role':None,'ambiguity_note':'','missing_coverage_note':''} for g,v in chosen]

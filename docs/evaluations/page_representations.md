@@ -73,7 +73,7 @@ and anchors in small components limit interpretation. Groups have numeric names;
 no workflow/role claim follows. Companion group agreement is descriptive,
 including ties; it is not a semantic clustering score.
 
-Review cards use round-robin source-family strata with SHA256 ID order, at
+Review cards use round-robin source-family strata with SHA256 stratum and ID order, at
 most 40 pages, excerpts and blank role/ambiguity/missing-coverage fields. No
 spectral features, graph clusters or suggested labels enter the cards. Raw
 editorial text can disclose its own role; source provenance must remain explicit.
