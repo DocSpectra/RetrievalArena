@@ -1,6 +1,6 @@
 [CmdletBinding(PositionalBinding = $false)]
 param(
-    [Parameter(Mandatory = $true, Position = 0)][ValidateSet('focused','all','evaluate-profile','review-packet','score-bertscore','candidate-retrieve','measure-docstyle','measure-graph-spectra','measure-magnetic-attribution','audit-trace-provenance','compare-answer-elements','measure-phase-navigation','score-phase-navigation','compare-support-access','compare-support-access-corpora','export-page-representations','generate-complementary-context','evaluate-complementary-context')][string]$Command,
+    [Parameter(Mandatory = $true, Position = 0)][ValidateSet('focused','all','evaluate-profile','review-packet','score-bertscore','candidate-retrieve','measure-docstyle','measure-graph-spectra','measure-magnetic-attribution','audit-trace-provenance','compare-answer-elements','measure-phase-navigation','score-phase-navigation','compare-support-access','compare-support-access-corpora','export-page-representations','generate-complementary-context','evaluate-complementary-context','page-roles')][string]$Command,
     [Parameter()][string]$InputRoot,
     [Parameter()][string]$OutputRoot,
     [Parameter()][string]$CandidateRoot,
@@ -118,6 +118,10 @@ if ($Command -in @('evaluate-profile','review-packet','score-bertscore','candida
             $cpuIndex = [Array]::IndexOf($arguments, '--cpus')
             $arguments[$cpuIndex + 1] = '4'
         }
+    }
+    if ($Command -eq 'page-roles') {
+        $arguments[[Array]::IndexOf($arguments, '--memory') + 1] = '8g'
+        $arguments[[Array]::IndexOf($arguments, '--cpus') + 1] = '4'
     }
     & docker @arguments
     exit $LASTEXITCODE

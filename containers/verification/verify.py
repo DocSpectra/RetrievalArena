@@ -40,6 +40,7 @@ COMMANDS = {
         "unit_tests.test_support_access",
         "unit_tests.test_support_access_corpora",
         "unit_tests.test_page_representations",
+        "unit_tests.test_page_roles",
         "unit_tests.test_complementary_context",
         "unit_tests.test_trace_provenance",
         "unit_tests.test_answer_element_comparison",
@@ -60,6 +61,7 @@ COMMANDS = {
     "compare-support-access": (),
     "compare-support-access-corpora": (),
     "export-page-representations": (),
+    "page-roles": (),
     "generate-complementary-context": (),
     "evaluate-complementary-context": (),
 }
@@ -113,6 +115,10 @@ def main(argv: list[str]) -> int:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from complementary_context import main as complementary_main
         return complementary_main(argv[1])
+    if argv[1] == "page-roles":
+        sys.path.insert(0, str(OPERATOR_ROOT))
+        from page_roles import main as page_roles_main
+        return page_roles_main()
     if argv[1] == "export-page-representations":
         sys.path.insert(0, str(OPERATOR_ROOT))
         from page_representations import main as page_representations_main

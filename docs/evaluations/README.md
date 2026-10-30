@@ -63,3 +63,7 @@ the caller composes answer pairs from `generated_answer`.
 | [`lexical_baseline`](lexical_baseline.md) | `precision`, `recall`, `f1` (legacy v1) | `retrieval_arena/scoring.py`, the `scoring.method` of the experiment YAMLs |
 
 - [Complementary context selection](complementary_context.md): frozen seed-preserving semantic/ordinary/magnetic rank fusion, static one/two-hop controls, separate pooled-positive evaluation and grouped uncertainty.
+
+## Page-purpose annotation
+
+[Page-purpose annotation and human-reference evaluation](page_roles.md): exact source evidence, blind human exchange, bounded provider reuse, leakage groups and grouped OOF role comparison. Corpus/rubric/budget choices remain caller configuration.

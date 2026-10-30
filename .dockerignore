@@ -18,4 +18,5 @@ containers/verification/*
 !containers/verification/support_access.py
 !containers/verification/support_access_corpora.py
 !containers/verification/page_representations.py
+!containers/verification/page_roles.py
 !containers/verification/complementary_context.py
