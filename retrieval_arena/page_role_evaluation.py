@@ -1,4 +1,4 @@
-"""Grouped human-reference role comparison; fixed settings, no model inference."""
+"""Grouped role-reference comparison; fixed settings, no model inference."""
 from __future__ import annotations
 from collections import Counter, defaultdict
 import re
@@ -170,7 +170,7 @@ def paired_bootstrap(labels, predictions, groups, classes, contrasts, draws, see
 
 
 def evaluate(labels, groups, texts, simple, kernels, config, *, freeze=None):
-    """Call only after human labels and verified kernel rows are joined by ID.
+    """Call only after declared reference labels and verified kernel rows are joined by ID.
     kernels is arm -> doc_id -> real/imag row; no feature fitting uses test labels.
     Mixed, unknown and unresolved are excluded here but counted in coverage.
     """

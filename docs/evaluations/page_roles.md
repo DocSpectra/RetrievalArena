@@ -190,3 +190,21 @@ Fixtures in `unit_tests.test_page_roles` exercise source/cache identity, malform
 annotations, evidence offsets, blind exchange, stale/conflicting labels,
 duplicate exclusion, deterministic sampling, group isolation, absent classes,
 training-only transforms, retry/resume bounds and offline end-to-end execution.
+
+## Explicit model-reference evaluation
+
+The separately selected `evaluate-model` stage supports exploratory prediction of
+model-assigned purposes. The historical `evaluate` stage still accepts only human
+references. No human form or human approval is synthesized for model labels.
+
+`model-reference/` contains the original authorized manifest, approval, prompt,
+result, append-only attempt journal and raw responses. `page_role_reference.py`
+revalidates exact content, rubric/schema/model/cache identities, evidence spans,
+first-valid attempt ordering, unresolved coverage and discovery-group exclusions.
+Its output explicitly identifies `kind: model_assigned` and states that scores
+measure agreement with model purposes, not human-reference accuracy. The same
+grouped classifier and ordinary/magnetic controls are reused unchanged. This
+mode neither qualifies annotation reliability nor authorizes additional inference.
+
+This is an explicit reference-type extension under the existing offline operator
+boundary (RA-D05); no provider/network or architecture-portability changes.

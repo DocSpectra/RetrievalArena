@@ -495,5 +495,92 @@ class EvaluationTests(unittest.TestCase):
             self.assertTrue((evaluation/'frozen-evaluation-plan.json').exists())
 
 
+
+class ModelReferenceTests(unittest.TestCase):
+    def batch(self, root, texts=None, invalid=False):
+        texts = texts or {'a': 'Run this.'}
+        manifest = batch_manifest(texts, retries=0)
+        async def transport(*args):
+            return fixture_reply(annotation(quote='missing' if invalid else 'Run this.'))
+        result = asyncio.run(pa.run_batch(texts, RUBRIC, 'prompt', manifest, approval(manifest), root, transport))
+        for name, value in [('approval.json', approval(manifest)), ('result.json', result)]:
+            (root/name).write_bytes(pa.canonical(value))
+        (root/'prompt.txt').write_text('prompt')
+        return texts, manifest, result
+
+    def test_model_reference_is_explicit_and_unresolved_stays_missing(self):
+        from retrieval_arena.page_role_reference import load_model_reference
+        for invalid in [False, True]:
+            with tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp); texts, _, _=self.batch(root, invalid=invalid)
+                labels, meta=load_model_reference(root, texts, RUBRIC, {'a':'g'}, [])
+                self.assertEqual(labels['a'], None if invalid else 'procedure')
+                self.assertEqual(meta['kind'], 'model_assigned')
+                self.assertNotIn('human_labels', meta)
+
+    def test_model_reference_rejects_tampering_and_discovery_leakage(self):
+        from retrieval_arena.page_role_reference import load_model_reference
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); texts, _, result=self.batch(root)
+            with self.assertRaisesRegex(ValueError, 'discovery-evaluation'):
+                load_model_reference(root, texts, RUBRIC, {'a':'g'}, ['a'])
+            with self.assertRaisesRegex(ValueError, 'model-reference-content'):
+                load_model_reference(root, {'a':'changed'}, RUBRIC, {'a':'g'}, [])
+            result['annotations'][0]['annotation']['role']='overview'
+            (root/'result.json').write_bytes(pa.canonical(result))
+            with self.assertRaisesRegex(ValueError, 'model-reference-result'):
+                load_model_reference(root, texts, RUBRIC, {'a':'g'}, [])
+
+    def test_model_reference_rejects_raw_reply_changes_and_interruption(self):
+        from retrieval_arena.page_role_reference import load_model_reference
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); texts, _, result=self.batch(root)
+            aid=result['annotations'][0]['attempt_id']
+            raw=(root/(aid+'.json')).read_bytes()
+            (root/(aid+'.json')).write_bytes(pa.canonical(fixture_reply(annotation(role='overview'))))
+            with self.assertRaisesRegex(ValueError, 'model-reference-annotation'):
+                load_model_reference(root, texts, RUBRIC, {'a':'g'}, [])
+            (root/(aid+'.json')).write_bytes(raw)
+            events=(root/'attempts.jsonl').read_bytes().splitlines()
+            (root/'attempts.jsonl').write_bytes(events[0]+b'\n')
+            with self.assertRaisesRegex(ValueError, 'model-reference-interrupted'):
+                load_model_reference(root, texts, RUBRIC, {'a':'g'}, [])
+
+    def test_model_operator_end_to_end_preserves_reference_kind(self):
+        from retrieval_arena.graph import page_representations as pr
+        spec=importlib.util.spec_from_file_location('role_operator', Path(__file__).resolve().parents[1]/'containers/verification/page_roles.py')
+        op=importlib.util.module_from_spec(spec); spec.loader.exec_module(op)
+        with tempfile.TemporaryDirectory() as tmp:
+            base=Path(tmp); inp=base/'input'; out=base/'output'
+            (inp/'corpus').mkdir(parents=True); out.mkdir()
+            ids=list('abcdef'); texts={v:'Run this. '+('concept system' if i%2 else 'action task')+' '+v*50 for i,v in enumerate(ids)}
+            for v in ids: (inp/'corpus'/f'{v}.md').write_text(texts[v])
+            def write(name, value): (inp/name).write_bytes(pa.canonical(value))
+            manifest=batch_manifest(texts, retries=0); manifest['max_attempts']=6
+            async def transport(prompt, *args):
+                return fixture_reply(annotation(role='overview' if 'concept system' in prompt else 'procedure'))
+            ref=inp/'model-reference'; result=asyncio.run(pa.run_batch(texts,RUBRIC,'prompt',manifest,approval(manifest),ref,transport))
+            for name,value in [('approval.json',approval(manifest)),('result.json',result)]: (ref/name).write_bytes(pa.canonical(value))
+            (ref/'prompt.txt').write_text('prompt')
+            write('pages.json',[{'doc_id':v,'raw_sha256':pa.raw_hash(texts[v])} for v in ids])
+            write('rubric.json',RUBRIC); write('discovery.json',[]); write('groups.json',{v:v for v in ids})
+            write('simple.json',{'rows':[{'doc_id':v,'value':0.} for v in ids]})
+            config={**EvaluationTests().fixture()[-1],'minimum_pages':1,'minimum_groups':3,'draws':10,'min_df':1}
+            write('evaluation.json',config)
+            kernels={}
+            for name,q in [('ordinary',0.),('magnetic',.25)]:
+                kernel,receipt=pr.heat_kernel(ids,[(ids[i],ids[i+1]) for i in range(5)],q=q)
+                pr.save_bundle(inp/name,ids,kernel,receipt,pa.digest([(v,pa.raw_hash(texts[v])) for v in ids]))
+                kernels[name]={'path':name,'graph_sha256':receipt['graph_sha256'],'q':q,'t':1.}
+            write('config.json',{'schema_version':'retrieval_arena.page_roles_config.v1','stage':'evaluate-model',
+                'simple_fields':['value'],'kernels':kernels,'max_seconds':60,'max_output_bytes':10000000})
+            inventory=op.regular_inventory(inp)
+            write('operator-request.json',{'schema_version':'retrieval_arena.page_roles_request.v1','command':'page-roles',
+                'input_inventory':inventory,'input_inventory_sha256':pa.digest(inventory)})
+            self.assertEqual(op.run(inp,out)['status'],'evaluated')
+            measured=json.loads((out/'evaluation-results.json').read_bytes())
+            self.assertEqual(measured['reference']['kind'],'model_assigned')
+            self.assertEqual(len(measured['predictions']['text']),6)
+
 if __name__ == '__main__':
     unittest.main()

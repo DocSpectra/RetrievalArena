@@ -10,6 +10,7 @@ for name in ('OPENBLAS_NUM_THREADS', 'OMP_NUM_THREADS', 'MKL_NUM_THREADS'):
 sys.path.insert(0, '/workspace/source')
 from retrieval_arena import page_role_annotation as pa
 from retrieval_arena import page_role_evaluation as pe
+from retrieval_arena import page_role_reference as pref
 from retrieval_arena.candidate_retrieval import regular_inventory, sha256_file
 from retrieval_arena.graph import page_representations as pr
 
@@ -30,7 +31,7 @@ def run(inp, out):
     pa.require(req == {'schema_version': 'retrieval_arena.page_roles_request.v1', 'command': 'page-roles',
         'input_inventory': inventory, 'input_inventory_sha256': pa.digest(inventory)}, 'roles-input-inventory')
     cfg = read(inp/'config.json'); stage = cfg['stage']
-    pa.require(cfg['schema_version'] == 'retrieval_arena.page_roles_config.v1' and stage in ('prepare', 'sample', 'import', 'evaluate'), 'roles-stage')
+    pa.require(cfg['schema_version'] == 'retrieval_arena.page_roles_config.v1' and stage in ('prepare', 'sample', 'import', 'evaluate', 'evaluate-model'), 'roles-stage')
     pa.require(0 < cfg['max_seconds'] <= 14400 and 0 < cfg['max_output_bytes'] <= 6*1024**3, 'roles-budget')
     pages = read(inp/'pages.json'); ids = [p['doc_id'] for p in pages]
     pa.require(ids == sorted(set(ids)) and all(Path(v).name == v and '/' not in v and '\\' not in v for v in ids), 'roles-page-order')
@@ -79,35 +80,42 @@ def run(inp, out):
         write(out/'initial-human-labels.json', imported)
         summary = {'stage': stage, 'human_rows': len(imported['rows']), 'resolved': imported['resolved'], 'calls': 0}
     else:
-        allowed |= {'reference.json', 'groups.json', 'evaluation.json', 'simple.json', 'reference-approval.json',
-                    'sample.json', 'blind-packet.json', 'private-key.json', 'initial-human-form.json', 'initial-human-labels.json'}
-        reference = read(inp/'reference.json'); approval = read(inp/'reference-approval.json')
-        pa.require(approval['decision'] == 'yes' and approval['author'] and approval['record'] and
-                   approval['reference_sha256'] == pa.digest(reference) and approval['rubric_sha256'] == rubric_hash,
-                   'human-reference-not-approved')
-        pa.require(reference['kind'] in ('initial_human', 'adjudicated_human') and reference['rubric_sha256'] == rubric_hash
-                   and reference['provenance_record'], 'reference-kind')
-        initial = pa.import_human(read(inp/'initial-human-form.json'), read(inp/'blind-packet.json'),
-            read(inp/'private-key.json'), rubric['roles'], texts)
-        pa.require(initial == read(inp/'initial-human-labels.json') and
-                   reference['initial_human_sha256'] == pa.digest(initial), 'reference-initial-stream')
-        sample = read(inp/'sample.json')
-        initial_by_id = {r['doc_id']: r for r in initial['rows']}
-        pa.require(set(initial_by_id) == {r['doc_id'] for r in sample['rows']}, 'sample-reference-join')
-        labels = {}
-        for row in reference['rows']:
-            v = row['doc_id']; pa.require(v in texts and v not in labels and row['raw_sha256'] == pa.raw_hash(texts[v]), 'reference-join')
-            pa.require(row['role'] is None or row['role'] in rubric['roles'], 'reference-role')
-            pa.require(v in initial_by_id, 'reference-unsampled-page')
-            if reference['kind'] == 'initial_human':
-                pa.require(row['role'] == initial_by_id[v]['role'], 'reference-changed-initial-label')
-            elif row['role'] != initial_by_id[v]['role']:
-                pa.require(isinstance(row.get('adjudication_rationale'), str) and row['adjudication_rationale'].strip(), 'adjudication-rationale')
-            labels[v] = row['role']
-        pa.require(set(labels) == set(initial_by_id), 'reference-coverage-join')
-        groups = read(inp/'groups.json')
-        pa.require(all(groups[r['doc_id']] == r['group'] for r in initial['rows']) and
-                   all(groups[r['doc_id']] == r['group'] for r in sample['rows']), 'reference-group-join')
+        reference_meta = None
+        if stage == 'evaluate-model':
+            allowed |= {'groups.json', 'evaluation.json', 'simple.json'}
+            allowed |= {'model-reference/'+p.name for p in (inp/'model-reference').iterdir() if p.is_file()}
+            groups = read(inp/'groups.json')
+            labels, reference_meta = pref.load_model_reference(inp/'model-reference', texts, rubric, groups, discovery)
+        else:
+            allowed |= {'reference.json', 'groups.json', 'evaluation.json', 'simple.json', 'reference-approval.json',
+                        'sample.json', 'blind-packet.json', 'private-key.json', 'initial-human-form.json', 'initial-human-labels.json'}
+            reference = read(inp/'reference.json'); approval = read(inp/'reference-approval.json')
+            pa.require(approval['decision'] == 'yes' and approval['author'] and approval['record'] and
+                       approval['reference_sha256'] == pa.digest(reference) and approval['rubric_sha256'] == rubric_hash,
+                       'human-reference-not-approved')
+            pa.require(reference['kind'] in ('initial_human', 'adjudicated_human') and reference['rubric_sha256'] == rubric_hash
+                       and reference['provenance_record'], 'reference-kind')
+            initial = pa.import_human(read(inp/'initial-human-form.json'), read(inp/'blind-packet.json'),
+                read(inp/'private-key.json'), rubric['roles'], texts)
+            pa.require(initial == read(inp/'initial-human-labels.json') and
+                       reference['initial_human_sha256'] == pa.digest(initial), 'reference-initial-stream')
+            sample = read(inp/'sample.json')
+            initial_by_id = {r['doc_id']: r for r in initial['rows']}
+            pa.require(set(initial_by_id) == {r['doc_id'] for r in sample['rows']}, 'sample-reference-join')
+            labels = {}
+            for row in reference['rows']:
+                v = row['doc_id']; pa.require(v in texts and v not in labels and row['raw_sha256'] == pa.raw_hash(texts[v]), 'reference-join')
+                pa.require(row['role'] is None or row['role'] in rubric['roles'], 'reference-role')
+                pa.require(v in initial_by_id, 'reference-unsampled-page')
+                if reference['kind'] == 'initial_human':
+                    pa.require(row['role'] == initial_by_id[v]['role'], 'reference-changed-initial-label')
+                elif row['role'] != initial_by_id[v]['role']:
+                    pa.require(isinstance(row.get('adjudication_rationale'), str) and row['adjudication_rationale'].strip(), 'adjudication-rationale')
+                labels[v] = row['role']
+            pa.require(set(labels) == set(initial_by_id), 'reference-coverage-join')
+            groups = read(inp/'groups.json')
+            pa.require(all(groups[r['doc_id']] == r['group'] for r in initial['rows']) and
+                       all(groups[r['doc_id']] == r['group'] for r in sample['rows']), 'reference-group-join')
         pa.require(not {groups[v] for v in labels} & {groups[v] for v in discovery}, 'discovery-evaluation-leakage')
         simple_rows = read(inp/'simple.json')['rows']; simple = {}
         fields = cfg['simple_fields']
@@ -128,6 +136,8 @@ def run(inp, out):
             kernels[name] = {v: rows[i] for i, v in enumerate(ids)}
         result = pe.evaluate(labels, groups, texts, simple, kernels, read(inp/'evaluation.json'),
             freeze=lambda plan: write(out/'frozen-evaluation-plan.json', plan))
+        if reference_meta is not None:
+            result['reference'] = reference_meta
         write(out/'evaluation-results.json', result); summary = {'stage': stage, 'status': result['status'], 'calls': 0}
     pa.require({r['path'] for r in inventory} == allowed, 'roles-undeclared-input')
     pa.require(time.monotonic()-started <= cfg['max_seconds'], 'roles-runtime-budget')
@@ -136,7 +146,7 @@ def run(inp, out):
     write(out/'summary.json', summary)
     manifest = {'schema_version': 'retrieval_arena.page_roles_operator_manifest.v1', 'input_inventory_sha256': pa.digest(inventory),
         'code_sha256': sha256_file(Path(pa.__file__)), 'evaluation_code_sha256': sha256_file(Path(pe.__file__)),
-        'operator_sha256': sha256_file(Path(__file__)), 'outputs': regular_inventory(out),
+        'operator_sha256': sha256_file(Path(__file__)), 'reference_code_sha256': sha256_file(Path(pref.__file__)), 'outputs': regular_inventory(out),
         'runtime': {k: os.environ.get(k) for k in ('RA_SOURCE_COMMIT', 'RA_SOURCE_TREE', 'RA_IMAGE_REFERENCE', 'RA_DEPENDENCY_LOCK_SHA256', 'RA_PLATFORM')}}
     write(out/'page_roles_manifest.json', manifest)
     write(out/'operator_receipt.v1.json', {'status': 'complete', 'manifest_sha256': pa.digest(manifest)})
