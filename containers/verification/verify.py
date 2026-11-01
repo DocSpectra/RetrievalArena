@@ -36,6 +36,7 @@ COMMANDS = {
         "unit_tests.test_structural_target_v2",
         "unit_tests.test_magnetic_spectrum",
         "unit_tests.test_magnetic_attribution",
+        "unit_tests.test_cycle_sampling",
         "unit_tests.test_phase_navigation",
         "unit_tests.test_support_access",
         "unit_tests.test_support_access_corpora",

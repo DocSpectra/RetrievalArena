@@ -103,6 +103,7 @@ def main() -> int:
         _, config = _request()
         t0 = time.time()
         rows, artifacts = ma.run_jobs(config, INPUT)
+        metric_version = ('magnetic_attribution.v2' if config['schema_version'] == ma.CONFIG_SCHEMA_V2 else ma.VERSION)
         table = b"".join(canonical(row) + b"\n" for row in rows)
         inventory = []
         for name in sorted(artifacts):
@@ -111,7 +112,7 @@ def main() -> int:
             path.write_bytes(artifacts[name])
             inventory.append({"path": f"{ARTIFACTS}/{name}", "sha256": sha256_bytes(artifacts[name]),
                               "size_bytes": len(artifacts[name])})
-        manifest = {"schema_version": "retrieval_arena.magnetic_attribution_manifest.v1", "metric_version": ma.VERSION,
+        manifest = {"schema_version": "retrieval_arena.magnetic_attribution_manifest.v1", "metric_version": metric_version,
                     "metric_code_sha256": ma.code_sha256(), "spectrum_code_sha256": ms.code_sha256(),
                     "config_sha256": sha256_file(INPUT / "config.json"), "runtime": ms.runtime_identity(),
                     "jobs": [{"job_id": r["job_id"], "kind": r["kind"], "receipt_sha256": sha256_bytes(canonical(r))}
@@ -121,7 +122,7 @@ def main() -> int:
         pending = {TABLE: table, MANIFEST: canonical(manifest) + b"\n"}
         for name, data in pending.items():
             (OUTPUT / (name + ".pending")).write_bytes(data)
-        extra = {"job_count": len(rows), "outputs": {name: sha256_bytes(data) for name, data in pending.items()},
+        extra = {"metric_version": metric_version, "job_count": len(rows), "outputs": {name: sha256_bytes(data) for name, data in pending.items()},
                  "artifact_count": len(inventory), "artifact_inventory_sha256": manifest["artifact_inventory_sha256"]}
         receipt = _receipt("completed", 0, started, extra=extra)
         (OUTPUT / "operator_receipt.v1.json.pending").write_bytes(canonical(receipt) + b"\n")

@@ -26,8 +26,9 @@ from retrieval_arena.graph import magnetic_spectrum as ms
 
 VERSION = 'magnetic_attribution.v1'
 CONFIG_SCHEMA = 'retrieval_arena.magnetic_attribution_config.v1'
+CONFIG_SCHEMA_V2 = 'retrieval_arena.magnetic_attribution_config.v2'
 CONTROLS = ('matched_cycle_reversal', 'global_reversal', 'forest_reorientation')
-JOB_KINDS = ('cycle_selection', 'pair', 'single')
+JOB_KINDS = ('cycle_selection', 'cycle_sample', 'pair', 'single')
 SELECTION_RULE = ('simple directed cycles using only nonreciprocal arcs; lengths searched in the declared order; '
                   'start nodes ascending; a cycle is rooted at its smallest id and every other node id is larger '
                   '(canonical rotation, so each cycle is met once); successors ascending; depth-first; one expansion '
@@ -538,7 +539,7 @@ def permutation_check(nodes, edges, q, spec, config, seed, reference):
 # ------------------------------------------------------------------ jobs
 
 def validate_jobs_config(config):
-    if not isinstance(config, dict) or config.get('schema_version') != CONFIG_SCHEMA:
+    if not isinstance(config, dict) or config.get('schema_version') not in (CONFIG_SCHEMA, CONFIG_SCHEMA_V2):
         raise ValueError('magnetic-attribution-config-schema')
     if set(config) != {'schema_version', 'spectrum_config', 'attribution_config', 'jobs'}:
         raise ValueError('magnetic-attribution-config-keys')
@@ -548,6 +549,7 @@ def validate_jobs_config(config):
     attr = validate_config(AttributionConfig(**config['attribution_config']))
     ids, selections = set(), set()
     allowed = {'cycle_selection': {'job_id', 'kind', 'bundle', 'view', 'lengths', 'max_cycles', 'budget'},
+               'cycle_sample': {'job_id', 'kind', 'bundle', 'view', 'lengths', 'quota', 'budget', 'seed', 'corpus'},
                'pair': {'job_id', 'kind', 'bundle_a', 'bundle_b', 'view', 'q', 'control', 'changed_arcs',
                         'selection_ref', 'permutation_seed'},
                'single': {'job_id', 'kind', 'bundle', 'views', 'q'}}
@@ -563,6 +565,10 @@ def validate_jobs_config(config):
                                or '..' in Path(job[key]).parts):
                 raise ValueError('magnetic-attribution-bundle-path')
         if kind == 'cycle_selection':
+            selections.add(job['job_id'])
+        if kind == 'cycle_sample':
+            if config['schema_version'] != CONFIG_SCHEMA_V2:
+                raise ValueError('cycle-sample-requires-config-v2')
             selections.add(job['job_id'])
         if kind == 'pair':
             if job.get('control') not in CONTROLS:
@@ -594,6 +600,7 @@ def _common(spec, attr):
 def run_jobs(config, input_root):
     """Run every job of a validated config over bundles under input_root. Returns (records, artifacts)."""
     spec, attr = validate_jobs_config(config)
+    bounded = config['schema_version'] == CONFIG_SCHEMA_V2
     bundles, sides, artifacts, selections, rows = {}, {}, {}, {}, []
 
     def load(path):
@@ -605,6 +612,10 @@ def run_jobs(config, input_root):
         key = (record['view_graph_sha256'], float(q))
         if key not in sides:
             s = _Side(nodes, edges, float(q), spec, attr)
+            if bounded and s.u is not None:
+                # Keep the complete ground cluster, release the full dense eigenbasis.
+                s.u = s.u.copy()
+                s.rec.pop('_vectors', None)
             slug = f"{record['view_graph_sha256'][:16]}_q{float(q):.2f}"
             artifacts.update(s.artifacts(slug))
             sides[key] = (s, slug)
@@ -612,6 +623,22 @@ def run_jobs(config, input_root):
 
     for job in config['jobs']:
         base = dict(_common(spec, attr), job_id=job['job_id'], kind=job['kind'])
+        if bounded:
+            base['metric_version'] = 'magnetic_attribution.v2'
+            from retrieval_arena.graph import cycle_sampling
+            base['selection_code_sha256'] = hashlib.sha256(Path(cycle_sampling.__file__).read_bytes()).hexdigest()
+        if job['kind'] == 'cycle_sample':
+            from retrieval_arena.graph.cycle_sampling import sample_cycles
+            b = load(job['bundle'])
+            nodes, edges, record = _view_of(b, job['view'])
+            result, ledger = sample_cycles(nodes, edges, **{k: job[k] for k in
+                ('corpus', 'seed', 'lengths', 'quota', 'budget')})
+            ledger_path = 'selection/' + hashlib.sha256(job['job_id'].encode()).hexdigest() + '.jsonl'
+            artifacts[ledger_path] = ledger
+            selections[job['job_id']] = (record['view_graph_sha256'], result)
+            rows.append(dict(base, graph_id=b['graph_id'], selection=record, result=result,
+                             candidate_ledger=ledger_path, spectral_inputs_read=False))
+            continue
         if job['kind'] == 'cycle_selection':
             b = load(job['bundle'])
             nodes, edges, record = _view_of(b, job['view'])
@@ -656,7 +683,8 @@ def run_jobs(config, input_root):
         per_q = {}
         for q in job['q']:
             sa, slug_a = side(na, ea, ra, q)
-            sb, slug_b = side(nb, eb, rb, q)
+            reuse_q0 = bounded and float(q) == 0.0 and controls['checks']['q0_normalized_matrix_equal']
+            sb, slug_b = (sa, slug_a) if reuse_q0 else side(nb, eb, rb, q)
             delta = float(sb.values[0] - sa.values[0])
             resid = (sa.residual or 0.0) + (sb.residual or 0.0)
             tol = max(attr.resolution_floor, attr.resolution_factor * resid)
@@ -673,6 +701,8 @@ def run_jobs(config, input_root):
                 'finite_change': (finite_change(sa, sb, changed_edges, attr) if changed_edges is not None
                                   else {'status': 'unavailable', 'reasons': ['every_edge_changes']}),
             }
+            if bounded:
+                block['variant_solve_reused_baseline_after_exact_q0_equality'] = reuse_q0
             if job.get('permutation_seed') is not None:
                 block['permutation_check'] = permutation_check(na, ea, float(q), spec, attr, job['permutation_seed'], sa)
             per_q[f'{float(q):.2f}'] = block
@@ -682,4 +712,8 @@ def run_jobs(config, input_root):
                          graph_b={'graph_id': bb['graph_id'], 'canonical_graph_sha256': bb['canonical_graph_sha256'],
                                   'selection': rb},
                          selection_ref=ref, controls=controls, q=per_q))
+        if bounded:
+            # Config-v2 jobs are grouped by baseline. Retain only this baseline's
+            # factors; artifacts keep every variant. Config-v1 caching is unchanged.
+            sides = {k: v for k, v in sides.items() if k[0] == ra['view_graph_sha256']}
     return rows, artifacts

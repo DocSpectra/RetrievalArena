@@ -1,5 +1,55 @@
 # Magnetic attribution v1
 
+## Compatible v2 extension: hash sampling and bounded memory
+
+Config `retrieval_arena.magnetic_attribution_config.v2` emits
+`magnetic_attribution.v2` rows through the same operator and table filename.
+The original v1 config, first-cycle search and replay retain their semantics.
+The numerical operator, thresholds and scientific interpretation are unchanged.
+
+V2 adds a `cycle_sample` job: `bundle`, `view`, `corpus` (caller namespace),
+`seed`, `lengths`, `quota`, `budget`. `cycle_sampling.sample_cycles` reads
+only node IDs and binary arcs. Graph admission rejects loops, unknown endpoints
+and weights; each nonreciprocal arc has unit directed weight. Reversing a
+simple cycle therefore preserves every directed/weighted degree.
+
+The versioned selection contract is `nonreciprocal_cycle_sample.v2`.
+Hash input is UTF-8 JSON `[version, domain, seed, corpus, length, ids]`,
+with `ensure_ascii=False`, compact separators, no NaN and no trailing newline.
+SHA-256 hexadecimal priority sorts ascending, followed by lexical IDs for ties.
+Domains: `root` (one node), `successor` (source and destination), `selection`
+(the canonical cycle). Roots and each node's successors have independent
+hash ordering per length. DFS admits only nodes greater than the root,
+so canonical rotation starts with the minimum Unicode-ordered ID; directed
+reverses remain distinct. Repeated vertices and reciprocal arcs are excluded.
+
+Every created partial path, including each root, consumes one expansion.
+Closing an arc consumes none. Budget resets per length. Search continues
+after quota and stops only on exhaustion or when an otherwise eligible next
+partial path would exceed budget. From unique encountered cycles, retain
+the `quota` smallest selection priorities per length; unused slots do not move.
+The candidate ledger is canonical JSONL in encounter order (includes length,
+IDs and selection hash). Per-length stream hashes and its combined hash
+allow exact reconstruction. Operator artifacts retain that ledger; compact
+rows retain counts, expansions, selected cycles and capped/exhaustive status.
+Capped empty means none found within budget, not no cycles in the graph.
+This samples the encountered frame, not uniformly every cycle in the graph.
+
+V2 retains only baseline sides between pair jobs and releases each full dense
+eigenbasis after retaining the complete ground cluster. Baselines are cached
+by view hash and q within the fixed operator/config run. Each variant's
+cluster factors, node mass and edge energy are still exported. For q=0,
+the variant reuses the baseline only after exact matrix equality, explicitly
+recorded in every pair-q block. V1 allocation/solve behavior is unchanged.
+Use one baseline group per operator root for resumable corpus-level receipts.
+The operator launcher remains bounded to two CPUs/4 GiB, network disabled,
+single-threaded BLAS. There is no new dependency or platform requirement.
+
+`unit_tests/test_cycle_sampling.py` (in `focused`) covers reordered inputs,
+canonical/brute-force frame parity, nonreciprocal eligibility, quotas,
+per-length budget, capped versus exhaustive emptiness, domain serialization,
+no spectral call during selection, v1 compatibility and v2 solve parity/q0 reuse.
+
 `retrieval_arena/graph/magnetic_attribution.py`, version
 `magnetic_attribution.v1`. It is a diagnostic over
 [`normalized_magnetic_spectrum.v1`](normalized_magnetic_spectrum.md). That
