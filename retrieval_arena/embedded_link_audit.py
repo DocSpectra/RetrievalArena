@@ -127,10 +127,13 @@ def run(inp,out):
     if p:
         by_id={r['doc_id']:r for r in rows}; raw=contents[p['source_id']]
         # A complete isolated local corpus copy, never the released corpus.
-        shutil.copytree(inp/'corpus',out/'fixture-corpus')
+        shutil.copytree(inp/'corpus',out/'fixture-corpus',copy_function=shutil.copyfile)
         (out/'fixture-corpus'/by_id[p['source_id']]['path']).write_bytes(edited)
         write(out/'fixture-proposal.json',p); write(out/'fixture-host-facts.json',facts)
-        write(out/'fixture-raw-response.json',response)
+        (out/'fixture-raw-response.json').write_bytes(el.canonical(response))
+        el.verify_response_bytes((out/'fixture-raw-response.json').read_bytes(),p['provenance']['response_sha256'])
+        review_response={'mock':'eligible'}
+        (out/'fixture-review-raw-response.json').write_bytes(el.canonical(review_response))
         blind=el.blind_review_input(p,raw,contents[p['target_id']]); write(out/'fixture-blinded-input.json',blind)
         log=[]
         def emit(typ,payload,authority='host'): log.append(el.event(log,p,typ,payload,authority))
@@ -138,7 +141,7 @@ def run(inp,out):
         emit('structurally_validated',{'eligible':True,'reason':'mechanical fixture only','validation_sha256':el.digest(facts)})
         emit('reviewed',{'reviewer_provider':'offline','reviewer_model':'mock','rubric_version':'fixture-only',
             'decision':'eligible','evidence':p['target_evidence'],'uncertainty':'Unassessed mock decision; no semantic validation.',
-            'response_sha256':el.digest({'mock':'eligible'}),'blinded_input_sha256':el.digest(blind),'status':'mock-model'},'reviewer')
+            'response_sha256':el.digest(review_response),'blinded_input_sha256':el.digest(blind),'status':'mock-model'},'reviewer')
         emit('eligible',{'structural':True,'semantic':True})
         emit('selected',{'rank':1,'reason':'first valid mechanical development fixture; no score',
             'objective_input_sha256':el.digest(None),'objective_output_sha256':el.digest(None),
@@ -169,6 +172,8 @@ def run(inp,out):
             'source_id':p['source_id'],'target_id':p['target_id'],'region_id':p['region_id'],
             'added_edges':1,'removed_edges':0,'unchanged_other_files':len(nodes)-1,
             'ledger':replay,'patch_replay_idempotent':True,'semantic_text_identical':True,
+            'raw_proposer_response_hash_verified':True,'raw_reviewer_response_hash_verified':el.verify_response_bytes(
+                (out/'fixture-review-raw-response.json').read_bytes(),el.digest(review_response)),
             'existing_retriever':'raw Markdown corpus search can index destinations; use frozen semantic text view',
             'failed_mechanical_checks':failed}
     write(out/'fixture-smoke.json',smoke)

@@ -108,6 +108,8 @@ class EmbeddedLinks(unittest.TestCase):
             self.edit(raw,source_sha256=e.rawhash(raw),source_span=[at,at+6],sentence=raw.decode().strip())
         with self.assertRaisesRegex(ValueError,'overlap'):
             e.apply_edit(self.raw,self.target,self.p,self.pages,[],self.region,self.limits,[(15,21)])
+        with self.assertRaisesRegex(ValueError,'anchor-crosses-sentence'):
+            self.edit(source_span=[14,31],anchor='engine. Then read',sentence='First use the engine. Then read the manual.')
 
     def test_region_and_component_rejection(self):
         for region in [{'region_id':'x','nodes':['a','b']},
@@ -182,6 +184,13 @@ class EmbeddedLinks(unittest.TestCase):
             for name in ['z.md','A.md','b.md']:
                 (root/name).write_bytes(b'fixture')
             self.assertEqual([r['path'] for r in portable_inventory(root)],['A.md','b.md','z.md'])
+
+    def test_semantic_text_preserves_line_boundaries_and_exact_response_bytes(self):
+        self.assertEqual(e.semantic_text(b'First engine\nthen manual.\n'),'First engine\nthen manual.')
+        raw=b'{"fixture":true}'
+        self.assertTrue(e.verify_response_bytes(raw,e.rawhash(raw)))
+        with self.assertRaisesRegex(ValueError,'raw-response-hash'):
+            e.verify_response_bytes(raw+b'\n',e.rawhash(raw))
 
     def test_patch_tamper_and_stale_replay(self):
         _,facts=self.edit(); bad=copy.deepcopy(facts); bad['patch']['replacement']='changed'

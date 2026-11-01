@@ -68,7 +68,8 @@ def semantic_text(raw):
     def values(x):
         for row in x:
             if row[0]=='inline':
-                yield ''.join(v for typ,v in row[1] if typ in ('text','code_inline','softbreak','hardbreak'))
+                yield ''.join('\n' if typ in ('softbreak','hardbreak') else v
+                              for typ,v in row[1] if typ in ('text','code_inline','softbreak','hardbreak'))
             elif row[0] in ('fence','code_block','html_block'): yield row[1]
     return '\n'.join(values(visible_text(raw)))
 
@@ -304,6 +305,7 @@ def apply_edit(raw,target_raw,proposal,pages,baseline_edges,region,limits,prior_
             if any(t.type not in ('text','softbreak','hardbreak','link_open','link_close') for t in b['children']):
                 raise ValueError('unsupported-inline-syntax')
             lo,hi=sentence_span(b['content'],a,z)
+            if re.search(r'[.!?](?=\s)|\n',b['content'][a:z]): raise ValueError('anchor-crosses-sentence')
             if proposal['sentence']!=b['content'][lo:hi]: raise ValueError('sentence-evidence')
             if any(lo<=x<hi for x,_,_ in _parsed_links(b['content'],b['env'])): raise ValueError('sentence-link-budget')
             selected=(b,lo,hi)
@@ -337,6 +339,7 @@ def apply_edit(raw,target_raw,proposal,pages,baseline_edges,region,limits,prior_
         'rendered_after_sha256':digest(merge(after)),'semantic_before_sha256':rawhash(semantic_text(raw).encode()),
         'semantic_after_sha256':rawhash(semantic_text(edited).encode()),
         'before_graph_sha256':digest(old),'after_graph_sha256':digest(new),'added_edges':[[source,target]],
+        'graph_hash_scope':'source-only parser projection; corpus fragment mask audited separately',
         'removed_edges':[],'occurrence_id':next(r['occurrence_id'] for r in occurrences(edited,src,pages)
             if r['target_id']==target and r['class']=='substantive'), 'edge_id':stable('edge',source,target)}
 
@@ -418,10 +421,10 @@ EVENT_SCHEMA['properties']['payload']={}
 EVENT_SCHEMA['allOf']=[{'if':{'properties':{'type':{'const':typ}}},
     'then':{'properties':{'payload':schema}}} for typ,schema in EVENT_PAYLOADS.items()]
 
-def event(log,proposal,typ,payload,authority='host',supersedes=None):
+def event(log,proposal,typ,payload,authority='host',supersedes=None,timestamp=None):
     row={'schema_version':VERSION+'.event','previous_sha256':digest(log[-1]) if log else '0'*64,
         **{k:proposal[k] for k in ('proposal_id','run_id','arm_id','region_id')},
-        'type':typ,'authority':authority,'timestamp':proposal['provenance']['timestamp'],
+        'type':typ,'authority':authority,'timestamp':timestamp or proposal['provenance']['timestamp'],
         'supersedes_event_id':supersedes,'payload':payload}
     row['event_id']=digest(row)
     replay([*log,row])
@@ -483,6 +486,10 @@ def blind_review_input(proposal,source_raw,target_raw):
     return {'source_passage':proposal['sentence'],'anchor':proposal['anchor'],
         'target_passages':[e['quote'] for e in proposal['target_evidence']],
         'source_sha256':rawhash(source_raw),'target_sha256':rawhash(target_raw)}
+
+def verify_response_bytes(raw,expected_hash):
+    if rawhash(raw)!=expected_hash: raise ValueError('raw-response-hash')
+    return True
 
 def navigation_view(raw,source,pages):
     return [{'destination':r['target_id'],'href':r['href'],'source_syntax':r['source_syntax'],
