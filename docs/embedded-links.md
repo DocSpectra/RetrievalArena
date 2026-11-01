@@ -81,8 +81,13 @@ span in an inline internal link. It retains old links and every other byte.
 It rejects headings, all list placements (a conservative subset of the graph
 mask), quoted blocks, code/emphasis/escaping in the edited block, HTML/templates,
 unsafe targets, invalid fragments, stale hashes/spans, overlap/nesting, existing
-directed pairs, reciprocal partners and different baseline components. One new
-link is allowed per lexical sentence, defined by `. ! ?` followed by whitespace
+directed pairs, reciprocal partners and different baseline components. The shared
+proposal pool must be passed in full to `apply_edit(..., proposed_pool=pool)` before
+selection/application: `pool_conflicts` rejects proposed reciprocal partners on
+both sides and records duplicate page pairs/overlapping anchors as conflicts.
+Callers must pass original parsed pairs plus already selected/applied pairs in
+the edge exclusion set. The pool contains no arm feedback or spectral scores.
+One new link is allowed per lexical sentence, defined by `. ! ?` followed by whitespace
 or line boundaries. Word counting uses Unicode word runs with internal
 apostrophes/hyphens. Generation limits must be frozen by the consumer; audit
 fixture limits do not authorize model generation.

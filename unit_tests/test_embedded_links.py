@@ -192,6 +192,20 @@ class EmbeddedLinks(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'raw-response-hash'):
             e.verify_response_bytes(raw+b'\n',e.rawhash(raw))
 
+    def test_shared_pool_rejects_proposed_reciprocal_partners(self):
+        other=copy.deepcopy(self.p)
+        other.update(proposal_id='proposal:reverse',source_id='b',target_id='a')
+        self.assertEqual(e.pool_conflicts([self.p,other])[0]['reason'],'proposed-reciprocal-partner')
+        with self.assertRaisesRegex(ValueError,'proposed-reciprocal-partner'):
+            e.apply_edit(self.raw,self.target,self.p,self.pages,[],self.region,self.limits,proposed_pool=[self.p,other])
+
+    def test_shared_pool_records_duplicate_and_overlapping_anchors(self):
+        other=copy.deepcopy(self.p); other['proposal_id']='proposal:other'
+        self.assertEqual(e.pool_conflicts([self.p,other])[0]['reason'],'duplicate-page-pair')
+        other['target_id']='c'
+        self.assertEqual(e.pool_conflicts([self.p,other])[0]['reason'],'overlapping-proposed-anchors')
+        with self.assertRaisesRegex(ValueError,'duplicate-proposal-id'): e.pool_conflicts([self.p,self.p])
+
     def test_patch_tamper_and_stale_replay(self):
         _,facts=self.edit(); bad=copy.deepcopy(facts); bad['patch']['replacement']='changed'
         with self.assertRaises(ValueError): e.replay_patch(self.raw,bad)

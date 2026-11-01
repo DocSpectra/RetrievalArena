@@ -57,7 +57,7 @@ def fixture_proposal(pages,contents,edges,regions,cfg):
                             'timestamp':'2026-11-01T00:00:00Z','response_sha256':el.digest(response),
                             'source_access':[source,target],'retry_of':None,'status':'mock-model'}}
                     try:
-                        edited,facts=el.apply_edit(raw,traw,p,pages,edges,region,cfg['edit_limits'])
+                        edited,facts=el.apply_edit(raw,traw,p,pages,edges,region,cfg['edit_limits'],proposed_pool=[p])
                         return p,edited,facts,response,dict(reasons)
                     except ValueError as error: reasons[str(error)]+=1
     return None,None,None,None,dict(reasons)

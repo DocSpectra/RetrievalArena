@@ -253,9 +253,42 @@ def sentence_span(text,start,end):
     lo=max(c for c in cuts if c<=start); hi=min(c for c in cuts if c>=end)
     return lo,hi
 
-def apply_edit(raw,target_raw,proposal,pages,baseline_edges,region,limits,prior_spans=()):
+def pool_conflicts(proposals):
+    """Unordered conflict pairs in a shared pre-selection pool; no scores used.
+
+    Callers retain all proposals and record the conflicts/skips in the ledger.
+    A reciprocal proposal pair is structurally ineligible on both sides. A
+    duplicate page pair or overlapping anchor cannot consume two edit slots.
+    """
+    by_id={}
+    for p in proposals:
+        validate_schema(p,PROPOSAL_SCHEMA)
+        if p['proposal_id'] in by_id: raise ValueError('duplicate-proposal-id')
+        by_id[p['proposal_id']]=p
+    conflicts=[]
+    ordered=sorted(by_id)
+    for i,a in enumerate(ordered):
+        p=by_id[a]
+        for b in ordered[i+1:]:
+            q=by_id[b]
+            if (p['corpus_id'],p['snapshot_id'])!=(q['corpus_id'],q['snapshot_id']): continue
+            reason=None
+            if (p['source_id'],p['target_id'])==(q['target_id'],q['source_id']): reason='proposed-reciprocal-partner'
+            elif (p['source_id'],p['target_id'])==(q['source_id'],q['target_id']): reason='duplicate-page-pair'
+            elif p['source_id']==q['source_id'] and p['source_sha256']==q['source_sha256']:
+                a0,a1=p['source_span']; b0,b1=q['source_span']
+                if a0<b1 and b0<a1: reason='overlapping-proposed-anchors'
+            if reason: conflicts.append({'proposal_ids':[a,b],'reason':reason})
+    return conflicts
+
+def apply_edit(raw,target_raw,proposal,pages,baseline_edges,region,limits,prior_spans=(),proposed_pool=()):
     """Return bytes and host facts, without writing to an original corpus."""
     validate_schema(proposal,PROPOSAL_SCHEMA)
+    if proposed_pool:
+        if proposal['proposal_id'] not in {p['proposal_id'] for p in proposed_pool}: raise ValueError('proposal-pool-binding')
+        for conflict in pool_conflicts(proposed_pool):
+            if proposal['proposal_id'] in conflict['proposal_ids'] and conflict['reason']=='proposed-reciprocal-partner':
+                raise ValueError('proposed-reciprocal-partner')
     if proposal['coordinate_convention']!=COORDINATES: raise ValueError('coordinates')
     if proposal['source_sha256']!=rawhash(raw) or proposal['target_sha256']!=rawhash(target_raw):
         raise ValueError('stale-source-or-target')
