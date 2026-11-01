@@ -69,3 +69,5 @@ the caller composes answer pairs from `generated_answer`.
 
 [Page-purpose annotation and human-reference evaluation](page_roles.md): exact source evidence, blind human exchange, bounded provider reuse, leakage groups and grouped OOF role comparison. Corpus/rubric/budget choices remain caller configuration.
 
+
+| [`local_objective`](local_objective.md) | Fixed-node normalized magnetic descriptor, bounded unit-phase feasible solutions and equal-budget marginal-cost qualification; no utility/global-optimum claim | `qualify-local-objective`, offline immutable verification operator |

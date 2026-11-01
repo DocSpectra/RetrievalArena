@@ -34,3 +34,5 @@ For full normalized magnetic heat-row exports, pair affinity and edge-masked rec
 For frozen seed-preserving affinity selection with held-separate labels, see [complementary context](evaluations/complementary_context.md).
 
 For source-only content masking, fixed regions, safe inline edits and append-only intent events, see [embedded links](embedded-links.md).
+
+For fixed-node additive phase-energy qualification and bounded solver diagnostics, see [local objectives](evaluations/local_objective.md).
