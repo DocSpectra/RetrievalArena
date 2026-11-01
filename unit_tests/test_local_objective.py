@@ -100,4 +100,25 @@ class LocalObjective(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'invalid-numerical'):
             lo.solve(self.nodes,self.edges,.25,replace(lo.Policy(),starts=0))
 
+    def test_highly_localized_complete_ground_cluster(self):
+        # Twenty frustrated triangles plus a two-node balanced component.
+        # All 62 nodes stay; the exact ground projector lives on the small pair.
+        nodes=[f'{i:02d}' for i in range(62)]; edges=[['00','01']]
+        for j in range(2,62,3):
+            edges += [[f'{j:02d}',f'{j+1:02d}'],[f'{j+1:02d}',f'{j+2:02d}'],[f'{j+2:02d}',f'{j:02d}']]
+        for q in [.25,.1]:
+            r=lo.spectral(nodes,edges,q)
+            self.assertEqual(r['ground_cluster_size'],1)
+            self.assertAlmostEqual(r['effective_support'],2.,places=8)
+            self.assertAlmostEqual(r['max_node_mass'],.5,places=8)
+            self.assertLess(abs(r['lambda1']),1e-9)
+
+    def test_nonglobal_old_assignment_is_not_true_minimum(self):
+        # Individual old-edge energies may redistribute; their optimized sum
+        # cannot fall below the true baseline optimum.
+        fit=lo.solve(self.nodes,self.edges,.25)
+        _,ts=lo.terms(self.nodes,self.edges,.25)
+        zero_energy=lo.energy_gradient(np.zeros(4),ts)[0]
+        self.assertGreater(zero_energy,fit['energy_upper_bound']+1)
+
 if __name__ == '__main__': unittest.main()

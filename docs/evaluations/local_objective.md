@@ -54,3 +54,11 @@ runtime, peak Linux RSS, source/image/dependency identities and zero-call record
 Launchers keep network none, read-only inputs/source, two CPUs and 2 GiB. The
 Python numerical library has no corpus or operating-system assumptions; the
 existing immutable image remains linux/amd64 under RA-D09. No dependency change.
+
+`embedded_link_selection.py` qualifies the prepared pool selection contract on
+synthetic fixtures: exact common conflict-free budget (at most four of twenty),
+one source file per arm, completion-preserving S and three-choice greedy M,
+recomputation callbacks, semantic/ID ties and explicit unresolved-rank refusal.
+It performs no candidate generation or live semantic validation. Callbacks use
+raw total marginal energy and uncertainty for the 1e-6 floor; normalized values
+are reporting fields. No magnetic admission follows from selector unit tests.

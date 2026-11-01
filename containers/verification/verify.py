@@ -10,6 +10,7 @@ SOURCE_ROOT = Path("/workspace/source")
 OPERATOR_ROOT = Path(__file__).resolve().parent
 COMMANDS = {
     "focused": (
+        "unit_tests.test_embedded_link_selection",
         "unit_tests.test_local_objective",
         "unit_tests.test_embedded_links",
         "unit_tests.test_ragas_scoring",
