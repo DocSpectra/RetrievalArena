@@ -113,3 +113,5 @@ terminal receipt. The schemas and the stratified sampling live in
 ## Embedded-link audit
 
 `audit-embedded-links` accepts the same `-InputRoot`, `-OutputRoot`, `-Receipt` arguments as other offline single-phase commands. See [the contract](embedded-links.md) for the input allowlist and source/fixture outputs. It runs with network none and never calls a model.
+
+`demonstrate-embedded-v2` runs the inventory-bound fixture or development-access stage with two CPUs, 2 GiB, network none and both shell adapters; [contract](evaluations/embedded_selection_v2.md).

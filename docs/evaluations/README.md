@@ -72,3 +72,5 @@ the caller composes answer pairs from `generated_answer`.
 [Page-purpose annotation and human-reference evaluation](page_roles.md): exact source evidence, blind human exchange, bounded provider reuse, leakage groups and grouped OOF role comparison. Corpus/rubric/budget choices remain caller configuration.
 
 
+
+- [Embedded-link selection v2](embedded_selection_v2.md): whole-prefix S/Z/M selection, explicit abstention, authored source demonstrations and deterministic access inventory; offline, no inference.

@@ -150,3 +150,5 @@ Tests in `unit_tests.test_embedded_links` are in the focused suite. The corpus-c
 smoke imports all pages after one labeled mechanical fixture edit, checks exactly
 the expected content-edge addition, exact preservation of all other files, raw
 response/event linkage, rejected/failed examples, and idempotent patch replay.
+
+V2 authored-fixture provenance, matched selector and offline source/access operator: [contract](evaluations/embedded_selection_v2.md). Historical v1 replay remains unchanged.
