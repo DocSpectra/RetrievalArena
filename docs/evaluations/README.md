@@ -76,3 +76,4 @@ the caller composes answer pairs from `generated_answer`.
 - [Embedded-link selection v2](embedded_selection_v2.md): whole-prefix S/Z/M selection, explicit abstention, authored source demonstrations and deterministic access inventory; offline, no inference.
 
 - [Authorized embedded refinement](embedded_refinement.md): inventory-bound role execution and offline pool/selection/copy/assessment integration.
+- [Source-bound refinement interface](embedded_interface.md): exact sentence/passage IDs, separate host projection, persistent circuits and combined preflight/count/canary execution through the shared providers.

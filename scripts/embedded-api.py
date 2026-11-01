@@ -14,7 +14,7 @@ def identity():
     return call('git','rev-parse','HEAD'),call('git','rev-parse','HEAD^{tree}')
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('command',choices=['build','smoke','count','model'])
+    p=argparse.ArgumentParser();p.add_argument('command',choices=['build','smoke','count','model','study'])
     p.add_argument('--receipt',required=True);p.add_argument('--base-image');p.add_argument('--input-root');p.add_argument('--output-root');p.add_argument('--authorization')
     a=p.parse_args();receipt=Path(a.receipt).resolve();commit,tree=identity()
     lock=hashlib.sha256((REPO/'containers/ragas/requirements.lock').read_bytes()).hexdigest()
@@ -50,21 +50,28 @@ def main():
     if not all([a.input_root,a.output_root,a.authorization]): raise ValueError('count-paths-required')
     auth_path=Path(a.authorization).resolve();authorization=json.loads(auth_path.read_bytes())
     inp=Path(a.input_root).resolve();out=Path(a.output_root).resolve()
-    scope='provider_token_count_only' if a.command=='count' else 'bounded_embedded_refinement_v2'
+    scope={'count':'provider_token_count_only','model':'bounded_embedded_refinement_v2','study':'bounded_embedded_refinement_v3'}[a.command]
     if authorization.get('approved') is not True or authorization.get('scope')!=scope:
         raise ValueError('explicit-'+scope+'-authorization-required')
     req=json.loads((inp/'operator-request.json').read_bytes())
     if a.command=='count' and authorization.get('input_inventory_sha256')!=req['input_inventory_sha256']: raise ValueError('authorization-input-binding')
     if inp==out or inp in out.parents or out in inp.parents: raise ValueError('count-root-overlap')
     credential='OPENAI_API_KEY'
+    if a.command=='study':
+        study=json.loads((inp/'study-manifest.json').read_bytes())
+        if authorization.get('study_manifest_sha256')!=digest(study) or authorization.get('input_inventory_sha256')!=req['input_inventory_sha256']:
+            raise ValueError('combined-authorization-binding')
+        if {k:v for k,v in study['runtime_receipts']['sdk'].items() if k!='receipt_sha256'}!=value:
+            raise ValueError('combined-approved-runtime-binding')
     if a.command=='model':
         cfg=json.loads((inp/'config.json').read_bytes());study=json.loads((inp/'study-manifest.json').read_bytes())
         if authorization.get('study_manifest_sha256')!=digest(study):raise ValueError('authorization-manifest-binding')
         credential={'openai':'OPENAI_API_KEY','anthropic':'ANTHROPIC_API_KEY'}[cfg['settings']['provider']]
-    if a.command=='model':args+=['--entrypoint','python']
+    if a.command in ('model','study'):args+=['--entrypoint','python']
     tail=(['count','/input','/output','/authorization.json'] if a.command=='count' else
-          ['-B','-m','retrieval_arena.embedded_model_run','/input','/output','/authorization.json'])
-    subprocess.check_call([*args,'--network','bridge','--env',credential,
+          ['-B','-m','retrieval_arena.'+('embedded_study' if a.command=='study' else 'embedded_model_run'),'/input','/output','/authorization.json'])
+    credentials=['--env','OPENAI_API_KEY','--env','ANTHROPIC_API_KEY'] if a.command=='study' else ['--env',credential]
+    subprocess.check_call([*args,'--network','bridge',*credentials,
         '--mount',f'type=bind,src={inp},dst=/input,readonly', '--mount',f'type=bind,src={out},dst=/output',
         '--mount',f'type=bind,src={auth_path},dst=/authorization.json,readonly',value['image'],
         *tail])

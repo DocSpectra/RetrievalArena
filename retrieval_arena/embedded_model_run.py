@@ -13,6 +13,7 @@ from . import embedded_links as e
 from .embedded_link_audit import read, write, portable_inventory
 from .model_providers import transport_for
 from .model_providers.base import validate_settings
+from .embedded_failures import classify
 
 VERSION='retrieval_arena.embedded_model_run.v1'
 
@@ -47,6 +48,10 @@ def evidence_valid(evidence, passages):
 def validate_result(payload, job):
     validate_json(payload,job['schema'])
     if job.get('evidence'):
+        from . import embedded_interface as interface
+        if job['evidence'].get('interface_version')==interface.VERSION:
+            interface.resolve_review(payload,job['evidence'])
+            return
         evidence_valid(payload['source_evidence'],job['evidence']['source'])
         evidence_valid(payload['target_evidence'],job['evidence']['target'])
 
@@ -115,6 +120,18 @@ async def execute(cfg, manifest, jobs, out, factory=transport_for, counter=sdk_c
         write(out/'summary.json',summary);return summary
     transport=factory(cfg['settings'],'external_api',out)
     (out/'jobs').mkdir(exist_ok=True);semaphore=asyncio.Semaphore(2);blocked=False;block_reason=None
+    policy=manifest.get('lifecycle_policy')
+    from . import embedded_interface as interface
+    interface_path=out/'response-interface-events.jsonl'
+    interface_log=[json.loads(line) for line in interface_path.read_bytes().splitlines()] if interface_path.exists() else []
+    if interface_log:interface.replay(interface_log,read(out/'response-interface-tip.json')['tip_sha256'])
+    def interface_event(typ,payload,authority):
+        row=interface.event(interface_log,typ,payload,authority)
+        with interface_path.open('ab') as stream:stream.write(e.canonical(row)+b'\n');stream.flush();os.fsync(stream.fileno())
+        write(out/'response-interface-tip.json',{'tip_sha256':e.digest(row)})
+    circuit=out/'provider-circuit.json'
+    if policy and circuit.exists():
+        blocked=True;block_reason=read(circuit)['halt_reason']
     attempt_files=list((out/'jobs').glob('*/attempt-*/attempt.json'))
     attempted=len(attempt_files);count_attempts=len(list((out/'jobs').glob('*/count-*.json')))
     result_rows=[]
@@ -132,24 +149,40 @@ async def execute(cfg, manifest, jobs, out, factory=transport_for, counter=sdk_c
             return dict(prior,cache_reused=True)
         body=transport.request(job['prompt'],job['schema'],cfg['settings']);request_hash=e.digest(body)
         write(target/'request.json',body)
+        if policy and len(e.canonical(body))>policy['maximum_count_request_bytes']:
+            result={'job_id':job['job_id'],'status':'request_byte_cap_unavailable'}
+            write(terminal,result);return result
         tokens=None;count_record=job.get('provider_count')
         if count_record and count_record['request_sha256']==request_hash and count_record['model']==cfg['settings']['model']:
             tokens=count_record['input_tokens']
         if tokens is None:
-            for retry in range(2):
+            prior_counts=sorted(target.glob('count-*.json'))
+            for prior in reversed(prior_counts):
+                saved=read(prior)
+                if saved.get('status')=='counted' and saved['request_sha256']==request_hash:
+                    tokens=saved['raw_response']['input_tokens'];break
+            for retry in range(len(prior_counts),2) if tokens is None else []:
                 async with semaphore:
                     if blocked or time.monotonic()>=deadline or count_attempts>=2*len(jobs):break
                     count_attempts+=1
+                    if policy:write(target/f'count-{retry}.json',{'request_sha256':request_hash,'status':'attempted'})
                     try:
+                        if policy:
+                            reserve=transport.ledger.reserve(policy['maximum_count_request_bytes']+1024,1,request_hash)
+                            transport.ledger.fail(reserve,'count-billing-contingency-no-invoice')
                         raw=await asyncio.wait_for(counter(transport,body,cfg['settings']['provider']),min(120,max(.001,deadline-time.monotonic())))
                         tokens=raw['input_tokens']
                         if type(tokens) is not int or tokens<=0:raise ValueError('invalid-provider-token-count')
                         write(target/f'count-{retry}.json',{'request_sha256':request_hash,'raw_response':raw,'status':'counted'})
                         break
                     except Exception as exc:
-                        write(target/f'count-{retry}.json',{'request_sha256':request_hash,'status':'technical_failure','error_class':type(exc).__name__})
-                        if type(exc).__name__ in ('AuthenticationError','PermissionDeniedError'):
-                            blocked=True;block_reason='authentication_blocked'
+                        kind,transient,halt=classify(exc)
+                        write(target/f'count-{retry}.json',{'request_sha256':request_hash,'status':'technical_failure','error_class':type(exc).__name__,'failure_kind':kind})
+                        if halt:
+                            blocked=True;block_reason=kind+'_blocked'
+                            if policy:write(circuit,{'halt_reason':block_reason,'failure_kind':kind})
+                        if policy and not transient:break
+                        if policy and retry==0:await asyncio.sleep(min(policy['retry_backoff_seconds'],max(0,deadline-time.monotonic())))
         if tokens is None or tokens>cfg['settings']['max_input_tokens']:
             result={'job_id':job['job_id'],'status':block_reason if blocked else
                 'token_unavailable' if tokens is None else 'over_cap_unavailable','input_tokens':tokens}
@@ -175,7 +208,14 @@ async def execute(cfg, manifest, jobs, out, factory=transport_for, counter=sdk_c
                     if total_input>cfg['settings']['max_input_tokens'] or usage['output_tokens']>cfg['settings']['max_output_tokens'] or transport.ledger.spent>cfg['settings']['spend_cap_usd']+1e-12:
                         blocked=True;block_reason='provider_budget_violation'
                         raise RuntimeError('provider-usage-budget-violation')
-                    payload=json.loads(response['text']);validate_result(payload,job)
+                    payload=json.loads(response['text'])
+                    if job.get('evidence',{}).get('interface_version')==interface.VERSION:
+                        interface_event('reviewer_declared',{'job_id':job['job_id'],'attempt':retry,
+                            'declaration':payload,'response_sha256':e.rawhash((attempt_dir/'provider-response.json').read_bytes())},'reviewer')
+                    validate_result(payload,job)
+                    if job.get('evidence',{}).get('interface_version')==interface.VERSION:
+                        resolved,proof=interface.resolve_review(payload,job['evidence'])
+                        interface_event('review_resolved',{'job_id':job['job_id'],'attempt':retry,'resolution':proof,'resolved':resolved},'host')
                     raw=read(attempt_dir/'provider-response.json')
                     if response['text']!=response_text(raw,cfg['settings']['provider']):raise ValueError('raw-response-text-binding')
                     result={'job_id':job['job_id'],'status':'complete','payload':payload,
@@ -187,11 +227,18 @@ async def execute(cfg, manifest, jobs, out, factory=transport_for, counter=sdk_c
                     meta['status']='complete';write(attempt_dir/'attempt.json',meta);write(terminal,result);return result
                 except Exception as exc:
                     if reservation is not None:transport.ledger.fail(reservation,type(exc).__name__)
-                    meta.update(status='technical_failure',error_class=type(exc).__name__)
+                    kind,transient,halt=classify(exc)
+                    if policy and job.get('evidence',{}).get('interface_version')==interface.VERSION:
+                        interface_event('host_rejected',{'job_id':job['job_id'],'attempt':retry,
+                            'failure_kind':kind,'error_class':type(exc).__name__},'host')
+                    meta.update(status='technical_failure',error_class=type(exc).__name__,failure_kind=kind)
                     write(attempt_dir/'attempt.json',meta)
                     # Transports retain redacted SDK failures, not credential values.
-                    if any(name in str(exc) for name in ['AuthenticationError','PermissionDeniedError']):
-                        blocked=True;block_reason='authentication_blocked'
+                    if halt:
+                        blocked=True;block_reason=kind+'_blocked'
+                        if policy:write(circuit,{'halt_reason':block_reason,'failure_kind':kind})
+                    if policy and not transient:break
+                    if policy and retry==0:await asyncio.sleep(min(policy['retry_backoff_seconds'],max(0,deadline-time.monotonic())))
         result={'job_id':job['job_id'],'status':block_reason if blocked else 'technical_unavailable',
                 'reason':'wall_ceiling' if time.monotonic()>=deadline else 'role_attempt_ceiling' if attempted>=role['attempts_max'] else 'technical_attempts_exhausted'}
         write(terminal,result);return result

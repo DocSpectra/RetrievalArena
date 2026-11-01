@@ -1,5 +1,9 @@
 # Authorized embedded-link refinement integration
 
+The opt-in [source-bound interface and combined execution](embedded_interface.md)
+adds host-resolved IDs, persistent provider circuits and one complete approval
+path. The byte-coordinate contract below remains available for historical replay.
+
 This extends the [v2 offline selector](embedded_selection_v2.md) without changing
 its objective, q or semantic rubric. Corpus sources, groups, access, prompts,
 schemas, models/prices and caps remain consumer-owned, frozen inputs. Historical

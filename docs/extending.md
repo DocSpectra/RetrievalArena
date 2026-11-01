@@ -35,6 +35,9 @@ For frozen seed-preserving affinity selection with held-separate labels, see [co
 
 For source-only content masking, fixed regions, safe inline edits and append-only intent events, see [embedded links](embedded-links.md).
 
+For model-facing sentence/passage IDs, exact host resolution and a combined
+preflight/count/canary/refinement lifecycle, see [source-bound refinement](evaluations/embedded_interface.md).
+
 For fixed-node additive phase-energy qualification and bounded solver diagnostics, see [local objectives](evaluations/local_objective.md).
 
 For exact component/block cancellation and finite phase comparisons, see [block phase](evaluations/block_phase.md).

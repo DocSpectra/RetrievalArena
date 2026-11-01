@@ -15,6 +15,8 @@ COMMANDS = {
         "unit_tests.test_embedded_token_admission",
         "unit_tests.test_embedded_model_run",
         "unit_tests.test_embedded_refinement",
+        "unit_tests.test_embedded_interface",
+        "unit_tests.test_embedded_study",
         "unit_tests.test_embedded_link_selection",
         "unit_tests.test_local_objective",
         "unit_tests.test_embedded_links",

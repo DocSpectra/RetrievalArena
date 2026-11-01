@@ -127,6 +127,79 @@ async def run(inp, out, authorization):
         'authorization_sha256':e.digest(authorization),'generation_calls':0})
 
 
+async def count_resumable(jobs,out,count,*,deadline,maximum_attempts,backoff=1):
+    """ID-interface lifecycle; persist unknown attempts and cache exact counts.
+
+    The caller has already admitted its combined manifest. This function does
+    not construct a client or infer authorization from the presence of jobs.
+    """
+    from .embedded_failures import classify
+    out.mkdir(exist_ok=True);(out/'counts').mkdir(exist_ok=True);(out/'admitted').mkdir(exist_ok=True)
+    binding=e.digest(jobs);header=out/'count-binding.json'
+    if header.exists() and read(header)['jobs_sha256']!=binding:raise ValueError('count-resume-binding')
+    if not header.exists():write(header,{'jobs_sha256':binding})
+    semaphore=asyncio.Semaphore(2);attempts=len(list((out/'counts').glob('*.json')))
+    circuit=out/'provider-circuit.json';halt=read(circuit)['halt_reason'] if circuit.exists() else None
+    async def one(job):
+        nonlocal attempts,halt
+        target=out/('job-'+job['job_id']);target.mkdir(exist_ok=True)
+        terminal=target/'result.json'
+        if terminal.exists():return read(terminal)
+        body=copy.deepcopy(job['body']);prefix,text=body['input'].split(MARKER,1);data=json.loads(text)
+        records=[]
+        for level in range(10):
+            tokens=None
+            for retry in range(2):
+                async with semaphore:
+                    existing=next((p for p in (out/'counts').glob('*.json') if
+                        (row:=read(p))['attempt']['job_id']==job['job_id'] and
+                        row['attempt']['disclosure_level']==level and row['attempt']['technical_retry']==retry),None)
+                    if existing:
+                        saved=read(existing);attempt=saved['attempt'];records.append(attempt)
+                        if attempt['request_sha256']!=e.digest(body):raise ValueError('cached-count-request-drift')
+                        if attempt.get('status')=='counted':
+                            tokens=saved['raw_response']['input_tokens'];break
+                        if not attempt.get('retryable',True):break
+                        continue
+                    if halt or time.monotonic()>=deadline or attempts>=maximum_attempts:break
+                    attempts+=1;attempt={'attempt':attempts,'job_id':job['job_id'],'request_sha256':e.digest(body),
+                        'disclosure_level':level,'technical_retry':retry,'status':'attempted'}
+                    records.append(attempt);path=out/'counts'/f'{attempts:04}.json';write(path,{'attempt':attempt})
+                    try:
+                        raw=await asyncio.wait_for(count(body),min(120,max(.001,deadline-time.monotonic())))
+                        tokens=raw['input_tokens']
+                        if type(tokens) is not int or tokens<=0:raise ValueError('provider-token-count-invalid')
+                        attempt.update(status='counted',provider_input_tokens=tokens)
+                        write(path,{'attempt':attempt,'raw_response':raw});break
+                    except Exception as exc:
+                        kind,retryable,stop=classify(exc)
+                        attempt.update(status='technical_failure',error_class=type(exc).__name__,failure_kind=kind,retryable=retryable)
+                        write(path,{'attempt':attempt})
+                        if stop:
+                            halt=kind+'_blocked';write(circuit,{'halt_reason':halt})
+                        if not retryable:break
+                if retry==0:await asyncio.sleep(min(backoff,max(0,deadline-time.monotonic())))
+            if tokens is None:
+                result={'job_id':job['job_id'],'status':halt or ('resource_limit' if time.monotonic()>=deadline or attempts>=maximum_attempts else 'technical_unavailable'),'attempts':records}
+                write(terminal,result);return result
+            if tokens<=16000:
+                write(out/'admitted'/(e.digest(body)+'.json'),body)
+                result={'job_id':job['job_id'],'status':'admitted','request_sha256':e.digest(body),
+                    'provider_input_tokens':tokens,'attempts':records};write(terminal,result);return result
+            data=omit_lowest_target_passage(data)
+            if data is None:
+                result={'job_id':job['job_id'],'status':'over_cap_omitted','attempts':records};write(terminal,result);return result
+            body['input']=prefix+MARKER+e.canonical(data).decode()
+        result={'job_id':job['job_id'],'status':'disclosure_levels_exhausted','attempts':records};write(terminal,result);return result
+    rows=await asyncio.gather(*(one(j) for j in jobs))
+    summary={'schema_version':VERSION+'.resumable','results':rows,'attempts':attempts,'generation_calls':0,
+        'halt_reason':halt,'concurrency':2,'input_token_cap_including_schema':16000}
+    write(out/'token-admission.json',summary)
+    inv=[r for r in portable_inventory(out) if r['path']!='manifest.json']
+    write(out/'manifest.json',{'outputs':inv,'outputs_sha256':e.digest(inv)})
+    return summary
+
+
 def smoke():
     """Local SDK surface/lock check, with no client, key or network access."""
     import importlib.metadata as metadata

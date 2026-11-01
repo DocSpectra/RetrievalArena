@@ -16,6 +16,7 @@ import time
 
 from . import embedded_links as e
 from . import embedded_ledger_v2 as ledger
+from . import embedded_interface as interface
 from .embedded_link_audit import read, write, portable_inventory
 from .embedded_model_run import validate_result, evidence_valid, response_text
 from .embedded_selection_v2 import select_embedded_v2, BoundedBlockScorer, DEFAULT_POLICY
@@ -65,7 +66,12 @@ def prepare_generation(inp,out,cfg):
                 raise ValueError('target-identity-drift')
             if any(p not in target_map[tid]['paragraphs'] for p in chosen['paragraphs']) or not chosen['paragraphs']:
                 raise ValueError('target-passage-drift')
-            spans=[p['raw_span'] for p in chosen['paragraphs']]
+            if manifest.get('interface_version')==interface.VERSION:
+                # Public IDs replace byte arithmetic; recover the original
+                # host paragraph by its frozen order in the parent disclosure.
+                spans=[target['paragraphs'][target_map[tid]['paragraphs'].index(p)]['raw_span']
+                       for p in chosen['paragraphs']]
+            else:spans=[p['raw_span'] for p in chosen['paragraphs']]
             new_targets.append(dict(target,paragraphs=[p for p in target['paragraphs'] if p['raw_span'] in spans]))
         old_hash=packet.pop('packet_sha256');packet['parent_packet_sha256']=old_hash;packet['targets']=new_targets
         packet['packet_sha256']=e.digest(packet);admitted.append(packet)
@@ -83,6 +89,33 @@ def prepare_generation(inp,out,cfg):
     write(out/'study-manifest.json',manifest);write(out/'generation-jobs.json',jobs)
     write(out/'packets.json',admitted);write(out/'admission-omissions.json',omissions)
     return {'admitted_packets':len(jobs),'omitted_packets':len(omissions),'inference_authorized_by_this_stage':False}
+
+
+def prepare_interface(inp,out,cfg):
+    """Version only the interface; retain exact parent paragraphs/target order."""
+    _,_,contents,_=load_sources(inp);parents=read(inp/'packets.json')
+    (out/'host-disclosures').mkdir()
+    children=[];proof=[];jobs=[];role=next(r for r in read(inp/'study-manifest.json')['roles'] if r['role']=='generation')
+    for parent in parents:
+        if e.digest({k:v for k,v in parent.items() if k!='packet_sha256'})!=parent['packet_sha256']:
+            raise ValueError('parent-packet-hash')
+        child=copy.deepcopy(parent);old=child.pop('packet_sha256')
+        child.update(parent_packet_sha256=old,interface_version=interface.VERSION)
+        child['packet_sha256']=e.digest(child);data=interface.disclosure(child,contents)
+        public=interface.public_disclosure(data)
+        prompt=role['prompt_prefix']+MARKER+e.canonical(public).decode()
+        body=OpenAITransport.request(prompt,role['schema'],role['settings'])
+        jobs.append({'job_id':e.digest(body),'body':body})
+        children.append(child)
+        proof.append({'parent_packet_sha256':old,'child_packet_sha256':child['packet_sha256'],
+            'source_id':child['source_id'],'parent_passages_sha256':e.digest([parent['source_paragraphs'],parent['targets']]),
+            'child_passages_sha256':e.digest([child['source_paragraphs'],child['targets']]),
+            'new_paragraphs_or_targets':0,'host_disclosure_sha256':e.digest(data),'public_disclosure_sha256':e.digest(public),
+            'source_sentences':sum(len(p['sentences']) for p in data['source_paragraphs']),
+            'unmapped_source_paragraphs':[p['passage_id'] for p in data['source_paragraphs'] if not p['sentences']]})
+        write(out/'host-disclosures'/(old+'.json'),data)
+    write(out/'packets.json',children);write(out/'parent-child.json',proof);write(out/'jobs.json',jobs)
+    return {'packets':len(children),'new_paragraphs_or_targets':0,'provider_calls':0}
 
 
 def load_sources(inp):
@@ -112,7 +145,8 @@ def source_passage(row, raw):
     return {'raw_span':[a,z],'raw_excerpt':raw[a:z].decode('utf-8')}
 
 
-def review_disclosure(p, packet, contents):
+def review_disclosure(p, packet, contents, use_ids=False):
+    if use_ids:return interface.review_disclosure(p,packet,contents)
     sources=[b for b in packet['source_paragraphs'] if b['raw_span'][0]<=p['source_span'][0]<p['source_span'][1]<=b['raw_span'][1]]
     if len(sources)!=1:raise ValueError('source-anchor-outside-packet')
     target=next(t for t in packet['targets'] if t['target_id']==p['target_id'])
@@ -139,7 +173,8 @@ def proposals(inp,out,cfg):
     pages,by_id,contents,regions=load_sources(inp);region_by_id={r['region_id']:r for r in regions}
     packets={p['packet_sha256']:p for p in read(inp/'packets.json')}
     jobs={j['job_id']:j for j in read(inp/'model-jobs.json')}
-    records=[];manifest=read(inp/'study-manifest.json')
+    records=[];manifest=read(inp/'study-manifest.json');interface_log=[]
+    use_ids=manifest.get('interface_version')==interface.VERSION
     if (inp/'admission-omissions.json').exists():
         for row in read(inp/'admission-omissions.json'):
             records.append(dict(row,status='generation_unavailable',technical_status='token-'+row['reason']))
@@ -154,6 +189,15 @@ def proposals(inp,out,cfg):
         for ordinal,item in enumerate(result['payload']['proposals']):
             record={'job_id':result['job_id'],'packet_sha256':packet['packet_sha256'],'raw_item':item,
                 'raw_response_sha256':result['raw_response_sha256'],'ordinal':ordinal,'region_id':packet['region_id']}
+            if use_ids:
+                interface.event(interface_log,'model_declared',dict(record),'model')
+                try:
+                    item,witness=interface.resolve_proposal(item,interface.disclosure(packet,contents),contents)
+                    record['host_resolution']=witness
+                    interface.event(interface_log,'host_resolved',{'job_id':result['job_id'],'ordinal':ordinal,'resolution':witness},'host')
+                except (ValueError,UnicodeError) as exc:
+                    record.update(status='interface_rejected',reason=str(exc))
+                    interface.event(interface_log,'host_rejected',dict(record),'host');records.append(record);continue
             if item['source_id']!=packet['source_id'] or item['target_id'] not in {t['target_id'] for t in packet['targets']}:
                 records.append(dict(record,status='schema_or_access_rejected',reason='outside-frozen-disclosure'));continue
             source,target=item['source_id'],item['target_id']
@@ -171,9 +215,12 @@ def proposals(inp,out,cfg):
                    'source_access':[source]+[t['target_id'] for t in packet['targets']],
                    'retry_of':None if result['attempt']==0 else result['job_id']+':0','status':'model-response'}}
             p['proposal_id']=e.stable('proposal',cfg['run_id'],item,p['provenance']['response_sha256'],ordinal)
+            if manifest.get('mock_responses'):
+                p['provenance'].update(kind='mock_response',provider='MOCK:'+role['settings']['provider'],
+                    model='MOCK:'+role['settings']['model'],status='mock-model')
             try:
                 ledger.validate_proposal(p);record['proposal']=p
-                review_disclosure(p,packet,contents)
+                review_disclosure(p,packet,contents,use_ids)
                 _,facts=ledger.apply_edit(contents[source],contents[target],p,pages,read(inp/'original.json')['edges'],region,LIMITS)
                 record.update(status='structural_eligible',structural_facts_sha256=e.digest(facts))
                 if p['relation']=='insufficient_evidence' or p['basis']=='unsupported':
@@ -190,9 +237,13 @@ def proposals(inp,out,cfg):
     review_jobs=[]
     for record in records:
         if record['status']!='structural_eligible':continue
-        p=record['proposal'];packet=packets[record['packet_sha256']];data,evidence=review_disclosure(p,packet,contents)
+        p=record['proposal'];packet=packets[record['packet_sha256']];data,evidence=review_disclosure(p,packet,contents,use_ids)
         review_jobs.append(model_job('eligibility',data,evidence,p,packet,manifest))
     write(out/'records.json',records);write(out/'conflicts.json',conflicts);write(out/'review-jobs.json',review_jobs)
+    if use_ids:
+        (out/'interface-events.jsonl').write_bytes(b''.join(e.canonical(row)+b'\n' for row in interface_log))
+        tip=e.digest(interface_log[-1]) if interface_log else '0'*64
+        write(out/'interface-trusted-tip.json',interface.replay(interface_log,tip))
     return {'records':len(records),'proposals':len(pool),'structural_eligible':len(review_jobs),
             'generation_unavailable':sum(r['status']=='generation_unavailable' for r in records)}
 
@@ -207,7 +258,11 @@ def eligible_records(inp):
         if not result or result['status']!='complete':
             record.update(semantic_eligible=False,semantic_status='review_unavailable');continue
         validate_result(result['payload'],jobs[result['job_id']]);provider_result(inp,result)
-        verdict=result['payload'];score=sum(verdict[k] for k in ['relationship_support','target_support','placement'])
+        verdict=result['payload']
+        if jobs[result['job_id']].get('evidence',{}).get('interface_version')==interface.VERSION:
+            verdict,proof=interface.resolve_review(verdict,jobs[result['job_id']]['evidence'])
+            record['review_declaration']=result['payload'];record['review_resolution']=proof
+        score=sum(verdict[k] for k in ['relationship_support','target_support','placement'])
         eligible=(min(verdict[k] for k in ['relationship_support','target_support','placement'])>=1 and
                   score>=5 and not verdict['uncertainty'] and not verdict['contradiction'] and verdict['relation']!='insufficient_evidence')
         record.update(semantic_eligible=eligible,semantic_score=score,semantic_status='eligible' if eligible else 'semantic_rejected',
@@ -250,6 +305,11 @@ def select_groups(inp,out,records,regions,occurrences,scorer_factory=BoundedBloc
             'target_id':r['proposal']['target_id'],'semantic_score':r['semantic_score'],'semantic_eligible':True,
             'conflicts':[pid for c in conflicts if r['proposal']['proposal_id'] in c['proposal_ids']
                          for pid in c['proposal_ids'] if pid!=r['proposal']['proposal_id']]} for r in good]
+        fixture_policy=read(inp/'study-manifest.json')
+        if fixture_policy.get('authored_fixture'):
+            order=fixture_policy['authored_tie_order']
+            for candidate in pool:
+                candidate['tie_id']='f%02d'%order.index({k:candidate[k] for k in ('source_id','target_id')})
         # project() filters targets and expects source-scoped occurrence rows.
         # Region views are induced: incoming edges from other groups are not halo.
         nodes=set(region['nodes'])
@@ -261,7 +321,9 @@ def select_groups(inp,out,records,regions,occurrences,scorer_factory=BoundedBloc
                     'input_inventory_sha256':read(inp/'operator-request.json')['input_inventory_sha256'] if (inp/'operator-request.json').exists() else None}}
         # Reserve half of the 100 MiB group output ceiling for traces and final
         # descriptors. This is an explicit storage sublimit, never a rank gate.
-        policy=dict(DEFAULT_POLICY,wall_seconds=max(.001,min(600,deadline-time.monotonic())),max_output_bytes=50*1024**2)
+        maximum=read(inp/'study-manifest.json').get('maximum_group_arm_edits',4)
+        if type(maximum) is not int or not 0<=maximum<=4:raise ValueError('maximum-group-arm-edits')
+        policy=dict(DEFAULT_POLICY,maximum=maximum,wall_seconds=max(.001,min(600,deadline-time.monotonic())),max_output_bytes=50*1024**2)
         scorer=scorer_factory(graph,pool,policy);score_cache={};solve_cache=getattr(scorer,'cache',{})
         start=time.monotonic();arms={a:select_embedded_v2(pool,graph,policy,score_cache,arm=a,scorer=scorer) for a in ['S','Z','M']}
         if arms['S']['selected']!=arms['Z']['selected'] or len({a['achieved_budget'] for a in arms.values()})!=1:
@@ -279,7 +341,7 @@ def select_groups(inp,out,records,regions,occurrences,scorer_factory=BoundedBloc
             'structural_eligible':sum(r['status'] in ('structural_eligible','proposer_rejected') for r in relevant),
             'proposer_rejected':sum(r['status']=='proposer_rejected' for r in relevant),
             'review_unavailable':sum(r.get('semantic_status')=='review_unavailable' for r in relevant),
-            'semantic_eligible':len(pool),'requested_budget':4,'feasible_budget':arms['S']['feasible_budget'],
+            'semantic_eligible':len(pool),'requested_budget':maximum,'feasible_budget':arms['S']['feasible_budget'],
             'arms':arms,'final':final,'runtime_seconds':time.monotonic()-start,
             'selection_sequence_changed':arms['S']['selected']!=arms['M']['selected'],
             'final_selected_set_changed':set(arms['S']['selected'])!=set(arms['M']['selected']),
@@ -303,9 +365,10 @@ def case_card(path,arm,proposal,record,step,raw,edited,packet):
     path.with_suffix('.diff').write_text(diff,encoding='utf-8')
     info={'proposal':proposal,'eligibility':record['review'],'selection_step':step,'source_paragraph_span':[a,z]}
     write(path.with_suffix('.json'),info)
+    label='MOCK fixture assertion' if proposal['provenance']['kind']=='mock_response' else 'AI-reference eligibility'
     path.write_text('<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'">'
         '<style>body{font:16px/1.5 system-ui;margin:28px;max-width:1250px;color:#192638}.cols{display:grid;grid-template-columns:1fr 1fr;gap:24px}article{padding:20px;background:#f3f6fa;border:1px solid #ccd5df}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef2f6;padding:16px}h1{font-size:24px}a{color:#1756a4}</style>'
-        f'<h1>{html.escape(arm)} · {html.escape(proposal["anchor"])}</h1><p>AI-reference eligibility {record["semantic_score"]}/6. Source-based paragraph preview; reader benefit and human accuracy untested.</p>'
+        f'<h1>{html.escape(arm)} · {html.escape(proposal["anchor"])}</h1><p>{label} {record["semantic_score"]}/6. Source-based paragraph preview; reader benefit and human accuracy untested.</p>'
         f'<p>{html.escape(proposal["source_id"])} → {html.escape(proposal["target_id"])}<br>Decision: {html.escape(step["status"])}; raw source span {proposal["source_span"]}.</p>'
         f'<div class="cols"><section><h2>Before</h2><article>{render(before)}</article></section><section><h2>After</h2><article>{render(after)}</article></section></div>'
         f'<h2>Exact full-file diff</h2><pre>{html.escape(diff)}</pre><p>All source bytes outside the inserted link syntax and all visible prose are mechanically verified.</p>',encoding='utf-8')
@@ -344,7 +407,7 @@ def materialize(inp,out,records,groups,pages,contents,regions):
                 'rubric_version':review_role['schema_sha256'],'decision':'eligible' if record['semantic_eligible'] else 'reject',
                 'evidence':record['review']['target_evidence'],'uncertainty':str(record['review']['uncertainty']),
                 'response_sha256':record['review_response_sha256'],'blinded_input_sha256':record['review_input_sha256'],
-                'status':'model-response'},'reviewer')
+                'status':'mock-model' if manifest.get('mock_responses') else 'model-response'},'reviewer')
             if not record['semantic_eligible']:
                 append('rejected',{'reason':'independent-semantic-rejection','no_new_edge':False});continue
             append('eligible',{'structural':True,'semantic':True})
@@ -390,7 +453,8 @@ def materialize(inp,out,records,groups,pages,contents,regions):
             'target_evidence_scope':'frozen baseline byte quotes; final target semantic text verified even when its link syntax also changes',
             'added_pairs':sorted([f['added_edges'][0] for f in facts.values()])})
     write(out/'applications.json',output);write(out/'case-card-inventory.json',cards)
-    (out/'index.html').write_text('<!doctype html><meta charset="utf-8"><h1>Real-document refinement source previews</h1><p>AI-reference labels; no human accuracy or reader benefit established.</p><ul>'+''.join(f'<li><a href="{c}">{html.escape(c)}</a></li>' for c in cards)+'</ul>',encoding='utf-8')
+    label='OFFLINE MOCK fixture labels' if manifest.get('mock_responses') else 'AI-reference labels'
+    (out/'index.html').write_text('<!doctype html><meta charset="utf-8"><h1>Refinement source previews</h1><p>'+label+'; no human accuracy or reader benefit established.</p><ul>'+''.join(f'<li><a href="{c}">{html.escape(c)}</a></li>' for c in cards)+'</ul>',encoding='utf-8')
     return output
 
 
@@ -399,6 +463,16 @@ def select_and_apply(inp,out,cfg):
     groups=select_groups(inp,out,records,regions,read(inp/'frozen-occurrences.json'))
     applications=materialize(inp,out,records,groups,pages,contents,regions)
     write(out/'records.json',records);write(out/'groups.json',groups)
+    review_log=[]
+    for record in records:
+        if 'review_declaration' in record:
+            interface.event(review_log,'reviewer_declared',{'job_id':record['review_job_id'],
+                'response_sha256':record['review_response_sha256'],'declaration':record['review_declaration']},'reviewer')
+            interface.event(review_log,'review_resolved',{'job_id':record['review_job_id'],
+                'resolution':record['review_resolution'],'resolved':record['review']},'host')
+    if review_log:
+        (out/'review-interface-events.jsonl').write_bytes(b''.join(e.canonical(row)+b'\n' for row in review_log))
+        write(out/'review-interface-trusted-tip.json',interface.replay(review_log,e.digest(review_log[-1])))
     selected={pid for group in groups for arm in group['arms'].values() for pid in arm['selected']}
     records_by_id={r['proposal']['proposal_id']:r for r in records if 'proposal' in r}
     union={}
@@ -408,7 +482,7 @@ def select_and_apply(inp,out,cfg):
     packets={p['packet_sha256']:p for p in read(inp/'packets.json')};manifest=read(inp/'study-manifest.json');jobs=[]
     for key in sorted(union,key=lambda k:e.digest([3602,k])):
         ids=sorted(union[key]);record=records_by_id[ids[0]];p=record['proposal'];packet=packets[record['packet_sha256']]
-        data,evidence=review_disclosure(p,packet,contents)
+        data,evidence=review_disclosure(p,packet,contents,manifest.get('interface_version')==interface.VERSION)
         jobs.append(model_job('blinded_assessment',data,evidence,p,packet,manifest,proposal_ids=ids))
     write(out/'assessment-jobs.json',jobs);write(out/'assessment-union.json',union)
     return {'groups':groups,'applications':applications,'unique_final_assessment_jobs':len(jobs)}
@@ -421,7 +495,11 @@ def assemble(inp,out,cfg):
         job=jobs[result['job_id']];row={'job_id':result['job_id'],'proposal_ids':job['proposal_ids'],'status':result['status']}
         if result['status']=='complete':
             validate_result(result['payload'],job);provider_result(inp,result)
-            row.update(assessment=result['payload'],raw_response_sha256=result['raw_response_sha256'],
+            assessment=result['payload']
+            if job.get('evidence',{}).get('interface_version')==interface.VERSION:
+                assessment,proof=interface.resolve_review(assessment,job['evidence'])
+                row.update(assessment_declaration=result['payload'],assessment_resolution=proof)
+            row.update(assessment=assessment,raw_response_sha256=result['raw_response_sha256'],
                 score=sum(result['payload'][k] for k in ['relationship_support','target_support','placement']))
         assessments.append(row)
     write(out/'assessments.json',assessments);write(out/'groups.json',read(inp/'groups.json'))
@@ -434,6 +512,13 @@ def run(inp,out):
     if set(p.name for p in out.iterdir())!={'.retrieval-arena-output-owner'}:raise ValueError('output-not-fresh')
     cfg=read(inp/'config.json');started=time.monotonic();stage=cfg['stage']
     if stage=='prepare-generation':result=prepare_generation(inp,out,cfg)
+    elif stage=='prepare-interface':result=prepare_interface(inp,out,cfg)
+    elif stage=='diagnose-interface':
+        from .embedded_interface_diagnostic import diagnose
+        result=diagnose(inp,out)
+    elif stage=='prepare-authored-interface':
+        from .embedded_interface_fixture import prepare
+        result=prepare(inp,out,cfg)
     elif stage=='proposals':result=proposals(inp,out,cfg)
     elif stage=='select':result=select_and_apply(inp,out,cfg)
     elif stage=='assemble':result=assemble(inp,out,cfg)

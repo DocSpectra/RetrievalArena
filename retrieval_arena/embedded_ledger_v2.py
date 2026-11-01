@@ -16,17 +16,20 @@ MODEL_PROVENANCE = copy.deepcopy(e.PROPOSAL_SCHEMA['properties']['provenance'])
 MODEL_PROVENANCE['properties']['kind'] = {'const': 'model_response'}
 MODEL_PROVENANCE['required'].append('kind')
 MODEL_PROVENANCE['properties']['status'] = {'const':'model-response'}
+MOCK_PROVENANCE = copy.deepcopy(MODEL_PROVENANCE)
+MOCK_PROVENANCE['properties']['kind'] = {'const':'mock_response'}
+MOCK_PROVENANCE['properties']['status'] = {'const':'mock-model'}
 # Conditional provenance schemas are emitted and enforced by validate_proposal.
 PROPOSAL_SCHEMA['properties']['provenance'] = {}
 PROPOSAL_SCHEMA['allOf'] = [{'if': {'properties': {'provenance': {'properties': {'kind': {'const': kind}}}}},
     'then': {'properties': {'provenance': schema}}} for kind, schema in
-    [('authored_fixture', FIXTURE_PROVENANCE), ('model_response', MODEL_PROVENANCE)]]
+    [('authored_fixture', FIXTURE_PROVENANCE), ('model_response', MODEL_PROVENANCE), ('mock_response', MOCK_PROVENANCE)]]
 
 
 def public_schemas():
     """Full JSON Schema unions; the dependency-free validator uses tagged checks."""
     proposal=copy.deepcopy(PROPOSAL_SCHEMA); proposal.pop('allOf')
-    proposal['properties']['provenance']={'oneOf':[FIXTURE_PROVENANCE, MODEL_PROVENANCE]}
+    proposal['properties']['provenance']={'oneOf':[FIXTURE_PROVENANCE, MODEL_PROVENANCE, MOCK_PROVENANCE]}
     event_schema=copy.deepcopy(e.EVENT_SCHEMA)
     event_schema['properties']['schema_version']={'const':VERSION+'.event'}
     event_schema['properties']['authority']={'enum':['model','reviewer','host','fixture_author']}
@@ -42,7 +45,7 @@ def public_schemas():
 def validate_proposal(p):
     e.validate_schema(p, PROPOSAL_SCHEMA)
     provenance = p['provenance']; kind = provenance.get('kind')
-    schema = {'authored_fixture': FIXTURE_PROVENANCE, 'model_response': MODEL_PROVENANCE}.get(kind)
+    schema = {'authored_fixture': FIXTURE_PROVENANCE, 'model_response': MODEL_PROVENANCE, 'mock_response':MOCK_PROVENANCE}.get(kind)
     if schema is None: raise ValueError('v2-provenance-kind')
     e.validate_schema(provenance, schema)
     return p
