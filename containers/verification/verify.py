@@ -10,6 +10,7 @@ SOURCE_ROOT = Path("/workspace/source")
 OPERATOR_ROOT = Path(__file__).resolve().parent
 COMMANDS = {
     "focused": (
+        "unit_tests.test_block_phase",
         "unit_tests.test_embedded_link_selection",
         "unit_tests.test_local_objective",
         "unit_tests.test_embedded_links",
@@ -66,6 +67,7 @@ COMMANDS = {
     "compare-support-access-corpora": (),
     "export-page-representations": (),
     "page-roles": (),
+    "compare-block-phase": (),
     "qualify-local-objective": (),
     "audit-embedded-links": (),
     "generate-complementary-context": (),
@@ -121,6 +123,10 @@ def main(argv: list[str]) -> int:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from complementary_context import main as complementary_main
         return complementary_main(argv[1])
+    if argv[1] == "compare-block-phase":
+        sys.path.insert(0, str(OPERATOR_ROOT))
+        from block_phase import main as block_phase_main
+        return block_phase_main()
     if argv[1] == "qualify-local-objective":
         sys.path.insert(0, str(OPERATOR_ROOT))
         from local_objective import main as local_objective_main

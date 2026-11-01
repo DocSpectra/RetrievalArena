@@ -49,6 +49,7 @@ COPY containers/verification/phase_navigation.py /opt/retrieval-arena/phase_navi
 COPY containers/verification/support_access.py /opt/retrieval-arena/support_access.py
 COPY containers/verification/support_access_corpora.py /opt/retrieval-arena/support_access_corpora.py
 COPY containers/verification/page_roles.py /opt/retrieval-arena/page_roles.py
+COPY containers/verification/block_phase.py /opt/retrieval-arena/block_phase.py
 COPY containers/verification/local_objective.py /opt/retrieval-arena/local_objective.py
 COPY containers/verification/embedded_links.py /opt/retrieval-arena/embedded_links.py
 COPY containers/verification/page_representations.py /opt/retrieval-arena/page_representations.py
