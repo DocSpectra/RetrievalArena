@@ -22,3 +22,4 @@ containers/verification/*
 !containers/verification/local_objective.py
 !containers/verification/embedded_links.py
 !containers/verification/complementary_context.py
+!containers/verification/block_phase.py
