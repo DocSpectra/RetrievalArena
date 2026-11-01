@@ -97,6 +97,22 @@ def fixture(inp):
 
 
 class Refinement(unittest.TestCase):
+    def test_group_views_exclude_cross_group_incoming_sources(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            inp=Path(tmp)/'input';inp.mkdir();fixture(inp)
+            out=Path(tmp)/'output';out.mkdir();graphs=[]
+            rows=read(inp/'frozen-occurrences.json')
+            rows.append({'source_id':'g1-0','target_id':'g0-0','class':'substantive'})
+            def scorer(graph,pool,policy):
+                graphs.append(graph)
+                return DirectScorer(graph,pool,policy)
+            groups=f.select_groups(inp,out,[],read(inp/'regions.json'),rows,
+                scorer_factory=scorer,with_diagnostics=False)
+            self.assertEqual(len(groups),4)
+            for graph in graphs:
+                self.assertTrue(all(s in graph['nodes'] and t in graph['nodes'] for s,t in graph['edges']))
+                self.assertNotIn(('g1-0','g0-0'),graph['edges'])
+
     def test_any_model_authentication_block_refuses_semantic_interpretation(self):
         with tempfile.TemporaryDirectory() as tmp:
             inp=Path(tmp);write(inp/'model-summary.json',{'authentication_blocked':True,'results':[]})

@@ -250,7 +250,10 @@ def select_groups(inp,out,records,regions,occurrences,scorer_factory=BoundedBloc
             'target_id':r['proposal']['target_id'],'semantic_score':r['semantic_score'],'semantic_eligible':True,
             'conflicts':[pid for c in conflicts if r['proposal']['proposal_id'] in c['proposal_ids']
                          for pid in c['proposal_ids'] if pid!=r['proposal']['proposal_id']]} for r in good]
-        graph={'nodes':region['nodes'],'edges':e.project(occurrences,set(region['nodes'])),
+        # project() filters targets and expects source-scoped occurrence rows.
+        # Region views are induced: incoming edges from other groups are not halo.
+        nodes=set(region['nodes'])
+        graph={'nodes':region['nodes'],'edges':e.project([r for r in occurrences if r['source_id'] in nodes],nodes),
                'audit_binding':{'region':region,'all_records':relevant,'frozen_mask_sha256':e.digest(occurrences),
                     'original_full_graph_sha256':e.digest(read(inp/'original.json')),
                     'source_inventory_sha256':e.digest(read(inp/'pages.json')),
