@@ -12,6 +12,8 @@ from .candidate_retrieval import regular_inventory
 
 def read(p): return json.loads(p.read_bytes())
 def write(p,x): p.write_bytes(el.canonical(x)+b'\n')
+def portable_inventory(root):
+    return sorted(regular_inventory(root),key=lambda r:r['path'])
 
 def fixture_proposal(pages,contents,edges,regions,cfg):
     """First valid mechanical addition in development order; no semantic claim."""
@@ -63,7 +65,7 @@ def fixture_proposal(pages,contents,edges,regions,cfg):
 def run(inp,out):
     started=time.monotonic()
     if {p.name for p in out.iterdir()}!={'.retrieval-arena-output-owner'}: raise ValueError('output-not-fresh')
-    inv=[r for r in regular_inventory(inp) if r['path']!='operator-request.json']
+    inv=[r for r in portable_inventory(inp) if r['path']!='operator-request.json']
     req=read(inp/'operator-request.json')
     if req!={'schema_version':'retrieval_arena.embedded_links_request.v1','command':'audit-embedded-links',
         'input_inventory':inv,'input_inventory_sha256':el.digest(inv)}: raise ValueError('input-inventory')
@@ -184,7 +186,7 @@ def run(inp,out):
         'smoke':smoke,'runtime_seconds':time.monotonic()-started,'model_calls':0,
         'limits':'CommonMark source view only; HTML/template semantics and classification unvalidated.'}
     write(out/'summary.json',result)
-    outputs=regular_inventory(out)
+    outputs=portable_inventory(out)
     if sum(r['size_bytes'] for r in outputs)>cfg['max_output_bytes']: raise ValueError('output-budget')
     write(out/'embedded-links-manifest.json',{'schema_version':el.VERSION+'.manifest','input_inventory_sha256':el.digest(inv),
         'outputs':outputs,'outputs_sha256':el.digest(outputs),'config_sha256':el.digest(cfg)})

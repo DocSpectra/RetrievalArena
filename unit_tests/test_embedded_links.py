@@ -175,6 +175,14 @@ class EmbeddedLinks(unittest.TestCase):
             saved=json.loads((root/f'embedded-link-{name}.v1.json').read_bytes())
             self.assertEqual({k:v for k,v in saved.items() if k!='$schema'},schema)
 
+    def test_portable_inventory_has_case_sensitive_posix_path_order(self):
+        from retrieval_arena.embedded_link_audit import portable_inventory
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            for name in ['z.md','A.md','b.md']:
+                (root/name).write_bytes(b'fixture')
+            self.assertEqual([r['path'] for r in portable_inventory(root)],['A.md','b.md','z.md'])
+
     def test_patch_tamper_and_stale_replay(self):
         _,facts=self.edit(); bad=copy.deepcopy(facts); bad['patch']['replacement']='changed'
         with self.assertRaises(ValueError): e.replay_patch(self.raw,bad)
