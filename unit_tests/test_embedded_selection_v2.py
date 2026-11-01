@@ -114,6 +114,18 @@ class SelectionV2(unittest.TestCase):
             r=self.run_select(scorer=lambda p:{'status':'finite_estimate','schedule_costs':costs})
             self.assertEqual(r['trace'][0]['status'],'unscorable_candidate')
 
+    def test_callback_exception_keeps_common_budget(self):
+        def fail(prefix): raise RuntimeError('unavailable native backend')
+        r=self.run_select(scorer=fail)
+        self.assertEqual(r['selected'],['a'])
+        self.assertEqual(r['trace'][0]['status'],'unscorable_candidate')
+        self.assertEqual(r['achieved_budget'],r['feasible_budget'])
+
+    def test_semantic_scores_are_exact_integer_tiers(self):
+        for value in [5.5,6.0,True]:
+            self.pool[0]['semantic_score']=value
+            with self.assertRaisesRegex(ValueError,'semantic-score-tier'): self.run_select(arm='S')
+
     def test_process_watchdog(self):
         policy=dict(DEFAULT_POLICY,wall_seconds=.2)
         scorer=BoundedBlockScorer(self.graph,self.pool,policy,worker=sleepy_worker)
@@ -161,6 +173,15 @@ class FixtureLedgerV2(unittest.TestCase):
     def test_authored_provenance_closed(self):
         p=copy.deepcopy(self.p); p['provenance']['provider']='invented'
         with self.assertRaises(ValueError): ledger.validate_proposal(p)
+
+    def test_model_provenance_replays_separately_from_fixture_author(self):
+        p=copy.deepcopy(self.old.p);p['schema_version']=ledger.VERSION+'.proposal'
+        p['provenance'].update(kind='model_response',status='model-response')
+        ledger.validate_proposal(p)
+        log=[ledger.event([],p,'proposed',p,'model')]
+        log.append(ledger.event(log,p,'schema_validated',{'proposal_sha256':e.digest(p)}))
+        self.assertEqual(ledger.replay(log,e.digest(log[-1]))['states'][p['proposal_id']],'schema_validated')
+        with self.assertRaisesRegex(ValueError,'authority'): ledger.event([],p,'proposed',p,'fixture_author')
 
     def test_source_paragraph_masks_and_byte_maps(self):
         raw='Café engine works.\r\n\r\n- list text.\r\n\r\nThe [manual](b.md) explains engines.\r\n'.encode()

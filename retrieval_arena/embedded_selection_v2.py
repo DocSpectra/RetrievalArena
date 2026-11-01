@@ -116,6 +116,8 @@ def select_embedded_v2(pool, group_graph, policy=None, score_cache=None, *, arm=
     if cfg['numerical'] != asdict(bp.lo.Policy()): raise ValueError('v2-numerical-policy')
     graph = bp.lo.ms.admit_graph(group_graph['nodes'], group_graph['edges'])
     for p in pool:
+        if type(p['semantic_score']) is not int or p['semantic_score'] not in (5, 6):
+            raise ValueError('v2-semantic-score-tier')
         bp.lo.eligible_additions(graph['nodes'], graph['edges'], [[p['source_id'], p['target_id']]])
     feasible = feasible_sets(pool, cfg['maximum'])
     budget = max(map(len, feasible), default=0)
@@ -136,7 +138,10 @@ def select_embedded_v2(pool, group_graph, policy=None, score_cache=None, *, arm=
             key = digest([binding, arm if arm != 'M' else 'q=.25', sorted(prefix)])
             cache_ids.append(key)
             if arm == 'M':
-                if key not in cache: cache[key] = scorer(prefix)
+                if key not in cache:
+                    try: cache[key] = scorer(prefix)
+                    except Exception as exc:
+                        cache[key] = {'status':'unscorable','reason':'callback-failed:'+type(exc).__name__}
                 r = cache[key]
                 if r['status'] == 'finite_estimate':
                     costs = r.get('schedule_costs', [])
