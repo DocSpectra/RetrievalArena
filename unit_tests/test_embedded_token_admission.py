@@ -25,6 +25,13 @@ class TokenAdmission(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,'authorization-required'): asyncio.run(t.run(inp,out,{'approved':False}))
                 factory.assert_not_called()
 
+    def test_existing_approval_does_not_skip_runtime_repair_gate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            inp=Path(tmp);write(inp/'jobs.json',[job()]);inv=portable_inventory(inp)
+            write(inp/'operator-request.json',{'input_inventory':inv,'input_inventory_sha256':e.digest(inv)})
+            auth={'approved':True,'scope':'provider_token_count_only','runtime_repair_confirmed':False}
+            with self.assertRaisesRegex(ValueError,'runtime-authentication-repair'):t.admit(inp,auth)
+
     def test_exact_authorization_inventory_and_schema_binding(self):
         with tempfile.TemporaryDirectory() as tmp:
             inp=Path(tmp);write(inp/'jobs.json',[job()]);inv=portable_inventory(inp)
@@ -32,6 +39,11 @@ class TokenAdmission(unittest.TestCase):
             auth={'approved':True,'scope':'provider_token_count_only','input_inventory_sha256':e.digest(inv),
                   'provider':'openai','model':'gpt-6-luna'}
             self.assertEqual(t.admit(inp,auth),[job()])
+            for invalid in [{'previous_count_attempts':-1},{'remaining_count_attempts':21},
+                            {'previous_count_attempts':2,'remaining_count_attempts':19},
+                            {'aggregate_count_attempt_cap':21}]:
+                with self.assertRaisesRegex(ValueError,'aggregate-count-attempt-ceiling'):
+                    t.admit(inp,dict(auth,**invalid))
             auth['input_inventory_sha256']='0'*64
             with self.assertRaisesRegex(ValueError,'input-binding'):t.admit(inp,auth)
 

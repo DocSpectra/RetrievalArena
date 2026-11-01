@@ -25,12 +25,20 @@ def admit(inp, authorization):
         raise ValueError('token-input-inventory')
     if authorization.get('approved') is not True or authorization.get('scope')!='provider_token_count_only':
         raise ValueError('explicit-token-count-authorization-required')
+    if authorization.get('runtime_repair_confirmed',True) is not True:
+        raise ValueError('runtime-authentication-repair-not-confirmed')
     if authorization.get('input_inventory_sha256')!=request['input_inventory_sha256']:
         raise ValueError('authorization-input-binding')
     if authorization.get('model')!='gpt-6-luna' or authorization.get('provider')!='openai':
         raise ValueError('authorization-provider-binding')
     jobs=read(inp/'jobs.json')
     if len(jobs)>40: raise ValueError('token-job-ceiling')
+    remaining=authorization.get('remaining_count_attempts',20*len(jobs))
+    previous=authorization.get('previous_count_attempts',0)
+    cap=authorization.get('aggregate_count_attempt_cap',20*len(jobs))
+    if (type(remaining) is not int or remaining<=0 or type(previous) is not int or previous<0
+            or type(cap) is not int or cap>20*len(jobs) or previous+remaining>cap):
+        raise ValueError('aggregate-count-attempt-ceiling')
     for job in jobs:
         if set(job)!={'job_id','body'} or job['job_id']!=e.digest(job['body']): raise ValueError('token-job-binding')
         body=job['body']
@@ -52,10 +60,10 @@ def counter_client():
     return openai.AsyncOpenAI(base_url=base+'/v1',max_retries=0,http_client=http)
 
 
-async def count_jobs(jobs, out, count, *, timeout=120, wall_seconds=7200):
+async def count_jobs(jobs, out, count, *, timeout=120, wall_seconds=7200, maximum_attempts=None):
     semaphore=asyncio.Semaphore(2); started=time.monotonic(); attempts=[]
     authentication_blocked=False
-    maximum_attempts=20*len(jobs)  # <=10 deterministic disclosure levels, one technical retry each
+    maximum_attempts=min(20*len(jobs),maximum_attempts if maximum_attempts is not None else 20*len(jobs))
     (out/'counts').mkdir();(out/'admitted').mkdir()
     async def one(job):
         nonlocal authentication_blocked
@@ -112,7 +120,7 @@ async def run(inp, out, authorization):
     async def count(**kwargs):
         response=await client.responses.input_tokens.count(**kwargs)
         return response.model_dump(mode='json')
-    try: await count_jobs(jobs,out,count)
+    try: await count_jobs(jobs,out,count,maximum_attempts=authorization.get('remaining_count_attempts'))
     finally: await client.close()
     inv=portable_inventory(out)
     write(out/'manifest.json',{'outputs':inv,'outputs_sha256':e.digest(inv),
