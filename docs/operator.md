@@ -109,3 +109,7 @@ terminal receipt. The schemas and the stratified sampling live in
 `export-review-packet` and `import-judgments`.
 
 `compare-support-access` adds the offline [cached support-access comparison](evaluations/support_access.md) to both verification adapters. It requires the standard exact input inventory and a fresh output root; execution uses at most four CPUs, 8 GiB, 4 GiB of generated output and 7,200 seconds.
+
+## Embedded-link audit
+
+`audit-embedded-links` accepts the same `-InputRoot`, `-OutputRoot`, `-Receipt` arguments as other offline single-phase commands. See [the contract](embedded-links.md) for the input allowlist and source/fixture outputs. It runs with network none and never calls a model.

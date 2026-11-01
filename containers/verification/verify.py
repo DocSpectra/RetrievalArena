@@ -10,6 +10,7 @@ SOURCE_ROOT = Path("/workspace/source")
 OPERATOR_ROOT = Path(__file__).resolve().parent
 COMMANDS = {
     "focused": (
+        "unit_tests.test_embedded_links",
         "unit_tests.test_ragas_scoring",
         "unit_tests.test_model_providers",
         "unit_tests.test_dual_profile",
@@ -63,6 +64,7 @@ COMMANDS = {
     "compare-support-access-corpora": (),
     "export-page-representations": (),
     "page-roles": (),
+    "audit-embedded-links": (),
     "generate-complementary-context": (),
     "evaluate-complementary-context": (),
 }
@@ -116,6 +118,10 @@ def main(argv: list[str]) -> int:
         sys.path.insert(0, str(OPERATOR_ROOT))
         from complementary_context import main as complementary_main
         return complementary_main(argv[1])
+    if argv[1] == "audit-embedded-links":
+        sys.path.insert(0, str(OPERATOR_ROOT))
+        from embedded_links import main as embedded_links_main
+        return embedded_links_main()
     if argv[1] == "page-roles":
         sys.path.insert(0, str(OPERATOR_ROOT))
         from page_roles import main as page_roles_main

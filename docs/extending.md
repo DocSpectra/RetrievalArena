@@ -32,3 +32,5 @@ For implementation changes, add focused behavioral tests for the changed contrac
 For full normalized magnetic heat-row exports, pair affinity and edge-masked recomputation, see [page representations](evaluations/page_representations.md).
 
 For frozen seed-preserving affinity selection with held-separate labels, see [complementary context](evaluations/complementary_context.md).
+
+For source-only content masking, fixed regions, safe inline edits and append-only intent events, see [embedded links](embedded-links.md).

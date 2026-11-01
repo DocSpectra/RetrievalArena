@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "anchor": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "arm_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "basis": {
+      "enum": [
+        "explicit_in_source",
+        "supported_inference",
+        "unsupported"
+      ]
+    },
+    "confidence": {
+      "maximum": 1,
+      "minimum": 0,
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "confidence_status": {
+      "const": "uncalibrated"
+    },
+    "coordinate_convention": {
+      "const": "zero-based half-open UTF-8 bytes of exact raw file"
+    },
+    "corpus_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "expected_reading_use": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "href": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "proposal_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "model": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "prompt_version": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "provider": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "response_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "retry_of": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "schema_version": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "source_access": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "mock-model",
+            "model-response"
+          ]
+        },
+        "timestamp": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider",
+        "model",
+        "prompt_version",
+        "schema_version",
+        "attempt_id",
+        "timestamp",
+        "response_sha256",
+        "source_access",
+        "retry_of",
+        "status"
+      ],
+      "type": "object"
+    },
+    "region_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "relation": {
+      "enum": [
+        "source_requires_target",
+        "source_continues_to_target",
+        "target_elaborates_source",
+        "target_exemplifies_source",
+        "target_diagnoses_source",
+        "related_context",
+        "insufficient_evidence"
+      ]
+    },
+    "run_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "retrieval_arena.embedded_links.v1.proposal"
+    },
+    "sentence": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "snapshot_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "source_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "source_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "source_span": {
+      "items": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "maxItems": 2,
+      "minItems": 2,
+      "type": "array"
+    },
+    "stated_intent": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "target_evidence": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "quote": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "span": {
+            "items": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          }
+        },
+        "required": [
+          "span",
+          "quote"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "target_fragment": {
+      "type": "string"
+    },
+    "target_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "target_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "proposal_id",
+    "run_id",
+    "arm_id",
+    "region_id",
+    "corpus_id",
+    "snapshot_id",
+    "source_id",
+    "target_id",
+    "source_sha256",
+    "target_sha256",
+    "href",
+    "target_fragment",
+    "coordinate_convention",
+    "source_span",
+    "anchor",
+    "sentence",
+    "target_evidence",
+    "relation",
+    "stated_intent",
+    "expected_reading_use",
+    "basis",
+    "confidence",
+    "confidence_status",
+    "provenance"
+  ],
+  "type": "object"
+}
