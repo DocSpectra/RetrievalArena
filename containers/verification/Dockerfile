@@ -21,7 +21,10 @@ ENV HOME=/tmp \
     PYTHONHASHSEED=0 \
     PYTHONIOENCODING=utf-8 \
     TMPDIR=/workspace/source/.tmp_unit_tests \
-    TZ=UTC
+    TZ=UTC \
+    OPENBLAS_NUM_THREADS=1 \
+    OMP_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1
 
 COPY containers/verification/requirements.lock /opt/retrieval-arena/requirements.lock
 RUN if [ "$PROVISIONED" = "true" ]; then \
