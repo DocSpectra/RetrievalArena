@@ -54,6 +54,8 @@ class LocalObjective(unittest.TestCase):
         self.assertGreater(r['total_energy_change'],0)
         self.assertEqual(len(r['baseline']['starts']),len(r['edited']['starts']))
         self.assertEqual(r['effort']['total_minimizations_per_graph'],18)
+        self.assertEqual(len(r['baseline_scout']['starts'])+len(r['baseline']['starts']),18)
+        self.assertEqual(len(r['edited_scout']['starts'])+len(r['edited']['starts']),18)
         self.assertAlmostEqual(r['added_weight'],.5)
         self.assertAlmostEqual(r['baseline_weight'],1.5)
 

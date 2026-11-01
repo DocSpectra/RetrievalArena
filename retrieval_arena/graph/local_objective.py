@@ -199,7 +199,8 @@ def compare(nodes, edges, additions, q, p=Policy()):
     solver_ok = bp['all_stationary'] and ep['all_stationary']
     return {'q': q, 'graph_sha256': ms.graph_sha256(nodes, edges),
             'edited_graph_sha256': ms.graph_sha256(nodes, edited), 'additions': additions,
-            'baseline': bp, 'edited': ep, 'spectral_baseline': sb, 'spectral_edited': se,
+            'baseline': bp, 'edited': ep, 'baseline_scout': b0, 'edited_scout': e0,
+            'spectral_baseline': sb, 'spectral_edited': se,
             'ordinary_baseline': ordinary(nodes, edges), 'ordinary_edited': ordinary(nodes, edited),
             'baseline_weight': denom, 'added_weight': added_weight, 'total_energy_change': delta,
             'old_energy_at_edited_solution': old_at_edit, 'added_energy_at_edited_solution': added_at_edit,
