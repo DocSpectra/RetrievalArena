@@ -23,3 +23,7 @@ containers/verification/*
 !containers/verification/embedded_links.py
 !containers/verification/complementary_context.py
 !containers/verification/block_phase.py
+!containers/embedded_api/
+!containers/embedded_api/Dockerfile
+!retrieval_arena/
+!retrieval_arena/**

@@ -12,6 +12,7 @@ COMMANDS = {
     "focused": (
         "unit_tests.test_block_phase",
         "unit_tests.test_embedded_selection_v2",
+        "unit_tests.test_embedded_token_admission",
         "unit_tests.test_embedded_link_selection",
         "unit_tests.test_local_objective",
         "unit_tests.test_embedded_links",

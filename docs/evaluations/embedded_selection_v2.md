@@ -76,3 +76,25 @@ The deterministic over-cap helper removes the last-ranked whole target paragraph
 then last target, preserving one target/passage; a final over-cap packet is omitted.
 No source sentence is truncated. A provider token-counting request is an outbound
 disclosure requiring consumer authorization; none is made by this offline stage.
+
+`scripts/embedded-api.py` (with `.ps1`/`.sh` thin shims) builds a separate
+immutable token-counting image from an already local RAGAS SDK image matching
+the existing SDK lock. Build has network none and adds no dependency. Receipt
+checks bind clean source commit/tree, dependency lock and image labels. `smoke`
+imports the pinned SDK count surface locally without a client/key/network.
+`count` requires a separate explicit authorization record binding the exact
+input inventory, provider/model and `provider_token_count_only` scope before
+any client is opened. It passes the environment credential by name only; the
+SDK reads it. The RA https host guard, no redirects/proxies, no SDK retry and
+existing external_api container admission apply. It calls only OpenAI's input
+token-count endpoint, not text generation. Full request/schema bodies are counted.
+
+The caller permits two simultaneous counts, 120 seconds each, two hours total,
+at most ten deterministic whole-target disclosure levels and one technical
+retry per level. Every count/failure and modified request hash is retained.
+The final admitted request bodies and token receipts are inventoried separately;
+they do not themselves authorize inference. No live count has been qualified
+without author authorization. Only linux/amd64 is exercised by the inherited
+SDK image; this does not resolve RA-D10. Token counting for later Haiku/Sol
+judgment requests and the generation/review/assessment executor remain a later
+integration after the actual token-admitted manifest is available.
