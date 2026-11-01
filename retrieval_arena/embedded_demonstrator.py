@@ -217,7 +217,9 @@ def fixture_run(inp, out, cfg):
     index = '<!doctype html><meta charset="utf-8"><title>Authored refinement demonstration</title><h1>Authored refinement demonstration</h1><p>Source previews; equal-score designed cases. No editorial efficacy or reader benefit is established.</p><ul>'
     index += ''.join(f'<li><a href="{p}">{p}</a></li>' for p in card_paths)+'</ul>'
     (out/'index.html').write_text(index,encoding='utf-8')
-    write(out/'proposal.v2.schema.json', ledger.PROPOSAL_SCHEMA)
+    proposal_schema,event_schema=ledger.public_schemas()
+    write(out/'proposal.v2.schema.json', proposal_schema)
+    write(out/'event.v2.schema.json', event_schema)
     return {'scenarios':summaries,'cards':card_paths,'unique_solves':len(solve_cache)}
 
 
@@ -362,6 +364,9 @@ def run(inp, out):
     if set(p.name for p in out.iterdir())!={'.retrieval-arena-output-owner'}: raise ValueError('output-not-fresh')
     cfg=read(inp/'config.json')
     if request['stage']=='fixtures': result=fixture_run(inp,out,cfg)
+    elif request['stage']=='requests':
+        from .embedded_request_plan import prepare
+        result=prepare(inp,out,cfg)
     elif request['stage']=='access':
         import multiprocessing as mp
         proc=mp.get_context('spawn').Process(target=_access_worker,args=(inp,out,cfg))

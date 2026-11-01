@@ -15,11 +15,28 @@ FIXTURE_PROVENANCE = e._obj({'kind': {'const': 'authored_fixture'},
 MODEL_PROVENANCE = copy.deepcopy(e.PROPOSAL_SCHEMA['properties']['provenance'])
 MODEL_PROVENANCE['properties']['kind'] = {'const': 'model_response'}
 MODEL_PROVENANCE['required'].append('kind')
+MODEL_PROVENANCE['properties']['status'] = {'const':'model-response'}
 # Conditional provenance schemas are emitted and enforced by validate_proposal.
 PROPOSAL_SCHEMA['properties']['provenance'] = {}
 PROPOSAL_SCHEMA['allOf'] = [{'if': {'properties': {'provenance': {'properties': {'kind': {'const': kind}}}}},
     'then': {'properties': {'provenance': schema}}} for kind, schema in
     [('authored_fixture', FIXTURE_PROVENANCE), ('model_response', MODEL_PROVENANCE)]]
+
+
+def public_schemas():
+    """Full JSON Schema unions; the dependency-free validator uses tagged checks."""
+    proposal=copy.deepcopy(PROPOSAL_SCHEMA); proposal.pop('allOf')
+    proposal['properties']['provenance']={'oneOf':[FIXTURE_PROVENANCE, MODEL_PROVENANCE]}
+    event_schema=copy.deepcopy(e.EVENT_SCHEMA)
+    event_schema['properties']['schema_version']={'const':VERSION+'.event'}
+    event_schema['properties']['authority']={'enum':['model','reviewer','host','fixture_author']}
+    fixture_review=e._obj({'kind':{'const':'authored_fixture'},'manifest_sha256':e.H,
+        'semantic_score':{'const':6},'relation':{'enum':list(e.RELATIONS)},'decision':{'const':'eligible'}})
+    payloads=dict(e.EVENT_PAYLOADS,proposed=proposal,
+                  reviewed={'oneOf':[e.EVENT_PAYLOADS['reviewed'],fixture_review]})
+    event_schema['allOf']=[{'if':{'properties':{'type':{'const':typ}}},
+        'then':{'properties':{'payload':schema}}} for typ,schema in payloads.items()]
+    return proposal,event_schema
 
 
 def validate_proposal(p):

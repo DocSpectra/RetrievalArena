@@ -67,3 +67,12 @@ There is no live model execution in this operator. Reusable external_api
 transport/accounting remain in model_providers and need an authorized caller
 before real pool construction. Authored assertions and future AI references
 must not be pooled. No efficacy, global minimum or recovered intent is claimed.
+
+The `requests` stage projects frozen access into exact provider request bodies,
+with full raw excerpts/byte intervals and semantic text, excluding graph scores,
+rankings and group membership. The large character maps remain in local evidence.
+It records request hashes/bytes but refuses to claim provider token counts.
+The deterministic over-cap helper removes the last-ranked whole target paragraph,
+then last target, preserving one target/passage; a final over-cap packet is omitted.
+No source sentence is truncated. A provider token-counting request is an outbound
+disclosure requiring consumer authorization; none is made by this offline stage.

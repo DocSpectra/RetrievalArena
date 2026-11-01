@@ -175,6 +175,21 @@ class FixtureLedgerV2(unittest.TestCase):
         self.assertEqual(rows[0]['text'],'The manual explains engines.')
         self.assertNotIn('b.md',rows[0]['text'])
 
+    def test_request_projection_has_exact_raw_unicode_and_no_graph_feedback(self):
+        from retrieval_arena.embedded_request_plan import disclosure, omit_lowest_target_passage
+        raw='Café [manual](b.md) explains engines.\r\n'.encode()
+        para=demo.paragraphs(raw)[0][0]
+        packet={'source_id':'a','source_path':'a.md','source_sha256':e.rawhash(raw),
+                'source_paragraphs':[para],'targets':[{'target_id':'b','path':'b.md','title':'Target',
+                'source_sha256':e.rawhash(raw),'paragraphs':[para,para]}]}
+        result=disclosure(packet,{'a':raw,'b':raw})
+        self.assertNotIn('region_id',result);self.assertNotIn('jaccard',str(result))
+        self.assertEqual(result['source_paragraphs'][0]['raw_excerpt'],raw[slice(*para['raw_span'])].decode())
+        trimmed=omit_lowest_target_passage(result)
+        self.assertEqual(len(trimmed['targets'][0]['paragraphs']),1)
+        self.assertIsNone(omit_lowest_target_passage(trimmed))
+        self.assertEqual(len(result['targets'][0]['paragraphs']),2)
+
     def test_access_materializes_four_groups_and_excludes_original_pairs(self):
         from retrieval_arena.embedded_link_audit import write, read
         with tempfile.TemporaryDirectory() as tmp:
