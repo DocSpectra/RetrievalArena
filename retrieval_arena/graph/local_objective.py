@@ -67,6 +67,9 @@ def starts(nodes, p):
 
 
 def solve(nodes, edges, q, p=Policy(), extra=()):
+    if p.starts < 2 or p.maxiter < 1 or any(not np.isfinite(v) or v <= 0 for v in
+            [p.stationarity, p.identity_atol, p.spectral_atol, p.cluster_atol, p.rank_atol]):
+        raise ValueError('invalid-numerical-policy')
     nodes, ts = terms(nodes, edges, q)
     locked = anchors(nodes, edges)
     free = np.array([i for i in range(len(nodes)) if i not in locked], dtype=int)
@@ -91,7 +94,7 @@ def solve(nodes, edges, q, p=Policy(), extra=()):
         stationarity = float(np.max(abs(grad))) if len(nodes) else 0.
         phases.append(phi)
         records.append({'start': k, 'initial_sha256': ms.digest(initial.tolist()),
-                        'initial_phases': initial.tolist(), 'energy': val,
+                        'initial_phases': initial.tolist(), 'final_phases': phi.tolist(), 'energy': val,
                         'gradient_inf': stationarity, 'iterations': nit,
                         'optimizer_success': success, 'message': message,
                         'stationary': stationarity <= p.stationarity})
@@ -130,8 +133,8 @@ def spectral(nodes, edges, q, p=Policy()):
             'projector_mass': mass.tolist(), 'effective_support': float(1 / np.sum(mass**2)),
             'max_node_mass': float(max(mass)), 'residual_fro': residual,
             'orthogonality_fro': orth, 'degree': degree.tolist(),
-            'qualified': residual <= p.spectral_atol and orth <= p.spectral_atol and
-                         vals[0] >= -p.spectral_atol and vals[-1] <= 2 + p.spectral_atol,
+            'qualified': bool(residual <= p.spectral_atol and orth <= p.spectral_atol and
+                         vals[0] >= -p.spectral_atol and vals[-1] <= 2 + p.spectral_atol),
             'phase_energy_lower_bound': max(0., len(nodes) * (float(ev[0]) - p.spectral_atol)),
             'lower_bound_kind': 'n * (unnormalized lambda1 - residual allowance)',
             'normalization_mechanism': 'added edges change W, D and normalized old-edge entries'}

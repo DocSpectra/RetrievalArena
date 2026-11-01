@@ -91,4 +91,13 @@ class LocalObjective(unittest.TestCase):
         b = lo.spectral(self.nodes,list(self.edges),.25)
         self.assertEqual(a,b)
 
+    def test_receipts_are_json_safe_and_keep_all_final_phases(self):
+        import json
+        json.dumps(lo.spectral(self.nodes,self.edges,.25),allow_nan=False)
+        fit = lo.solve(self.nodes,self.edges,.25)
+        json.dumps(fit,allow_nan=False)
+        self.assertTrue(all(len(s['final_phases'])==len(self.nodes) for s in fit['starts']))
+        with self.assertRaisesRegex(ValueError,'invalid-numerical'):
+            lo.solve(self.nodes,self.edges,.25,replace(lo.Policy(),starts=0))
+
 if __name__ == '__main__': unittest.main()
