@@ -175,5 +175,28 @@ class FixtureLedgerV2(unittest.TestCase):
         self.assertEqual(rows[0]['text'],'The manual explains engines.')
         self.assertNotIn('b.md',rows[0]['text'])
 
+    def test_access_materializes_four_groups_and_excludes_original_pairs(self):
+        from retrieval_arena.embedded_link_audit import write, read
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); inp=root/'input'; out=root/'output'; inp.mkdir();out.mkdir();(inp/'corpus').mkdir()
+            pages=[]; regions=[]; edges=[]
+            for i in range(4):
+                nodes=[f'{i}{n}' for n in 'abc']
+                for n in nodes:
+                    raw=b'The engine manual explains this workflow.\n'
+                    (inp/'corpus'/(n+'.md')).write_bytes(raw)
+                    pages.append({'doc_id':n,'path':n+'.md','raw_sha256':e.rawhash(raw)})
+                edges += [[nodes[0],nodes[1]],[nodes[1],nodes[2]]]
+                regions.append({'assignment':'development','region_id':str(i),'nodes':nodes,'source_families':['fixture'],
+                                'component_membership':{n:str(i) for n in nodes}})
+            write(inp/'pages.json',pages);write(inp/'regions.json',regions);write(inp/'original.json',{'edges':edges})
+            result=demo.access_run(inp,out,{'pages':'pages.json','regions':'regions.json','original':'original.json','corpus':'corpus'})
+            self.assertEqual(len(result['groups']),4);self.assertEqual(result['packets'],8)
+            self.assertEqual(len(list((out/'packets').glob('*.json'))),8)
+            for packet in read(out/'packets.json'):
+                for target in packet['targets']:
+                    pair=[packet['source_id'],target['target_id']]
+                    self.assertNotIn(pair,edges);self.assertNotIn(pair[::-1],edges)
+
 
 if __name__=='__main__': unittest.main()

@@ -293,6 +293,7 @@ def paragraphs(raw, *, source=False):
 
 def access_run(inp, out, cfg):
     started = time.monotonic(); pages = read(inp/cfg['pages']); regions = read(inp/cfg['regions'])
+    (out/'packets').mkdir()
     if isinstance(pages,list): pages={p['path']:p for p in pages}
     by_id={p['doc_id']:p for p in pages.values()}
     if len(regions)!=4 or any(r['assignment']!='development' for r in regions): raise ValueError('development-only-four-groups')
