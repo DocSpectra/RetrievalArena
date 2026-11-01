@@ -8,13 +8,13 @@ import subprocess
 REPO=Path(__file__).resolve().parents[1]
 
 def call(*args): return subprocess.check_output(list(args),cwd=REPO).decode().strip()
-def digest(x): return hashlib.sha256(json.dumps(x,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+def digest(x): return hashlib.sha256(json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False).encode()).hexdigest()
 def identity():
     if call('git','status','--porcelain'): raise ValueError('embedded-api-source-not-clean')
     return call('git','rev-parse','HEAD'),call('git','rev-parse','HEAD^{tree}')
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('command',choices=['build','smoke','count'])
+    p=argparse.ArgumentParser();p.add_argument('command',choices=['build','smoke','count','model'])
     p.add_argument('--receipt',required=True);p.add_argument('--base-image');p.add_argument('--input-root');p.add_argument('--output-root');p.add_argument('--authorization')
     a=p.parse_args();receipt=Path(a.receipt).resolve();commit,tree=identity()
     lock=hashlib.sha256((REPO/'containers/ragas/requirements.lock').read_bytes()).hexdigest()
@@ -42,20 +42,31 @@ def main():
     if info['Id']!=value['image'] or labels.get('org.opencontainers.image.revision')!=commit or labels.get('io.retrieval-arena.source.tree')!=tree or labels.get('io.retrieval-arena.embedded-api.lock')!=lock:
         raise ValueError('embedded-api-image-identity')
     args=['docker','run','--rm','--platform','linux/amd64','--read-only','--cpus','2','--memory','2g',
-          '--cap-drop','ALL','--security-opt','no-new-privileges','--pids-limit','512','--tmpfs','/tmp:rw,nosuid,nodev,size=256m']
+          '--cap-drop','ALL','--security-opt','no-new-privileges','--pids-limit','512','--tmpfs','/tmp:rw,nosuid,nodev,size=256m',
+          '--env','RA_SOURCE_COMMIT='+commit,'--env','RA_SOURCE_TREE='+tree,
+          '--env','RA_IMAGE_REFERENCE='+value['image'],'--env','RA_DEPENDENCY_LOCK_SHA256='+lock,'--env','RA_PLATFORM=linux/amd64']
     if a.command=='smoke':
         subprocess.check_call([*args,'--network','none',value['image'],'smoke']);return
     if not all([a.input_root,a.output_root,a.authorization]): raise ValueError('count-paths-required')
     auth_path=Path(a.authorization).resolve();authorization=json.loads(auth_path.read_bytes())
     inp=Path(a.input_root).resolve();out=Path(a.output_root).resolve()
-    if authorization.get('approved') is not True or authorization.get('scope')!='provider_token_count_only':
-        raise ValueError('explicit-token-count-authorization-required')
+    scope='provider_token_count_only' if a.command=='count' else 'bounded_embedded_refinement_v2'
+    if authorization.get('approved') is not True or authorization.get('scope')!=scope:
+        raise ValueError('explicit-'+scope+'-authorization-required')
     req=json.loads((inp/'operator-request.json').read_bytes())
-    if authorization.get('input_inventory_sha256')!=req['input_inventory_sha256']: raise ValueError('authorization-input-binding')
+    if a.command=='count' and authorization.get('input_inventory_sha256')!=req['input_inventory_sha256']: raise ValueError('authorization-input-binding')
     if inp==out or inp in out.parents or out in inp.parents: raise ValueError('count-root-overlap')
-    subprocess.check_call([*args,'--network','bridge','--env','OPENAI_API_KEY',
+    credential='OPENAI_API_KEY'
+    if a.command=='model':
+        cfg=json.loads((inp/'config.json').read_bytes());study=json.loads((inp/'study-manifest.json').read_bytes())
+        if authorization.get('study_manifest_sha256')!=digest(study):raise ValueError('authorization-manifest-binding')
+        credential={'openai':'OPENAI_API_KEY','anthropic':'ANTHROPIC_API_KEY'}[cfg['settings']['provider']]
+    if a.command=='model':args+=['--entrypoint','python']
+    tail=(['count','/input','/output','/authorization.json'] if a.command=='count' else
+          ['-B','-m','retrieval_arena.embedded_model_run','/input','/output','/authorization.json'])
+    subprocess.check_call([*args,'--network','bridge','--env',credential,
         '--mount',f'type=bind,src={inp},dst=/input,readonly', '--mount',f'type=bind,src={out},dst=/output',
         '--mount',f'type=bind,src={auth_path},dst=/authorization.json,readonly',value['image'],
-        'count','/input','/output','/authorization.json'])
+        *tail])
 
 if __name__=='__main__':main()

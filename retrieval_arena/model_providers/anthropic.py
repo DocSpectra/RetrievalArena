@@ -37,22 +37,33 @@ class AnthropicTransport:
         generation = config["generation"]
         # The SDK moves unsupported constraints into descriptions; the caller
         # still validates the reply against the original schema.
-        return {"model": config["model"], "max_tokens": config["max_output_tokens"],
+        body = {"model": config["model"], "max_tokens": config["max_output_tokens"],
                 "messages": [{"role": "user", "content": prompt}],
                 "thinking": {"type": generation["thinking"]},
                 "output_config": {"effort": generation["effort"],
                                   "format": {"type": "json_schema", "schema": self.transform(schema)}}}
+        if 'service_tier' in config: body['service_tier']=config['service_tier']
+        return body
 
-    async def __call__(self, prompt, schema, config):
+    async def __call__(self, prompt, schema, config, *, audit=None):
         require(config["provider"] == "anthropic", "judge-provider")
         body = self.request(prompt, schema, config)
         reservation = self.ledger.reserve(config["max_input_tokens"] + REQUEST_OVERHEAD_TOKENS,
                                           config["max_output_tokens"], _sha(body))
+        if audit is not None: audit({'event':'request','body':body,'reservation':reservation})
         try:
             message = await self.client.messages.create(**body)
         except Exception as exc:
             self.ledger.fail(reservation, type(exc).__name__, getattr(exc, "request_id", None))
+            if audit is not None:
+                audit({'event':'failure','error_class':type(exc).__name__,
+                       'status_code':getattr(exc,'status_code',None),'request_id':getattr(exc,'request_id',None),
+                       'redacted_response':('[authentication payload suppressed]' if type(exc).__name__ in ('AuthenticationError','PermissionDeniedError')
+                                            else redact(str(getattr(exc,'body','')), 'anthropic'))})
             raise RuntimeError("anthropic-request-failed:" + type(exc).__name__ + ":" + redact(str(getattr(exc, "status_code", "")), "anthropic")) from None
+        if audit is not None:
+            audit({'event':'response','body':message.model_dump(mode='json'),
+                   'request_id':getattr(message,'_request_id',None)})
         request_id = getattr(message, "_request_id", None)
         raw = message.usage
         usage = {"input_tokens": raw.input_tokens, "output_tokens": raw.output_tokens,

@@ -54,15 +54,19 @@ def counter_client():
 
 async def count_jobs(jobs, out, count, *, timeout=120, wall_seconds=7200):
     semaphore=asyncio.Semaphore(2); started=time.monotonic(); attempts=[]
+    authentication_blocked=False
     maximum_attempts=20*len(jobs)  # <=10 deterministic disclosure levels, one technical retry each
     (out/'counts').mkdir();(out/'admitted').mkdir()
     async def one(job):
+        nonlocal authentication_blocked
         body=copy.deepcopy(job['body']); prefix,raw=body['input'].split(MARKER,1)
         disclosed=json.loads(raw); records=[]
         for level in range(10):
             response=None
             for retry in range(2):
                 async with semaphore:
+                    if authentication_blocked:
+                        return {'job_id':job['job_id'],'status':'authentication_blocked','attempts':records}
                     remaining=wall_seconds-(time.monotonic()-started)
                     if remaining<=0 or len(attempts)>=maximum_attempts:
                         return {'job_id':job['job_id'],'status':'resource_limit','attempts':records}
@@ -70,7 +74,8 @@ async def count_jobs(jobs, out, count, *, timeout=120, wall_seconds=7200):
                         'disclosure_level':level,'technical_retry':retry,'attempt':len(attempts)+1}
                     attempts.append(attempt);records.append(attempt)
                     try:
-                        response=await asyncio.wait_for(count(model=body['model'],input=body['input'],text=body['text']),
+                        parameters={k:body[k] for k in ['model','input','text','reasoning'] if k in body}
+                        response=await asyncio.wait_for(count(**parameters),
                                                         timeout=min(timeout,remaining))
                         tokens=response['input_tokens']
                         if type(tokens) is not int or tokens<=0: raise ValueError('provider-token-count-invalid')
@@ -81,6 +86,9 @@ async def count_jobs(jobs, out, count, *, timeout=120, wall_seconds=7200):
                         attempt.update(status='technical_failure',error_class=type(exc).__name__)
                         write(out/'counts'/f"{attempt['attempt']:04}.json",{'attempt':attempt})
                         response=None
+                        if type(exc).__name__ in ('AuthenticationError','PermissionDeniedError'):
+                            authentication_blocked=True
+                            return {'job_id':job['job_id'],'status':'authentication_blocked','attempts':records}
             if response is None: return {'job_id':job['job_id'],'status':'technical_unavailable','attempts':records}
             if tokens<=16000:
                 write(out/'admitted'/(e.digest(body)+'.json'),body)
@@ -116,11 +124,18 @@ def smoke():
     import importlib.metadata as metadata
     import inspect
     from openai.resources.responses.input_tokens import AsyncInputTokens
+    from openai.resources.responses.responses import AsyncResponses
+    from anthropic.resources.messages.messages import AsyncMessages
     parameters=inspect.signature(AsyncInputTokens.count).parameters
     if not {'model','input','text'}<=set(parameters): raise ValueError('sdk-token-count-shape-unavailable')
+    anthropic_count=inspect.signature(AsyncMessages.count_tokens).parameters
+    if not {'model','messages','thinking','output_config'}<=set(anthropic_count):raise ValueError('sdk-anthropic-count-shape-unavailable')
+    if 'service_tier' not in inspect.signature(AsyncResponses.create).parameters or 'service_tier' not in inspect.signature(AsyncMessages.create).parameters:
+        raise ValueError('sdk-standard-service-tier-unavailable')
     return {'schema_version':VERSION+'.smoke','openai':metadata.version('openai'),
             'anthropic':metadata.version('anthropic'),'count_parameters':sorted(parameters),
-            'clients_constructed':0,'provider_calls':0}
+            'anthropic_count_parameters':sorted(anthropic_count),
+            'standard_service_tier_parameters_available':True,'clients_constructed':0,'provider_calls':0}
 
 
 if __name__=='__main__':

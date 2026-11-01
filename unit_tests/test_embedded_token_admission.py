@@ -62,5 +62,14 @@ class TokenAdmission(unittest.TestCase):
             results=asyncio.run(t.count_jobs([job()],Path(tmp),count))
             self.assertEqual(results[0]['status'],'over_cap_omitted')
 
+    def test_authentication_failure_halts_other_jobs_without_retry(self):
+        class AuthenticationError(Exception):pass
+        calls=[]
+        async def count(**kwargs):calls.append(kwargs);raise AuthenticationError()
+        with tempfile.TemporaryDirectory() as tmp:
+            results=asyncio.run(t.count_jobs([job(),job(),job()],Path(tmp),count))
+            self.assertLessEqual(len(calls),2)
+            self.assertTrue(all(r['status']=='authentication_blocked' for r in results))
+
 
 if __name__=='__main__':unittest.main()

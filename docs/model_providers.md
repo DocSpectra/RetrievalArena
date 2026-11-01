@@ -97,3 +97,5 @@ In the RAGAS image only, RAGAS metrics run through the Anthropic transport with 
 ## Portability
 
 The layer is pure Python with lazily imported optional SDKs, so it imports without them; the verification image has neither. The RAGAS image it runs in is still `linux/amd64` with an amd64 wheel lock (RA-D10), and its launcher is PowerShell (RA-D11).
+
+The embedded refinement caller uses an optional per-call audit callback on both hosted transports, preserving requests/reservations, canonical SDK JSON responses and redacted failures. Optional explicit service_tier settings pin Standard processing; existing callers remain unchanged. See [the integration contract](evaluations/embedded_refinement.md).

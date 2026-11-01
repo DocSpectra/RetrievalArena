@@ -13,6 +13,8 @@ COMMANDS = {
         "unit_tests.test_block_phase",
         "unit_tests.test_embedded_selection_v2",
         "unit_tests.test_embedded_token_admission",
+        "unit_tests.test_embedded_model_run",
+        "unit_tests.test_embedded_refinement",
         "unit_tests.test_embedded_link_selection",
         "unit_tests.test_local_objective",
         "unit_tests.test_embedded_links",
@@ -71,6 +73,7 @@ COMMANDS = {
     "page-roles": (),
     "compare-block-phase": (),
     "demonstrate-embedded-v2": (),
+    "refine-embedded-v2": (),
     "qualify-local-objective": (),
     "audit-embedded-links": (),
     "generate-complementary-context": (),
@@ -129,6 +132,10 @@ def main(argv: list[str]) -> int:
     if argv[1] == "demonstrate-embedded-v2":
         from retrieval_arena.embedded_demonstrator import run
         run(Path("/workspace/input"), Path("/workspace/output"))
+        return 0
+    if argv[1] == "refine-embedded-v2":
+        from retrieval_arena.embedded_refinement import run
+        run(Path('/workspace/input'),Path('/workspace/output'))
         return 0
     if argv[1] == "compare-block-phase":
         sys.path.insert(0, str(OPERATOR_ROOT))

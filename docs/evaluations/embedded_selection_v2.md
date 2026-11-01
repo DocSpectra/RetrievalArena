@@ -95,6 +95,6 @@ retry per level. Every count/failure and modified request hash is retained.
 The final admitted request bodies and token receipts are inventoried separately;
 they do not themselves authorize inference. No live count has been qualified
 without author authorization. Only linux/amd64 is exercised by the inherited
-SDK image; this does not resolve RA-D10. Token counting for later Haiku/Sol
-judgment requests and the generation/review/assessment executor remain a later
-integration after the actual token-admitted manifest is available.
+SDK image; this does not resolve RA-D10. Provider token counting for Haiku/Sol and the generation/review/assessment executor are implemented by the separate model mode; they remain gated on actual token admission and explicit bounded-study authorization.
+
+The complete real-document integration and approval-bound model mode are now in [embedded_refinement](embedded_refinement.md). Token-count and inference scopes remain separate; no network is added to verification commands.

@@ -115,3 +115,5 @@ terminal receipt. The schemas and the stratified sampling live in
 `audit-embedded-links` accepts the same `-InputRoot`, `-OutputRoot`, `-Receipt` arguments as other offline single-phase commands. See [the contract](embedded-links.md) for the input allowlist and source/fixture outputs. It runs with network none and never calls a model.
 
 `demonstrate-embedded-v2` runs the inventory-bound fixture or development-access stage with two CPUs, 2 GiB, network none and both shell adapters; [contract](evaluations/embedded_selection_v2.md).
+
+`refine-embedded-v2` consumes frozen provider artifacts for offline generation admission, proposal validation, S/Z/M copies and final-assessment assembly. Both verification shims retain network none; the separate approval-bound SDK caller executes role jobs. See [the contract](evaluations/embedded_refinement.md).

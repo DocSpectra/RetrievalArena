@@ -115,7 +115,7 @@ def replay(log, trusted_tip=None):
         if r['supersedes_event_id'] is not None:
             r['supersedes_event_id'] = mapping[r['supersedes_event_id']]
         r['event_id'] = e.digest({k:v for k,v in r.items() if k!='event_id'})
-        legacy.append(r); e.replay(legacy)
+        legacy.append(r)
         seen[row['event_id']] = row; previous = e.digest(row); mapping[row['event_id']] = r['event_id']
     if trusted_tip is not None and previous != trusted_tip: raise ValueError('untrusted-ledger-tip')
     result = e.replay(legacy)

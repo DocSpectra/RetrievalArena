@@ -27,21 +27,32 @@ class OpenAITransport:
     @staticmethod
     def request(prompt, schema, config):
         generation = config["generation"]
-        return {"model": config["model"], "input": prompt, "max_output_tokens": config["max_output_tokens"],
+        body = {"model": config["model"], "input": prompt, "max_output_tokens": config["max_output_tokens"],
                 "reasoning": {"effort": generation["reasoning_effort"]}, "store": False,
                 "text": {"format": {"type": "json_schema", "name": "ra_structured_output",
                                     "schema": schema, "strict": generation["strict"]}}}
+        if 'service_tier' in config: body['service_tier']=config['service_tier']
+        return body
 
-    async def __call__(self, prompt, schema, config):
+    async def __call__(self, prompt, schema, config, *, audit=None):
         require(config["provider"] == "openai", "judge-provider")
         body = self.request(prompt, schema, config)
         reservation = self.ledger.reserve(config["max_input_tokens"] + REQUEST_OVERHEAD_TOKENS,
                                           config["max_output_tokens"], _sha(body))
+        if audit is not None: audit({'event':'request','body':body,'reservation':reservation})
         try:
             response = await self.client.responses.create(**body)
         except Exception as exc:
             self.ledger.fail(reservation, type(exc).__name__, getattr(exc, "request_id", None))
+            if audit is not None:
+                audit({'event':'failure','error_class':type(exc).__name__,
+                       'status_code':getattr(exc,'status_code',None),'request_id':getattr(exc,'request_id',None),
+                       'redacted_response':('[authentication payload suppressed]' if type(exc).__name__ in ('AuthenticationError','PermissionDeniedError')
+                                            else redact(str(getattr(exc,'body','')), 'openai'))})
             raise RuntimeError("openai-request-failed:" + type(exc).__name__ + ":" + redact(str(getattr(exc, "status_code", "")), "openai")) from None
+        if audit is not None:
+            audit({'event':'response','body':response.model_dump(mode='json'),
+                   'request_id':getattr(response,'_request_id',None)})
         request_id = getattr(response, "_request_id", None)
         raw = response.usage
         cached = getattr(getattr(raw, "input_tokens_details", None), "cached_tokens", None) or 0

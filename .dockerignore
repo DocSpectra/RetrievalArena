@@ -27,3 +27,5 @@ containers/verification/*
 !containers/embedded_api/Dockerfile
 !retrieval_arena/
 !retrieval_arena/**
+retrieval_arena/**/__pycache__/
+retrieval_arena/**/*.pyc
