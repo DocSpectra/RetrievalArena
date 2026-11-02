@@ -134,29 +134,54 @@ def structural_export(regions,frozen,occurrences,groups,history):
                 'before_arcs':before,'after_arcs':after,'directed_arc_weight':1,
                 'simple_cycle':simple_cycle,'schedules':schedules}
             if simple_cycle:
-                cycle=nx.cycle_basis(undirected)[0];signed=0
-                for s,t in zip(cycle,cycle[1:]+cycle[:1]):signed+=1 if [s,t] in after else -1
-                flux=2*math.pi*.25*signed;wrapped=(flux+math.pi)%(2*math.pi)-math.pi
-                # Uniform w=.5 terms: each contributes 1-cos(residual).
-                row['cycle']={'nodes':cycle,'length':len(cycle),'signed_arcs':signed,'flux':flux,
-                    'wrapped_flux':wrapped,'equal_residual_stationary_energy':len(cycle)*(1-math.cos(wrapped/len(cycle))),
-                    'certified_global_optimum':False}
+                row['cycle']=cycle_record(nx.cycle_basis(undirected)[0],after)
             records.append(row)
-    return {'q':.25,'classes':classes,'candidates':records,'structural_only':True}
+    return canonical_structure({'q':.25,'classes':classes,'candidates':records,'structural_only':True})
+
+
+def cycle_record(cycle,arcs):
+    if len(set(cycle))!=len(cycle) or set(cycle)!={n for edge in arcs for n in edge}:
+        raise ValueError('minimum-set-cycle-coverage')
+    signed=0
+    for s,t in zip(cycle,cycle[1:]+cycle[:1]):
+        if [s,t] in arcs:signed+=1
+        elif [t,s] in arcs:signed-=1
+        else:raise ValueError('minimum-set-cycle-edge')
+    flux=2*math.pi*.25*signed;wrapped=(flux+math.pi)%(2*math.pi)-math.pi
+    return {'nodes':cycle,'length':len(cycle),'signed_arcs':signed,'flux':flux,
+        'wrapped_flux':wrapped,'equal_residual_stationary_energy':len(cycle)*(1-math.cos(wrapped/len(cycle))),
+        'certified_global_optimum':False}
+
+
+def canonical_structure(record):
+    """Validate raw cycle receipts, then canonicalize traversal gauge for replay.
+
+    Cycle-basis traversal can reverse with process hash order. This changes flux
+    sign, but neither the directed graph nor the equal-residual energy. Preserve
+    original exports; validate their stated traversal before normalizing it.
+    """
+    result=copy.deepcopy(record)
+    for row in result['candidates']:
+        if 'cycle' not in row:continue
+        old=row['cycle'];cycle=old['nodes'];arcs=row['after_arcs']
+        if old!=cycle_record(cycle,arcs):raise ValueError('minimum-set-cycle-receipt')
+        rotate=lambda seq:seq[seq.index(min(seq)):]+seq[:seq.index(min(seq))]
+        canonical=min(rotate(cycle),rotate(list(reversed(cycle))))
+        row['cycle']=cycle_record(canonical,arcs)
+    return result
 
 
 def verify(inp,out,cfg):
-    _,_,_,_,_,proofs=load_bound(inp)
+    pages,contents,regions,frozen,oldgroups,proofs=load_bound(inp)
     result=inp/'result';groups=read(result/'groups.json')
     seal=read(result/'primary-outcomes-sealed.json')
     if seal['groups']!=groups or seal['score_replay']!=proofs:raise ValueError('minimum-set-primary-seal')
-    pages,contents,regions,frozen,oldgroups,_=load_bound(inp)
     occurrences=read(inp/'frozen-occurrences.json');policy=dict(m.v2.DEFAULT_POLICY,maximum=1,constraint_version=c.constraints.VERSION)
     for region,plan,old,group in zip(regions,frozen['A']['groups'],oldgroups,groups):
         graph=graph_for(region,frozen,occurrences)
         replay=m.select_minimum_set(plan['pool'],graph,policy,{},scorer=lambda prefix:old['candidate_costs'][prefix[0]])
         if replay!=group['arms']['M'] or group['historical_M_v2']!=old['arms']['M']:raise ValueError('minimum-set-selection-replay')
-    if structural_export(regions,frozen,occurrences,groups,inp/'historical')!=read(result/'changed-block-structures.json'):
+    if structural_export(regions,frozen,occurrences,groups,inp/'historical')!=canonical_structure(read(result/'changed-block-structures.json')):
         raise ValueError('minimum-set-structure-replay')
     proof=c.verify(inp,out,cfg,selection_fn=m.select_minimum_set)
     proof.update(score_replay=proofs,selector=m.VERSION,structural_replay_equal=True)

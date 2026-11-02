@@ -126,5 +126,14 @@ class MinimumSet(unittest.TestCase):
             anchors=read(inp/'ledger-anchors.json');anchors['M']='0'*64;write(inp/'ledger-anchors.json',anchors)
             with self.assertRaisesRegex(ValueError,'tip'):study.verify(inp,checked,{})
 
+    def test_cycle_traversal_replay_gauge_and_tamper(self):
+        arcs=[['a','b'],['b','c'],['a','c']]
+        make=lambda cycle:{'candidates':[{'after_arcs':arcs,'cycle':study.cycle_record(cycle,arcs)}]}
+        baseline=study.canonical_structure(make(list('abc')))
+        for cycle in itertools.permutations('abc'):
+            self.assertEqual(study.canonical_structure(make(list(cycle))),baseline)
+        bad=make(list('abc'));bad['candidates'][0]['cycle']['flux']+=.1
+        with self.assertRaisesRegex(ValueError,'cycle-receipt'):study.canonical_structure(bad)
+
 
 if __name__=='__main__':unittest.main()

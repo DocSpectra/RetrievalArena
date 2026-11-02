@@ -37,3 +37,10 @@ is explanatory, not a global-optimum certificate. Corpus interpretation belongs
 to the consumer. Same 2 CPU/2 GiB, 600-second/100-MiB group watchdog and one native
 thread; no dependencies added. Pure Python remains portable; only existing
 linux/amd64 verification is exercised (RA-D09 remains open).
+
+Cycle traversal is canonicalized by the lexicographically first rotation and
+direction. Replay of older exports first validates their raw cycle/flux receipt
+against actual arcs, then normalizes this traversal gauge. Reversing traversal
+changes the reported flux sign but leaves graph orientation and cycle energy
+unchanged; stale/incorrect flux metadata still fails. Numerical/selection
+receipts and original exported files are preserved.
