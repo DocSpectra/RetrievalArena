@@ -547,8 +547,8 @@ def run(inp,out):
     elif stage=='proposals':result=proposals(inp,out,cfg)
     elif stage=='select':result=select_and_apply(inp,out,cfg)
     elif stage=='competitive-select':
-        from .embedded_competitive import select_and_apply
-        result=select_and_apply(inp,out,cfg)
+        from .embedded_competitive import select_and_apply as competitive_select_and_apply
+        result=competitive_select_and_apply(inp,out,cfg)
     elif stage=='assemble':result=assemble(inp,out,cfg)
     else:raise ValueError('refinement-stage')
     write(out/'summary.json',{'schema_version':VERSION,'stage':stage,'result':result,'runtime_seconds':time.monotonic()-started,
