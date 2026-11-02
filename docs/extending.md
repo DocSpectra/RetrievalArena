@@ -44,3 +44,5 @@ frozen k=1 pair-set comparison, see [competitive selection](evaluations/embedded
 For fixed-node additive phase-energy qualification and bounded solver diagnostics, see [local objectives](evaluations/local_objective.md).
 
 For exact component/block cancellation and finite phase comparisons, see [block phase](evaluations/block_phase.md).
+
+For opt-in individual versus selected-set constraints and bounded read-only evidence context, see [constraint/context v2](evaluations/embedded_constraints.md).

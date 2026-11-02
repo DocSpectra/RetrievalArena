@@ -7,7 +7,9 @@ from itertools import combinations
 import math
 
 
-def feasible_sets(pool, maximum=4):
+def feasible_sets(pool, maximum=4, *, constraint_version=None):
+    from .embedded_constraints import admit_version
+    admit_version(constraint_version)
     if len(pool) > 20 or maximum < 0 or maximum > 4:
         raise ValueError('selection-budget')
     ids = [p['proposal_id'] for p in pool]
@@ -15,7 +17,7 @@ def feasible_sets(pool, maximum=4):
     if any(not p['semantic_eligible'] or p['semantic_score'] < 5 or p['semantic_score'] > 6 for p in pool):
         raise ValueError('pool-not-semantically-eligible')
     allpairs={(p['source_id'],p['target_id']) for p in pool}
-    if any((t,s) in allpairs for s,t in allpairs): raise ValueError('pool-reciprocal-partners')
+    if constraint_version is None and any((t,s) in allpairs for s,t in allpairs): raise ValueError('pool-reciprocal-partners')
     result = []
     for k in range(min(maximum,len(pool)) + 1):
         for subset in combinations(pool,k):

@@ -85,9 +85,11 @@ def confirm(records, jobs, output):
     return result
 
 
-def freeze(records, regions):
+def freeze(records, regions, *, constraint_version=None):
     """Full rejected/accepted pool and semantic winners, before any scoring."""
-    conflicts = f.ledger.pool_conflicts([r['proposal'] for r in records if 'proposal' in r])
+    f.constraints.admit_version(constraint_version)
+    proposals=[r['proposal'] for r in records if 'proposal' in r]
+    conflicts = f.constraints.pool_conflicts(proposals) if constraint_version else f.ledger.pool_conflicts(proposals)
     groups = []
     for region in regions:
         good = [r for r in records if r.get('semantic_eligible') and r.get('region_id') == region['region_id']]
@@ -95,6 +97,7 @@ def freeze(records, regions):
         for r in good:
             if not r.get('haiku_eligible') or r.get('confirmation_status') != 'eligible':
                 raise ValueError('two-stage-support-required')
+            if constraint_version and r['status']!='structural_eligible':raise ValueError('individual-host-admission-required')
             p = r['proposal']; pid = p['proposal_id']
             pool.append({k:p[k] for k in ('proposal_id','source_id','target_id')} | {
                 'semantic_score':r['semantic_score'], 'semantic_eligible':True,
@@ -102,14 +105,21 @@ def freeze(records, regions):
                 'conflicts':sorted({other for c in conflicts if pid in c['proposal_ids']
                                     for other in c['proposal_ids'] if other != pid})})
         pairs = [(p['source_id'],p['target_id']) for p in pool]
-        if len(set(pairs)) != len(pairs): raise ValueError('duplicate-directed-pair')
+        if len(set(pairs)) != len(pairs):
+            if constraint_version is None:raise ValueError('duplicate-directed-pair')
+            # Preserve every occurrence/review in records; count each pair once.
+            canonical={}
+            for candidate in sorted(pool,key=lambda p:(-p['semantic_score'],p['proposal_id'])):
+                canonical.setdefault((candidate['source_id'],candidate['target_id']),candidate)
+            pool=list(canonical.values())
         pool.sort(key=lambda p:(-p['semantic_score'],p['tie_id'],p['proposal_id']))
         tier = [p for p in pool if p['semantic_score'] == pool[0]['semantic_score']] if pool else []
         groups.append({'region_id':region['region_id'],'pool':pool, 'budget':int(bool(pool)),
             'top_tier':[p['proposal_id'] for p in tier], 'top_tier_pair_count':len(tier),
             'competitive':len(tier)>=2,'semantic_winner':tier[0]['proposal_id'] if tier else None})
     return {'schema_version':VERSION,'records':records,'records_sha256':e.digest(records),
-        'groups':groups,'conflicts':conflicts,'tie_seed':3801,'frozen_before_selection':True}
+        'groups':groups,'conflicts':conflicts,'tie_seed':3801,'frozen_before_selection':True,
+        **({'constraint_version':constraint_version} if constraint_version else {})}
 
 
 def outcome(plan, arms):
@@ -132,7 +142,7 @@ def outcome(plan, arms):
 def select_and_apply(inp, out, cfg, *, scorer_factory=BoundedBlockScorer, diagnostic=True):
     pages, _, contents, regions = f.load_sources(inp)
     frozen = read(inp/'common-pool.json'); records = frozen['records']
-    if freeze(records,regions) != frozen: raise ValueError('competitive-pool-binding')
+    if freeze(records,regions,constraint_version=read(inp/'study-manifest.json').get('constraint_version')) != frozen: raise ValueError('competitive-pool-binding')
     manifest = read(inp/'study-manifest.json')
     if manifest.get('maximum_group_arm_edits') != 1: raise ValueError('competitive-budget')
     occurrences = read(inp/'frozen-occurrences.json'); groups=[]; state=[]
@@ -143,6 +153,7 @@ def select_and_apply(inp, out, cfg, *, scorer_factory=BoundedBlockScorer, diagno
             'audit_binding':{'pool_sha256':e.digest(frozen),'region':region,
                 'mask_sha256':e.digest(occurrences),'pages_sha256':e.digest(read(inp/'pages.json'))}}
         policy=dict(DEFAULT_POLICY,maximum=1,max_output_bytes=50*1024**2)
+        if manifest.get('constraint_version'):policy['constraint_version']=manifest['constraint_version']
         start=time.monotonic(); scorer=scorer_factory(graph,pool,policy) if plan['competitive'] else None
         # Noncompetitive groups have no numerical selection test. Record fallback
         # without entering the solver, including when every group is singleton.
@@ -250,7 +261,7 @@ class CompetitiveStudy(study.Study):
             write(poolinp/'model-jobs.json',haiku_jobs);shutil.copyfile(hr/'summary.json',poolinp/'model-summary.json')
             shutil.copytree(hr,poolinp/'model-output')
         records=confirm(f.eligible_records(poolinp),sol_jobs,sr)
-        frozen=freeze(records,read(source/'regions.json'));poolout=self.out/(lane+'-pool-output');poolout.mkdir(exist_ok=True)
+        frozen=freeze(records,read(source/'regions.json'),constraint_version=admitted.get('constraint_version'));poolout=self.out/(lane+'-pool-output');poolout.mkdir(exist_ok=True)
         path=poolout/'common-pool.json'
         if path.exists() and read(path)!=frozen:raise ValueError('frozen-pool-drift')
         if not path.exists():write(path,frozen)

@@ -64,9 +64,9 @@ def _legacy_proposal(p):
     return row
 
 
-def apply_edit(raw, target_raw, proposal, pages, edges, region, limits, proposed_pool=()):
+def apply_edit(raw, target_raw, proposal, pages, edges, region, limits, proposed_pool=(), *, constraint_version=None):
     return e.apply_edit(raw, target_raw, _legacy_proposal(proposal), pages, edges, region, limits,
-                        proposed_pool=[_legacy_proposal(p) for p in proposed_pool])
+                        proposed_pool=[_legacy_proposal(p) for p in proposed_pool], constraint_version=constraint_version)
 
 
 def pool_conflicts(pool):

@@ -281,13 +281,15 @@ def pool_conflicts(proposals):
             if reason: conflicts.append({'proposal_ids':[a,b],'reason':reason})
     return conflicts
 
-def apply_edit(raw,target_raw,proposal,pages,baseline_edges,region,limits,prior_spans=(),proposed_pool=()):
+def apply_edit(raw,target_raw,proposal,pages,baseline_edges,region,limits,prior_spans=(),proposed_pool=(), *, constraint_version=None):
     """Return bytes and host facts, without writing to an original corpus."""
+    from .embedded_constraints import VERSION as constraints_v2, admit_version
+    admit_version(constraint_version)
     validate_schema(proposal,PROPOSAL_SCHEMA)
     if proposed_pool:
         if proposal['proposal_id'] not in {p['proposal_id'] for p in proposed_pool}: raise ValueError('proposal-pool-binding')
         for conflict in pool_conflicts(proposed_pool):
-            if proposal['proposal_id'] in conflict['proposal_ids'] and conflict['reason']=='proposed-reciprocal-partner':
+            if constraint_version is None and proposal['proposal_id'] in conflict['proposal_ids'] and conflict['reason']=='proposed-reciprocal-partner':
                 raise ValueError('proposed-reciprocal-partner')
     if proposal['coordinate_convention']!=COORDINATES: raise ValueError('coordinates')
     if proposal['source_sha256']!=rawhash(raw) or proposal['target_sha256']!=rawhash(target_raw):
@@ -340,7 +342,7 @@ def apply_edit(raw,target_raw,proposal,pages,baseline_edges,region,limits,prior_
             lo,hi=sentence_span(b['content'],a,z)
             if re.search(r'[.!?](?=\s)|\n',b['content'][a:z]): raise ValueError('anchor-crosses-sentence')
             if proposal['sentence']!=b['content'][lo:hi]: raise ValueError('sentence-evidence')
-            if any(lo<=x<hi for x,_,_ in _parsed_links(b['content'],b['env'])): raise ValueError('sentence-link-budget')
+            if constraint_version is None and any(lo<=x<hi for x,_,_ in _parsed_links(b['content'],b['env'])): raise ValueError('sentence-link-budget')
             selected=(b,lo,hi)
             break
     if selected is None: raise ValueError('not-editable-prose')
@@ -367,7 +369,7 @@ def apply_edit(raw,target_raw,proposal,pages,baseline_edges,region,limits,prior_
     old=project(occurrences(raw,src,pages),set(by_id)); new=project(occurrences(edited,src,pages),set(by_id))
     if set(new)-set(old)!={(source,target)} or set(old)-set(new): raise ValueError('graph-delta')
     patch={'source_id':source,'span':[start,end],'old':anchor,'replacement':insertion.decode()}
-    return edited,{'authority':'host','source_before_sha256':rawhash(raw),'source_after_sha256':rawhash(edited),
+    return edited,{**({'constraint_version':constraints_v2} if constraint_version else {}), 'authority':'host','source_before_sha256':rawhash(raw),'source_after_sha256':rawhash(edited),
         'patch':patch,'patch_sha256':digest(patch),'rendered_before_sha256':digest(merge(before)),
         'rendered_after_sha256':digest(merge(after)),'semantic_before_sha256':rawhash(semantic_text(raw).encode()),
         'semantic_after_sha256':rawhash(semantic_text(edited).encode()),

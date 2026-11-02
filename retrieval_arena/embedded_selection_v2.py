@@ -119,7 +119,7 @@ def select_embedded_v2(pool, group_graph, policy=None, score_cache=None, *, arm=
         if type(p['semantic_score']) is not int or p['semantic_score'] not in (5, 6):
             raise ValueError('v2-semantic-score-tier')
         bp.lo.eligible_additions(graph['nodes'], graph['edges'], [[p['source_id'], p['target_id']]])
-    feasible = feasible_sets(pool, cfg['maximum'])
+    feasible = feasible_sets(pool, cfg['maximum'], constraint_version=cfg.get('constraint_version'))
     budget = max(map(len, feasible), default=0)
     completions = [c for c in feasible if len(c) == budget]
     order = sorted(pool, key=lambda p: (-p['semantic_score'], p.get('tie_id', p['proposal_id']), p['proposal_id']))
@@ -135,6 +135,9 @@ def select_embedded_v2(pool, group_graph, policy=None, score_cache=None, *, arm=
         scores = []; cache_ids = []; prefixes = []
         for p in tier:
             prefix = tuple(chosen + [p['proposal_id']]); prefixes.append(list(prefix))
+            if cfg.get('constraint_version'):
+                from .embedded_constraints import validate_selected
+                validate_selected(pool, prefix, graph['edges'])
             key = digest([binding, arm if arm != 'M' else 'q=.25', sorted(prefix)])
             cache_ids.append(key)
             if arm == 'M':

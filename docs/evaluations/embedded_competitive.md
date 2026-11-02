@@ -54,3 +54,5 @@ true/partial ties, overlap, unavailable alternatives, lower-tier singleton,
 empty/negative pools, confirmation disagreement, disposition coverage, stable
 hash order, full fake-provider copies/ledgers, deterministic replay and restart.
 Authored/mock outcomes establish plumbing, never real semantic validity.
+
+Opt-in [constraint/context v2](embedded_constraints.md) retains reciprocal alternatives, counts duplicate occurrences once and validates selected assignments before materialization and replay. Historical defaults remain unchanged.

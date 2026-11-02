@@ -17,6 +17,7 @@ import time
 from . import embedded_links as e
 from . import embedded_ledger_v2 as ledger
 from . import embedded_interface as interface
+from . import embedded_constraints as constraints
 from .embedded_link_audit import read, write, portable_inventory
 from .embedded_model_run import validate_result, evidence_valid, response_text
 from .embedded_selection_v2 import select_embedded_v2, BoundedBlockScorer, DEFAULT_POLICY
@@ -53,6 +54,7 @@ def prepare_generation(inp,out,cfg):
         if e.digest(body)!=row['request_sha256'] or body!=OpenAITransport.request(body['input'],role['schema'],role['settings']):
             raise ValueError('admitted-request-model-settings')
         data=json.loads(body['input'].split(MARKER,1)[1])
+        if manifest.get('competitive_selection_version') and data!=original_data:raise ValueError('exact-competitive-disclosure-drift')
         if data['source_id']!=source or data['source_paragraphs']!=original_data['source_paragraphs']:raise ValueError('source-disclosure-drift')
         target_map={t['target_id']:t for t in original_data['targets']}
         selected_targets={t['target_id']:t for t in data['targets']}
@@ -64,7 +66,7 @@ def prepare_generation(inp,out,cfg):
             chosen=selected_targets[tid]
             if {k:v for k,v in chosen.items() if k!='paragraphs'}!={k:v for k,v in target_map[tid].items() if k!='paragraphs'}:
                 raise ValueError('target-identity-drift')
-            if any(p not in target_map[tid]['paragraphs'] for p in chosen['paragraphs']) or not chosen['paragraphs']:
+            if any(p not in target_map[tid]['paragraphs'] for p in chosen['paragraphs']) or (not chosen['paragraphs'] and not packet.get('context_version')):
                 raise ValueError('target-passage-drift')
             if manifest.get('interface_version')==interface.VERSION:
                 # Public IDs replace byte arithmetic; recover the original
@@ -179,6 +181,7 @@ def proposals(inp,out,cfg):
     packets={p['packet_sha256']:p for p in read(inp/'packets.json')}
     jobs={j['job_id']:j for j in read(inp/'model-jobs.json')}
     records=[];manifest=read(inp/'study-manifest.json');interface_log=[]
+    constraint_version=constraints.admit_version(manifest.get('constraint_version'))
     use_ids=manifest.get('interface_version')==interface.VERSION
     if (inp/'admission-omissions.json').exists():
         for row in read(inp/'admission-omissions.json'):
@@ -236,19 +239,19 @@ def proposals(inp,out,cfg):
             try:
                 ledger.validate_proposal(p);record['proposal']=p
                 review_disclosure(p,packet,contents,use_ids)
-                _,facts=ledger.apply_edit(contents[source],contents[target],p,pages,read(inp/'original.json')['edges'],region,LIMITS)
+                _,facts=ledger.apply_edit(contents[source],contents[target],p,pages,read(inp/'original.json')['edges'],region,LIMITS,constraint_version=constraint_version)
                 record.update(status='structural_eligible',structural_facts_sha256=e.digest(facts))
                 if p['relation']=='insufficient_evidence' or p['basis']=='unsupported':
                     record.update(status='proposer_rejected',reason='proposer-insufficient-evidence')
             except (ValueError,UnicodeError) as exc:record.update(status='structural_rejected',reason=str(exc))
             records.append(record)
     pool=[r['proposal'] for r in records if 'proposal' in r]
-    conflicts=ledger.pool_conflicts(pool)
+    conflicts=(constraints.pool_conflicts(pool) if constraint_version else ledger.pool_conflicts(pool))
     for record in records:
         if 'proposal' not in record:continue
         pid=record['proposal']['proposal_id']
         bad=[c for c in conflicts if pid in c['proposal_ids'] and c['reason']=='proposed-reciprocal-partner']
-        if bad:record.update(status='structural_rejected',reason='proposed-reciprocal-partner')
+        if bad and constraint_version is None:record.update(status='structural_rejected',reason='proposed-reciprocal-partner')
     review_jobs=[]
     for record in records:
         if record['status']!='structural_eligible':continue
@@ -312,7 +315,9 @@ def diagnostics(graph, deadline, cache):
 
 def select_groups(inp,out,records,regions,occurrences,scorer_factory=BoundedBlockScorer,with_diagnostics=True):
     deadline=time.monotonic()+2400;groups=[]
-    conflicts=ledger.pool_conflicts([r['proposal'] for r in records if 'proposal' in r])
+    version=constraints.admit_version(read(inp/'study-manifest.json').get('constraint_version'))
+    all_proposals=[r['proposal'] for r in records if 'proposal' in r]
+    conflicts=constraints.pool_conflicts(all_proposals) if version else ledger.pool_conflicts(all_proposals)
     for region in regions:
         relevant=[r for r in records if r.get('region_id')==region['region_id']]
         good=[r for r in relevant if r.get('semantic_eligible')]
@@ -339,6 +344,7 @@ def select_groups(inp,out,records,regions,occurrences,scorer_factory=BoundedBloc
         maximum=read(inp/'study-manifest.json').get('maximum_group_arm_edits',4)
         if type(maximum) is not int or not 0<=maximum<=4:raise ValueError('maximum-group-arm-edits')
         policy=dict(DEFAULT_POLICY,maximum=maximum,wall_seconds=max(.001,min(600,deadline-time.monotonic())),max_output_bytes=50*1024**2)
+        if version:policy['constraint_version']=version
         scorer=scorer_factory(graph,pool,policy);score_cache={};solve_cache=getattr(scorer,'cache',{})
         start=time.monotonic();arms={a:select_embedded_v2(pool,graph,policy,score_cache,arm=a,scorer=scorer) for a in ['S','Z','M']}
         if arms['S']['selected']!=arms['Z']['selected'] or len({a['achieved_budget'] for a in arms.values()})!=1:
@@ -403,6 +409,10 @@ def materialize(inp,out,records,groups,pages,contents,regions):
         root=out/arm;root.mkdir();edited=dict(contents);log=[];facts={};selected_steps={}
         for group in groups:
             for step in group['arms'][arm]['trace']:selected_steps[step['selected']]=(group,step)
+        if manifest.get('constraint_version'):
+            constraints.admit_version(manifest['constraint_version'])
+            assignment=constraints.validate_selected(all_pool,list(selected_steps),original)
+            write(root/'selected-set-proof.json',assignment)
         for record in records:
             if 'proposal' not in record:continue
             p=copy.deepcopy(record['proposal']);p['arm_id']=arm
@@ -444,7 +454,7 @@ def materialize(inp,out,records,groups,pages,contents,regions):
                 'achieved_budget':selection['achieved_budget'],'conflicts_skips':[]})
             raw=contents[p['source_id']]
             new,f=ledger.apply_edit(edited[p['source_id']],contents[p['target_id']],p,pages,original,
-                                   region_by_id[p['region_id']],LIMITS,all_pool)
+                                   region_by_id[p['region_id']],LIMITS,all_pool, constraint_version=manifest.get('constraint_version'))
             if e.replay_patch(raw,f)!=new or e.replay_patch(new,f)!=new:raise ValueError('patch-replay')
             edited[p['source_id']]=new;facts[p['proposal_id']]=f
             append('applied',{k:f[k] for k in ['patch_sha256','source_before_sha256','source_after_sha256','occurrence_id','edge_id']}|{'facts_sha256':e.digest(f)})
@@ -464,6 +474,9 @@ def materialize(inp,out,records,groups,pages,contents,regions):
                 before_pairs=set(e.project(old,set(contents),'original'));after_pairs=set(e.project(new,set(contents),'original'))
                 if after_pairs-before_pairs!=expected or before_pairs-after_pairs:raise ValueError('original-parser-graph-delta')
             dest=root/'corpus'/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(after)
+        if manifest.get('constraint_version'):
+            replayed,_=constraints.replay_assignment(all_pool,list(selected_steps),original,contents,facts)
+            if replayed!=edited:raise ValueError('selected-assignment-replay')
         tip=e.digest(log[-1]) if log else '0'*64;replay=ledger.replay(log,tip)
         if not log:(root/'intent-events.jsonl').write_bytes(b'')
         write(root/'trusted-tip.json',{'tip_sha256':tip,'replay':replay});write(root/'host-facts.json',facts)
@@ -538,6 +551,9 @@ def run(inp,out):
     cfg=read(inp/'config.json');started=time.monotonic();stage=cfg['stage']
     if stage=='prepare-generation':result=prepare_generation(inp,out,cfg)
     elif stage=='prepare-interface':result=prepare_interface(inp,out,cfg)
+    elif stage=='prepare-packet-context':
+        from .embedded_packet_context import prepare
+        result=prepare(inp,out,cfg)
     elif stage=='diagnose-interface':
         from .embedded_interface_diagnostic import diagnose
         result=diagnose(inp,out)

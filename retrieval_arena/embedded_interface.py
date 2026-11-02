@@ -89,7 +89,20 @@ def disclosure(packet, raw_by_id):
         if 'source_sha256' in t and e.rawhash(raw)!=t['source_sha256']:raise ValueError('interface-stale-target')
         targets.append({k:t[k] for k in ('target_id','path','title') if k in t} |
             {'raw_sha256':e.rawhash(raw),'paragraphs':[passage(p,node,raw,'target') for p in t['paragraphs']]})
-    return {'interface_version':VERSION,'resolution_policy':POLICY,'source_id':source,
+    if packet.get('context_version'):
+        from .embedded_packet_context import VERSION as context_version
+        if packet['context_version']!=context_version:raise ValueError('unknown-packet-context-version')
+        def context_rows(rows,node,role):
+            result=[]
+            for row in rows:
+                p=passage(row,node,raw_by_id[node],role);p.pop('sentences',None)
+                p.update(editable=False,heading=row.get('heading',''),block_types=row.get('block_types',[]));result.append(p)
+            return result
+        for target,original in zip(targets,packet['targets']):
+            target['evidence_context']=context_rows(original.get('evidence_context',[]),target['target_id'],'target')
+        extra={'context_version':context_version,'source_context':context_rows(packet.get('source_context',[]),source,'source')}
+    else:extra={}
+    return {**extra,'interface_version':VERSION,'resolution_policy':POLICY,'source_id':source,
         'source_sha256':e.rawhash(raw_by_id[source]),'source_paragraphs':sources,'targets':targets,'max_proposals':2}
 
 
@@ -97,11 +110,16 @@ def public_disclosure(data):
     """Byte arithmetic and maps stay host-side; exact text and IDs go to models."""
     def public(p):
         result={k:p[k] for k in ('passage_id','doc_id','source_sha256','role','text')}
+        for k in ('editable','heading','block_types'):
+            if k in p:result[k]=p[k]
         if 'sentences' in p:result['sentences']=[{k:s[k] for k in ('sentence_id','text')} for s in p['sentences']]
         return result
-    return {k:v for k,v in data.items() if k not in ('source_paragraphs','targets')} | {
+    return {k:v for k,v in data.items() if k not in ('source_paragraphs','targets','source_context')} | {
+        **({'source_context':[public(p) for p in data['source_context']]} if 'source_context' in data else {}),
         'source_paragraphs':[public(p) for p in data['source_paragraphs']],
-        'targets':[{k:v for k,v in t.items() if k!='paragraphs'} | {'paragraphs':[public(p) for p in t['paragraphs']]} for t in data['targets']]}
+        'targets':[{k:v for k,v in t.items() if k not in ('paragraphs','evidence_context')} | {
+            **({'evidence_context':[public(p) for p in t['evidence_context']]} if 'evidence_context' in t else {}),
+            'paragraphs':[public(p) for p in t['paragraphs']]} for t in data['targets']]}
 
 
 def exact_matches(text, quote):
@@ -145,7 +163,7 @@ def resolve_proposal(item, data, raw_by_id):
     sentence,p=sentences[0]
     bound={**sentence,**{k:p[k] for k in ('passage_id','doc_id','source_sha256')}}
     anchor,anchor_proof=resolve_quote(item['anchor'],bound,raw_by_id[item['source_id']],contiguous=True)
-    evidence,proof=citations(item['target_evidence'],target['paragraphs'],raw_by_id,'target')
+    evidence,proof=citations(item['target_evidence'],target['paragraphs']+target.get('evidence_context',[]),raw_by_id,'target')
     result={k:v for k,v in item.items() if k!='source_sentence_id'}
     result.update(source_span=anchor['span'],sentence=sentence['text'],target_evidence=evidence)
     return result,{'schema_version':VERSION+'.resolution','policy':POLICY,'declaration':copy.deepcopy(item),
@@ -159,7 +177,8 @@ def review_disclosure(proposal, packet, raw_by_id):
     sources=[p for p in data['source_paragraphs'] if p['raw_span'][0]<=a<z<=p['raw_span'][1]]
     if len(sources)!=1:raise ValueError('source-anchor-outside-packet')
     target=next(t for t in data['targets'] if t['target_id']==proposal['target_id'])
-    evidence={'source':sources,'target':target['paragraphs'],'interface_version':VERSION}
+    evidence={'source':sources+data.get('source_context',[]),
+        'target':target['paragraphs']+target.get('evidence_context',[]),'interface_version':VERSION}
     public=public_disclosure(dict(data,source_paragraphs=sources,targets=[target]))
     # Independent reviewer and final assessor see the proposed occurrence and
     # exact same evidence. No rationale, prior score, verdict or arm is exposed.
