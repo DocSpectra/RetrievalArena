@@ -12,6 +12,13 @@ PROPOSAL_SCHEMA = copy.deepcopy(e.PROPOSAL_SCHEMA)
 PROPOSAL_SCHEMA['properties']['schema_version'] = {'const': VERSION+'.proposal'}
 FIXTURE_PROVENANCE = e._obj({'kind': {'const': 'authored_fixture'},
     'manifest_sha256': e.H, 'candidate_key': e.S, 'timestamp': e.S})
+CURATOR_PROVENANCE = copy.deepcopy(FIXTURE_PROVENANCE)
+CURATOR_PROVENANCE['properties']['kind'] = {'const': 'curator'}
+CURATOR_REVIEW = e._obj({'kind': {'const':'curator'}, 'manifest_sha256':e.H,
+    'semantic_score':{'type':'integer','enum':[5,6]},
+    **{k:{'type':'integer','enum':[1,2]} for k in ('relationship_support','target_support','placement')},
+    'uncertainty':{'const':False}, 'contradiction':{'const':False},
+    'relation':{'enum':list(e.RELATIONS)}, 'decision':{'const':'eligible'}})
 MODEL_PROVENANCE = copy.deepcopy(e.PROPOSAL_SCHEMA['properties']['provenance'])
 MODEL_PROVENANCE['properties']['kind'] = {'const': 'model_response'}
 MODEL_PROVENANCE['required'].append('kind')
@@ -23,20 +30,20 @@ MOCK_PROVENANCE['properties']['status'] = {'const':'mock-model'}
 PROPOSAL_SCHEMA['properties']['provenance'] = {}
 PROPOSAL_SCHEMA['allOf'] = [{'if': {'properties': {'provenance': {'properties': {'kind': {'const': kind}}}}},
     'then': {'properties': {'provenance': schema}}} for kind, schema in
-    [('authored_fixture', FIXTURE_PROVENANCE), ('model_response', MODEL_PROVENANCE), ('mock_response', MOCK_PROVENANCE)]]
+    [('authored_fixture', FIXTURE_PROVENANCE), ('curator', CURATOR_PROVENANCE), ('model_response', MODEL_PROVENANCE), ('mock_response', MOCK_PROVENANCE)]]
 
 
 def public_schemas():
     """Full JSON Schema unions; the dependency-free validator uses tagged checks."""
     proposal=copy.deepcopy(PROPOSAL_SCHEMA); proposal.pop('allOf')
-    proposal['properties']['provenance']={'oneOf':[FIXTURE_PROVENANCE, MODEL_PROVENANCE, MOCK_PROVENANCE]}
+    proposal['properties']['provenance']={'oneOf':[FIXTURE_PROVENANCE, CURATOR_PROVENANCE, MODEL_PROVENANCE, MOCK_PROVENANCE]}
     event_schema=copy.deepcopy(e.EVENT_SCHEMA)
     event_schema['properties']['schema_version']={'const':VERSION+'.event'}
-    event_schema['properties']['authority']={'enum':['model','reviewer','host','fixture_author']}
+    event_schema['properties']['authority']={'enum':['model','reviewer','host','fixture_author','curator']}
     fixture_review=e._obj({'kind':{'const':'authored_fixture'},'manifest_sha256':e.H,
         'semantic_score':{'const':6},'relation':{'enum':list(e.RELATIONS)},'decision':{'const':'eligible'}})
     payloads=dict(e.EVENT_PAYLOADS,proposed=proposal,
-                  reviewed={'oneOf':[e.EVENT_PAYLOADS['reviewed'],fixture_review]})
+                  reviewed={'oneOf':[e.EVENT_PAYLOADS['reviewed'],fixture_review,CURATOR_REVIEW]})
     event_schema['allOf']=[{'if':{'properties':{'type':{'const':typ}}},
         'then':{'properties':{'payload':schema}}} for typ,schema in payloads.items()]
     return proposal,event_schema
@@ -45,7 +52,7 @@ def public_schemas():
 def validate_proposal(p):
     e.validate_schema(p, PROPOSAL_SCHEMA)
     provenance = p['provenance']; kind = provenance.get('kind')
-    schema = {'authored_fixture': FIXTURE_PROVENANCE, 'model_response': MODEL_PROVENANCE, 'mock_response':MOCK_PROVENANCE}.get(kind)
+    schema = {'authored_fixture': FIXTURE_PROVENANCE, 'curator':CURATOR_PROVENANCE, 'model_response': MODEL_PROVENANCE, 'mock_response':MOCK_PROVENANCE}.get(kind)
     if schema is None: raise ValueError('v2-provenance-kind')
     e.validate_schema(provenance, schema)
     return p
@@ -55,7 +62,7 @@ def _legacy_proposal(p):
     """Private validation projection, never persisted as scientific provenance."""
     validate_proposal(p)
     row = copy.deepcopy(p); row['schema_version'] = e.VERSION+'.proposal'
-    if p['provenance']['kind'] == 'authored_fixture':
+    if p['provenance']['kind'] in ('authored_fixture', 'curator'):
         row['provenance'] = {'provider': 'internal-validation-projection', 'model': 'internal-validation-projection',
             'prompt_version': 'internal', 'schema_version': 'internal', 'attempt_id': 'internal',
             'timestamp': p['provenance']['timestamp'], 'response_sha256': p['provenance']['manifest_sha256'],
@@ -97,18 +104,21 @@ def replay(log, trusted_tip=None):
         pid = r['proposal_id']
         if r['type'] == 'proposed':
             validate_proposal(r['payload']); proposals[pid] = r['payload']
-            fixture = r['payload']['provenance']['kind'] == 'authored_fixture'
-            if r['authority'] != ('fixture_author' if fixture else 'model'): raise ValueError('provenance-authority')
+            kind = r['payload']['provenance']['kind']
+            if r['authority'] != {'authored_fixture':'fixture_author','curator':'curator'}.get(kind,'model'): raise ValueError('provenance-authority')
             r['payload'] = _legacy_proposal(r['payload']); r['authority'] = 'model'
         elif r['type'] == 'schema_validated':
             if r['payload']['proposal_sha256'] != e.digest(proposals[pid]): raise ValueError('schema-binding')
             r['payload']['proposal_sha256'] = e.digest(_legacy_proposal(proposals[pid]))
-        elif r['type'] == 'reviewed' and proposals[pid]['provenance']['kind'] == 'authored_fixture':
+        elif r['type'] == 'reviewed' and proposals[pid]['provenance']['kind'] in ('authored_fixture','curator'):
+            kind = proposals[pid]['provenance']['kind']
             expected = e._obj({'kind': {'const':'authored_fixture'}, 'manifest_sha256':e.H,
                               'semantic_score':{'const':6}, 'relation':{'enum':list(e.RELATIONS)},
                               'decision':{'const':'eligible'}})
-            e.validate_schema(r['payload'], expected)
-            if r['authority'] != 'fixture_author' or r['payload']['manifest_sha256'] != proposals[pid]['provenance']['manifest_sha256']:
+            e.validate_schema(r['payload'], CURATOR_REVIEW if kind=='curator' else expected)
+            if kind=='curator' and (sum(r['payload'][k] for k in ('relationship_support','target_support','placement'))!=r['payload']['semantic_score'] or r['payload']['relation']=='insufficient_evidence'):
+                raise ValueError('curator-score-binding')
+            if r['authority'] != ('curator' if kind=='curator' else 'fixture_author') or r['payload']['manifest_sha256'] != proposals[pid]['provenance']['manifest_sha256']:
                 raise ValueError('fixture-review-binding')
             r['authority'] = 'reviewer'
             r['payload'] = {'reviewer_provider':'internal-validation-projection','reviewer_model':'internal',

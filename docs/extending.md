@@ -46,3 +46,6 @@ For fixed-node additive phase-energy qualification and bounded solver diagnostic
 For exact component/block cancellation and finite phase comparisons, see [block phase](evaluations/block_phase.md).
 
 For opt-in individual versus selected-set constraints and bounded read-only evidence context, see [constraint/context v2](evaluations/embedded_constraints.md).
+
+For explicit curator provenance, full-page evidence and an offline real-document
+mechanism diagnostic, see [curated candidates](evaluations/embedded_curated.md).

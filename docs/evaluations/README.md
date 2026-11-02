@@ -80,3 +80,5 @@ the caller composes answer pairs from `generated_answer`.
 - [Competitive embedded selection](embedded_competitive.md): all-target dispositions, two-model preselection support, immutable k=1 tiers and actual pair-set comparisons with coverage/tie accounting.
 
 - [Embedded individual/set constraints and bounded context](embedded_constraints.md): opt-in `constraint_version`, exact assignment replay and offline `prepare-packet-context`; no semantic labels or numerical-policy changes.
+
+- [Curated embedded candidates](embedded_curated.md): explicit curator provenance, full-page review evidence, frozen offline mechanism diagnostic and independent copy/numerical replay; independent review stays a separate authorized stage.
