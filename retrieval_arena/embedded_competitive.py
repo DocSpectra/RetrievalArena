@@ -17,6 +17,18 @@ from .embedded_selection_v2 import DEFAULT_POLICY, BoundedBlockScorer, select_em
 VERSION = 'retrieval_arena.embedded_competitive.v1'
 
 
+def canary_sources(source, manifest):
+    """Preserve original identities when packet preparation omits a source."""
+    ids = manifest.get('canary_source_ids')
+    if ids is None:
+        return [p['source_id'] for p in read(source/'packets.json')[:2]]
+    if (not isinstance(ids, list) or len(ids) != 2 or
+            any(not isinstance(s, str) or not s for s in ids) or len(set(ids)) != 2 or
+            not set(ids) <= set(manifest.get('allowed_source_ids', []))):
+        raise ValueError('frozen-canary-source-identities')
+    return ids
+
+
 def disposition_schema():
     proposal = interface.proposal_schema()['properties']['proposals']['items']
     return e._obj({'dispositions': {'type': 'array', 'minItems': 1, 'maxItems': 5,
@@ -189,6 +201,7 @@ def select_and_apply(inp, out, cfg, *, scorer_factory=BoundedBlockScorer, diagno
         write(root/'audit.json',audit)
         if diagnostic and plan['competitive']:
             policy=dict(DEFAULT_POLICY,maximum=1,q=.10)
+            if manifest.get('constraint_version'):policy['constraint_version']=manifest['constraint_version']
             secondary=scorer_factory(graph,pool,policy)
             rows=[secondary((pid,)) for pid in plan['top_tier']]
             status,index=classify(rows,1e-6)
@@ -210,12 +223,13 @@ def select_and_apply(inp, out, cfg, *, scorer_factory=BoundedBlockScorer, diagno
 class CompetitiveStudy(study.Study):
     async def lane(self,lane):
         source=self.inp/lane; original=read(source/'study-manifest.json')
+        first_ids=canary_sources(source,original)
         counts=await self.counts(lane,source,original)
         admission=self.offline(lane+'-admission',source,{'token-output':counts},
             {'stage':'prepare-generation','run_id':self.manifest['run_id']+'-'+lane})
         admitted=read(admission/'study-manifest.json');jobs=read(admission/'generation-jobs.json')
         if not jobs:admitted['provider_token_count_complete']=True
-        first={p['source_id'] for p in read(source/'packets.json')[:2]}
+        first=set(first_ids)
         batches=[jobs] if lane=='preflight' else [[j for j in jobs if j['source_id'] in first],
                                                   [j for j in jobs if j['source_id'] not in first]]
         gen_outputs=[]; haiku_outputs=[]; sol_outputs=[]; haiku_jobs=[]; sol_jobs=[]
@@ -242,6 +256,8 @@ class CompetitiveStudy(study.Study):
                 failures=[r for r in records if r['status'] in ('generation_unavailable','interface_rejected','schema_or_access_rejected')]
                 failures += [r for output in (hr,sr) for r in read(output/'summary.json')['results'] if r['status']!='complete']
                 canary={'frozen_generation_job_ids':[j['job_id'] for j in batch],
+                    'original_source_ids':first_ids,
+                    'unavailable_source_ids':[s for s in first_ids if s not in {j['source_id'] for j in batch}],
                     'technical_success':not failures,'technical_failures':failures,'replacement_packets':0}
                 write(self.out/'canary.json',canary)
                 if failures:raise RuntimeError('technical-canary-failed')

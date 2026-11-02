@@ -77,6 +77,31 @@ def corrected_bundle(root):
 
 
 class ConstraintTests(unittest.TestCase):
+    def test_original_canary_shortage_never_selects_replacement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);inp,manifest=corrected_bundle(root)
+            policy=read(inp/'real/study-manifest.json')
+            policy.update(canary_source_ids=['missing-original','0'],allowed_source_ids=['missing-original','0','2'])
+            write(inp/'real/study-manifest.json',policy);study.seal(inp)
+            out=root/'output'
+            asyncio.run(c.CompetitiveStudy(inp,out,manifest,
+                factory=lambda settings,network,path:MockTransport(settings,path),counter=mock_count).run())
+            canary=read(out/'canary.json')
+            self.assertEqual(canary['original_source_ids'],['missing-original','0'])
+            self.assertEqual(canary['unavailable_source_ids'],['missing-original'])
+            self.assertEqual({j['source_id'] for j in read(out/'real-0-generation-input/jobs.json')},{'0'})
+            self.assertEqual({j['source_id'] for j in read(out/'real-1-generation-input/jobs.json')},{'2'})
+            self.assertEqual(canary['replacement_packets'],0)
+
+    def test_invalid_explicit_canary_fails_before_count(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);inp,manifest=corrected_bundle(root)
+            policy=read(inp/'real/study-manifest.json')
+            for ids in ([],['0','0'],['0','unknown'],'02'):
+                with self.subTest(ids=ids):
+                    with self.assertRaisesRegex(ValueError,'frozen-canary'):
+                        c.canary_sources(inp/'real',dict(policy,canary_source_ids=ids))
+
     def test_reciprocal_singletons_and_k_greater_than_one(self):
         pool=selector_pool()
         sets=feasible_sets(pool,4,constraint_version=v.VERSION)

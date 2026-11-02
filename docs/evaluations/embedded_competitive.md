@@ -56,3 +56,10 @@ hash order, full fake-provider copies/ledgers, deterministic replay and restart.
 Authored/mock outcomes establish plumbing, never real semantic validity.
 
 Opt-in [constraint/context v2](embedded_constraints.md) retains reciprocal alternatives, counts duplicate occurrences once and validates selected assignments before materialization and replay. Historical defaults remain unchanged.
+
+Consumers whose source projection can omit packets freeze exactly two original
+`canary_source_ids` in the lane manifest, within `allowed_source_ids`. These are
+validated before counting. Missing sources stay unavailable in the canary receipt;
+later surviving packets never replace them. Omission of this field retains the
+historical first-two-packets behavior. The diagnostic scorer receives the same
+constraint version as primary selection and materialization.
