@@ -12,6 +12,7 @@ COMMANDS = {
     "focused": (
         "unit_tests.test_block_phase",
         "unit_tests.test_embedded_selection_v2",
+        "unit_tests.test_embedded_minimum_set",
         "unit_tests.test_embedded_token_admission",
         "unit_tests.test_embedded_model_run",
         "unit_tests.test_embedded_refinement",

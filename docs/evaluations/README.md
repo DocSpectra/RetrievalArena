@@ -82,3 +82,4 @@ the caller composes answer pairs from `generated_answer`.
 - [Embedded individual/set constraints and bounded context](embedded_constraints.md): opt-in `constraint_version`, exact assignment replay and offline `prepare-packet-context`; no semantic labels or numerical-policy changes.
 
 - [Curated embedded candidates](embedded_curated.md): explicit curator provenance, full-page review evidence, frozen offline mechanism diagnostic and independent copy/numerical replay; independent review stays a separate authorized stage.
+- [Separated minimum-set selection](embedded_minimum_set.md): explicit k=1 tie policy, bound historical-score replay, actual edited copies and directed changed-block mappings; v2 defaults remain unchanged.

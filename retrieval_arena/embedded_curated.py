@@ -237,7 +237,7 @@ def select(inp,out,cfg,scorer_factory=BoundedBlockScorer):
         'changed_groups':sum(g['outcome']=='qualified_changed_subset' for g in groups),'applications':applications,'B':'unrun-not-authorized','provider_calls':0}
 
 
-def verify(inp,out,cfg):
+def verify(inp,out,cfg,*,selection_fn=select_embedded_v2):
     """Separate offline replay over sealed results and externally copied tips."""
     import json
     import numpy as np
@@ -283,8 +283,10 @@ def verify(inp,out,cfg):
             for pid,row in zip(plan['top_tier'],rows):
                 old=group['candidate_costs'][pid]
                 if row['status']!=old['status'] or row.get('schedule_costs')!=old.get('schedule_costs'):raise ValueError('curated-fresh-numerical-parity')
-            status,index=classify(rows,1e-6)
-            if status!='resolved_finite_order' or plan['top_tier'][index]!=group['arms']['M']['selected'][0]:raise ValueError('curated-winner-replay')
+            by_pid=dict(zip(plan['top_tier'],rows))
+            replay=selection_fn(plan['pool'],graph,dict(DEFAULT_POLICY,maximum=1,constraint_version=constraints.VERSION),
+                {},arm='M',scorer=lambda prefix:by_pid[prefix[0]])
+            if replay['selected']!=group['arms']['M']['selected'] or not replay['magnetic_changed_steps']:raise ValueError('curated-winner-replay')
             write(out/(region['region_id'].replace(':','-')+'-fresh-replay.json'),{'scores':rows,'solves':scorer.cache,'attempts':scorer.attempts})
             replayed.append(region['region_id'])
     proof={'files_verified':file_count,'ledger_arms':3,'numerical_fits_recomputed':fits_count,
