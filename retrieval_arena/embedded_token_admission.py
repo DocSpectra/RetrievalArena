@@ -219,6 +219,8 @@ def smoke():
     from .model_providers.anthropic import sdk_schema
     schemas={name:anthropic.transform_schema(sdk_schema(schema)) for name,schema in
         [('proposal',interface.proposal_schema()),('review',interface.review_schema())]}
+    from .embedded_competitive import disposition_schema
+    schemas['target_dispositions']=anthropic.transform_schema(sdk_schema(disposition_schema()))
     threads={k:os.environ.get(k) for k in ['OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS']}
     if any(value!='1' for value in threads.values()):raise ValueError('sdk-numerical-thread-profile')
     import ctypes

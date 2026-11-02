@@ -1,5 +1,9 @@
 # Source-bound refinement interface
 
+Opt-in [competitive selection](embedded_competitive.md) adds exact all-target
+dispositions, two preselection support stages, a frozen k=1 pool and pair-set
+outcomes. Historical source-bound runs retain their original behavior.
+
 `retrieval_arena.embedded_interface.v1` is an opt-in model-facing projection over
 the existing [v2 editor/selector](embedded_refinement.md). Historical proposals,
 ledgers, counts and responses retain their original meanings. It changes neither

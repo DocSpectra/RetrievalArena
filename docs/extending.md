@@ -38,6 +38,9 @@ For source-only content masking, fixed regions, safe inline edits and append-onl
 For model-facing sentence/passage IDs, exact host resolution and a combined
 preflight/count/canary/refinement lifecycle, see [source-bound refinement](evaluations/embedded_interface.md).
 
+For exact all-target dispositions, sequential blinded support confirmation and
+frozen k=1 pair-set comparison, see [competitive selection](evaluations/embedded_competitive.md).
+
 For fixed-node additive phase-energy qualification and bounded solver diagnostics, see [local objectives](evaluations/local_objective.md).
 
 For exact component/block cancellation and finite phase comparisons, see [block phase](evaluations/block_phase.md).

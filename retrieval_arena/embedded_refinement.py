@@ -83,6 +83,9 @@ def prepare_generation(inp,out,cfg):
                  'receipt_sha256':e.rawhash(count_file.read_bytes())};receipts.append(receipt)
         job={'source_id':source,'packet_sha256':packet['packet_sha256'],'prompt':body['input'],
              'schema':role['schema'],'provider_count':receipt};job['job_id']=e.digest(job);jobs.append(job)
+        if manifest.get('competitive_selection_version'):
+            job['target_ids']=[t['target_id'] for t in data['targets']]
+            job['job_id']=e.digest({k:v for k,v in job.items() if k!='job_id'})
     manifest=copy.deepcopy(manifest);manifest['provider_token_count_complete']=bool(jobs)
     manifest['generation_counts']=receipts;manifest['generation_jobs_sha256']=e.digest(jobs)
     manifest['admitted_packet_inventory_sha256']=e.digest(admitted)
@@ -103,6 +106,8 @@ def prepare_interface(inp,out,cfg):
         child.update(parent_packet_sha256=old,interface_version=interface.VERSION)
         child['packet_sha256']=e.digest(child);data=interface.disclosure(child,contents)
         public=interface.public_disclosure(data)
+        if read(inp/'study-manifest.json').get('competitive_selection_version'):
+            public.update(max_proposals=len(public['targets']),target_dispositions_required=True)
         prompt=role['prompt_prefix']+MARKER+e.canonical(public).decode()
         body=OpenAITransport.request(prompt,role['schema'],role['settings'])
         jobs.append({'job_id':e.digest(body),'body':body})
@@ -129,9 +134,9 @@ def load_sources(inp):
     return pages,by_id,contents,regions
 
 
-def provider_result(inp,row):
+def provider_result(inp,row,*,direct=False):
     if row['status']!='complete':return None
-    p=inp/'model-output/jobs'/row['job_id']/row['raw_response_file']
+    p=inp/('jobs' if direct else 'model-output/jobs')/row['job_id']/row['raw_response_file']
     if e.rawhash(p.read_bytes())!=row['raw_response_sha256']:raise ValueError('provider-response-file-binding')
     body=read(p);provider='openai' if 'output' in body else 'anthropic'
     text=response_text(body,provider)
@@ -186,7 +191,17 @@ def proposals(inp,out,cfg):
                 'status':'generation_unavailable','technical_status':result['status']});continue
         validate_result(result['payload'],job);raw_file=provider_result(inp,result)
         region=region_by_id[packet['region_id']]
-        for ordinal,item in enumerate(result['payload']['proposals']):
+        if manifest.get('competitive_selection_version'):
+            from .embedded_competitive import validate_dispositions
+            dispositions=validate_dispositions(result['payload'],packet['source_id'],[t['target_id'] for t in packet['targets']])
+            items=[d['proposal'] for d in dispositions if d['disposition']=='supported_link']
+            for d in dispositions:
+                if d['disposition']=='no_supported_link':
+                    records.append({'job_id':result['job_id'],'packet_sha256':packet['packet_sha256'],
+                        'source_id':packet['source_id'],'region_id':packet['region_id'],'status':'no_supported_link',
+                        'target_id':d['target_id'],'reason':d['reason'],'raw_response_sha256':result['raw_response_sha256']})
+        else:items=result['payload']['proposals']
+        for ordinal,item in enumerate(items):
             record={'job_id':result['job_id'],'packet_sha256':packet['packet_sha256'],'raw_item':item,
                 'raw_response_sha256':result['raw_response_sha256'],'ordinal':ordinal,'region_id':packet['region_id']}
             if use_ids:
@@ -364,6 +379,7 @@ def case_card(path,arm,proposal,record,step,raw,edited,packet):
     diff=''.join(difflib.unified_diff(raw.decode().splitlines(True),edited.decode().splitlines(True),fromfile='original',tofile=arm))
     path.with_suffix('.diff').write_text(diff,encoding='utf-8')
     info={'proposal':proposal,'eligibility':record['review'],'selection_step':step,'source_paragraph_span':[a,z]}
+    if 'confirmation' in record:info['preselection_support_confirmation']=record['confirmation']
     write(path.with_suffix('.json'),info)
     label='MOCK fixture assertion' if proposal['provenance']['kind']=='mock_response' else 'AI-reference eligibility'
     path.write_text('<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'">'
@@ -403,11 +419,20 @@ def materialize(inp,out,records,groups,pages,contents,regions):
                 append('rejected',{'reason':record['reason'],'no_new_edge':False});continue
             if 'review' not in record:
                 append('failed',{'reason':'independent-review-unavailable'});continue
+            review_metadata={}
+            if 'confirmation' in record:
+                confirmation_role=next(r for r in manifest['roles'] if r['role']=='support_confirmation')
+                review_metadata={'reviewer_provider':review_role['settings']['provider']+'+'+confirmation_role['settings']['provider'],
+                    'reviewer_model':review_role['settings']['model']+'+'+confirmation_role['settings']['model'],
+                    'response_sha256':e.digest([record['review_response_sha256'],record['confirmation_response_sha256']]),
+                    'blinded_input_sha256':e.digest([record['review_input_sha256'],record['confirmation_input_sha256']])}
+            elif manifest.get('competitive_selection_version') and record.get('haiku_eligible'):
+                append('failed',{'reason':'preselection-confirmation-unavailable'});continue
             append('reviewed',{'reviewer_provider':review_role['settings']['provider'],'reviewer_model':review_role['settings']['model'],
                 'rubric_version':review_role['schema_sha256'],'decision':'eligible' if record['semantic_eligible'] else 'reject',
                 'evidence':record['review']['target_evidence'],'uncertainty':str(record['review']['uncertainty']),
                 'response_sha256':record['review_response_sha256'],'blinded_input_sha256':record['review_input_sha256'],
-                'status':'mock-model' if manifest.get('mock_responses') else 'model-response'},'reviewer')
+                'status':'mock-model' if manifest.get('mock_responses') else 'model-response',**review_metadata},'reviewer')
             if not record['semantic_eligible']:
                 append('rejected',{'reason':'independent-semantic-rejection','no_new_edge':False});continue
             append('eligible',{'structural':True,'semantic':True})
@@ -521,6 +546,9 @@ def run(inp,out):
         result=prepare(inp,out,cfg)
     elif stage=='proposals':result=proposals(inp,out,cfg)
     elif stage=='select':result=select_and_apply(inp,out,cfg)
+    elif stage=='competitive-select':
+        from .embedded_competitive import select_and_apply
+        result=select_and_apply(inp,out,cfg)
     elif stage=='assemble':result=assemble(inp,out,cfg)
     else:raise ValueError('refinement-stage')
     write(out/'summary.json',{'schema_version':VERSION,'stage':stage,'result':result,'runtime_seconds':time.monotonic()-started,

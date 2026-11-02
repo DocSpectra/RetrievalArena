@@ -41,7 +41,8 @@ def admit(inp,authorization):
         raise ValueError('explicit-combined-authorization-required')
     if authorization.get('input_inventory_sha256')!=req['input_inventory_sha256'] or authorization.get('study_manifest_sha256')!=e.digest(manifest):
         raise ValueError('combined-authorization-binding')
-    if manifest['interface_version']!=interface.VERSION or manifest['aggregate_hard_cap_usd']>20:
+    ceiling=30 if manifest.get('competitive_selection_version')=='retrieval_arena.embedded_competitive.v1' else 20
+    if manifest['interface_version']!=interface.VERSION or manifest['aggregate_hard_cap_usd']>ceiling:
         raise ValueError('combined-policy')
     maximum=0
     for lane in ('real','preflight'):
@@ -256,6 +257,9 @@ class Study:
 
 async def run(inp,out,authorization):
     manifest=admit(inp,authorization)  # Before any client exists.
+    if manifest.get('competitive_selection_version'):
+        from .embedded_competitive import CompetitiveStudy
+        return await CompetitiveStudy(inp,out,manifest).run()
     return await Study(inp,out,manifest).run()
 
 

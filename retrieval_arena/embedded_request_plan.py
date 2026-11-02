@@ -38,6 +38,8 @@ def omit_lowest_target_passage(disclosed):
     one target with one paragraph remains, the packet must be omitted.
     """
     import copy
+    if disclosed.get('target_dispositions_required'):
+        return None  # Exact all-target disclosure: omit the packet, never a target.
     result=copy.deepcopy(disclosed)
     for target in reversed(result['targets']):
         if len(target['paragraphs'])>1:

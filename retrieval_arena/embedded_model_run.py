@@ -47,6 +47,9 @@ def evidence_valid(evidence, passages):
 
 def validate_result(payload, job):
     validate_json(payload,job['schema'])
+    if 'target_ids' in job:
+        from .embedded_competitive import validate_dispositions
+        validate_dispositions(payload, job['source_id'], job['target_ids'])
     if job.get('evidence'):
         from . import embedded_interface as interface
         if job['evidence'].get('interface_version')==interface.VERSION:
@@ -74,7 +77,8 @@ def admit(inp, authorization):
     roles={r['role']:r for r in manifest['roles']};role=roles[cfg['role']]
     if cfg['settings']!=role['settings']:raise ValueError('role-settings-binding')
     validate_settings(cfg['settings'])
-    if sum(r['settings']['spend_cap_usd'] for r in roles.values())>manifest['aggregate_hard_cap_usd'] or manifest['aggregate_hard_cap_usd']>20:
+    ceiling=30 if manifest.get('competitive_selection_version')=='retrieval_arena.embedded_competitive.v1' else 20
+    if sum(r['settings']['spend_cap_usd'] for r in roles.values())>manifest['aggregate_hard_cap_usd'] or manifest['aggregate_hard_cap_usd']>ceiling:
         raise ValueError('aggregate-spend-cap')
     if not 0<=cfg['remaining_inference_seconds']<=7200:raise ValueError('inference-wall-policy')
     jobs=read(inp/'jobs.json')

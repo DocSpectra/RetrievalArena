@@ -81,7 +81,7 @@ class MockTransport:
         return OpenAITransport.request(prompt,schema,dict(settings,generation={'reasoning_effort':'low','strict':True}))
     async def __call__(self,prompt,schema,settings,*,audit=None):
         from .embedded_refinement import MARKER
-        data=json.loads(prompt.split(MARKER,1)[1]);generation='proposals' in schema['properties']
+        data=json.loads(prompt.split(MARKER,1)[1]);generation=bool({'proposals','dispositions'} & schema['properties'].keys())
         if generation:
             items=[]
             for target in data['targets']:
@@ -94,6 +94,11 @@ class MockTransport:
                     'relation':'target_elaborates_source','stated_intent':'Mock fixture declaration.',
                     'expected_reading_use':'Mock technical evidence only.','basis':'supported_inference','confidence':None})
             payload={'proposals':items if self.mode!='empty' else []}
+            if 'dispositions' in schema['properties']:
+                payload={'dispositions':[{'target_id':p['target_id'],
+                    'disposition':'no_supported_link' if self.mode=='empty' else 'supported_link',
+                    'reason':'MOCK technical disposition, no external model.',
+                    'proposal':None if self.mode=='empty' else p} for p in items]}
         else:
             source=data['source_paragraphs'][0];target=data['targets'][0]['paragraphs'][0]
             negative=self.mode=='negative'
