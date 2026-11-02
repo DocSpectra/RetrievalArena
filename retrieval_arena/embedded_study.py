@@ -256,6 +256,9 @@ class Study:
 
 
 async def run(inp,out,authorization):
+    if read(inp/'study-manifest.json').get('blinded_support_version'):
+        from .embedded_blinded_support import run as blinded_run
+        return await blinded_run(inp,out,authorization)
     manifest=admit(inp,authorization)  # Before any client exists.
     if manifest.get('competitive_selection_version'):
         from .embedded_competitive import CompetitiveStudy

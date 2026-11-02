@@ -110,7 +110,8 @@ def replay(log, trusted_tip=None):
         elif r['type'] == 'schema_validated':
             if r['payload']['proposal_sha256'] != e.digest(proposals[pid]): raise ValueError('schema-binding')
             r['payload']['proposal_sha256'] = e.digest(_legacy_proposal(proposals[pid]))
-        elif r['type'] == 'reviewed' and proposals[pid]['provenance']['kind'] in ('authored_fixture','curator'):
+        elif (r['type'] == 'reviewed' and proposals[pid]['provenance']['kind'] in ('authored_fixture','curator')
+              and r['payload'].get('kind') in ('authored_fixture','curator')):
             kind = proposals[pid]['provenance']['kind']
             expected = e._obj({'kind': {'const':'authored_fixture'}, 'manifest_sha256':e.H,
                               'semantic_score':{'const':6}, 'relation':{'enum':list(e.RELATIONS)},

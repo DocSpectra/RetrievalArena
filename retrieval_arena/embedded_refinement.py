@@ -419,7 +419,7 @@ def materialize(inp,out,records,groups,pages,contents,regions):
             def append(typ,payload,authority='host'):
                 row=ledger.event(log,p,typ,payload,authority)
                 ledger.append_event(root/'intent-events.jsonl',row,e.digest(log[-1]) if log else '0'*64);log.append(row)
-            append('proposed',p,'model');append('schema_validated',{'proposal_sha256':e.digest(p)})
+            append('proposed',p,{'curator':'curator','authored_fixture':'fixture_author'}.get(p['provenance']['kind'],'model'));append('schema_validated',{'proposal_sha256':e.digest(p)})
             structural=record['status'] in ('structural_eligible','proposer_rejected')
             append('structurally_validated',{'eligible':structural,'reason':'exact-host-valid' if structural else record['reason'],
                 'validation_sha256':record.get('structural_facts_sha256',e.digest({'reason':record.get('reason')}))})
@@ -568,6 +568,10 @@ def run(inp,out):
     elif stage in ('curated-prepare','curated-select','curated-verify'):
         from . import embedded_curated
         result={'curated-prepare':embedded_curated.prepare,'curated-select':embedded_curated.select,'curated-verify':embedded_curated.verify}[stage](inp,out,cfg)
+    elif stage in ('blinded-support-prepare','blinded-support-select','blinded-support-verify'):
+        from . import embedded_blinded_support as blinded
+        result={'blinded-support-prepare':blinded.prepare,'blinded-support-select':blinded.select_stage,
+                'blinded-support-verify':blinded.verify}[stage](inp,out,cfg)
     elif stage in ('minimum-set-select','minimum-set-verify'):
         from . import embedded_minimum_set_study
         result={'minimum-set-select':embedded_minimum_set_study.select,'minimum-set-verify':embedded_minimum_set_study.verify}[stage](inp,out,cfg)

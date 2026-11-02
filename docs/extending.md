@@ -49,3 +49,6 @@ For opt-in individual versus selected-set constraints and bounded read-only evid
 
 For explicit curator provenance, full-page evidence and an offline real-document
 mechanism diagnostic, see [curated candidates](evaluations/embedded_curated.md).
+
+For all-candidate blinded two-model review with fresh shared tiers and verified
+numerical reuse, see [blinded support](evaluations/embedded_blinded_support.md).

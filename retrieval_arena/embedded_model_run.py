@@ -152,6 +152,8 @@ async def execute(cfg, manifest, jobs, out, factory=transport_for, counter=sdk_c
                     raise ValueError('cached-payload-response-binding')
             return dict(prior,cache_reused=True)
         body=transport.request(job['prompt'],job['schema'],cfg['settings']);request_hash=e.digest(body)
+        if cfg.get('frozen_request_hashes') is not None and cfg['frozen_request_hashes'].get(job['job_id'])!=request_hash:
+            raise ValueError('frozen-serialized-request-mismatch')
         write(target/'request.json',body)
         if policy and len(e.canonical(body))>policy['maximum_count_request_bytes']:
             result={'job_id':job['job_id'],'status':'request_byte_cap_unavailable'}
