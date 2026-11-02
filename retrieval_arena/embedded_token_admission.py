@@ -204,6 +204,7 @@ def smoke():
     """Local SDK surface/lock check, with no client, key or network access."""
     import importlib.metadata as metadata
     import inspect
+    import os
     from openai.resources.responses.input_tokens import AsyncInputTokens
     from openai.resources.responses.responses import AsyncResponses
     from anthropic.resources.messages.messages import AsyncMessages
@@ -218,10 +219,27 @@ def smoke():
     from .model_providers.anthropic import sdk_schema
     schemas={name:anthropic.transform_schema(sdk_schema(schema)) for name,schema in
         [('proposal',interface.proposal_schema()),('review',interface.review_schema())]}
+    threads={k:os.environ.get(k) for k in ['OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS']}
+    if any(value!='1' for value in threads.values()):raise ValueError('sdk-numerical-thread-profile')
+    import ctypes
+    import numpy
+    import scipy
+    pools=[]
+    for package in (numpy,scipy):
+        for path in (Path(package.__file__).parent.parent/(package.__name__+'.libs')).glob('*openblas*'):
+            library=ctypes.CDLL(str(path))
+            for name in ('openblas_get_num_threads','openblas_get_num_threads64_',
+                         'scipy_openblas_get_num_threads','scipy_openblas_get_num_threads64_'):
+                if hasattr(library,name):
+                    function=getattr(library,name);function.restype=ctypes.c_int;function.argtypes=[]
+                    pools.append({'package':package.__name__,'library':path.name,'threads':function()});break
+    if any(pool['threads']!=1 for pool in pools):raise ValueError('sdk-native-thread-profile')
     return {'schema_version':VERSION+'.smoke','openai':metadata.version('openai'),
             'anthropic':metadata.version('anthropic'),'count_parameters':sorted(parameters),
             'anthropic_count_parameters':sorted(anthropic_count),
             'standard_service_tier_parameters_available':True,'actual_interface_schema_projection_sha256':{k:e.digest(v) for k,v in schemas.items()},
+            'numerical_thread_settings':threads,
+            'native_thread_pools':pools,
             'clients_constructed':0,'provider_calls':0}
 
 

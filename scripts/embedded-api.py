@@ -45,6 +45,7 @@ def main():
           '--cap-drop','ALL','--security-opt','no-new-privileges','--pids-limit','512','--tmpfs','/tmp:rw,nosuid,nodev,size=256m',
           '--env','RA_SOURCE_COMMIT='+commit,'--env','RA_SOURCE_TREE='+tree,
           '--env','RA_IMAGE_REFERENCE='+value['image'],'--env','RA_DEPENDENCY_LOCK_SHA256='+lock,'--env','RA_PLATFORM=linux/amd64']
+    args+=['--env','OPENBLAS_NUM_THREADS=1','--env','OMP_NUM_THREADS=1','--env','MKL_NUM_THREADS=1']
     if a.command=='smoke':
         subprocess.check_call([*args,'--network','none',value['image'],'smoke']);return
     if not all([a.input_root,a.output_root,a.authorization]): raise ValueError('count-paths-required')

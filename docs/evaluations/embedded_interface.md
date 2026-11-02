@@ -100,3 +100,10 @@ bind a corrected immutable runtime to the same approved manifest, input inventor
 and authorization, preserving all prompts/host schemas/access/caps, original
 clock, cached jobs and used capacity. The original receipt and failed checkpoint
 remain historical; the manifest is never rewritten as if it used the correction.
+
+The embedded SDK image and launcher explicitly set `OPENBLAS_NUM_THREADS`,
+`OMP_NUM_THREADS` and `MKL_NUM_THREADS` to one. The combined runner performs
+numerical work in this image; a two-CPU Docker quota alone does not limit a BLAS
+pool's thread count. SDK smoke refuses an inconsistent thread environment.
+Existing API completions can be cached while a prematurely started numerical
+stage is preserved and replayed under the already-declared one-thread profile.

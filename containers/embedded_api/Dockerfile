@@ -10,6 +10,7 @@ LABEL org.opencontainers.image.revision="${SOURCE_COMMIT}" \
 USER 0:0
 COPY retrieval_arena /opt/embedded-api/retrieval_arena
 WORKDIR /opt/embedded-api
-ENV PYTHONDONTWRITEBYTECODE=1 HOME=/tmp TMPDIR=/tmp
+ENV PYTHONDONTWRITEBYTECODE=1 HOME=/tmp TMPDIR=/tmp \
+    OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 USER 65532:65532
 ENTRYPOINT ["python", "-B", "-m", "retrieval_arena.embedded_token_admission"]
