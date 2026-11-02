@@ -11,7 +11,7 @@ from retrieval_arena import embedded_ledger_v2 as ledger
 from retrieval_arena import embedded_model_run as model
 from retrieval_arena.embedded_link_audit import read,write
 from retrieval_arena.model_providers.ledger import CostLedger
-from unit_tests.test_embedded_curated import Curated
+from unit_tests import test_embedded_curated as curated_tests
 
 
 def manifest():
@@ -56,7 +56,7 @@ async def fake_count(*args):return {'input_tokens':100}
 
 class Blinded(unittest.TestCase):
     def fixture(self,root):
-        inp,frozen=Curated().prepare(root);regions=read(inp/'regions.json')
+        inp,frozen=curated_tests.Curated().prepare(root);regions=read(inp/'regions.json')
         jobs,bindings=b.jobs_for(frozen['records'],frozen['packets'],manifest())
         outputs={role:{'results':[{'job_id':j['job_id'],'status':'complete','payload':response(j),
             'raw_response_sha256':'1'*64} for j in rows]} for role,rows in jobs.items()}
