@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
+from types import SimpleNamespace
 
 from retrieval_arena import embedded_blinded_support as b
 from retrieval_arena import embedded_interface as interface
@@ -84,6 +86,10 @@ class Blinded(unittest.TestCase):
             first,sol=b.ROLES
             outputs[first]['results'][0]['payload']=response(jobs[first][0],5)
             common=b.pool(frozen,regions,jobs,bindings,outputs)
+            cached=copy.deepcopy(outputs)
+            for output in cached.values():
+                for row in output['results']:row['cache_reused']=True
+            self.assertEqual(common,b.pool(frozen,regions,jobs,bindings,cached))
             self.assertEqual(common['common_pool']['groups'][0]['semantic_winner'],bindings[1]['proposal_id'])
             self.assertNotEqual(common['common_pool']['groups'][0]['semantic_winner'],frozen['A']['groups'][0]['semantic_winner'])
             outputs[first]['results'][0]['payload']=response(jobs[first][0],4)
@@ -122,6 +128,19 @@ class Blinded(unittest.TestCase):
             bad=dict(cfg,frozen_request_hashes={})
             with self.assertRaisesRegex(ValueError,'serialized-request'):
                 asyncio.run(model.execute(bad,m,jobs[b.ROLES[0]],root/'bad-model',FakeTransport,fake_count))
+
+    def test_serialized_request_export_has_nested_bodies_and_no_clients(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);inp,_,_,jobs,_,_=self.fixture(root)
+            policy=manifest();policy['lifecycle_policy']={'maximum_count_request_bytes':32768}
+            for index,role in enumerate(policy['roles']):
+                role['settings'].update(provider='anthropic' if index==0 else 'openai',max_output_tokens=1000,
+                    generation={'thinking':'disabled','effort':'low'} if index==0 else {'reasoning_effort':'low','strict':True})
+            write(inp/'study-manifest.json',policy);write(inp/'jobs.json',jobs);write(inp/'preflight-jobs.json',jobs)
+            with mock.patch.dict('sys.modules',{'anthropic':SimpleNamespace(transform_schema=lambda schema:schema)}):
+                result=b.serialize_requests(inp,root/'bodies')
+            self.assertEqual(result['jobs'],8);self.assertEqual(result['clients_constructed'],0)
+            self.assertEqual(len(list((root/'bodies/real/eligibility').glob('*.json'))),2)
 
     def test_supported_materialization_and_anchored_ledgers(self):
         with tempfile.TemporaryDirectory() as tmp:

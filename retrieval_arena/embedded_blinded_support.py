@@ -118,6 +118,7 @@ def pool(frozen,regions,jobs,bindings,outputs):
             job=next(j for j in jobs[role] if j['job_id']==binding['jobs'][role])
             result=next(r for r in outputs[role]['results'] if r['job_id']==job['job_id'])
             raw[role]=copy.deepcopy(result)
+            raw[role].pop('cache_reused',None)
             if result['status']!='complete':states[role]='technical_unavailable';continue
             model.validate_result(result['payload'],job)
             verdict,proof=interface.resolve_review(result['payload'],job['evidence'])
@@ -237,8 +238,17 @@ def verify(inp,out,cfg):
         graph['audit_binding']['supported_pool_sha256']=e.digest(support)
         scorer=minimum.v2.BoundedBlockScorer(graph,group['pool'],policy)
         selection=minimum.select_minimum_set(group['pool'],graph,policy,{},scorer=scorer)
-        if selection!=group['arms']['M']:raise ValueError('blinded-fresh-winner-replay')
-        write(out/(region['region_id'].replace(':','-')+'-fresh-audit.json'),{'solves':scorer.cache,'attempts':scorer.attempts})
+        rows=selection['trace'][0]['raw_scores'];tier=selection['trace'][0]['tier']
+        parity=all(row['status']==group['candidate_costs'][pid]['status'] and
+            row.get('schedule_costs')==group['candidate_costs'][pid].get('schedule_costs') for pid,row in zip(tier,rows))
+        old=group['arms']['M']
+        winner_parity=(selection['selected']==old['selected'] and selection['binding_sha256']==old['binding_sha256'] and
+            selection['trace'][0]['status']==old['trace'][0]['status'] and selection['trace'][0]['minimum_set']==old['trace'][0]['minimum_set'])
+        # Cache-hit bookkeeping differs in a fresh solve; costs/status and the
+        # complete minimum-set decision must reproduce without that history.
+        write(out/(region['region_id'].replace(':','-')+'-fresh-audit.json'),{'solves':scorer.cache,'attempts':scorer.attempts,
+            'selection':selection,'cost_parity':parity,'winner_parity':winner_parity})
+        if not parity or not winner_parity:raise ValueError('blinded-fresh-winner-replay')
         fresh.append(region['region_id'])
     return {'independent_replay':True,'files_per_copy':len(pages),'copies':4,'external_anchors':anchors,'fresh_changed_groups':fresh}
 
@@ -266,6 +276,7 @@ def serialize_requests(inp,out):
                 if len(e.canonical(body))>manifest['lifecycle_policy']['maximum_count_request_bytes']:
                     raise ValueError('blinded-full-page-request-byte-cap')
                 name=lane+'/'+role+'/'+job['job_id']+'.json'
+                (out/name).parent.mkdir(parents=True,exist_ok=True)
                 write(out/name,body);hashes[lane][role][job['job_id']]=e.digest(body)
                 inventory.append({'lane':lane,'role':role,'job_id':job['job_id'],'body_sha256':e.digest(body),
                     'body_bytes':len(e.canonical(body)),'prompt_bytes':len(sent.encode()),'evidence_sha256':e.digest(data)})
