@@ -89,3 +89,14 @@ saved-response regressions, negative reviews, and the new schema through actual
 matched edits/final assessment. `unit_tests.test_embedded_study` covers combined
 admission, persistent circuits, count omission/restart/unknown attempts and the
 complete fake-provider pipeline with cached restart. Both are in `focused`.
+
+The pinned Anthropic SDK requires `type` on an enum schema even when JSON Schema
+does not. The shared transport now adds `type: string` only to nonempty all-string
+enums lacking type before the existing SDK transformation. This is a lossless
+transport projection: host schemas, accepted values, prompts and corpus disclosure
+remain unchanged. SDK smoke exercises both actual interface schemas without a
+client. A separately inventoried `semantics_preserving_runtime_correction` may
+bind a corrected immutable runtime to the same approved manifest, input inventory
+and authorization, preserving all prompts/host schemas/access/caps, original
+clock, cached jobs and used capacity. The original receipt and failed checkpoint
+remain historical; the manifest is never rewritten as if it used the correction.

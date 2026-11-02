@@ -15,7 +15,7 @@ def identity():
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('command',choices=['build','smoke','count','model','study'])
-    p.add_argument('--receipt',required=True);p.add_argument('--base-image');p.add_argument('--input-root');p.add_argument('--output-root');p.add_argument('--authorization')
+    p.add_argument('--receipt',required=True);p.add_argument('--base-image');p.add_argument('--input-root');p.add_argument('--output-root');p.add_argument('--authorization');p.add_argument('--runtime-correction')
     a=p.parse_args();receipt=Path(a.receipt).resolve();commit,tree=identity()
     lock=hashlib.sha256((REPO/'containers/ragas/requirements.lock').read_bytes()).hexdigest()
     if a.command=='build':
@@ -61,8 +61,18 @@ def main():
         study=json.loads((inp/'study-manifest.json').read_bytes())
         if authorization.get('study_manifest_sha256')!=digest(study) or authorization.get('input_inventory_sha256')!=req['input_inventory_sha256']:
             raise ValueError('combined-authorization-binding')
-        if {k:v for k,v in study['runtime_receipts']['sdk'].items() if k!='receipt_sha256'}!=value:
-            raise ValueError('combined-approved-runtime-binding')
+        expected={k:v for k,v in study['runtime_receipts']['sdk'].items() if k!='receipt_sha256'}
+        if expected!=value:
+            if not a.runtime_correction:raise ValueError('combined-approved-runtime-binding')
+            correction=json.loads(Path(a.runtime_correction).read_bytes())
+            if (correction.get('scope')!='semantics_preserving_runtime_correction'
+                or correction.get('study_manifest_sha256')!=digest(study)
+                or correction.get('authorization_sha256')!=digest(authorization)
+                or correction.get('original_runtime')!=expected or correction.get('corrected_runtime')!=value
+                or correction.get('input_inventory_sha256')!=req['input_inventory_sha256']
+                or any(correction.get(k) is not True for k in
+                    ['host_schemas_unchanged','prompts_unchanged','source_access_unchanged','caps_unchanged','preserve_clock_and_used_capacity'])):
+                raise ValueError('runtime-correction-binding')
     if a.command=='model':
         cfg=json.loads((inp/'config.json').read_bytes());study=json.loads((inp/'study-manifest.json').read_bytes())
         if authorization.get('study_manifest_sha256')!=digest(study):raise ValueError('authorization-manifest-binding')

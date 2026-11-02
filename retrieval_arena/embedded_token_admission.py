@@ -213,10 +213,16 @@ def smoke():
     if not {'model','messages','thinking','output_config'}<=set(anthropic_count):raise ValueError('sdk-anthropic-count-shape-unavailable')
     if 'service_tier' not in inspect.signature(AsyncResponses.create).parameters or 'service_tier' not in inspect.signature(AsyncMessages.create).parameters:
         raise ValueError('sdk-standard-service-tier-unavailable')
+    import anthropic
+    from . import embedded_interface as interface
+    from .model_providers.anthropic import sdk_schema
+    schemas={name:anthropic.transform_schema(sdk_schema(schema)) for name,schema in
+        [('proposal',interface.proposal_schema()),('review',interface.review_schema())]}
     return {'schema_version':VERSION+'.smoke','openai':metadata.version('openai'),
             'anthropic':metadata.version('anthropic'),'count_parameters':sorted(parameters),
             'anthropic_count_parameters':sorted(anthropic_count),
-            'standard_service_tier_parameters_available':True,'clients_constructed':0,'provider_calls':0}
+            'standard_service_tier_parameters_available':True,'actual_interface_schema_projection_sha256':{k:e.digest(v) for k,v in schemas.items()},
+            'clients_constructed':0,'provider_calls':0}
 
 
 if __name__=='__main__':

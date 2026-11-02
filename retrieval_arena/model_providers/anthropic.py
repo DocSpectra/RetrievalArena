@@ -11,12 +11,35 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import hashlib
 import json
+import copy
 
 from .base import REQUEST_OVERHEAD_TOKENS, admit_external, host_guard, redact, require
 
 
 def _sha(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+def sdk_schema(schema):
+    """Losslessly type homogeneous string enums before the SDK projection.
+
+    JSON Schema permits an enum without type. The pinned Anthropic transformer
+    requires an explicit type. A nonempty all-string enum already excludes every
+    non-string value, so this adds no constraint and changes no accepted output.
+    Existing explicitly typed schemas are byte-equivalent after this projection.
+    The caller still validates the unchanged original host schema.
+    """
+    result=copy.deepcopy(schema)
+    def visit(value):
+        if isinstance(value,dict):
+            enum=value.get('enum')
+            if 'type' not in value and isinstance(enum,list) and enum and all(type(v) is str for v in enum):
+                value['type']='string'
+            for child in value.values():visit(child)
+        elif isinstance(value,list):
+            for child in value:visit(child)
+    visit(result)
+    return result
 
 
 class AnthropicTransport:
@@ -41,7 +64,7 @@ class AnthropicTransport:
                 "messages": [{"role": "user", "content": prompt}],
                 "thinking": {"type": generation["thinking"]},
                 "output_config": {"effort": generation["effort"],
-                                  "format": {"type": "json_schema", "schema": self.transform(schema)}}}
+                                  "format": {"type": "json_schema", "schema": self.transform(sdk_schema(schema))}}}
         if 'service_tier' in config: body['service_tier']=config['service_tier']
         return body
 

@@ -31,6 +31,22 @@ def example(source='Read the validation rules.\n',target='These `validation` rul
 
 
 class Interface(unittest.TestCase):
+    def test_anthropic_string_enum_projection_is_lossless_and_nonmutating(self):
+        from retrieval_arena.model_providers.anthropic import sdk_schema
+        schema=i.review_schema();before=copy.deepcopy(schema);projected=sdk_schema(schema)
+        self.assertEqual(schema,before);self.assertNotIn('type',schema['properties']['relation'])
+        self.assertEqual(projected['properties']['relation']['type'],'string')
+        self.assertEqual(projected['properties']['relation']['enum'],schema['properties']['relation']['enum'])
+        for relation in [*e.RELATIONS,'invented',0,None,False]:
+            outcomes=[]
+            for candidate in (schema['properties']['relation'],projected['properties']['relation']):
+                try:e.validate_schema(relation,candidate);outcomes.append(True)
+                except ValueError:outcomes.append(False)
+            self.assertEqual(outcomes[0],outcomes[1])
+        typed=e._obj({'relation':{'type':'string','enum':['a','b']}})
+        self.assertEqual(sdk_schema(typed),typed)
+        numeric={'enum':[1,2]};self.assertEqual(sdk_schema(numeric),numeric)
+
     def test_faithful_saved_declarations_and_review_regressions(self):
         saved=read(Path(__file__).parent/'fixtures/embedded_interface_saved_responses.json')
         self.assertEqual(len(saved['generation']),8);self.assertEqual(len(saved['reviews']),3)
